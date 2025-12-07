@@ -209,6 +209,15 @@ function SeguimientosContent() {
     return Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   }
 
+  // Formatear días del ciclo para mostrar
+  function formatCycleDays(startDate: string): string {
+    const days = getCycleDays(startDate);
+    if (days < 0) return 'Programado';
+    if (days === 0) return 'Hoy';
+    if (days === 1) return '1 día';
+    return `${days} días`;
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -258,7 +267,7 @@ function SeguimientosContent() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowStrainModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-zinc-600 hover:border-zinc-500 hover:bg-zinc-800/50 text-zinc-300 hover:text-white rounded-lg transition-colors"
           >
             <Leaf className="w-4 h-4" />
             Genéticas
@@ -317,11 +326,11 @@ function SeguimientosContent() {
                     <div className="flex items-center gap-3 text-xs text-zinc-400">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {getCycleDays(cycle.startDate)} días
+                        {formatCycleDays(cycle.startDate)}
                       </span>
                       <span className="flex items-center gap-1">
                         <Leaf className="w-3 h-3" />
-                        {cycle._count?.plants || 0} plantas
+                        {cycle._count?.plants || 0} planta{(cycle._count?.plants || 0) !== 1 ? 's' : ''}
                       </span>
                     </div>
                   </button>
@@ -352,7 +361,7 @@ function SeguimientosContent() {
                     <h2 className="text-xl font-bold text-white">{selectedCycle.name}</h2>
                     <p className="text-sm text-zinc-400">
                       Iniciado el {new Date(selectedCycle.startDate).toLocaleDateString('es-AR')}
-                      {' • '}{getCycleDays(selectedCycle.startDate)} días
+                      {' • '}{formatCycleDays(selectedCycle.startDate)}
                     </p>
                   </div>
                   <div className="flex gap-2">

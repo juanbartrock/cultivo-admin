@@ -204,7 +204,7 @@ export default function SalaPage() {
                   {room.name}
                 </span>
                 {room.description && (
-                  <p className="text-xs text-zinc-500 max-w-[200px] truncate">{room.description}</p>
+                  <p className="text-xs text-zinc-400 max-w-[200px] truncate">{room.description}</p>
                 )}
               </div>
               {selectedRoom?.id === room.id && (
@@ -255,7 +255,7 @@ export default function SalaPage() {
                   ) : (
                     <>
                       <span className="text-sm font-semibold text-white">{weather.city}</span>
-                      <span className="text-xs text-zinc-500">{weather.country}</span>
+                      <span className="text-xs text-zinc-400">{weather.country}</span>
                     </>
                   )}
                 </div>
@@ -373,7 +373,7 @@ function CreateRoomButton({ onCreated, variant = 'primary' }: { onCreated: () =>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">Nombre</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Nombre <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={name}
@@ -476,7 +476,7 @@ function CreateSectionButton({
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">Nombre</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Nombre <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={form.name}

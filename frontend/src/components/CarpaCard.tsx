@@ -40,13 +40,21 @@ function getSectionIcon(sectionName: string) {
 }
 
 // Calcula el VPD (Vapor Pressure Deficit) en kPa
-function calculateVPD(temperature: number, humidity: number): number {
+function calculateVPD(temperature: number, humidity: number): number | null {
+  // Validar que los valores sean números válidos
+  if (typeof temperature !== 'number' || typeof humidity !== 'number' ||
+      isNaN(temperature) || isNaN(humidity) ||
+      !isFinite(temperature) || !isFinite(humidity)) {
+    return null;
+  }
   // Presión de vapor de saturación (SVP) usando la fórmula de Tetens
   const svp = 0.6108 * Math.exp((17.27 * temperature) / (temperature + 237.3));
   // Presión de vapor actual (AVP)
   const avp = (humidity / 100) * svp;
   // VPD = SVP - AVP
-  return Math.round((svp - avp) * 100) / 100;
+  const vpd = Math.round((svp - avp) * 100) / 100;
+  // Validar resultado
+  return isNaN(vpd) || !isFinite(vpd) ? null : vpd;
 }
 
 // Obtener el color del VPD según el rango
@@ -157,7 +165,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
             {plantsCount > 0 && (
               <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-cultivo-green-600/90 px-2 py-1 rounded-full">
                 <Leaf className="w-3 h-3 text-white" />
-                <span className="text-xs font-medium text-white">{plantsCount} plantas</span>
+                <span className="text-xs font-medium text-white">{plantsCount} planta{plantsCount !== 1 ? 's' : ''}</span>
               </div>
             )}
           </div>
@@ -172,7 +180,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
             )}
             
             {section.description && (
-              <p className="text-xs text-zinc-500 mb-3 line-clamp-2">{section.description}</p>
+              <p className="text-xs text-zinc-400 mb-3 line-clamp-2">{section.description}</p>
             )}
 
             {/* Stats */}
@@ -219,7 +227,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
               )}
               
               {/* VPD */}
-              {vpd !== undefined && (
+              {vpd !== undefined && vpd !== null && (
                 <div className="flex items-center gap-1.5 flex-1 justify-center">
                   <Activity className={`w-3.5 h-3.5 ${getVPDColor(vpd)}`} />
                   <span className={`text-sm font-medium ${getVPDColor(vpd)}`}>

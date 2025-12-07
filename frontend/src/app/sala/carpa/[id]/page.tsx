@@ -31,7 +31,9 @@ import {
   Shield,
   Camera,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 import DeviceControlCard from '@/components/DeviceControlCard';
@@ -1152,13 +1154,13 @@ export default function CarpaDetailPage() {
             <div className="flex items-center gap-2 bg-zinc-800/50 px-4 py-2 rounded-xl border border-zinc-700/50">
               <Activity className="w-4 h-4 text-cultivo-green-400" />
               <span className="text-sm text-zinc-300">
-                {devices.length} dispositivos
+                {devices.length} dispositivo{devices.length !== 1 ? 's' : ''}
               </span>
             </div>
             <div className="flex items-center gap-2 bg-zinc-800/50 px-4 py-2 rounded-xl border border-zinc-700/50">
               <Leaf className="w-4 h-4 text-cultivo-green-400" />
               <span className="text-sm text-zinc-300">
-                {section.plants?.length || 0} plantas
+                {section.plants?.length || 0} planta{(section.plants?.length || 0) !== 1 ? 's' : ''}
               </span>
             </div>
             {sensors.length > 0 && (
@@ -1347,7 +1349,7 @@ export default function CarpaDetailPage() {
             <h2 className="text-xl font-semibold text-white">Plan de Alimentación</h2>
             {!feedingPlanExpanded && feedingPlans?.plants.some(p => p.feedingPlans.length > 0) && (
               <span className="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded-full ml-2">
-                {feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length} plantas
+                {feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length} planta{feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length !== 1 ? 's' : ''}
               </span>
             )}
           </div>
@@ -1357,7 +1359,7 @@ export default function CarpaDetailPage() {
                 e.stopPropagation();
                 setShowUploadModal(true);
               }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors"
             >
               <Upload className="w-4 h-4" />
               Importar
@@ -1419,55 +1421,85 @@ export default function CarpaDetailPage() {
               </div>
             )}
 
-            {/* Planes disponibles */}
+            {/* Planes disponibles - Slider horizontal */}
             {availablePlans.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-zinc-400">Planes disponibles</h3>
-                <div className="grid gap-3">
-                  {availablePlans.map((plan) => {
-                    // Filtrar plantas que coincidan con la etapa del plan y no tengan este plan asignado
-                    const compatiblePlants = section?.plants?.filter(p => 
-                      p.stage === plan.stage && 
-                      !feedingPlans?.plants.find(fp => fp.id === p.id)?.feedingPlans.some(f => f.feedingPlanId === plan.id)
-                    ) || [];
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-zinc-400">Planes disponibles</h3>
+                  <span className="text-xs text-zinc-500">{availablePlans.length} plan{availablePlans.length !== 1 ? 'es' : ''}</span>
+                </div>
+                <div className="relative group">
+                  {/* Botón izquierda */}
+                  <button
+                    onClick={(e) => {
+                      const container = e.currentTarget.nextElementSibling as HTMLElement;
+                      container.scrollBy({ left: -280, behavior: 'smooth' });
+                    }}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                    title="Anterior"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-white" />
+                  </button>
+                  
+                  {/* Contenedor scrollable */}
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent scroll-smooth snap-x snap-mandatory">
+                    {availablePlans.map((plan) => {
+                      // Filtrar plantas que coincidan con la etapa del plan y no tengan este plan asignado
+                      const compatiblePlants = section?.plants?.filter(p => 
+                        p.stage === plan.stage && 
+                        !feedingPlans?.plants.find(fp => fp.id === p.id)?.feedingPlans.some(f => f.feedingPlanId === plan.id)
+                      ) || [];
 
-                    return (
-                      <div key={plan.id} className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h4 className="font-medium text-white">{plan.name}</h4>
-                            <p className="text-xs text-cyan-400">{plan.stage} • {plan.weeks.length} semanas</p>
+                      return (
+                        <div key={plan.id} className="flex-shrink-0 w-64 bg-zinc-800/50 border border-zinc-700/50 hover:border-cyan-600/50 rounded-lg p-4 snap-start transition-colors">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
+                              <p className="text-xs text-cyan-400">{plan.stage} • {plan.weeks.length} semanas</p>
+                            </div>
+                            <button
+                              onClick={() => setPlanToDelete(plan)}
+                              className="flex-shrink-0 p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2"
+                              title="Eliminar plan"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => setPlanToDelete(plan)}
-                            className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Eliminar plan"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {compatiblePlants.length > 0 ? (
+                            <button
+                              onClick={() => {
+                                setSelectedPlantsForAssign(compatiblePlants.map(p => p.id));
+                                setShowAssignModal({ plan, compatiblePlants });
+                              }}
+                              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm transition-colors"
+                            >
+                              <Link2 className="w-4 h-4" />
+                              Asignar a {compatiblePlants.length} planta{compatiblePlants.length > 1 ? 's' : ''}
+                            </button>
+                          ) : (
+                            <p className="text-xs text-zinc-500 text-center">
+                              {plan._count.plants > 0 
+                                ? `Asignado a ${plan._count.plants} planta(s)`
+                                : 'Sin plantas compatibles'
+                              }
+                            </p>
+                          )}
                         </div>
-                        {compatiblePlants.length > 0 ? (
-                          <button
-                            onClick={() => {
-                              setSelectedPlantsForAssign(compatiblePlants.map(p => p.id));
-                              setShowAssignModal({ plan, compatiblePlants });
-                            }}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm transition-colors"
-                          >
-                            <Link2 className="w-4 h-4" />
-                            Asignar a {compatiblePlants.length} planta{compatiblePlants.length > 1 ? 's' : ''}
-                          </button>
-                        ) : (
-                          <p className="text-xs text-zinc-500">
-                            {plan._count.plants > 0 
-                              ? `Asignado a ${plan._count.plants} planta(s)`
-                              : 'No hay plantas compatibles en esta sección'
-                            }
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Botón derecha */}
+                  <button
+                    onClick={(e) => {
+                      const container = e.currentTarget.previousElementSibling as HTMLElement;
+                      container.scrollBy({ left: 280, behavior: 'smooth' });
+                    }}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                    title="Siguiente"
+                  >
+                    <ChevronRight className="w-4 h-4 text-white" />
+                  </button>
                 </div>
               </div>
             )}
@@ -1482,7 +1514,7 @@ export default function CarpaDetailPage() {
                 </p>
                 <button
                   onClick={() => setShowUploadModal(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm transition-colors mx-auto"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors mx-auto"
                 >
                   <Plus className="w-4 h-4" />
                   Importar primer plan
@@ -1511,7 +1543,7 @@ export default function CarpaDetailPage() {
             <h2 className="text-xl font-semibold text-white">Plan de Prevención</h2>
             {!preventionPlanExpanded && preventionPlans?.plants.some(p => p.preventionPlans.length > 0) && (
               <span className="text-xs px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full ml-2">
-                {preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length} plantas
+                {preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length} planta{preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length !== 1 ? 's' : ''}
               </span>
             )}
           </div>
@@ -1521,7 +1553,7 @@ export default function CarpaDetailPage() {
                 e.stopPropagation();
                 setShowPreventionUploadModal(true);
               }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors"
             >
               <Upload className="w-4 h-4" />
               Importar
@@ -1583,54 +1615,84 @@ export default function CarpaDetailPage() {
               </div>
             )}
 
-            {/* Planes disponibles */}
+            {/* Planes disponibles - Slider horizontal */}
             {availablePreventionPlans.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-zinc-400">Planes disponibles</h3>
-                <div className="grid gap-3">
-                  {availablePreventionPlans.map((plan) => {
-                    const compatiblePlants = section?.plants?.filter(p => 
-                      p.stage === plan.stage && 
-                      !preventionPlans?.plants.find(pp => pp.id === p.id)?.preventionPlans.some(pr => pr.preventionPlanId === plan.id)
-                    ) || [];
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-zinc-400">Planes disponibles</h3>
+                  <span className="text-xs text-zinc-500">{availablePreventionPlans.length} plan{availablePreventionPlans.length !== 1 ? 'es' : ''}</span>
+                </div>
+                <div className="relative group">
+                  {/* Botón izquierda */}
+                  <button
+                    onClick={(e) => {
+                      const container = e.currentTarget.nextElementSibling as HTMLElement;
+                      container.scrollBy({ left: -280, behavior: 'smooth' });
+                    }}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                    title="Anterior"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-white" />
+                  </button>
+                  
+                  {/* Contenedor scrollable */}
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent scroll-smooth snap-x snap-mandatory">
+                    {availablePreventionPlans.map((plan) => {
+                      const compatiblePlants = section?.plants?.filter(p => 
+                        p.stage === plan.stage && 
+                        !preventionPlans?.plants.find(pp => pp.id === p.id)?.preventionPlans.some(pr => pr.preventionPlanId === plan.id)
+                      ) || [];
 
-                    return (
-                      <div key={plan.id} className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h4 className="font-medium text-white">{plan.name}</h4>
-                            <p className="text-xs text-orange-400">{plan.stage} • {plan.totalDays} días</p>
+                      return (
+                        <div key={plan.id} className="flex-shrink-0 w-64 bg-zinc-800/50 border border-zinc-700/50 hover:border-orange-600/50 rounded-lg p-4 snap-start transition-colors">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
+                              <p className="text-xs text-orange-400">{plan.stage} • {plan.totalDays} días</p>
+                            </div>
+                            <button
+                              onClick={() => setPreventionPlanToDelete(plan)}
+                              className="flex-shrink-0 p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2"
+                              title="Eliminar plan"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => setPreventionPlanToDelete(plan)}
-                            className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Eliminar plan"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {compatiblePlants.length > 0 ? (
+                            <button
+                              onClick={() => {
+                                setSelectedPlantsForPreventionAssign(compatiblePlants.map(p => p.id));
+                                setShowPreventionAssignModal({ plan, compatiblePlants });
+                              }}
+                              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm transition-colors"
+                            >
+                              <Link2 className="w-4 h-4" />
+                              Asignar a {compatiblePlants.length} planta{compatiblePlants.length > 1 ? 's' : ''}
+                            </button>
+                          ) : (
+                            <p className="text-xs text-zinc-500 text-center">
+                              {plan._count.plants > 0 
+                                ? `Asignado a ${plan._count.plants} planta(s)`
+                                : 'Sin plantas compatibles'
+                              }
+                            </p>
+                          )}
                         </div>
-                        {compatiblePlants.length > 0 ? (
-                          <button
-                            onClick={() => {
-                              setSelectedPlantsForPreventionAssign(compatiblePlants.map(p => p.id));
-                              setShowPreventionAssignModal({ plan, compatiblePlants });
-                            }}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm transition-colors"
-                          >
-                            <Link2 className="w-4 h-4" />
-                            Asignar a {compatiblePlants.length} planta{compatiblePlants.length > 1 ? 's' : ''}
-                          </button>
-                        ) : (
-                          <p className="text-xs text-zinc-500">
-                            {plan._count.plants > 0 
-                              ? `Asignado a ${plan._count.plants} planta(s)`
-                              : 'No hay plantas compatibles en esta sección'
-                            }
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Botón derecha */}
+                  <button
+                    onClick={(e) => {
+                      const container = e.currentTarget.previousElementSibling as HTMLElement;
+                      container.scrollBy({ left: 280, behavior: 'smooth' });
+                    }}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                    title="Siguiente"
+                  >
+                    <ChevronRight className="w-4 h-4 text-white" />
+                  </button>
                 </div>
               </div>
             )}
@@ -1645,7 +1707,7 @@ export default function CarpaDetailPage() {
                 </p>
                 <button
                   onClick={() => setShowPreventionUploadModal(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm transition-colors mx-auto"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors mx-auto"
                 >
                   <Plus className="w-4 h-4" />
                   Importar primer plan

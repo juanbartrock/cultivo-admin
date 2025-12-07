@@ -461,33 +461,39 @@ export default function ArtefactosPage() {
                       <span className="text-zinc-300">{section?.name || 'Sin asignar'}</span>
                     </div>
 
-                    {/* Control */}
+                    {/* Control - Solo mostrar para dispositivos controlables (no sensores ni cámaras) */}
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleControl(device.id, 'on')}
-                        disabled={controllingDevice === device.id}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-cultivo-green-400 hover:bg-cultivo-green-500/10 rounded transition-colors disabled:opacity-50"
-                        title="Encender"
-                      >
-                        <Power className="w-3 h-3" />
-                        ON
-                      </button>
-                      <button
-                        onClick={() => handleControl(device.id, 'off')}
-                        disabled={controllingDevice === device.id}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-500/10 rounded transition-colors disabled:opacity-50"
-                        title="Apagar"
-                      >
-                        <Power className="w-3 h-3" />
-                        OFF
-                      </button>
+                      {device.type !== 'SENSOR' && device.type !== 'CAMARA' ? (
+                        <>
+                          <button
+                            onClick={() => handleControl(device.id, 'on')}
+                            disabled={controllingDevice === device.id}
+                            className="flex items-center gap-1 px-2 py-1 text-xs text-cultivo-green-400 hover:bg-cultivo-green-500/10 rounded transition-colors disabled:opacity-50"
+                            title="Encender"
+                          >
+                            <Power className="w-3 h-3" />
+                            ON
+                          </button>
+                          <button
+                            onClick={() => handleControl(device.id, 'off')}
+                            disabled={controllingDevice === device.id}
+                            className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-500/10 rounded transition-colors disabled:opacity-50"
+                            title="Apagar"
+                          >
+                            <Power className="w-3 h-3" />
+                            OFF
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-zinc-500">—</span>
+                      )}
                     </div>
 
                     {/* Acciones */}
                     <div className="flex items-center">
                       <button
                         onClick={() => handleDesasignar(device.id)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:text-zinc-300 hover:bg-zinc-500/10 rounded transition-colors"
                         title="Desasignar"
                       >
                         <Unplug className="w-3 h-3" />
@@ -565,7 +571,7 @@ export default function ArtefactosPage() {
               {/* Nombre */}
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                  Nombre del dispositivo
+                  Nombre del dispositivo <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -579,7 +585,7 @@ export default function ArtefactosPage() {
               {/* Tipo */}
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                  Tipo de dispositivo
+                  Tipo de dispositivo <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={asignacionForm.tipo}
@@ -595,7 +601,7 @@ export default function ArtefactosPage() {
               {/* Sección */}
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                  Sección
+                  Sección <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={asignacionForm.sectionId}

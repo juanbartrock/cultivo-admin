@@ -368,8 +368,15 @@ export default function EnvironmentPanel({
  * Fórmula: VPD = SVP × (1 - RH/100)
  * Donde SVP = 0.6108 × exp((17.27 × T) / (T + 237.3))
  */
-function calculateVPD(temperature: number, humidity: number): number {
+function calculateVPD(temperature: number, humidity: number): number | undefined {
+  // Validar que los valores sean números válidos
+  if (typeof temperature !== 'number' || typeof humidity !== 'number' ||
+      isNaN(temperature) || isNaN(humidity) ||
+      !isFinite(temperature) || !isFinite(humidity)) {
+    return undefined;
+  }
   const svp = 0.6108 * Math.exp((17.27 * temperature) / (temperature + 237.3));
   const vpd = svp * (1 - humidity / 100);
-  return vpd;
+  // Validar resultado
+  return isNaN(vpd) || !isFinite(vpd) ? undefined : vpd;
 }

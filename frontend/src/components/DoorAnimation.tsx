@@ -2,12 +2,25 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Leaf } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Leaf, Sprout, Activity } from 'lucide-react';
 
 export default function DoorAnimation() {
   const [isOpening, setIsOpening] = useState(false);
   const router = useRouter();
+  
+  // Estado para mostrar info contextual (fecha/hora)
+  const [currentDate, setCurrentDate] = useState('');
+  
+  useEffect(() => {
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long' 
+    };
+    setCurrentDate(now.toLocaleDateString('es-AR', options));
+  }, []);
 
   const handleEnter = () => {
     setIsOpening(true);
@@ -96,15 +109,25 @@ export default function DoorAnimation() {
                 </div>
               </motion.div>
 
-              {/* Título */}
+              {/* Título mejorado */}
               <motion.h1
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-4xl md:text-5xl font-bold text-center text-white"
+                className="text-4xl md:text-5xl font-bold text-center text-white mb-3"
               >
-                Bienvenido
+                Tu cultivo te espera
               </motion.h1>
+              
+              {/* Subtítulo con fecha */}
+              <motion.p
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-zinc-400 text-lg capitalize"
+              >
+                {currentDate}
+              </motion.p>
             </div>
 
             {/* Espaciador para las manijas */}
@@ -123,8 +146,8 @@ export default function DoorAnimation() {
               {/* Efecto de brillo */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
               <span className="relative flex items-center gap-3">
-                <Leaf className="w-6 h-6" />
-                Entrar
+                <Sprout className="w-6 h-6" />
+                Entrar a la sala
               </span>
             </motion.button>
           </motion.div>
