@@ -133,6 +133,7 @@ interface PreventionProductWithCheck {
 function PlantEventModal({ 
   plant,
   sectionId,
+  availablePlants = [],
   feedingPlanInfo,
   preventionPlanInfo,
   onClose, 
@@ -140,6 +141,7 @@ function PlantEventModal({
 }: { 
   plant: Plant;
   sectionId: string;
+  availablePlants?: Plant[];
   feedingPlanInfo?: {
     planName: string;
     currentWeek: number;
@@ -188,6 +190,31 @@ function PlantEventModal({
   );
   
   const [isCreating, setIsCreating] = useState(false);
+  
+  // Estado para plantas adicionales seleccionadas
+  const [additionalPlantIds, setAdditionalPlantIds] = useState<string[]>([]);
+  const [showPlantSelector, setShowPlantSelector] = useState(false);
+  
+  // Plantas disponibles para agregar (excluyendo la planta principal)
+  const otherPlants = availablePlants.filter(p => p.id !== plant.id);
+  
+  // Toggle planta adicional
+  const toggleAdditionalPlant = (plantId: string) => {
+    setAdditionalPlantIds(prev => 
+      prev.includes(plantId) 
+        ? prev.filter(id => id !== plantId)
+        : [...prev, plantId]
+    );
+  };
+  
+  // Seleccionar/deseleccionar todas las plantas adicionales
+  const toggleAllAdditionalPlants = () => {
+    if (additionalPlantIds.length === otherPlants.length) {
+      setAdditionalPlantIds([]);
+    } else {
+      setAdditionalPlantIds(otherPlants.map(p => p.id));
+    }
+  };
 
   // Estado para foto
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -243,73 +270,86 @@ function PlantEventModal({
   async function handleCreate() {
     setIsCreating(true);
     try {
-      let newEvent: GrowEvent;
-      
-      const baseData = {
-        cycleId: plant.cycleId,
-        plantId: plant.id,
-        sectionId,
-      };
+      // Lista de plantIds a procesar (planta principal + adicionales)
+      const allPlantIds = [plant.id, ...additionalPlantIds];
+      let lastEvent: GrowEvent | null = null;
+      let createdCount = 0;
 
-      if (eventType === 'water') {
-        // Filtrar solo productos marcados e incluir unidad en la dosis
-        const selectedProducts = products
-          .filter(p => p.checked)
-          .map(p => ({ name: p.name, dose: `${p.dose} ${p.unit}` }));
-        
-        newEvent = await eventService.createWaterEvent({
-          ...baseData,
-          ph: form.ph ? parseFloat(form.ph) : undefined,
-          ec: form.ec ? parseFloat(form.ec) : undefined,
-          liters: form.liters ? parseFloat(form.liters) : undefined,
-          nutrients: selectedProducts.length > 0 ? selectedProducts : undefined,
-          notes: form.notes || undefined,
-        });
-      } else if (eventType === 'note') {
-        newEvent = await eventService.createNoteEvent({
-          ...baseData,
-          content: form.content,
-        });
-      } else if (eventType === 'photo') {
-        if (!selectedFile) {
-          alert('Debes seleccionar una imagen');
-          setIsCreating(false);
-          return;
+      for (const plantId of allPlantIds) {
+        const baseData = {
+          cycleId: plant.cycleId,
+          plantId,
+          sectionId,
+        };
+
+        if (eventType === 'water') {
+          // Filtrar solo productos marcados e incluir unidad en la dosis
+          const selectedProducts = products
+            .filter(p => p.checked)
+            .map(p => ({ name: p.name, dose: `${p.dose} ${p.unit}` }));
+          
+          lastEvent = await eventService.createWaterEvent({
+            ...baseData,
+            ph: form.ph ? parseFloat(form.ph) : undefined,
+            ec: form.ec ? parseFloat(form.ec) : undefined,
+            liters: form.liters ? parseFloat(form.liters) : undefined,
+            nutrients: selectedProducts.length > 0 ? selectedProducts : undefined,
+            notes: form.notes || undefined,
+          });
+        } else if (eventType === 'note') {
+          lastEvent = await eventService.createNoteEvent({
+            ...baseData,
+            content: form.content,
+          });
+        } else if (eventType === 'photo') {
+          if (!selectedFile) {
+            alert('Debes seleccionar una imagen');
+            setIsCreating(false);
+            return;
+          }
+          lastEvent = await eventService.createPhotoEvent({
+            ...baseData,
+            caption: form.caption || undefined,
+          }, selectedFile);
+        } else if (eventType === 'prevention') {
+          // Evento de prevención - se registra como nota con datos estructurados
+          const selectedPreventionProducts = preventionProducts
+            .filter(p => p.checked)
+            .map(p => ({ name: p.name, dose: `${p.dose} ${p.unit}` }));
+          
+          const preventionContent = `🛡️ Mantenimiento Preventivo - ${preventionPlanInfo?.planName || 'Sin plan'}\n` +
+            `Día ${preventionPlanInfo?.currentDay || 0}\n` +
+            `Tipo: ${preventionPlanInfo?.applicationData?.applicationType || 'Preventivo'}\n` +
+            `Objetivo: ${preventionPlanInfo?.applicationData?.target || 'General'}\n` +
+            `Productos aplicados:\n${selectedPreventionProducts.map(p => `  - ${p.name}: ${p.dose}`).join('\n')}` +
+            (form.notes ? `\nNotas: ${form.notes}` : '');
+          
+          lastEvent = await eventService.createNoteEvent({
+            ...baseData,
+            content: preventionContent,
+          });
+        } else {
+          lastEvent = await eventService.createEnvironmentEvent({
+            ...baseData,
+            temperature: form.temperature ? parseFloat(form.temperature) : undefined,
+            humidity: form.humidity ? parseFloat(form.humidity) : undefined,
+          });
         }
-        newEvent = await eventService.createPhotoEvent({
-          ...baseData,
-          caption: form.caption || undefined,
-        }, selectedFile);
-        // Limpiar preview
-        if (previewUrl) {
-          URL.revokeObjectURL(previewUrl);
-        }
-      } else if (eventType === 'prevention') {
-        // Evento de prevención - se registra como nota con datos estructurados
-        const selectedPreventionProducts = preventionProducts
-          .filter(p => p.checked)
-          .map(p => ({ name: p.name, dose: `${p.dose} ${p.unit}` }));
-        
-        const preventionContent = `🛡️ Mantenimiento Preventivo - ${preventionPlanInfo?.planName || 'Sin plan'}\n` +
-          `Día ${preventionPlanInfo?.currentDay || 0}\n` +
-          `Tipo: ${preventionPlanInfo?.applicationData?.applicationType || 'Preventivo'}\n` +
-          `Objetivo: ${preventionPlanInfo?.applicationData?.target || 'General'}\n` +
-          `Productos aplicados:\n${selectedPreventionProducts.map(p => `  - ${p.name}: ${p.dose}`).join('\n')}` +
-          (form.notes ? `\nNotas: ${form.notes}` : '');
-        
-        newEvent = await eventService.createNoteEvent({
-          ...baseData,
-          content: preventionContent,
-        });
-      } else {
-        newEvent = await eventService.createEnvironmentEvent({
-          ...baseData,
-          temperature: form.temperature ? parseFloat(form.temperature) : undefined,
-          humidity: form.humidity ? parseFloat(form.humidity) : undefined,
-        });
+        createdCount++;
       }
       
-      onCreated(newEvent);
+      // Limpiar preview
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
+      if (lastEvent) {
+        // Mostrar notificación si se crearon múltiples eventos
+        if (createdCount > 1) {
+          alert(`Se crearon ${createdCount} eventos (uno por cada planta)`);
+        }
+        onCreated(lastEvent);
+      }
     } catch (err) {
       console.error('Error creando evento:', err);
       alert('Error al crear el evento');
@@ -337,6 +377,68 @@ function PlantEventModal({
             </div>
           )}
         </div>
+
+        {/* Selector de plantas adicionales */}
+        {otherPlants.length > 0 && (
+          <div className="border border-zinc-700/50 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowPlantSelector(!showPlantSelector)}
+              className="w-full flex items-center justify-between p-3 bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Plus className="w-4 h-4 text-cultivo-green-400" />
+                <span className="text-sm text-zinc-300">
+                  {additionalPlantIds.length > 0 
+                    ? `${additionalPlantIds.length} planta${additionalPlantIds.length > 1 ? 's' : ''} adicional${additionalPlantIds.length > 1 ? 'es' : ''} seleccionada${additionalPlantIds.length > 1 ? 's' : ''}`
+                    : 'Agregar más plantas al evento'
+                  }
+                </span>
+              </div>
+              {showPlantSelector ? (
+                <ChevronUp className="w-4 h-4 text-zinc-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-zinc-400" />
+              )}
+            </button>
+            
+            {showPlantSelector && (
+              <div className="p-3 border-t border-zinc-700/50 bg-zinc-900/30">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-zinc-500">Otras plantas en la sección</p>
+                  <button
+                    type="button"
+                    onClick={toggleAllAdditionalPlants}
+                    className="text-xs text-cultivo-green-400 hover:text-cultivo-green-300"
+                  >
+                    {additionalPlantIds.length === otherPlants.length ? 'Ninguna' : 'Todas'}
+                  </button>
+                </div>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {otherPlants.map((p) => (
+                    <label
+                      key={p.id}
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                        additionalPlantIds.includes(p.id)
+                          ? 'bg-cultivo-green-500/20'
+                          : 'hover:bg-zinc-800/50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={additionalPlantIds.includes(p.id)}
+                        onChange={() => toggleAdditionalPlant(p.id)}
+                        className="w-4 h-4 rounded border-zinc-600 text-cultivo-green-600 focus:ring-cultivo-green-500 bg-zinc-700"
+                      />
+                      <span className="text-sm text-white">{p.tagCode}</span>
+                      <span className="text-xs text-zinc-500">{p.strain?.name || 'Sin genética'}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tipo de evento */}
         <div className="grid grid-cols-5 gap-2">
@@ -721,7 +823,12 @@ function PlantEventModal({
             className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
             {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            {isCreating ? 'Creando...' : 'Registrar'}
+            {isCreating 
+              ? 'Creando...' 
+              : additionalPlantIds.length > 0 
+                ? `Registrar (${1 + additionalPlantIds.length} plantas)` 
+                : 'Registrar'
+            }
           </button>
         </div>
       </div>
@@ -761,9 +868,10 @@ export default function CarpaDetailPage() {
   const [preventionPlanToDelete, setPreventionPlanToDelete] = useState<PreventionPlanWithCount | null>(null);
   const [deletingPreventionPlan, setDeletingPreventionPlan] = useState(false);
 
-  // Estados para secciones colapsables
-  const [feedingPlanExpanded, setFeedingPlanExpanded] = useState(true);
-  const [preventionPlanExpanded, setPreventionPlanExpanded] = useState(true);
+  // Estados para secciones colapsables (todas colapsadas por defecto)
+  const [feedingPlanExpanded, setFeedingPlanExpanded] = useState(false);
+  const [preventionPlanExpanded, setPreventionPlanExpanded] = useState(false);
+  const [plantsExpanded, setPlantsExpanded] = useState(false);
 
   // Obtener estados de todos los dispositivos
   const devices = useMemo(() => section?.devices || [], [section?.devices]);
@@ -1555,12 +1663,30 @@ export default function CarpaDetailPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
+        className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
       >
-        <div className="flex items-center gap-2 mb-4">
-          <Leaf className="w-5 h-5 text-cultivo-green-500" />
-          <h2 className="text-xl font-semibold text-white">Plantas</h2>
-        </div>
+        <button 
+          onClick={() => setPlantsExpanded(!plantsExpanded)}
+          className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Leaf className="w-5 h-5 text-cultivo-green-500" />
+            <h2 className="text-xl font-semibold text-white">Plantas</h2>
+            <span className="text-xs px-2 py-0.5 bg-cultivo-green-500/20 text-cultivo-green-400 rounded-full ml-2">
+              {section.plants?.length || 0}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {plantsExpanded ? (
+              <ChevronUp className="w-5 h-5 text-zinc-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-zinc-400" />
+            )}
+          </div>
+        </button>
 
+        {plantsExpanded && (
+        <div className="p-4 pt-0">
         {section.plants && section.plants.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {section.plants.map((plant, index) => (
@@ -1588,13 +1714,15 @@ export default function CarpaDetailPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-zinc-800/30 rounded-xl p-8 text-center border border-zinc-700/50">
+          <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
             <Leaf className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
             <p className="text-zinc-400">No hay plantas registradas en esta sección</p>
             <p className="text-xs text-zinc-500 mt-1">
               Agrega plantas desde la página de Ciclos
             </p>
           </div>
+        )}
+        </div>
         )}
       </motion.section>
 
@@ -1603,6 +1731,7 @@ export default function CarpaDetailPage() {
         <PlantEventModal
           plant={selectedPlantForEvent}
           sectionId={sectionId}
+          availablePlants={section?.plants || []}
           feedingPlanInfo={(() => {
             // Buscar el plan de alimentación de la planta seleccionada
             const plantWithPlan = feedingPlans?.plants.find(p => p.id === selectedPlantForEvent.id);

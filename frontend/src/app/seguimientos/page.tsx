@@ -1024,7 +1024,6 @@ function EventModal({
 }) {
   const [eventType, setEventType] = useState<'water' | 'note' | 'environment' | 'photo'>('water');
   const [form, setForm] = useState({
-    plantId: '',
     sectionId: sections[0]?.id || '',
     // Riego
     ph: '',
@@ -1038,6 +1037,10 @@ function EventModal({
     // Foto
     caption: '',
   });
+  // Selección múltiple de plantas
+  const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([]);
+  const [applyToCycle, setApplyToCycle] = useState(false); // Si true, no se asocia a plantas específicas
+  
   const [isCreating, setIsCreating] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -1062,45 +1065,79 @@ function EventModal({
     }
   };
 
+  // Toggle planta seleccionada
+  const togglePlant = (plantId: string) => {
+    setSelectedPlantIds(prev => 
+      prev.includes(plantId) 
+        ? prev.filter(id => id !== plantId)
+        : [...prev, plantId]
+    );
+    // Si se selecciona alguna planta, desactivar "aplicar a todo el ciclo"
+    if (!selectedPlantIds.includes(plantId)) {
+      setApplyToCycle(false);
+    }
+  };
+
+  // Seleccionar/deseleccionar todas
+  const toggleAllPlants = () => {
+    if (selectedPlantIds.length === plants.length) {
+      setSelectedPlantIds([]);
+    } else {
+      setSelectedPlantIds(plants.map(p => p.id));
+      setApplyToCycle(false);
+    }
+  };
+
   async function handleCreate() {
     setIsCreating(true);
     try {
-      let newEvent: GrowEvent;
-      
-      const baseData = {
+      const baseEventData = {
         cycleId,
-        plantId: form.plantId || undefined,
         sectionId: form.sectionId || undefined,
       };
 
-      if (eventType === 'water') {
-        newEvent = await eventService.createWaterEvent({
-          ...baseData,
-          ph: form.ph ? parseFloat(form.ph) : undefined,
-          ec: form.ec ? parseFloat(form.ec) : undefined,
-          liters: form.liters ? parseFloat(form.liters) : undefined,
-        });
-      } else if (eventType === 'note') {
-        newEvent = await eventService.createNoteEvent({
-          ...baseData,
-          content: form.content,
-        });
-      } else if (eventType === 'photo') {
-        if (!selectedFile) {
-          alert('Debes seleccionar una imagen');
-          setIsCreating(false);
-          return;
+      // Determinar los plantIds a usar
+      const plantIdsToUse = applyToCycle ? [undefined] : (selectedPlantIds.length > 0 ? selectedPlantIds : [undefined]);
+      
+      let lastEvent: GrowEvent | null = null;
+      let createdCount = 0;
+
+      for (const plantId of plantIdsToUse) {
+        const eventData = {
+          ...baseEventData,
+          plantId: plantId,
+        };
+
+        if (eventType === 'water') {
+          lastEvent = await eventService.createWaterEvent({
+            ...eventData,
+            ph: form.ph ? parseFloat(form.ph) : undefined,
+            ec: form.ec ? parseFloat(form.ec) : undefined,
+            liters: form.liters ? parseFloat(form.liters) : undefined,
+          });
+        } else if (eventType === 'note') {
+          lastEvent = await eventService.createNoteEvent({
+            ...eventData,
+            content: form.content,
+          });
+        } else if (eventType === 'photo') {
+          if (!selectedFile) {
+            alert('Debes seleccionar una imagen');
+            setIsCreating(false);
+            return;
+          }
+          lastEvent = await eventService.createPhotoEvent({
+            ...eventData,
+            caption: form.caption || undefined,
+          }, selectedFile);
+        } else {
+          lastEvent = await eventService.createEnvironmentEvent({
+            ...eventData,
+            temperature: form.temperature ? parseFloat(form.temperature) : undefined,
+            humidity: form.humidity ? parseFloat(form.humidity) : undefined,
+          });
         }
-        newEvent = await eventService.createPhotoEvent({
-          ...baseData,
-          caption: form.caption || undefined,
-        }, selectedFile);
-      } else {
-        newEvent = await eventService.createEnvironmentEvent({
-          ...baseData,
-          temperature: form.temperature ? parseFloat(form.temperature) : undefined,
-          humidity: form.humidity ? parseFloat(form.humidity) : undefined,
-        });
+        createdCount++;
       }
       
       // Limpiar preview antes de cerrar
@@ -1108,7 +1145,13 @@ function EventModal({
         URL.revokeObjectURL(previewUrl);
       }
       
-      onCreated(newEvent);
+      if (lastEvent) {
+        // Mostrar notificación si se crearon múltiples eventos
+        if (createdCount > 1) {
+          alert(`Se crearon ${createdCount} eventos (uno por cada planta seleccionada)`);
+        }
+        onCreated(lastEvent);
+      }
     } catch (err) {
       console.error('Error creando evento:', err);
       alert('Error al crear el evento');
@@ -1168,30 +1211,104 @@ function EventModal({
           </button>
         </div>
 
-        {/* Campos comunes */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Planta (opcional)</label>
-            <select
-              value={form.plantId}
-              onChange={(e) => setForm({ ...form, plantId: e.target.value })}
-              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
-            >
-              <option value="">Todo el ciclo</option>
-              {plants.map(p => <option key={p.id} value={p.id}>{p.tagCode}</option>)}
-            </select>
+        {/* Selección de plantas */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-zinc-300">
+              Plantas <span className="text-zinc-500">(puedes seleccionar varias)</span>
+            </label>
+            {plants.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleAllPlants}
+                className="text-xs text-cultivo-green-400 hover:text-cultivo-green-300"
+              >
+                {selectedPlantIds.length === plants.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
+              </button>
+            )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Sección</label>
-            <select
-              value={form.sectionId}
-              onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
-              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
-            >
-              <option value="">Sin sección</option>
-              {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
+          
+          {/* Opción: Aplicar a todo el ciclo */}
+          <label
+            className={`flex items-center gap-3 p-2 mb-2 rounded-lg cursor-pointer transition-colors border ${
+              applyToCycle
+                ? 'bg-blue-500/20 border-blue-500/30'
+                : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={applyToCycle}
+              onChange={(e) => {
+                setApplyToCycle(e.target.checked);
+                if (e.target.checked) {
+                  setSelectedPlantIds([]);
+                }
+              }}
+              className="w-4 h-4 rounded border-zinc-600 text-blue-600 focus:ring-blue-500 bg-zinc-700"
+            />
+            <div className="flex-1">
+              <span className="text-sm text-white">Aplicar a todo el ciclo</span>
+              <p className="text-xs text-zinc-500">Sin asociar a plantas específicas</p>
+            </div>
+          </label>
+
+          {/* Lista de plantas con checkboxes */}
+          {plants.length > 0 ? (
+            <div className="max-h-40 overflow-y-auto bg-zinc-800/30 rounded-lg p-2 space-y-1">
+              {plants.map((plant) => (
+                <label
+                  key={plant.id}
+                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                    selectedPlantIds.includes(plant.id)
+                      ? 'bg-cultivo-green-500/20 border border-cultivo-green-500/30'
+                      : 'hover:bg-zinc-700/50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedPlantIds.includes(plant.id)}
+                    onChange={() => togglePlant(plant.id)}
+                    disabled={applyToCycle}
+                    className="w-4 h-4 rounded border-zinc-600 text-cultivo-green-600 focus:ring-cultivo-green-500 bg-zinc-700 disabled:opacity-50"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm ${applyToCycle ? 'text-zinc-500' : 'text-white'}`}>
+                      {plant.tagCode}
+                    </span>
+                    <span className="text-xs text-zinc-500 ml-2">
+                      {plant.strain?.name || 'Sin genética'}
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-zinc-800/30 rounded-lg p-3 text-center">
+              <p className="text-sm text-zinc-500">No hay plantas en este ciclo</p>
+            </div>
+          )}
+          
+          {/* Resumen de selección */}
+          {selectedPlantIds.length > 0 && (
+            <p className="text-xs text-cultivo-green-400 mt-2">
+              {selectedPlantIds.length} planta{selectedPlantIds.length > 1 ? 's' : ''} seleccionada{selectedPlantIds.length > 1 ? 's' : ''} 
+              {selectedPlantIds.length > 1 && ' - Se creará un evento para cada una'}
+            </p>
+          )}
+        </div>
+
+        {/* Sección */}
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Sección</label>
+          <select
+            value={form.sectionId}
+            onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
+            className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+          >
+            <option value="">Sin sección</option>
+            {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
         </div>
 
         {/* Campos específicos por tipo */}
@@ -1352,7 +1469,12 @@ function EventModal({
           className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white rounded-lg"
         >
           {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-          {isCreating ? 'Guardando...' : 'Guardar'}
+          {isCreating 
+            ? 'Guardando...' 
+            : selectedPlantIds.length > 1 
+              ? `Guardar (${selectedPlantIds.length} eventos)` 
+              : 'Guardar'
+          }
         </button>
       </div>
     </Modal>
