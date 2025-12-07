@@ -80,41 +80,37 @@ export default function DoorAnimation() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative z-30 min-h-screen flex flex-col items-center justify-center px-4"
+            className="relative z-30 min-h-screen flex flex-col items-center justify-between px-4 py-16"
           >
-            {/* Logo/Icono */}
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mb-8"
-            >
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cultivo-green-600 to-cultivo-green-800 flex items-center justify-center shadow-lg shadow-cultivo-green-900/50">
-                <Leaf className="w-12 h-12 text-white" />
-              </div>
-            </motion.div>
+            {/* Sección superior - Logo y título */}
+            <div className="flex flex-col items-center">
+              {/* Logo/Icono */}
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="mb-6"
+              >
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cultivo-green-600 to-cultivo-green-800 flex items-center justify-center shadow-lg shadow-cultivo-green-900/50">
+                  <Leaf className="w-12 h-12 text-white" />
+                </div>
+              </motion.div>
 
-            {/* Título */}
-            <motion.h1
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-4xl md:text-5xl font-bold text-center mb-4 text-white"
-            >
-              Bienvenido
-            </motion.h1>
+              {/* Título */}
+              <motion.h1
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-4xl md:text-5xl font-bold text-center text-white"
+              >
+                Bienvenido
+              </motion.h1>
+            </div>
 
-            {/* Mensaje principal */}
-            <motion.p
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="text-2xl md:text-3xl text-cultivo-green-400 text-center mb-12 font-light"
-            >
-              Ingresa a la Sala de Cultivo
-            </motion.p>
+            {/* Espaciador para las manijas */}
+            <div className="flex-1" />
 
-            {/* Botón de entrada */}
+            {/* Botón de entrada - en la parte inferior */}
             <motion.button
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -131,16 +127,6 @@ export default function DoorAnimation() {
                 Entrar
               </span>
             </motion.button>
-
-            {/* Indicador sutil */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-8 text-zinc-500 text-sm"
-            >
-              Haz clic para abrir las puertas
-            </motion.p>
           </motion.div>
         )}
       </AnimatePresence>

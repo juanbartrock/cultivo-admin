@@ -119,7 +119,7 @@ export default function PlantCard({ plant, delay = 0, onRegisterEvent, onStageCh
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.05 }}
-      className="bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 rounded-xl p-4 hover:border-cultivo-green-600/30 transition-all"
+      className={`bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 rounded-xl p-4 hover:border-cultivo-green-600/30 transition-all ${showStageModal ? 'relative z-50' : 'relative'}`}
     >
       <div className="flex items-start gap-4">
         {/* Icono de etapa */}
