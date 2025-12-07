@@ -1,0 +1,143 @@
+services:
+  # ============================================
+  # Backend API (NestJS)
+  # ============================================
+  backend:
+    build: ./backend
+    container_name: cultivo-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - MS_SONOFF_URL=http://sonoff-service:3000
+      - MS_TUYA_URL=http://tuya-service:3000
+      - MS_TAPO_URL=http://tapo-service:3000
+      # - MS_ESP32_URL=http://esp32-service:3000
+    networks:
+      - cultivo-network
+    depends_on:
+      sonoff-service:
+        condition: service_healthy
+      tuya-service:
+        condition: service_healthy
+      tapo-service:
+        condition: service_healthy
+      # esp32-service:
+      #   condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ============================================
+  # Frontend (Next.js)
+  # ============================================
+  frontend:
+    build: ./frontend
+    container_name: cultivo-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:4000/api
+    networks:
+      - cultivo-network
+    depends_on:
+      - backend
+
+  # ============================================
+  # IoT Microservices
+  # ============================================
+  sonoff-service:
+    build: ./sonoff-service
+    container_name: sonoff-ewelink-service
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./sonoff-service/.env
+    environment:
+      - PORT=3000
+    networks:
+      - cultivo-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  tuya-service:
+    build: ./tuya-service
+    container_name: tuya-service
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    env_file:
+      - ./tuya-service/.env
+    environment:
+      - PORT=3000
+    networks:
+      - cultivo-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  tapo-service:
+    build: ./tapo-service
+    container_name: tapo-service
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    env_file:
+      - ./tapo-service/.env
+    environment:
+      - PORT=3000
+    volumes:
+      - tapo-snapshots:/app/snapshots
+    networks:
+      - cultivo-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ESP32 Service - Deshabilitado temporalmente
+  # esp32-service:
+  #   build: ./esp32-service
+  #   container_name: esp32-service
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3004:3000"
+  #   env_file:
+  #     - ./esp32-service/.env
+  #   environment:
+  #     - PORT=3000
+  #   networks:
+  #     - cultivo-network
+  #   healthcheck:
+  #     test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 10s
+
+networks:
+  cultivo-network:
+    name: cultivo-network
+    driver: bridge
+
+volumes:
+  tapo-snapshots:

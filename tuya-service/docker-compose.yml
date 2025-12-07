@@ -1,0 +1,18 @@
+services:
+  tuya-service:
+    build: .
+    container_name: tuya-service
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3002}:3000"
+    environment:
+      - TUYA_ACCESS_ID=${TUYA_ACCESS_ID}
+      - TUYA_ACCESS_SECRET=${TUYA_ACCESS_SECRET}
+      - TUYA_REGION=${TUYA_REGION:-us}
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

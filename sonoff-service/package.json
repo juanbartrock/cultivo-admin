@@ -1,0 +1,26 @@
+{
+  "name": "sonoff-ewelink-service",
+  "version": "1.0.0",
+  "description": "Microservicio para controlar Sonoff THR320D via eWeLink API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "keywords": [
+    "sonoff",
+    "ewelink",
+    "thr320d",
+    "temperature",
+    "humidity",
+    "iot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "swagger-ui-express": "^5.0.0",
+    "ws": "^8.14.2"
+  }
+}
+

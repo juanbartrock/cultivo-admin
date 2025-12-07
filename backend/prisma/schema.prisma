@@ -1,0 +1,326 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Connector {
+  SONOFF
+  TUYA
+  TAPO
+  ESP32
+}
+
+enum DeviceType {
+  SENSOR
+  LUZ
+  EXTRACTOR
+  VENTILADOR
+  HUMIDIFICADOR
+  DESHUMIDIFICADOR
+  AIRE_ACONDICIONADO
+  BOMBA_RIEGO
+  CALEFACTOR
+  CAMARA
+}
+
+enum StrainType {
+  SATIVA
+  INDICA
+  RUDERALIS
+  HYBRID
+}
+
+enum CycleStatus {
+  ACTIVE
+  COMPLETED
+  CURED
+}
+
+enum PlantStage {
+  GERMINACION
+  VEGETATIVO
+  PRE_FLORA
+  FLORACION
+  SECADO
+  CURADO
+}
+
+enum PlantSex {
+  FEM
+  REG
+  AUTO
+  UNKNOWN
+}
+
+enum EventType {
+  RIEGO
+  PODA
+  CAMBIO_FOTOPERIODO
+  TRANSPLANTE
+  NOTA
+  FOTO
+  PARAMETRO_AMBIENTAL
+}
+
+// ============================================
+// INFRAESTRUCTURA Y UBICACIONES
+// ============================================
+
+/// Salas - Espacios físicos principales (ej: "Habitación Cultivo", "Garage")
+model Room {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  sections    Section[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("rooms")
+}
+
+/// Secciones/Carpas - Subdivisiones dentro de una sala (ej: "Carpa 80x80", "Zona Esquejes")
+model Section {
+  id          String   @id @default(uuid())
+  name        String
+  dimensions  String?  // Ej: "80x80x180"
+  image       String?  // URL de imagen
+  description String?
+  roomId      String   @map("room_id")
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  devices     Device[]
+  plants      Plant[]
+  events      Event[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("sections")
+}
+
+// ============================================
+// HARDWARE (IoT)
+// ============================================
+
+/// Dispositivos - Representación lógica de los dispositivos físicos
+model Device {
+  id         String     @id @default(uuid())
+  name       String
+  connector  Connector  // Conector: SONOFF, TUYA, TAPO
+  externalId String     @map("external_id") // ID del dispositivo en el servicio externo
+  type       DeviceType // Tipo: sensor, luz, extractor, etc.
+  sectionId  String?    @map("section_id")
+  section    Section?   @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  metadata   Json?      // IP, modelo, configuración específica
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  @@unique([connector, externalId])
+  @@map("devices")
+}
+
+// ============================================
+// BIOLOGÍA Y SEGUIMIENTOS
+// ============================================
+
+/// Genéticas - Banco de datos de genéticas
+model Strain {
+  id                    String     @id @default(uuid())
+  name                  String
+  breeder               String?    // Banco de semillas
+  type                  StrainType // Sativa, Indica, Ruderalis, Hybrid
+  floweringDaysExpected Int?       @map("flowering_days_expected") // Días de floración esperados
+  description           String?
+  plants                Plant[]
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
+
+  @@map("strains")
+}
+
+/// Ciclos/Seguimientos - Agrupador temporal para comparar tandas de cultivo
+model Cycle {
+  id        String      @id @default(uuid())
+  name      String      // Ej: "Invierno 2025"
+  startDate DateTime    @map("start_date")
+  endDate   DateTime?   @map("end_date")
+  status    CycleStatus @default(ACTIVE)
+  notes     String?
+  plants    Plant[]
+  events    Event[]
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  @@map("cycles")
+}
+
+/// Plantas - Instancia física de una planta
+model Plant {
+  id              String               @id @default(uuid())
+  tagCode         String               @unique @map("tag_code") // Código único o nombre
+  strainId        String               @map("strain_id")
+  strain          Strain               @relation(fields: [strainId], references: [id])
+  cycleId         String               @map("cycle_id")
+  cycle           Cycle                @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  sectionId       String               @map("section_id")
+  section         Section              @relation(fields: [sectionId], references: [id])
+  stage           PlantStage           @default(GERMINACION)
+  sex             PlantSex             @default(UNKNOWN)
+  photo           String?              // URL de foto principal
+  notes           String?
+  startDate       DateTime?            @map("start_date") // Fecha de inicio (germinación/plantado)
+  stageStartDate  DateTime?            @map("stage_start_date") // Fecha del último cambio de etapa
+  events          Event[]
+  feedingPlans    PlantFeedingPlan[]
+  preventionPlans PlantPreventionPlan[]
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@map("plants")
+}
+
+// ============================================
+// EVENTOS Y BITÁCORA
+// ============================================
+
+/// Eventos - Registro inmutable de acciones en la bitácora
+model Event {
+  id        String    @id @default(uuid())
+  type      EventType // Tipo de evento
+  plantId   String?   @map("plant_id")
+  plant     Plant?    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  cycleId   String?   @map("cycle_id")
+  cycle     Cycle?    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  sectionId String?   @map("section_id")
+  section   Section?  @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  data      Json      // Datos específicos del evento (ph, ec, temperatura, url de foto, etc.)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([type])
+  @@index([plantId])
+  @@index([cycleId])
+  @@index([sectionId])
+  @@index([createdAt])
+  @@map("events")
+}
+
+// ============================================
+// PLANES DE ALIMENTACIÓN
+// ============================================
+
+/// Plan de alimentación - Template con semanas y productos
+model FeedingPlan {
+  id          String             @id @default(uuid())
+  name        String             // Ej: "BioBizz Floración"
+  description String?
+  stage       PlantStage         // Etapa para la cual aplica (VEGETATIVO, FLORACION, etc.)
+  weeks       FeedingPlanWeek[]
+  plants      PlantFeedingPlan[]
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  @@map("feeding_plans")
+}
+
+/// Semana del plan de alimentación - Detalle de productos por semana
+model FeedingPlanWeek {
+  id            String      @id @default(uuid())
+  feedingPlanId String      @map("feeding_plan_id")
+  feedingPlan   FeedingPlan @relation(fields: [feedingPlanId], references: [id], onDelete: Cascade)
+  weekNumber    Int         @map("week_number") // Semana 1, 2, 3...
+  products      Json        // [{name: string, dose: string, unit: string}]
+  ph            Float?      // pH recomendado
+  ec            Float?      // EC recomendada
+  notes         String?     // Notas adicionales
+
+  @@unique([feedingPlanId, weekNumber])
+  @@map("feeding_plan_weeks")
+}
+
+/// Relación planta-plan - Asigna un plan a una planta con fecha de inicio
+model PlantFeedingPlan {
+  id            String      @id @default(uuid())
+  plantId       String      @map("plant_id")
+  plant         Plant       @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  feedingPlanId String      @map("feeding_plan_id")
+  feedingPlan   FeedingPlan @relation(fields: [feedingPlanId], references: [id], onDelete: Cascade)
+  stageStartDate DateTime   @map("stage_start_date") // Cuando la planta entró en esta etapa
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@unique([plantId, feedingPlanId])
+  @@index([plantId])
+  @@index([feedingPlanId])
+  @@map("plant_feeding_plans")
+}
+
+// ============================================
+// PLANES DE PREVENCIÓN (Hongos y Plagas)
+// ============================================
+
+enum ApplicationType {
+  FOLIAR
+  RIEGO
+  PREVENTIVO
+}
+
+enum PreventionTarget {
+  HONGOS
+  PLAGAS
+  AMBOS
+  PREVENTIVO
+}
+
+/// Plan de prevención - Template con días y productos
+model PreventionPlan {
+  id          String                @id @default(uuid())
+  name        String                // Ej: "Preventivo Floración 21 días"
+  description String?
+  stage       PlantStage            // Etapa para la cual aplica
+  totalDays   Int                   @map("total_days") // Duración del ciclo (se repite)
+  applications PreventionPlanApplication[]
+  plants      PlantPreventionPlan[]
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  @@map("prevention_plans")
+}
+
+/// Aplicación del plan de prevención - Detalle de productos por día
+model PreventionPlanApplication {
+  id               String           @id @default(uuid())
+  preventionPlanId String           @map("prevention_plan_id")
+  preventionPlan   PreventionPlan   @relation(fields: [preventionPlanId], references: [id], onDelete: Cascade)
+  dayNumber        Int              @map("day_number") // Día 1, 7, 14...
+  products         Json             // [{name: string, dose: string, unit: string}]
+  applicationType  ApplicationType? @map("application_type") // FOLIAR, RIEGO, PREVENTIVO
+  target           PreventionTarget? // HONGOS, PLAGAS, AMBOS, PREVENTIVO
+  notes            String?          // Notas adicionales
+
+  @@unique([preventionPlanId, dayNumber])
+  @@map("prevention_plan_applications")
+}
+
+/// Relación planta-plan de prevención - Asigna un plan a una planta
+model PlantPreventionPlan {
+  id               String         @id @default(uuid())
+  plantId          String         @map("plant_id")
+  plant            Plant          @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  preventionPlanId String         @map("prevention_plan_id")
+  preventionPlan   PreventionPlan @relation(fields: [preventionPlanId], references: [id], onDelete: Cascade)
+  startDate        DateTime       @map("start_date") // Cuando comenzó el plan
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  @@unique([plantId, preventionPlanId])
+  @@index([plantId])
+  @@index([preventionPlanId])
+  @@map("plant_prevention_plans")
+}
