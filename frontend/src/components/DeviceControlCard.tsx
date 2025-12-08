@@ -191,9 +191,19 @@ export default function DeviceControlCard({
         {device.name}
       </h3>
       
-      <p className="text-xs text-zinc-500 mb-3">
+      <p className="text-xs text-zinc-500 mb-1">
         {typeLabels[device.type]} • {device.connector}
       </p>
+      
+      {/* Mostrar controlador para dispositivos virtuales */}
+      {device.connector === 'VIRTUAL' && (
+        <p className="text-xs text-cyan-400 mb-3">
+          {device.controlledBy 
+            ? `→ Controlado por: ${device.controlledBy.name}` 
+            : '⚠️ Sin controlador asignado'
+          }
+        </p>
+      )}
 
       {/* Sensor values */}
       {device.type === 'SENSOR' && status && (

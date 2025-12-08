@@ -38,6 +38,8 @@ export class DevicesService {
             room: true,
           },
         },
+        controlledBy: true, // Dispositivo que controla a este
+        controlledDevices: true, // Dispositivos que este controla
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -55,6 +57,8 @@ export class DevicesService {
             room: true,
           },
         },
+        controlledBy: true,
+        controlledDevices: true,
       },
     });
 
@@ -94,6 +98,17 @@ export class DevicesService {
       }
     }
 
+    // Verificar que el dispositivo controlador existe si se proporciona
+    if (data.controlledByDeviceId) {
+      const controllerDevice = await this.prisma.device.findUnique({
+        where: { id: data.controlledByDeviceId },
+      });
+
+      if (!controllerDevice) {
+        throw new NotFoundException(`Controller device with ID ${data.controlledByDeviceId} not found`);
+      }
+    }
+
     const createData: Prisma.DeviceCreateInput = {
       name: data.name,
       connector: data.connector,
@@ -103,12 +118,17 @@ export class DevicesService {
       ...(data.sectionId && {
         section: { connect: { id: data.sectionId } },
       }),
+      ...(data.controlledByDeviceId && {
+        controlledBy: { connect: { id: data.controlledByDeviceId } },
+      }),
     };
 
     return this.prisma.device.create({
       data: createData,
       include: {
         section: true,
+        controlledBy: true,
+        controlledDevices: true,
       },
     });
   }
@@ -119,6 +139,22 @@ export class DevicesService {
   async update(id: string, data: UpdateDeviceDto) {
     await this.findById(id);
 
+    // Verificar que el dispositivo controlador existe si se proporciona
+    if (data.controlledByDeviceId) {
+      // Evitar auto-referencia
+      if (data.controlledByDeviceId === id) {
+        throw new ConflictException('A device cannot control itself');
+      }
+
+      const controllerDevice = await this.prisma.device.findUnique({
+        where: { id: data.controlledByDeviceId },
+      });
+
+      if (!controllerDevice) {
+        throw new NotFoundException(`Controller device with ID ${data.controlledByDeviceId} not found`);
+      }
+    }
+
     const updateData: Prisma.DeviceUpdateInput = {
       ...(data.name && { name: data.name }),
       ...(data.connector && { connector: data.connector }),
@@ -128,6 +164,11 @@ export class DevicesService {
       ...(data.sectionId !== undefined && {
         section: data.sectionId ? { connect: { id: data.sectionId } } : { disconnect: true },
       }),
+      ...(data.controlledByDeviceId !== undefined && {
+        controlledBy: data.controlledByDeviceId 
+          ? { connect: { id: data.controlledByDeviceId } } 
+          : { disconnect: true },
+      }),
     };
 
     return this.prisma.device.update({
@@ -135,6 +176,8 @@ export class DevicesService {
       data: updateData,
       include: {
         section: true,
+        controlledBy: true,
+        controlledDevices: true,
       },
     });
   }
@@ -230,6 +273,7 @@ export class DevicesService {
         ...(data.name && { name: data.name }),
         ...(data.type && { type: data.type }),
         ...(data.metadata && { metadata: data.metadata as Prisma.InputJsonValue }),
+        ...(data.controlledByDeviceId && { controlledBy: { connect: { id: data.controlledByDeviceId } } }),
       };
 
       return this.prisma.device.update({
@@ -241,6 +285,8 @@ export class DevicesService {
               room: true,
             },
           },
+          controlledBy: true,
+          controlledDevices: true,
         },
       });
     }
@@ -260,6 +306,7 @@ export class DevicesService {
       type: data.type,
       section: { connect: { id: data.sectionId } },
       ...(data.metadata && { metadata: data.metadata as Prisma.InputJsonValue }),
+      ...(data.controlledByDeviceId && { controlledBy: { connect: { id: data.controlledByDeviceId } } }),
     };
 
     return this.prisma.device.create({
@@ -270,6 +317,8 @@ export class DevicesService {
             room: true,
           },
         },
+        controlledBy: true,
+        controlledDevices: true,
       },
     });
   }
@@ -277,16 +326,61 @@ export class DevicesService {
   /**
    * Obtiene el estado actual de un dispositivo (consultando al microservicio)
    * Para cámaras, incluye información adicional del stream
+   * Para dispositivos VIRTUAL, obtiene el estado del dispositivo controlador
    */
   async getDeviceStatus(id: string): Promise<{ device: Awaited<ReturnType<typeof this.findById>>; status: DeviceStatus }> {
     const device = await this.findById(id);
+
+    // Si es un dispositivo VIRTUAL, obtener el estado del controlador
+    if (device.connector === Connector.VIRTUAL) {
+      if (device.controlledBy) {
+        // Obtener estado del dispositivo controlador
+        const controllerStatus = await this.iotGateway.getDeviceStatus(
+          device.controlledBy.connector,
+          device.controlledBy.externalId,
+        );
+        
+        // El estado puede venir como 'state' o 'switch' dependiendo del conector
+        // Sonoff usa 'switch', otros usan 'state'
+        const switchValue = controllerStatus.switch as string | undefined;
+        const stateValue = controllerStatus.state;
+        const rawState = stateValue || switchValue;
+        // Normalizar a 'on' | 'off' | undefined
+        const inheritedState: 'on' | 'off' | undefined = 
+          rawState === 'on' ? 'on' : rawState === 'off' ? 'off' : undefined;
+        
+        return {
+          device,
+          status: {
+            online: controllerStatus.online,
+            state: inheritedState, // Heredar el estado ON/OFF del controlador
+            switch: switchValue, // También incluir switch por compatibilidad
+            controlledBy: {
+              id: device.controlledBy.id,
+              name: device.controlledBy.name,
+              connector: device.controlledBy.connector,
+            },
+          },
+        };
+      }
+      
+      // Si no tiene controlador asignado
+      return {
+        device,
+        status: {
+          online: true,
+          state: undefined,
+          message: 'Este dispositivo virtual no tiene un controlador asignado',
+        },
+      };
+    }
 
     const status = await this.iotGateway.getDeviceStatus(
       device.connector,
       device.externalId,
     );
 
-    // Si es una cámara TAPO, agregar información del stream
+    // Si es una cámara TAPO, agregar información adicional del stream
     if (device.type === DeviceType.CAMARA && device.connector === Connector.TAPO) {
       const streamInfo = await this.iotGateway.getCameraStreamInfo('high');
       const tapoServiceUrl = this.iotGateway.getTapoServiceUrl();
@@ -358,9 +452,41 @@ export class DevicesService {
 
   /**
    * Controla un dispositivo (on/off)
+   * Para dispositivos VIRTUAL, controla el dispositivo padre (controlledBy)
    */
   async controlDevice(id: string, action: 'on' | 'off') {
     const device = await this.findById(id);
+
+    // Si es un dispositivo VIRTUAL, controlar el dispositivo padre
+    if (device.connector === Connector.VIRTUAL) {
+      if (!device.controlledBy) {
+        return {
+          device,
+          action,
+          result: {
+            success: false,
+            message: 'Este dispositivo virtual no tiene un controlador asignado',
+          },
+        };
+      }
+
+      // Controlar el dispositivo padre
+      const result = await this.iotGateway.controlDevice(
+        device.controlledBy.connector,
+        device.controlledBy.externalId,
+        action,
+      );
+
+      return {
+        device,
+        action,
+        controlledThrough: {
+          id: device.controlledBy.id,
+          name: device.controlledBy.name,
+        },
+        result,
+      };
+    }
 
     const result = await this.iotGateway.controlDevice(
       device.connector,

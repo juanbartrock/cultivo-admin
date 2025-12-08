@@ -58,6 +58,14 @@ export class CreateDeviceDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'ID del dispositivo que controla a este (dependencia). Ej: un Sonoff que controla un extractor',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID()
+  @IsOptional()
+  controlledByDeviceId?: string;
 }
 
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}
@@ -110,6 +118,14 @@ export class AssignDeviceDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'ID del dispositivo que controla a este (dependencia). Ej: un Sonoff que controla un extractor',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID()
+  @IsOptional()
+  controlledByDeviceId?: string;
 }
 
 export class ControlDeviceDto {

@@ -3,7 +3,7 @@
 // ============================================
 
 // Conectores de dispositivos IoT
-export type Connector = 'SONOFF' | 'TUYA' | 'TAPO';
+export type Connector = 'SONOFF' | 'TUYA' | 'TAPO' | 'ESP32' | 'VIRTUAL';
 
 // Tipos de dispositivos
 export type DeviceType =
@@ -88,6 +88,10 @@ export interface Device {
   sectionId?: string;
   section?: Section;
   metadata?: Record<string, unknown>;
+  // Dependencia: dispositivo que controla a este
+  controlledByDeviceId?: string;
+  controlledBy?: Device; // Ej: Sonoff que controla al extractor
+  controlledDevices?: Device[]; // Dispositivos que este controla
   createdAt: string;
   updatedAt: string;
 }
@@ -292,6 +296,7 @@ export interface AssignDeviceDto {
   name?: string;
   type?: DeviceType;
   metadata?: Record<string, unknown>;
+  controlledByDeviceId?: string; // ID del dispositivo que controla a este
 }
 
 export interface CreateStrainDto {

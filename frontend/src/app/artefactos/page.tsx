@@ -56,6 +56,8 @@ const conectorColors: Record<Connector, string> = {
   SONOFF: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   TUYA: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   TAPO: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  ESP32: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  VIRTUAL: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
 };
 
 // Labels para tipos de dispositivo
@@ -114,6 +116,21 @@ export default function ArtefactosPage() {
 
   // Control de dispositivo
   const [controllingDevice, setControllingDevice] = useState<string | null>(null);
+
+  // Modal de dispositivo virtual
+  const [showVirtualModal, setShowVirtualModal] = useState(false);
+  const [virtualForm, setVirtualForm] = useState({
+    nombre: '',
+    tipo: 'EXTRACTOR' as DeviceType,
+    sectionId: '',
+    controlledByDeviceId: '',
+  });
+  const [isCreatingVirtual, setIsCreatingVirtual] = useState(false);
+
+  // Dispositivos que pueden controlar otros (sensores con salida, switches)
+  const controllableDevices = devices.filter(d => 
+    d.type === 'SENSOR' || d.connector === 'SONOFF' || d.connector === 'TUYA'
+  );
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -218,6 +235,40 @@ export default function ArtefactosPage() {
     }
   }
 
+  // Crear dispositivo virtual
+  async function handleCrearVirtual() {
+    if (!virtualForm.nombre.trim() || !virtualForm.sectionId) return;
+
+    setIsCreatingVirtual(true);
+    try {
+      // Generar un ID único para el dispositivo virtual
+      const externalId = `virtual-${Date.now()}`;
+      
+      const newDevice = await deviceService.assign({
+        connector: 'VIRTUAL' as Connector,
+        externalId,
+        sectionId: virtualForm.sectionId,
+        name: virtualForm.nombre,
+        type: virtualForm.tipo,
+        controlledByDeviceId: virtualForm.controlledByDeviceId || undefined,
+      });
+      
+      setDevices([...devices, newDevice]);
+      setShowVirtualModal(false);
+      setVirtualForm({
+        nombre: '',
+        tipo: 'EXTRACTOR',
+        sectionId: '',
+        controlledByDeviceId: '',
+      });
+    } catch (error) {
+      console.error('Error creando dispositivo virtual:', error);
+      alert('Error al crear dispositivo: ' + (error as Error).message);
+    } finally {
+      setIsCreatingVirtual(false);
+    }
+  }
+
   // Controlar dispositivo (on/off)
   async function handleControl(deviceId: string, action: 'on' | 'off') {
     setControllingDevice(deviceId);
@@ -251,14 +302,23 @@ export default function ArtefactosPage() {
           </p>
         </div>
         
-        <button
-          onClick={handleScanDevices}
-          disabled={isScanning}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white rounded-lg transition-colors"
-        >
-          <RefreshCw className={`w-5 h-5 ${isScanning ? 'animate-spin' : ''}`} />
-          {isScanning ? 'Escaneando...' : 'Escanear Dispositivos'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowVirtualModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Agregar Virtual
+          </button>
+          <button
+            onClick={handleScanDevices}
+            disabled={isScanning}
+            className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white rounded-lg transition-colors"
+          >
+            <RefreshCw className={`w-5 h-5 ${isScanning ? 'animate-spin' : ''}`} />
+            {isScanning ? 'Escaneando...' : 'Escanear'}
+          </button>
+        </div>
       </motion.div>
 
       {/* Panel de Dispositivos Disponibles */}
@@ -640,6 +700,138 @@ export default function ArtefactosPage() {
                   <Check className="w-4 h-4" />
                 )}
                 {isAssigning ? 'Asignando...' : 'Asignar'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal de Dispositivo Virtual */}
+      {showVirtualModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowVirtualModal(false)}
+          />
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md shadow-xl"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Agregar Dispositivo Virtual</h2>
+              <button
+                onClick={() => setShowVirtualModal(false)}
+                className="p-1 hover:bg-zinc-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-zinc-400" />
+              </button>
+            </div>
+
+            {/* Explicación */}
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 mb-4">
+              <p className="text-sm text-cyan-300">
+                Los dispositivos virtuales son artefactos físicos (extractor, deshumidificador, etc.) 
+                que se controlan a través de la salida de otro dispositivo (ej: un termohigrómetro Sonoff).
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">
+                  Nombre del dispositivo <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={virtualForm.nombre}
+                  onChange={(e) => setVirtualForm({ ...virtualForm, nombre: e.target.value })}
+                  placeholder="Ej: Extractor Carpa Flora"
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cyan-600"
+                />
+              </div>
+
+              {/* Tipo */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">
+                  Tipo de dispositivo <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={virtualForm.tipo}
+                  onChange={(e) => setVirtualForm({ ...virtualForm, tipo: e.target.value as DeviceType })}
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
+                >
+                  <option value="EXTRACTOR">Extractor</option>
+                  <option value="DESHUMIDIFICADOR">Deshumidificador</option>
+                  <option value="HUMIDIFICADOR">Humidificador</option>
+                  <option value="VENTILADOR">Ventilador</option>
+                  <option value="CALEFACTOR">Calefactor</option>
+                  <option value="AIRE_ACONDICIONADO">Aire Acondicionado</option>
+                  <option value="LUZ">Luz</option>
+                  <option value="BOMBA_RIEGO">Bomba de Riego</option>
+                </select>
+              </div>
+
+              {/* Sección */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">
+                  Sección <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={virtualForm.sectionId}
+                  onChange={(e) => setVirtualForm({ ...virtualForm, sectionId: e.target.value })}
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
+                >
+                  <option value="">Seleccionar sección...</option>
+                  {sections.map(section => (
+                    <option key={section.id} value={section.id}>{section.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Dispositivo controlador */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">
+                  Controlado por (opcional)
+                </label>
+                <select
+                  value={virtualForm.controlledByDeviceId}
+                  onChange={(e) => setVirtualForm({ ...virtualForm, controlledByDeviceId: e.target.value })}
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
+                >
+                  <option value="">Sin asignar (configurar después)</option>
+                  {controllableDevices.map(device => (
+                    <option key={device.id} value={device.id}>
+                      {device.name} ({device.connector})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Seleccioná el dispositivo cuya salida ON/OFF controla este artefacto
+                </p>
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowVirtualModal(false)}
+                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCrearVirtual}
+                disabled={!virtualForm.nombre.trim() || !virtualForm.sectionId || isCreatingVirtual}
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg transition-colors"
+              >
+                {isCreatingVirtual ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                {isCreatingVirtual ? 'Creando...' : 'Crear Dispositivo'}
               </button>
             </div>
           </motion.div>

@@ -19,6 +19,7 @@ enum Connector {
   TUYA
   TAPO
   ESP32
+  VIRTUAL // Dispositivos controlados por otros (no tienen conexión directa)
 }
 
 enum DeviceType {
@@ -115,12 +116,18 @@ model Section {
 model Device {
   id         String     @id @default(uuid())
   name       String
-  connector  Connector  // Conector: SONOFF, TUYA, TAPO
+  connector  Connector  // Conector: SONOFF, TUYA, TAPO, ESP32, VIRTUAL
   externalId String     @map("external_id") // ID del dispositivo en el servicio externo
   type       DeviceType // Tipo: sensor, luz, extractor, etc.
   sectionId  String?    @map("section_id")
   section    Section?   @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   metadata   Json?      // IP, modelo, configuración específica
+
+  // Dependencia: dispositivo que controla a este (ej: Sonoff controla al Extractor)
+  controlledByDeviceId String?  @map("controlled_by_device_id")
+  controlledBy         Device?  @relation("DeviceControl", fields: [controlledByDeviceId], references: [id], onDelete: SetNull)
+  controlledDevices    Device[] @relation("DeviceControl") // Dispositivos que este controla
+
   createdAt  DateTime   @default(now()) @map("created_at")
   updatedAt  DateTime   @updatedAt @map("updated_at")
 

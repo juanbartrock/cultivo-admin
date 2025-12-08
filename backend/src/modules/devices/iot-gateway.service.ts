@@ -43,6 +43,7 @@ export class IoTGatewayService {
       [Connector.TUYA]: this.configService.get<string>('MS_TUYA_URL', 'http://tuya-service:3000'),
       [Connector.TAPO]: this.configService.get<string>('MS_TAPO_URL', 'http://tapo-service:3000'),
       [Connector.ESP32]: this.configService.get<string>('MS_ESP32_URL', 'http://esp32-service:3000'),
+      [Connector.VIRTUAL]: '', // Dispositivos virtuales no tienen microservicio propio
     };
   }
 
@@ -57,6 +58,11 @@ export class IoTGatewayService {
    * Escanea todos los dispositivos de un conector específico
    */
   async scanConnector(connector: Connector): Promise<ConnectorDevice[]> {
+    // VIRTUAL no tiene microservicio, no se puede escanear
+    if (connector === Connector.VIRTUAL) {
+      return [];
+    }
+
     const baseUrl = this.getConnectorUrl(connector);
 
     try {
@@ -128,6 +134,9 @@ export class IoTGatewayService {
           // ESP32 usa deviceId como path parameter
           url = `${baseUrl}/device/${externalId}/status`;
           break;
+        case Connector.VIRTUAL:
+          // Dispositivos virtuales no tienen estado propio, dependen del controlador
+          return { online: true, state: undefined };
         default:
           throw new Error(`Unknown connector: ${connector}`);
       }
@@ -285,6 +294,9 @@ export class IoTGatewayService {
           // ESP32 controla relays individualmente (relay 1 por defecto)
           url = `${baseUrl}/device/${externalId}/relay/1/power`;
           break;
+        case Connector.VIRTUAL:
+          // Dispositivos virtuales no se controlan directamente, se controlan a través del dispositivo controlador
+          return { success: false, message: 'Virtual devices are controlled through their parent device' };
         default:
           return { success: false, message: `Unknown connector: ${connector}` };
       }
@@ -315,6 +327,11 @@ export class IoTGatewayService {
    * Verifica la salud de un conector
    */
   async checkConnectorHealth(connector: Connector): Promise<boolean> {
+    // VIRTUAL siempre está "healthy" ya que no tiene microservicio
+    if (connector === Connector.VIRTUAL) {
+      return true;
+    }
+
     const baseUrl = this.getConnectorUrl(connector);
 
     try {

@@ -328,6 +328,12 @@ export default function EnvironmentPanel({
                 <p className="text-xs text-zinc-500">
                   {isOn ? 'Salida activa' : 'Salida inactiva'} • {device.connector}
                 </p>
+                {/* Mostrar dispositivo controlado si existe */}
+                {device.controlledDevices && device.controlledDevices.length > 0 && (
+                  <p className="text-xs text-cyan-400 mt-1">
+                    → Controla: {device.controlledDevices.map(d => d.name).join(', ')}
+                  </p>
+                )}
               </div>
             </div>
             
