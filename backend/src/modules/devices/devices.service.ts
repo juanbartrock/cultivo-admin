@@ -161,6 +161,7 @@ export class DevicesService {
       ...(data.externalId && { externalId: data.externalId }),
       ...(data.type && { type: data.type }),
       ...(data.metadata !== undefined && { metadata: data.metadata as Prisma.InputJsonValue }),
+      ...(data.recordHistory !== undefined && { recordHistory: data.recordHistory }),
       ...(data.sectionId !== undefined && {
         section: data.sectionId ? { connect: { id: data.sectionId } } : { disconnect: true },
       }),

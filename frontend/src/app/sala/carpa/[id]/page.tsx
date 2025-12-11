@@ -33,7 +33,10 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Settings2,
+  Sun,
+  Clock
 } from 'lucide-react';
 import Link from 'next/link';
 import DeviceControlCard from '@/components/DeviceControlCard';
@@ -43,11 +46,14 @@ import FeedingPlanCard from '@/components/FeedingPlanCard';
 import FeedingPlanUpload from '@/components/FeedingPlanUpload';
 import PreventionPlanCard from '@/components/PreventionPlanCard';
 import PreventionPlanUpload from '@/components/PreventionPlanUpload';
+import PPFDGrid from '@/components/PPFDGrid';
+import SensorHistoryChart from '@/components/SensorHistoryChart';
+import SectionLayoutEditor from '@/components/SectionLayoutEditor';
 import { sectionService } from '@/services/locationService';
 import { feedingPlanService } from '@/services/feedingPlanService';
 import { preventionPlanService } from '@/services/preventionPlanService';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
-import { SectionDashboard, Device, DeviceType, DeviceStatus, Plant, GrowEvent, SectionFeedingPlansResponse, FeedingPlan, FeedingPlanWithCount, PlantStage, SectionPreventionPlansResponse, PreventionPlanWithCount } from '@/types';
+import { SectionDashboard, Device, DeviceType, DeviceStatus, Plant, GrowEvent, SectionFeedingPlansResponse, FeedingPlan, FeedingPlanWithCount, PlantStage, SectionPreventionPlansResponse, PreventionPlanWithCount, SectionLayoutConfig, SectionLayoutItem, DEFAULT_SECTION_LAYOUT } from '@/types';
 import { eventService } from '@/services/eventService';
 
 // Iconos según el nombre de la sección
@@ -874,6 +880,17 @@ export default function CarpaDetailPage() {
   const [feedingPlanExpanded, setFeedingPlanExpanded] = useState(false);
   const [preventionPlanExpanded, setPreventionPlanExpanded] = useState(false);
   const [plantsExpanded, setPlantsExpanded] = useState(false);
+  const [ppfdExpanded, setPpfdExpanded] = useState(false);
+  const [sensorHistoryExpanded, setSensorHistoryExpanded] = useState(false);
+
+  // Estado para layout configurable
+  const [layoutConfig, setLayoutConfig] = useState<SectionLayoutConfig>(DEFAULT_SECTION_LAYOUT);
+  const [showLayoutEditor, setShowLayoutEditor] = useState(false);
+
+  // Estado para mostrar eventos de planta seleccionada
+  const [selectedPlantForEvents, setSelectedPlantForEvents] = useState<Plant | null>(null);
+  const [selectedPlantEvents, setSelectedPlantEvents] = useState<GrowEvent[]>([]);
+  const [loadingPlantEvents, setLoadingPlantEvents] = useState(false);
 
   // Obtener estados de todos los dispositivos
   const devices = useMemo(() => section?.devices || [], [section?.devices]);
@@ -892,13 +909,37 @@ export default function CarpaDetailPage() {
   const primarySensor = sensors[0];
   const primarySensorStatus = primarySensor ? getStatus(primarySensor.id) : null;
 
+  // Helper para verificar si una sección del layout está habilitada
+  const isSectionEnabled = useCallback((key: string) => {
+    const layoutSection = layoutConfig.sections.find(s => s.key === key);
+    return layoutSection?.enabled ?? true;
+  }, [layoutConfig]);
+
+  // Ordenar secciones según el layout
+  const sortedLayoutSections = useMemo(() => {
+    return [...layoutConfig.sections].sort((a, b) => a.order - b.order);
+  }, [layoutConfig]);
+
   useEffect(() => {
     loadSection();
     loadFeedingPlans();
     loadAvailablePlans();
     loadPreventionPlans();
     loadAvailablePreventionPlans();
+    loadLayout();
   }, [sectionId]);
+
+  async function loadLayout() {
+    try {
+      const layout = await sectionService.getLayout(sectionId);
+      if (layout?.config) {
+        setLayoutConfig(layout.config);
+      }
+    } catch (error) {
+      console.error('Error cargando layout:', error);
+      // Usar configuración por defecto
+    }
+  }
 
   async function loadSection() {
     setIsLoading(true);
@@ -1037,6 +1078,28 @@ export default function CarpaDetailPage() {
     }
   }
 
+  // Cargar eventos de una planta específica
+  async function handleSelectPlantForEvents(plant: Plant) {
+    // Si ya está seleccionada, deseleccionar
+    if (selectedPlantForEvents?.id === plant.id) {
+      setSelectedPlantForEvents(null);
+      setSelectedPlantEvents([]);
+      return;
+    }
+
+    setSelectedPlantForEvents(plant);
+    setLoadingPlantEvents(true);
+    try {
+      const events = await eventService.getPlantHistory(plant.id, 3);
+      setSelectedPlantEvents(events);
+    } catch (err) {
+      console.error('Error cargando eventos de planta:', err);
+      setSelectedPlantEvents([]);
+    } finally {
+      setLoadingPlantEvents(false);
+    }
+  }
+
   async function handleUnassignPreventionPlan(plantId: string, preventionPlanId: string) {
     try {
       await preventionPlanService.unassignFromPlant(plantId, preventionPlanId);
@@ -1063,6 +1126,192 @@ export default function CarpaDetailPage() {
       setLastUpdate(new Date());
     }, 1000);
   }, [refreshStatuses]);
+
+  // Función para renderizar una sección por su key
+  const renderSection = useCallback((key: string, index: number) => {
+    const delay = 0.1 + index * 0.05;
+    
+    switch (key) {
+      case 'environment':
+        if (sensors.length === 0) return null;
+        return (
+          <motion.section
+            key={key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Gauge className="w-5 h-5 text-cultivo-green-500" />
+              <h2 className="text-xl font-semibold text-white">Ambiente</h2>
+            </div>
+            <EnvironmentPanel
+              device={primarySensor}
+              sensorName={primarySensor?.name}
+              status={primarySensorStatus}
+              loading={statusLoading}
+              lastUpdate={lastUpdate || undefined}
+              onRefresh={handleRefresh}
+            />
+          </motion.section>
+        );
+
+      case 'sensors':
+        if (sensors.length <= 1) return null;
+        return (
+          <motion.section
+            key={key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Thermometer className="w-5 h-5 text-orange-400" />
+              <h2 className="text-xl font-semibold text-white">Sensores</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sensors.slice(1).map((device, idx) => (
+                <DeviceControlCard
+                  key={device.id}
+                  device={device}
+                  status={getStatus(device.id)}
+                  loading={statusLoading}
+                  onStatusChange={handleStatusChange}
+                  delay={idx}
+                />
+              ))}
+            </div>
+          </motion.section>
+        );
+
+      case 'controllables':
+        if (controllables.length === 0) return null;
+        return (
+          <motion.section
+            key={key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Power className="w-5 h-5 text-blue-400" />
+              <h2 className="text-xl font-semibold text-white">Control de Dispositivos</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {controllables.map((device, idx) => (
+                <DeviceControlCard
+                  key={device.id}
+                  device={device}
+                  status={getStatus(device.id)}
+                  loading={statusLoading}
+                  onStatusChange={handleStatusChange}
+                  delay={idx}
+                />
+              ))}
+            </div>
+          </motion.section>
+        );
+
+      case 'cameras':
+        if (cameras.length === 0) return null;
+        return (
+          <motion.section
+            key={key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Video className="w-5 h-5 text-emerald-400" />
+              <h2 className="text-xl font-semibold text-white">Cámaras</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {cameras.map((device, idx) => (
+                <DeviceControlCard
+                  key={device.id}
+                  device={device}
+                  status={getStatus(device.id)}
+                  loading={statusLoading}
+                  delay={idx}
+                />
+              ))}
+            </div>
+          </motion.section>
+        );
+
+      case 'ppfd':
+        return (
+          <motion.section
+            key={key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay }}
+            className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
+          >
+            <button 
+              onClick={() => setPpfdExpanded(!ppfdExpanded)}
+              className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Sun className="w-5 h-5 text-yellow-400" />
+                <h2 className="text-xl font-semibold text-white">PPFD por Zona - Floración</h2>
+              </div>
+              {ppfdExpanded ? (
+                <ChevronUp className="w-5 h-5 text-zinc-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-zinc-400" />
+              )}
+            </button>
+
+            {ppfdExpanded && (
+              <div className="p-4 pt-0">
+                <PPFDGrid sectionId={sectionId} sectionName={section?.name} />
+              </div>
+            )}
+          </motion.section>
+        );
+
+      case 'sensorHistory':
+        if (sensors.length === 0) return null;
+        return (
+          <motion.section
+            key={key}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay }}
+            className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
+          >
+            <button 
+              onClick={() => setSensorHistoryExpanded(!sensorHistoryExpanded)}
+              className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-cyan-400" />
+                <h2 className="text-xl font-semibold text-white">Historial de Sensores</h2>
+              </div>
+              {sensorHistoryExpanded ? (
+                <ChevronUp className="w-5 h-5 text-zinc-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-zinc-400" />
+              )}
+            </button>
+
+            {sensorHistoryExpanded && (
+              <div className="p-4 pt-0">
+                <SensorHistoryChart
+                  deviceId={primarySensor?.id || ''}
+                  deviceName={primarySensor?.name || 'Sensor'}
+                />
+              </div>
+            )}
+          </motion.section>
+        );
+
+      // feedingPlans, preventionPlans y plants se mantienen como estaban (son más complejos)
+      default:
+        return null;
+    }
+  }, [sensors, controllables, cameras, primarySensor, primarySensorStatus, statusLoading, lastUpdate, handleRefresh, getStatus, handleStatusChange, sectionId, section?.name, ppfdExpanded, sensorHistoryExpanded]);
 
   // Loading state
   if (isLoading) {
@@ -1118,13 +1367,23 @@ export default function CarpaDetailPage() {
           Volver a la sala
         </Link>
         
-        <button
-          onClick={handleRefresh}
-          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors"
-        >
-          <RefreshCw className={`w-4 h-4 ${statusLoading ? 'animate-spin' : ''}`} />
-          Actualizar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowLayoutEditor(true)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors"
+            title="Configurar layout de la página"
+          >
+            <Settings2 className="w-4 h-4" />
+            Layout
+          </button>
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${statusLoading ? 'animate-spin' : ''}`} />
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {/* Header con icono */}
@@ -1208,133 +1467,24 @@ export default function CarpaDetailPage() {
         </div>
       </motion.div>
 
-      {/* Panel Ambiental - Prominente si hay sensor */}
-      {sensors.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Gauge className="w-5 h-5 text-cultivo-green-500" />
-            <h2 className="text-xl font-semibold text-white">Ambiente</h2>
-          </div>
+      {/* Secciones renderizadas dinámicamente según layout */}
+      {sortedLayoutSections.map((layoutItem, index) => {
+        // Las secciones complejas (feedingPlans, preventionPlans, plants) se manejan aparte
+        if (['feedingPlans', 'preventionPlans', 'plants'].includes(layoutItem.key)) {
+          return null;
+        }
+        if (!layoutItem.enabled) return null;
+        return renderSection(layoutItem.key, index);
+      })}
 
-          <EnvironmentPanel
-            device={primarySensor}
-            sensorName={primarySensor?.name}
-            status={primarySensorStatus}
-            loading={statusLoading}
-            lastUpdate={lastUpdate || undefined}
-            onRefresh={handleRefresh}
-          />
-        </motion.section>
-      )}
+      {/* Sección de dispositivos vacía removida - no mostrar si no hay dispositivos */}
 
-      {/* Sensores adicionales */}
-      {sensors.length > 1 && (
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Thermometer className="w-5 h-5 text-orange-400" />
-            <h2 className="text-xl font-semibold text-white">Sensores</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sensors.slice(1).map((device, index) => (
-              <DeviceControlCard
-                key={device.id}
-                device={device}
-                status={getStatus(device.id)}
-                loading={statusLoading}
-                onStatusChange={handleStatusChange}
-                delay={index}
-              />
-            ))}
-          </div>
-        </motion.section>
-      )}
-
-      {/* Dispositivos Controlables */}
-      {controllables.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Power className="w-5 h-5 text-blue-400" />
-            <h2 className="text-xl font-semibold text-white">Control de Dispositivos</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {controllables.map((device, index) => (
-              <DeviceControlCard
-                key={device.id}
-                device={device}
-                status={getStatus(device.id)}
-                loading={statusLoading}
-                onStatusChange={handleStatusChange}
-                delay={index}
-              />
-            ))}
-          </div>
-        </motion.section>
-      )}
-
-      {/* Cámaras */}
-      {cameras.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Video className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-xl font-semibold text-white">Cámaras</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {cameras.map((device, index) => (
-              <DeviceControlCard
-                key={device.id}
-                device={device}
-                status={getStatus(device.id)}
-                loading={statusLoading}
-                delay={index}
-              />
-            ))}
-          </div>
-        </motion.section>
-      )}
-
-      {/* Mensaje si no hay dispositivos */}
-      {devices.length === 0 && (
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-5 h-5 text-cultivo-green-500" />
-            <h2 className="text-xl font-semibold text-white">Dispositivos</h2>
-          </div>
-
-          <div className="bg-zinc-800/30 rounded-xl p-8 text-center border border-zinc-700/50">
-            <Activity className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-            <p className="text-zinc-400">No hay dispositivos vinculados a esta sección</p>
-            <p className="text-xs text-zinc-500 mt-1">
-              Asigna dispositivos desde la página de Dispositivos
-            </p>
-          </div>
-        </motion.section>
-      )}
-
+      {/* Secciones complejas ordenadas según layout usando CSS order */}
+      <div className="flex flex-col gap-8">
       {/* Planes de Alimentación */}
+      {isSectionEnabled('feedingPlans') && (
       <motion.section
+        style={{ order: sortedLayoutSections.find(s => s.key === 'feedingPlans')?.order ?? 6 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.28 }}
@@ -1526,9 +1676,12 @@ export default function CarpaDetailPage() {
         </div>
         )}
       </motion.section>
+      )}
 
       {/* Planes de Prevención */}
+      {isSectionEnabled('preventionPlans') && (
       <motion.section
+        style={{ order: sortedLayoutSections.find(s => s.key === 'preventionPlans')?.order ?? 7 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.29 }}
@@ -1719,9 +1872,12 @@ export default function CarpaDetailPage() {
         </div>
         )}
       </motion.section>
+      )}
 
       {/* Plantas */}
+      {isSectionEnabled('plants') && (
       <motion.section
+        style={{ order: sortedLayoutSections.find(s => s.key === 'plants')?.order ?? 8 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
@@ -1748,33 +1904,164 @@ export default function CarpaDetailPage() {
         </button>
 
         {plantsExpanded && (
-        <div className="p-4 pt-0">
+        <div className="p-4 pt-0 space-y-4">
         {section.plants && section.plants.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {section.plants.map((plant, index) => (
-              <PlantCard 
-                key={plant.id} 
-                plant={plant} 
-                delay={index}
-                onRegisterEvent={(plant) => setSelectedPlantForEvent(plant)}
-                onStageChange={(updatedPlant) => {
-                  // Actualizar la planta en el estado local
-                  if (section) {
-                    const updatedPlants = section.plants?.map(p => 
-                      p.id === updatedPlant.id ? updatedPlant : p
-                    );
-                    setSection({
-                      ...section,
-                      plants: updatedPlants || []
-                    });
-                  }
-                  // Recargar los planes de alimentación porque pueden cambiar con la etapa
-                  loadFeedingPlans();
-                  loadPreventionPlans();
-                }}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {section.plants.map((plant, index) => (
+                <PlantCard 
+                  key={plant.id} 
+                  plant={plant} 
+                  delay={index}
+                  isSelected={selectedPlantForEvents?.id === plant.id}
+                  onClick={handleSelectPlantForEvents}
+                  onRegisterEvent={(plant) => setSelectedPlantForEvent(plant)}
+                  onStageChange={(updatedPlant) => {
+                    // Actualizar la planta en el estado local
+                    if (section) {
+                      const updatedPlants = section.plants?.map(p => 
+                        p.id === updatedPlant.id ? updatedPlant : p
+                      );
+                      setSection({
+                        ...section,
+                        plants: updatedPlants || []
+                      });
+                    }
+                    // Recargar los planes de alimentación porque pueden cambiar con la etapa
+                    loadFeedingPlans();
+                    loadPreventionPlans();
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Grilla de últimos 3 eventos de la planta seleccionada */}
+            {selectedPlantForEvents && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-zinc-900/50 rounded-xl border border-cultivo-green-500/30 p-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-cultivo-green-400" />
+                    <h4 className="text-sm font-medium text-white">
+                      Últimos eventos de <span className="text-cultivo-green-400">{selectedPlantForEvents.tagCode}</span>
+                    </h4>
+                  </div>
+                  <Link 
+                    href={`/seguimientos?plant=${selectedPlantForEvents.id}`}
+                    className="text-xs text-zinc-400 hover:text-cultivo-green-400 transition-colors"
+                  >
+                    Ver historial completo →
+                  </Link>
+                </div>
+
+                {loadingPlantEvents ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 text-cultivo-green-400 animate-spin" />
+                  </div>
+                ) : selectedPlantEvents.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {selectedPlantEvents.map((event) => (
+                      <div 
+                        key={event.id}
+                        className="bg-zinc-800/50 rounded-lg p-3 border border-zinc-700/50 hover:border-cultivo-green-600/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          {event.type === 'RIEGO' && <Droplets className="w-4 h-4 text-cyan-400" />}
+                          {event.type === 'NOTA' && <FileText className="w-4 h-4 text-yellow-400" />}
+                          {event.type === 'FOTO' && <Camera className="w-4 h-4 text-purple-400" />}
+                          {event.type === 'PARAMETRO_AMBIENTAL' && <Thermometer className="w-4 h-4 text-orange-400" />}
+                          {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL'].includes(event.type) && (
+                            <Activity className="w-4 h-4 text-zinc-400" />
+                          )}
+                          <span className="text-xs font-medium text-zinc-300">
+                            {event.type === 'RIEGO' && 'Riego'}
+                            {event.type === 'NOTA' && 'Nota'}
+                            {event.type === 'FOTO' && 'Foto'}
+                            {event.type === 'PARAMETRO_AMBIENTAL' && 'Ambiente'}
+                            {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL'].includes(event.type) && event.type}
+                          </span>
+                        </div>
+                        <div className="text-xs text-zinc-500 mb-1">
+                          {new Date(event.createdAt).toLocaleDateString('es-AR', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                        {event.data && (
+                          <div className="text-xs text-zinc-400 space-y-1">
+                            {event.type === 'RIEGO' && (
+                              <>
+                                <div className="flex flex-wrap gap-2">
+                                  {'ph' in event.data && event.data.ph != null && (
+                                    <span className="px-1.5 py-0.5 bg-cyan-500/20 text-cyan-300 rounded">
+                                      pH: {String(event.data.ph)}
+                                    </span>
+                                  )}
+                                  {'ec' in event.data && event.data.ec != null && (
+                                    <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded">
+                                      EC: {String(event.data.ec)}
+                                    </span>
+                                  )}
+                                  {'liters' in event.data && event.data.liters != null && (
+                                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 rounded">
+                                      {String(event.data.liters)}L
+                                    </span>
+                                  )}
+                                </div>
+                                {/* Productos/Nutrientes utilizados */}
+                                {'nutrients' in event.data && Array.isArray(event.data.nutrients) && event.data.nutrients.length > 0 && (
+                                  <div className="mt-1.5 pt-1.5 border-t border-zinc-700/50">
+                                    <span className="text-zinc-500 block mb-1">Productos:</span>
+                                    <div className="flex flex-wrap gap-1">
+                                      {(event.data.nutrients as Array<{ name: string; dose: string }>).map((nutrient, idx) => (
+                                        <span 
+                                          key={idx}
+                                          className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded text-[10px]"
+                                        >
+                                          {nutrient.name} ({nutrient.dose})
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {event.type === 'NOTA' && 'content' in event.data && event.data.content != null && (
+                              <span className="line-clamp-2">{String(event.data.content)}</span>
+                            )}
+                            {event.type === 'PARAMETRO_AMBIENTAL' && (
+                              <div className="flex flex-wrap gap-2">
+                                {'temperature' in event.data && event.data.temperature != null && (
+                                  <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-300 rounded">
+                                    {String(event.data.temperature)}°C
+                                  </span>
+                                )}
+                                {'humidity' in event.data && event.data.humidity != null && (
+                                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 rounded">
+                                    {String(event.data.humidity)}%
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-zinc-500 text-sm">
+                    No hay eventos registrados para esta planta
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </>
         ) : (
           <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
             <Leaf className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
@@ -1787,6 +2074,9 @@ export default function CarpaDetailPage() {
         </div>
         )}
       </motion.section>
+      )}
+      </div>
+      {/* Fin de secciones complejas ordenadas */}
 
       {/* Modal de registro de evento */}
       {selectedPlantForEvent && (
@@ -2244,6 +2534,18 @@ export default function CarpaDetailPage() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Modal de configuración de layout */}
+      {showLayoutEditor && (
+        <SectionLayoutEditor
+          sectionId={sectionId}
+          sectionName={section?.name}
+          onClose={() => setShowLayoutEditor(false)}
+          onSave={(config) => {
+            setLayoutConfig(config);
+          }}
+        />
       )}
     </div>
   );

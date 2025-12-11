@@ -21,8 +21,10 @@ import {
   Power,
   Loader2,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  History
 } from 'lucide-react';
+import { deviceService } from '@/services/deviceService';
 
 // Mapa de iconos por tipo de dispositivo
 const iconMap: Record<DeviceType, React.ElementType> = {
@@ -107,6 +109,8 @@ export default function DeviceControlCard({
   
   const { toggle, controlling } = useDeviceControl(device.id);
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
+  const [recordHistory, setRecordHistory] = useState<boolean>(device.recordHistory ?? false);
+  const [togglingHistory, setTogglingHistory] = useState(false);
 
   const isOnline = status?.online !== false;
   
@@ -142,6 +146,23 @@ export default function DeviceControlCard({
       setOptimisticState(null);
     }
   }, [controlling, isOnline, isOn, toggle, onStatusChange]);
+
+  const handleToggleRecordHistory = useCallback(async () => {
+    if (togglingHistory) return;
+    setTogglingHistory(true);
+    const newValue = !recordHistory;
+    setRecordHistory(newValue); // Optimistic
+    
+    try {
+      await deviceService.update(device.id, { recordHistory: newValue });
+      onStatusChange?.();
+    } catch (err) {
+      console.error('Error toggling recordHistory:', err);
+      setRecordHistory(!newValue); // Revert
+    } finally {
+      setTogglingHistory(false);
+    }
+  }, [togglingHistory, recordHistory, device.id, onStatusChange]);
 
   return (
     <motion.div
@@ -246,6 +267,32 @@ export default function DeviceControlCard({
               </span>
             </div>
           )}
+
+          {/* Toggle registrar historial */}
+          <button
+            onClick={handleToggleRecordHistory}
+            disabled={togglingHistory}
+            className={`
+              w-full flex items-center justify-between 
+              bg-zinc-900/50 rounded-lg px-3 py-2
+              hover:bg-zinc-800/80 transition-colors
+              ${togglingHistory ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
+            `}
+          >
+            <div className="flex items-center gap-2">
+              <History className={`w-4 h-4 ${recordHistory ? 'text-purple-400' : 'text-zinc-500'}`} />
+              <span className="text-xs text-zinc-400">Registrar historial</span>
+            </div>
+            <div className={`
+              w-8 h-4 rounded-full transition-colors relative
+              ${recordHistory ? 'bg-purple-500' : 'bg-zinc-700'}
+            `}>
+              <div className={`
+                absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform
+                ${recordHistory ? 'translate-x-4' : 'translate-x-0.5'}
+              `} />
+            </div>
+          </button>
 
           {/* Si no hay valores */}
           {status.temperature === undefined && status.humidity === undefined && (

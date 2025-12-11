@@ -6,6 +6,7 @@ import {
   IsUUID,
   IsEnum,
   IsObject,
+  IsBoolean,
   MaxLength,
 } from 'class-validator';
 import { Connector, DeviceType } from '@prisma/client';
@@ -66,6 +67,14 @@ export class CreateDeviceDto {
   @IsUUID()
   @IsOptional()
   controlledByDeviceId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Si el dispositivo debe registrar historial (solo para sensores)',
+    example: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  recordHistory?: boolean;
 }
 
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}

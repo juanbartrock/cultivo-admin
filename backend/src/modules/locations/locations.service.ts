@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRoomDto, UpdateRoomDto } from './dto/room.dto';
 import { CreateSectionDto, UpdateSectionDto } from './dto/section.dto';
+import { UpdateSectionLayoutDto, DEFAULT_LAYOUT_CONFIG } from './dto/layout.dto';
 
 @Injectable()
 export class LocationsService {
@@ -227,6 +228,158 @@ export class LocationsService {
         totalDevices: section.devices.length,
         plantsByStage,
       },
+    };
+  }
+
+  // ============================================
+  // PPFD / DLI
+  // ============================================
+
+  /**
+   * Registra una lectura de PPFD para una zona de la sección
+   */
+  async createPPFDReading(sectionId: string, data: {
+    zone: number;
+    ppfdValue: number;
+    lightHeight: number;
+  }) {
+    await this.findSectionById(sectionId);
+
+    return this.prisma.pPFDReading.create({
+      data: {
+        section: { connect: { id: sectionId } },
+        zone: data.zone,
+        ppfdValue: data.ppfdValue,
+        lightHeight: data.lightHeight,
+      },
+    });
+  }
+
+  /**
+   * Obtiene las últimas lecturas de PPFD por zona
+   */
+  async getLatestPPFDReadings(sectionId: string) {
+    await this.findSectionById(sectionId);
+
+    // Obtener la última lectura de cada zona (1-6)
+    const zones = [1, 2, 3, 4, 5, 6];
+    const readings = await Promise.all(
+      zones.map(async (zone) => {
+        const reading = await this.prisma.pPFDReading.findFirst({
+          where: { sectionId, zone },
+          orderBy: { recordedAt: 'desc' },
+        });
+        return { zone, reading };
+      }),
+    );
+
+    return readings;
+  }
+
+  /**
+   * Obtiene el historial de PPFD de una zona específica
+   */
+  async getPPFDHistory(sectionId: string, zone?: number, limit = 50) {
+    await this.findSectionById(sectionId);
+
+    return this.prisma.pPFDReading.findMany({
+      where: {
+        sectionId,
+        ...(zone && { zone }),
+      },
+      orderBy: { recordedAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  /**
+   * Calcula el DLI teórico basado en PPFD y horas de luz
+   * DLI = PPFD × horas de luz × 0.0036
+   */
+  async calculateDLI(sectionId: string, lightHoursPerDay = 18) {
+    const latestReadings = await this.getLatestPPFDReadings(sectionId);
+    
+    // Calcular promedio de PPFD de todas las zonas con lectura
+    const validReadings = latestReadings
+      .filter(r => r.reading !== null)
+      .map(r => r.reading!.ppfdValue);
+
+    if (validReadings.length === 0) {
+      return {
+        sectionId,
+        avgPPFD: null,
+        lightHoursPerDay,
+        dli: null,
+        message: 'No hay lecturas de PPFD registradas',
+      };
+    }
+
+    const avgPPFD = validReadings.reduce((a, b) => a + b, 0) / validReadings.length;
+    const dli = avgPPFD * lightHoursPerDay * 0.0036;
+
+    return {
+      sectionId,
+      avgPPFD: Math.round(avgPPFD * 100) / 100,
+      lightHoursPerDay,
+      dli: Math.round(dli * 100) / 100,
+      zonesWithData: validReadings.length,
+      readings: latestReadings,
+    };
+  }
+
+  // ============================================
+  // SECTION LAYOUT
+  // ============================================
+
+  /**
+   * Obtiene la configuración de layout de una sección
+   * Si no existe, devuelve la configuración por defecto
+   */
+  async getSectionLayout(sectionId: string) {
+    await this.findSectionById(sectionId);
+
+    const layout = await this.prisma.sectionLayout.findUnique({
+      where: { sectionId },
+    });
+
+    if (!layout) {
+      return {
+        sectionId,
+        config: DEFAULT_LAYOUT_CONFIG,
+        isDefault: true,
+      };
+    }
+
+    return {
+      ...layout,
+      isDefault: false,
+    };
+  }
+
+  /**
+   * Actualiza la configuración de layout de una sección
+   * Si no existe, la crea
+   */
+  async updateSectionLayout(sectionId: string, data: UpdateSectionLayoutDto) {
+    await this.findSectionById(sectionId);
+
+    // Convertir a formato JSON compatible con Prisma (serializar y deserializar)
+    const config = JSON.parse(JSON.stringify({ sections: data.sections }));
+
+    const layout = await this.prisma.sectionLayout.upsert({
+      where: { sectionId },
+      create: {
+        sectionId,
+        config,
+      },
+      update: {
+        config,
+      },
+    });
+
+    return {
+      ...layout,
+      isDefault: false,
     };
   }
 }

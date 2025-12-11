@@ -3,6 +3,7 @@ import { HttpModule } from '@nestjs/axios';
 import { DevicesController } from './devices.controller';
 import { DevicesService } from './devices.service';
 import { IoTGatewayService } from './iot-gateway.service';
+import { SensorHistoryService } from './sensor-history.service';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { IoTGatewayService } from './iot-gateway.service';
     }),
   ],
   controllers: [DevicesController],
-  providers: [DevicesService, IoTGatewayService],
-  exports: [DevicesService, IoTGatewayService],
+  providers: [DevicesService, IoTGatewayService, SensorHistoryService],
+  exports: [DevicesService, IoTGatewayService, SensorHistoryService],
 })
 export class DevicesModule {}

@@ -31,6 +31,7 @@ import {
 import { cycleService, plantService, strainService } from '@/services/growService';
 import { eventService, formatEventDate, getEventTypeInfo } from '@/services/eventService';
 import { sectionService } from '@/services/locationService';
+import HarvestSection from '@/components/HarvestSection';
 import { 
   Cycle, 
   CycleWithCount,
@@ -599,6 +600,14 @@ function SeguimientosContent() {
                     </div>
                   );
                 })()}
+              </div>
+
+              {/* Sección de Cosechas */}
+              <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
+                <HarvestSection 
+                  plants={plants} 
+                  cycleId={selectedCycle?.id} 
+                />
               </div>
             </>
           ) : (

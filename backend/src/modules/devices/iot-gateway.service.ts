@@ -151,6 +151,11 @@ export class IoTGatewayService {
         ),
       );
 
+      // Para dispositivos SONOFF, parsear los valores del sensor
+      if (connector === Connector.SONOFF) {
+        return this.parseSonoffData(response.data);
+      }
+
       // Para dispositivos TUYA, parsear los valores del sensor
       if (connector === Connector.TUYA && response.data.status) {
         return this.parseTuyaSensorData(response.data);
@@ -168,6 +173,30 @@ export class IoTGatewayService {
     } catch {
       return { online: false };
     }
+  }
+
+  /**
+   * Parsea los datos de un dispositivo SONOFF (eWeLink)
+   * Convierte valores null a undefined para compatibilidad con el servicio de historial
+   */
+  private parseSonoffData(data: Record<string, unknown>): DeviceStatus {
+    // Sonoff devuelve: { deviceId, name, online, switch, temperature, humidity, unit }
+    const temperature = data.temperature !== null && data.temperature !== undefined 
+      ? Number(data.temperature) 
+      : undefined;
+    const humidity = data.humidity !== null && data.humidity !== undefined 
+      ? Number(data.humidity) 
+      : undefined;
+
+    this.logger.debug(`Parsed SONOFF device: temp=${temperature}, humidity=${humidity}, switch=${data.switch}`);
+
+    return {
+      online: data.online !== false && data.success !== false,
+      state: data.switch === 'on' ? 'on' : data.switch === 'off' ? 'off' : undefined,
+      switch: data.switch as string | undefined,
+      temperature,
+      humidity,
+    };
   }
 
   /**

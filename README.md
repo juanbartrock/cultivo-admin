@@ -155,6 +155,20 @@ API central que gestiona la lógica de negocio, persistencia y orquestación de 
 - `POST /api/events/environment` - Parámetros ambientales
 - `POST /api/events/photo` - Subir foto
 
+#### Automatizaciones
+- `GET /api/automations` - Listar automatizaciones
+- `POST /api/automations` - Crear automatización
+- `GET /api/automations/:id` - Detalle de automatización
+- `PATCH /api/automations/:id/status` - Cambiar estado (ACTIVE/PAUSED/DISABLED)
+- `POST /api/automations/:id/execute` - Ejecutar manualmente
+- `GET /api/automations/:id/executions` - Historial de ejecuciones
+- `GET /api/automations/:id/effectiveness` - Estadísticas de efectividad
+
+**Tipos de automatización:**
+- **SCHEDULED**: Basada solo en horarios (rango horario, intervalo, horas específicas)
+- **CONDITION**: Basada en condiciones de sensores
+- **HYBRID**: Combinación de horarios + condiciones
+
 Ver documentación completa en http://localhost:4000/docs
 
 ---
@@ -198,6 +212,7 @@ NEXT_PUBLIC_API_URL=http://localhost:4000/api
 | `/sala/carpa/[id]` | Detalle de una sección (dispositivos y plantas) |
 | `/artefactos` | Autodescubrimiento y asignación de dispositivos |
 | `/seguimientos` | Gestión de ciclos, plantas y eventos |
+| `/automatizaciones` | Sistema de automatizaciones avanzadas (horarios y condiciones) |
 
 ---
 
@@ -505,11 +520,34 @@ npm run dev
 - [x] CRUD completo de ciclos y plantas
 - [x] Bitácora de eventos (riego, fotos, notas)
 - [x] Gestión de genéticas
+- [x] **Sistema de automatizaciones avanzadas** (horarios programados, condiciones, híbridas)
 - [ ] Autenticación de usuarios
 - [ ] Gráficos históricos de sensores
 - [ ] Notificaciones y alertas
-- [ ] Control automático por parámetros
+- [ ] Ejecutor automático de automatizaciones (cron job)
 - [ ] WebSockets para actualizaciones en tiempo real
+
+## 📚 Documentación
+
+### Módulos Principales
+
+- **[Sistema de Automatizaciones Avanzadas](./docs/AUTOMATIZACIONES_AVANZADAS.md)**: Documentación completa del sistema de automatizaciones, incluyendo tipos de automatización (programadas, por condición, híbridas), configuración de horarios, múltiples condiciones y acciones, y ejemplos de uso.
+
+- **[Sistema de Planes de Alimentación](./docs/PLANES_DE_ALIMENTACION.md)**: Documentación completa del sistema de planes de alimentación, incluyendo importación, asignación a plantas, integración con eventos de riego y visualización en historial.
+
+- **[Changelog - Planes de Alimentación](./docs/CHANGELOG_PLANES_ALIMENTACION.md)**: Documentación técnica detallada de todos los cambios realizados, incluyendo nuevos archivos, modificaciones, endpoints y componentes.
+
+- **[Changelog - Visualización de Eventos de Planta](./docs/CHANGELOG_EVENTOS_PLANTA.md)**: Documentación técnica de la funcionalidad de visualización interactiva de eventos de planta en la página de detalle de carpa, incluyendo selección de plantas, carga de eventos y diseño visual.
+
+### Características Documentadas
+
+- ✅ **Sistema de automatizaciones avanzadas** (horarios programados, condiciones de sensores, híbridas)
+- ✅ Gestión de planes de alimentación (importación, asignación, eliminación)
+- ✅ Integración con eventos de riego (valores por defecto, cálculo de totales)
+- ✅ Visualización mejorada en historial (nutrientes, notas)
+- ✅ Visualización interactiva de eventos de planta (click para ver últimos 3 eventos)
+- ✅ API endpoints completos
+- ✅ Componentes React reutilizables
 
 ## Licencia
 

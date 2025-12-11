@@ -9,11 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "framer-motion": "^11.2.10",
+    "lucide-react": "^0.378.0",
     "next": "14.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "framer-motion": "^11.2.10",
-    "lucide-react": "^0.378.0"
+    "recharts": "^3.5.1"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
@@ -27,4 +28,3 @@
     "typescript": "^5.4.5"
   }
 }
-

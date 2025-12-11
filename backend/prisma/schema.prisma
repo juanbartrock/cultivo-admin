@@ -75,6 +75,96 @@ enum EventType {
 }
 
 // ============================================
+// ENUMS - AUTOMATIZACIONES
+// ============================================
+
+enum AutomationStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+enum ConditionOperator {
+  GREATER_THAN
+  LESS_THAN
+  EQUALS
+  NOT_EQUALS
+  BETWEEN
+  OUTSIDE
+}
+
+enum ActionType {
+  TURN_ON
+  TURN_OFF
+  TOGGLE
+  CAPTURE_PHOTO
+  TRIGGER_IRRIGATION
+}
+
+// Tipo de trigger de la automatización
+enum TriggerType {
+  SCHEDULED      // Solo basado en horario (sin condiciones de sensores)
+  CONDITION      // Solo basado en condiciones de sensores
+  HYBRID         // Combinación: horario + condiciones
+}
+
+// Tipo de programación horaria
+enum ScheduleType {
+  TIME_RANGE     // ON desde hora X hasta hora Y
+  INTERVAL       // Cada X horas/minutos
+  SPECIFIC_TIMES // A horas específicas del día
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ============================================
+// ENUMS - NOTIFICACIONES
+// ============================================
+
+enum NotificationType {
+  AUTOMATION
+  FEEDING_PLAN
+  PREVENTION_PLAN
+  MILESTONE
+  ALERT
+  SYSTEM
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================
+// ENUMS - COSECHA
+// ============================================
+
+enum HarvestProductType {
+  FLOR
+  TRIM
+  LARF
+  KIEF
+  HASH
+  ROSIN
+  ACEITE
+  OTRO
+}
+
+enum StorageLocation {
+  AMBIENTE
+  HELADERA
+  FREEZER
+}
+
+// ============================================
 // INFRAESTRUCTURA Y UBICACIONES
 // ============================================
 
@@ -92,20 +182,35 @@ model Room {
 
 /// Secciones/Carpas - Subdivisiones dentro de una sala (ej: "Carpa 80x80", "Zona Esquejes")
 model Section {
-  id          String   @id @default(uuid())
-  name        String
-  dimensions  String?  // Ej: "80x80x180"
-  image       String?  // URL de imagen
-  description String?
-  roomId      String   @map("room_id")
-  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  devices     Device[]
-  plants      Plant[]
-  events      Event[]
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String         @id @default(uuid())
+  name         String
+  dimensions   String?        // Ej: "80x80x180"
+  image        String?        // URL de imagen
+  description  String?
+  roomId       String         @map("room_id")
+  room         Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  devices      Device[]
+  plants       Plant[]
+  events       Event[]
+  automations  Automation[]
+  ppfdReadings PPFDReading[]
+  layout       SectionLayout?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
 
   @@map("sections")
+}
+
+/// Configuración de layout de sección - Define qué secciones mostrar y en qué orden
+model SectionLayout {
+  id        String   @id @default(uuid())
+  sectionId String   @unique @map("section_id")
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  config    Json     // { sections: [{ key, enabled, order }] }
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("section_layouts")
 }
 
 // ============================================
@@ -114,19 +219,25 @@ model Section {
 
 /// Dispositivos - Representación lógica de los dispositivos físicos
 model Device {
-  id         String     @id @default(uuid())
-  name       String
-  connector  Connector  // Conector: SONOFF, TUYA, TAPO, ESP32, VIRTUAL
-  externalId String     @map("external_id") // ID del dispositivo en el servicio externo
-  type       DeviceType // Tipo: sensor, luz, extractor, etc.
-  sectionId  String?    @map("section_id")
-  section    Section?   @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-  metadata   Json?      // IP, modelo, configuración específica
+  id            String     @id @default(uuid())
+  name          String
+  connector     Connector  // Conector: SONOFF, TUYA, TAPO, ESP32, VIRTUAL
+  externalId    String     @map("external_id") // ID del dispositivo en el servicio externo
+  type          DeviceType // Tipo: sensor, luz, extractor, etc.
+  sectionId     String?    @map("section_id")
+  section       Section?   @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  metadata      Json?      // IP, modelo, configuración específica
+  recordHistory Boolean    @default(false) @map("record_history") // Si registra historial de sensores
 
   // Dependencia: dispositivo que controla a este (ej: Sonoff controla al Extractor)
   controlledByDeviceId String?  @map("controlled_by_device_id")
   controlledBy         Device?  @relation("DeviceControl", fields: [controlledByDeviceId], references: [id], onDelete: SetNull)
   controlledDevices    Device[] @relation("DeviceControl") // Dispositivos que este controla
+
+  // Relaciones con automatizaciones
+  automationConditions AutomationCondition[]
+  automationActions    AutomationAction[]
+  sensorReadings       SensorReading[]
 
   createdAt  DateTime   @default(now()) @map("created_at")
   updatedAt  DateTime   @updatedAt @map("updated_at")
@@ -189,6 +300,7 @@ model Plant {
   events          Event[]
   feedingPlans    PlantFeedingPlan[]
   preventionPlans PlantPreventionPlan[]
+  harvests        Harvest[]
   createdAt       DateTime             @default(now()) @map("created_at")
   updatedAt       DateTime             @updatedAt @map("updated_at")
 
@@ -330,4 +442,237 @@ model PlantPreventionPlan {
   @@index([plantId])
   @@index([preventionPlanId])
   @@map("plant_prevention_plans")
+}
+
+// ============================================
+// AUTOMATIZACIONES
+// ============================================
+
+/// Automatización - Regla de automatización para dispositivos
+model Automation {
+  id            String             @id @default(uuid())
+  name          String
+  description   String?
+  sectionId     String             @map("section_id")
+  section       Section            @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  status        AutomationStatus   @default(ACTIVE)
+  
+  // === CAMPOS EXISTENTES (NO MODIFICAR) ===
+  interval      Int                @default(60) // Intervalo de evaluación en minutos (MANTENER para compatibilidad)
+  executionTime Int?               @map("execution_time") // Tiempo de ejecución en minutos
+  daysOfWeek    Int[]              @map("days_of_week") // [0-6] Domingo=0, array vacío = todos los días
+  startTime     String?            @map("start_time") // "08:00" - Hora de inicio permitida
+  endTime       String?            @map("end_time") // "20:00" - Hora de fin permitida
+  priority      Int                @default(0) // Mayor prioridad = se evalúa primero
+  allowOverlap  Boolean            @default(true) @map("allow_overlap")
+  notifications Boolean            @default(true)
+  
+  // === NUEVOS CAMPOS PARA PROGRAMACIÓN AVANZADA ===
+  // Tipo de trigger (default CONDITION para compatibilidad con automatizaciones existentes)
+  triggerType   TriggerType        @default(CONDITION) @map("trigger_type")
+  
+  // Configuración de programación horaria
+  scheduleType  ScheduleType?      @map("schedule_type") // Tipo de programación
+  
+  // Para TIME_RANGE: horario de activación/desactivación
+  activeStartTime String?          @map("active_start_time") // "08:00" - Hora de encendido
+  activeEndTime   String?          @map("active_end_time")   // "20:00" - Hora de apagado
+  
+  // Para INTERVAL: repetir cada X tiempo
+  intervalMinutes Int?             @map("interval_minutes") // Intervalo en minutos (ej: 120 = cada 2 horas)
+  actionDuration  Int?             @map("action_duration")  // Duración de la acción en minutos
+  
+  // Para SPECIFIC_TIMES: horas específicas del día
+  specificTimes   String[]         @default([]) @map("specific_times") // ["08:00", "14:00", "20:00"]
+
+  // Dependencia de otra automatización
+  dependsOnId   String?            @map("depends_on_id")
+  dependsOn     Automation?        @relation("AutomationDependency", fields: [dependsOnId], references: [id], onDelete: SetNull)
+  dependents    Automation[]       @relation("AutomationDependency")
+
+  // Relaciones
+  conditions    AutomationCondition[]
+  actions       AutomationAction[]
+  executions    AutomationExecution[]
+
+  lastEvaluatedAt DateTime?        @map("last_evaluated_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  @@index([sectionId])
+  @@index([status])
+  @@map("automations")
+}
+
+/// Condición de automatización - Condiciones que deben cumplirse para activar
+model AutomationCondition {
+  id           String            @id @default(uuid())
+  automationId String            @map("automation_id")
+  automation   Automation        @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  deviceId     String            @map("device_id") // ID del dispositivo sensor
+  device       Device            @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  property     String            // Propiedad a evaluar: "temperature", "humidity", "state"
+  operator     ConditionOperator
+  value        Float             // Valor para comparar
+  valueMax     Float?            @map("value_max") // Para operador BETWEEN/OUTSIDE
+  order        Int               @default(0) // Orden de evaluación
+  
+  // === NUEVOS CAMPOS (opcionales, no rompen datos existentes) ===
+  timeValue    String?           @map("time_value") // Para condiciones de tiempo "HH:MM"
+  timeValueMax String?           @map("time_value_max") // Para condiciones de tiempo BETWEEN
+  logicOperator String           @default("AND") @map("logic_operator") // AND/OR con la siguiente condición
+
+  @@index([automationId])
+  @@map("automation_conditions")
+}
+
+/// Acción de automatización - Acciones a ejecutar cuando se cumplen las condiciones
+model AutomationAction {
+  id           String     @id @default(uuid())
+  automationId String     @map("automation_id")
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  deviceId     String     @map("device_id")
+  device       Device     @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  actionType   ActionType @map("action_type")
+  duration     Int?       // Duración de la acción en minutos (ej: encender por 30 min)
+  delayMinutes Int?       @map("delay_minutes") // Retraso antes de ejecutar esta acción
+  value        Float?     // Valor opcional (ej: brillo, velocidad)
+  order        Int        @default(0) // Orden de ejecución
+
+  @@index([automationId])
+  @@map("automation_actions")
+}
+
+/// Ejecución de automatización - Historial de ejecuciones
+model AutomationExecution {
+  id                   String               @id @default(uuid())
+  automationId         String               @map("automation_id")
+  automation           Automation           @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  status               ExecutionStatus      @default(PENDING)
+  triggeredConditions  Json?                @map("triggered_conditions") // Snapshot de condiciones que se cumplieron
+  executedActions      Json?                @map("executed_actions") // Acciones ejecutadas
+  errorMessage         String?              @map("error_message")
+  startedAt            DateTime             @default(now()) @map("started_at")
+  endedAt              DateTime?            @map("ended_at")
+  effectivenessChecks  EffectivenessCheck[]
+
+  @@index([automationId])
+  @@index([startedAt])
+  @@map("automation_executions")
+}
+
+/// Verificación de efectividad - Chequeos cada 15 minutos post-ejecución
+model EffectivenessCheck {
+  id           String              @id @default(uuid())
+  executionId  String              @map("execution_id")
+  execution    AutomationExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  conditionMet Boolean             @map("condition_met") // Si el objetivo se cumplió
+  valueAtCheck Float?              @map("value_at_check") // Valor actual del sensor al momento del check
+  targetValue  Float?              @map("target_value") // Valor objetivo que se esperaba
+  notes        String?
+  checkedAt    DateTime            @default(now()) @map("checked_at")
+
+  @@index([executionId])
+  @@map("effectiveness_checks")
+}
+
+// ============================================
+// HISTORIAL DE SENSORES
+// ============================================
+
+/// Lectura de sensor - Registro histórico de temperatura/humedad
+model SensorReading {
+  id          String   @id @default(uuid())
+  deviceId    String   @map("device_id")
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  temperature Float?   // Temperatura en °C
+  humidity    Float?   // Humedad en %
+  co2         Float?   // CO2 en ppm (si aplica)
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+
+  @@index([deviceId, recordedAt])
+  @@index([recordedAt])
+  @@map("sensor_readings")
+}
+
+// ============================================
+// PPFD Y DLI
+// ============================================
+
+/// Lectura de PPFD - Registro de intensidad lumínica por zona
+model PPFDReading {
+  id          String   @id @default(uuid())
+  sectionId   String   @map("section_id")
+  section     Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  zone        Int      // Zona 1-6 (grilla 2x3)
+  ppfdValue   Float    @map("ppfd_value") // µmol/m²/s
+  lightHeight Float    @map("light_height") // Altura de la luz en cm desde el follaje
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+
+  @@index([sectionId, zone])
+  @@index([recordedAt])
+  @@map("ppfd_readings")
+}
+
+// ============================================
+// NOTIFICACIONES
+// ============================================
+
+/// Notificación - Sistema de alertas y notificaciones in-app
+model Notification {
+  id        String               @id @default(uuid())
+  type      NotificationType
+  priority  NotificationPriority @default(MEDIUM)
+  title     String
+  message   String
+  read      Boolean              @default(false)
+  actionUrl String?              @map("action_url") // Link a la página relacionada
+  metadata  Json?                // Datos adicionales (automationId, plantId, etc.)
+  createdAt DateTime             @default(now()) @map("created_at")
+
+  @@index([read])
+  @@index([type])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================================
+// COSECHA Y POST-COSECHA
+// ============================================
+
+/// Cosecha - Registro de cosecha de una planta
+model Harvest {
+  id          String           @id @default(uuid())
+  plantId     String           @map("plant_id")
+  plant       Plant            @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  harvestDate DateTime         @map("harvest_date")
+  wetWeight   Float?           @map("wet_weight") // Peso húmedo en gramos
+  dryWeight   Float?           @map("dry_weight") // Peso seco en gramos
+  trimWeight  Float?           @map("trim_weight") // Peso del trim en gramos
+  notes       String?
+  products    HarvestProduct[]
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@index([plantId])
+  @@map("harvests")
+}
+
+/// Producto de cosecha - Flor, extracciones, etc.
+model HarvestProduct {
+  id              String             @id @default(uuid())
+  harvestId       String             @map("harvest_id")
+  harvest         Harvest            @relation(fields: [harvestId], references: [id], onDelete: Cascade)
+  type            HarvestProductType
+  initialWeight   Float              @map("initial_weight") // Peso inicial en gramos
+  currentWeight   Float              @map("current_weight") // Peso actual (se actualiza al extraer)
+  packageType     String?            @map("package_type") // "Frasco vidrio", "Bolsa vacío", etc.
+  packageNumber   String?            @map("package_number") // Código de identificación "F-001"
+  storageLocation StorageLocation    @default(AMBIENTE) @map("storage_location")
+  notes           String?
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  @@index([harvestId])
+  @@map("harvest_products")
 }

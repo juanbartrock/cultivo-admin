@@ -6,10 +6,12 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DevicesService, ScannedDevice } from './devices.service';
+import { SensorHistoryService } from './sensor-history.service';
 import { DeviceStatus } from './iot-gateway.service';
 import {
   CreateDeviceDto,
@@ -21,7 +23,10 @@ import {
 @ApiTags('devices')
 @Controller('devices')
 export class DevicesController {
-  constructor(private readonly devicesService: DevicesService) {}
+  constructor(
+    private readonly devicesService: DevicesService,
+    private readonly sensorHistoryService: SensorHistoryService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar todos los dispositivos registrados' })
@@ -156,5 +161,77 @@ export class DevicesController {
   @ApiResponse({ status: 404, description: 'Dispositivo no encontrado' })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.devicesService.delete(id);
+  }
+
+  // ============================================
+  // HISTORIAL DE SENSORES
+  // ============================================
+
+  @Post('history/record')
+  @ApiOperation({
+    summary: 'Forzar registro de lecturas de sensores',
+    description: 'Dispara manualmente el registro de lecturas para todos los dispositivos con recordHistory=true',
+  })
+  @ApiResponse({ status: 200, description: 'Registro ejecutado' })
+  async forceRecordSensorReadings() {
+    await this.sensorHistoryService.recordSensorReadings();
+    return { success: true, message: 'Sensor readings recorded' };
+  }
+
+  @Get(':id/history')
+  @ApiOperation({
+    summary: 'Obtener historial de lecturas de un sensor',
+    description: 'Retorna lecturas de temperatura/humedad. Por defecto las últimas 6 horas.',
+  })
+  @ApiResponse({ status: 200, description: 'Historial de lecturas' })
+  async getHistory(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('hours') hours?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    // Si se proporcionan from y to, usar rango de fechas
+    if (from && to) {
+      return this.sensorHistoryService.getHistoryByRange(
+        id,
+        new Date(from),
+        new Date(to),
+      );
+    }
+    // Si no, usar horas (default 6)
+    return this.sensorHistoryService.getHistory(
+      id,
+      hours ? parseInt(hours, 10) : 6,
+    );
+  }
+
+  @Get(':id/history/latest')
+  @ApiOperation({
+    summary: 'Obtener las últimas lecturas de un sensor',
+  })
+  @ApiResponse({ status: 200, description: 'Últimas lecturas' })
+  async getLatestReadings(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.sensorHistoryService.getLatestReadings(
+      id,
+      limit ? parseInt(limit, 10) : 10,
+    );
+  }
+
+  @Get(':id/history/stats')
+  @ApiOperation({
+    summary: 'Obtener estadísticas del historial de un sensor',
+  })
+  @ApiResponse({ status: 200, description: 'Estadísticas del sensor' })
+  async getHistoryStats(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('hours') hours?: string,
+  ) {
+    return this.sensorHistoryService.getStats(
+      id,
+      hours ? parseInt(hours, 10) : 24,
+    );
   }
 }

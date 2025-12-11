@@ -51,11 +51,13 @@ const sexLabels: Record<PlantSex, string> = {
 interface PlantCardProps {
   plant: Plant;
   delay?: number;
+  isSelected?: boolean;
   onRegisterEvent?: (plant: Plant) => void;
   onStageChange?: (plant: Plant, newStage: PlantStage) => void;
+  onClick?: (plant: Plant) => void;
 }
 
-export default function PlantCard({ plant, delay = 0, onRegisterEvent, onStageChange }: PlantCardProps) {
+export default function PlantCard({ plant, delay = 0, isSelected = false, onRegisterEvent, onStageChange, onClick }: PlantCardProps) {
   const [currentPlant, setCurrentPlant] = useState(plant);
   const stageConfig = stageIcons[currentPlant.stage] || stageIcons.VEGETATIVO;
   const StageIcon = stageConfig.icon;
@@ -119,7 +121,12 @@ export default function PlantCard({ plant, delay = 0, onRegisterEvent, onStageCh
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.05 }}
-      className={`bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 rounded-xl p-4 hover:border-cultivo-green-600/30 transition-all ${showStageModal ? 'relative z-50' : 'relative'}`}
+      onClick={() => onClick?.(currentPlant)}
+      className={`bg-zinc-800/50 backdrop-blur-sm border rounded-xl p-4 transition-all cursor-pointer ${
+        isSelected 
+          ? 'border-cultivo-green-500 ring-2 ring-cultivo-green-500/30' 
+          : 'border-zinc-700/50 hover:border-cultivo-green-600/30'
+      } ${showStageModal ? 'relative z-50' : 'relative'}`}
     >
       <div className="flex items-start gap-4">
         {/* Icono de etapa */}

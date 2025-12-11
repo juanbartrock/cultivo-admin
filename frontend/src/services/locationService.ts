@@ -12,6 +12,8 @@ import {
   Section,
   SectionDashboard,
   CreateSectionDto,
+  SectionLayout,
+  SectionLayoutConfig,
 } from '@/types';
 
 // ============================================
@@ -88,6 +90,17 @@ export const sectionService = {
    * Elimina una sección
    */
   delete: (id: string) => api.delete(`/sections/${id}`),
+
+  /**
+   * Obtiene la configuración de layout de una sección
+   */
+  getLayout: (id: string) => api.get<SectionLayout>(`/sections/${id}/layout`),
+
+  /**
+   * Actualiza la configuración de layout de una sección
+   */
+  updateLayout: (id: string, config: SectionLayoutConfig) =>
+    api.put<SectionLayout>(`/sections/${id}/layout`, config),
 };
 
 // ============================================

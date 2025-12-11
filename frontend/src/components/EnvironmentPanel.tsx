@@ -15,8 +15,10 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Power
+  Power,
+  History
 } from 'lucide-react';
+import { deviceService } from '@/services/deviceService';
 
 interface EnvironmentData {
   temperature?: number;
@@ -156,6 +158,8 @@ export default function EnvironmentPanel({
   // Hook de control (solo se usa si hay device)
   const { toggle, controlling } = useDeviceControl(device?.id || '');
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
+  const [recordHistory, setRecordHistory] = useState<boolean>(device?.recordHistory ?? false);
+  const [togglingHistory, setTogglingHistory] = useState(false);
 
   // Extraer y parsear valores del status (pueden venir como string o number)
   const temperature = status?.temperature !== undefined 
@@ -203,6 +207,23 @@ export default function EnvironmentPanel({
       setOptimisticState(null);
     }
   }, [controlling, isOnline, device, isOn, toggle, onRefresh]);
+
+  const handleToggleRecordHistory = useCallback(async () => {
+    if (togglingHistory || !device) return;
+    setTogglingHistory(true);
+    const newValue = !recordHistory;
+    setRecordHistory(newValue); // Optimistic
+    
+    try {
+      await deviceService.update(device.id, { recordHistory: newValue });
+      onRefresh?.();
+    } catch (err) {
+      console.error('Error toggling recordHistory:', err);
+      setRecordHistory(!newValue); // Revert
+    } finally {
+      setTogglingHistory(false);
+    }
+  }, [togglingHistory, recordHistory, device, onRefresh]);
 
   if (loading) {
     return (
@@ -254,14 +275,35 @@ export default function EnvironmentPanel({
       className="space-y-4"
     >
       {/* Header con nombre del sensor y última actualización */}
-      {(sensorName || lastUpdate) && (
-        <div className="flex items-center justify-between">
-          {sensorName && (
-            <div className="flex items-center gap-2">
-              <Gauge className="w-5 h-5 text-cultivo-green-500" />
-              <span className="text-sm font-medium text-zinc-300">{sensorName}</span>
-            </div>
-          )}
+      {(sensorName || lastUpdate || device) && (
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            {sensorName && (
+              <div className="flex items-center gap-2">
+                <Gauge className="w-5 h-5 text-cultivo-green-500" />
+                <span className="text-sm font-medium text-zinc-300">{sensorName}</span>
+              </div>
+            )}
+            {/* Toggle registrar historial */}
+            {device && (
+              <button
+                onClick={handleToggleRecordHistory}
+                disabled={togglingHistory}
+                title={recordHistory ? 'Historial habilitado' : 'Habilitar registro de historial'}
+                className={`
+                  flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs transition-all
+                  ${togglingHistory ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
+                  ${recordHistory 
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30' 
+                    : 'bg-zinc-800/50 text-zinc-500 border border-zinc-700/50 hover:bg-zinc-700/50 hover:text-zinc-300'
+                  }
+                `}
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>{recordHistory ? 'Historial ON' : 'Historial OFF'}</span>
+              </button>
+            )}
+          </div>
           {lastUpdate && (
             <span className="text-xs text-zinc-500">
               Actualizado: {lastUpdate.toLocaleTimeString()}

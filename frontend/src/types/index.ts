@@ -88,6 +88,7 @@ export interface Device {
   sectionId?: string;
   section?: Section;
   metadata?: Record<string, unknown>;
+  recordHistory?: boolean; // Si registra historial (solo sensores)
   // Dependencia: dispositivo que controla a este
   controlledByDeviceId?: string;
   controlledBy?: Device; // Ej: Sonoff que controla al extractor
@@ -678,3 +679,337 @@ export function plantStageToEtapaPlanta(stage: PlantStage): EtapaPlanta {
 export function etapaPlantaToPlantStage(etapa: EtapaPlanta): PlantStage {
   return etapa.toUpperCase() as PlantStage;
 }
+
+// ============================================
+// AUTOMATIZACIONES
+// ============================================
+
+export type AutomationStatus = 'ACTIVE' | 'PAUSED' | 'DISABLED';
+export type ConditionOperator = 'GREATER_THAN' | 'LESS_THAN' | 'EQUALS' | 'NOT_EQUALS' | 'BETWEEN' | 'OUTSIDE';
+export type ActionType = 'TURN_ON' | 'TURN_OFF' | 'TOGGLE' | 'CAPTURE_PHOTO' | 'TRIGGER_IRRIGATION';
+export type ExecutionStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+export type TriggerType = 'SCHEDULED' | 'CONDITION' | 'HYBRID';
+export type ScheduleType = 'TIME_RANGE' | 'INTERVAL' | 'SPECIFIC_TIMES';
+
+export interface AutomationCondition {
+  id: string;
+  automationId: string;
+  deviceId?: string;
+  device?: Device;
+  property: string;
+  operator: ConditionOperator;
+  value: number;
+  valueMax?: number;
+  timeValue?: string;
+  timeValueMax?: string;
+  logicOperator: string;
+  order: number;
+}
+
+export interface AutomationAction {
+  id: string;
+  automationId: string;
+  deviceId: string;
+  device?: Device;
+  actionType: ActionType;
+  duration?: number;
+  delayMinutes?: number;
+  value?: number;
+  order: number;
+}
+
+export interface EffectivenessCheck {
+  id: string;
+  executionId: string;
+  conditionMet: boolean;
+  valueAtCheck?: number;
+  targetValue?: number;
+  notes?: string;
+  checkedAt: string;
+}
+
+export interface AutomationExecution {
+  id: string;
+  automationId: string;
+  status: ExecutionStatus;
+  triggeredConditions?: unknown;
+  executedActions?: unknown;
+  errorMessage?: string;
+  startedAt: string;
+  endedAt?: string;
+  effectivenessChecks?: EffectivenessCheck[];
+}
+
+export interface Automation {
+  id: string;
+  name: string;
+  description?: string;
+  sectionId: string;
+  section?: Section;
+  status: AutomationStatus;
+  
+  // Tipo de trigger
+  triggerType: TriggerType;
+  
+  // Configuración de programación
+  scheduleType?: ScheduleType;
+  activeStartTime?: string;
+  activeEndTime?: string;
+  intervalMinutes?: number;
+  actionDuration?: number;
+  specificTimes: string[];
+  
+  // Campos existentes (mantener compatibilidad)
+  interval: number; // Intervalo de evaluación en minutos
+  executionTime?: number;
+  daysOfWeek: number[];
+  startTime?: string;
+  endTime?: string;
+  
+  priority: number;
+  allowOverlap: boolean;
+  notifications: boolean;
+  dependsOnId?: string;
+  dependsOn?: Automation;
+  conditions: AutomationCondition[];
+  actions: AutomationAction[];
+  executions?: AutomationExecution[];
+  lastEvaluatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    executions: number;
+  };
+}
+
+export interface CreateAutomationDto {
+  name: string;
+  description?: string;
+  sectionId: string;
+  
+  // Tipo de trigger
+  triggerType?: TriggerType;
+  
+  // Configuración de programación
+  scheduleType?: ScheduleType;
+  activeStartTime?: string;
+  activeEndTime?: string;
+  intervalMinutes?: number;
+  actionDuration?: number;
+  specificTimes?: string[];
+  
+  // Días y ventana de evaluación
+  daysOfWeek?: number[];
+  evaluationInterval?: number;
+  startTime?: string;
+  endTime?: string;
+  
+  priority?: number;
+  allowOverlap?: boolean;
+  notifications?: boolean;
+  dependsOnId?: string;
+  
+  // Condiciones (opcionales para SCHEDULED)
+  conditions?: {
+    deviceId: string;
+    property: string;
+    operator: ConditionOperator;
+    value?: number;
+    valueMax?: number;
+    timeValue?: string;
+    timeValueMax?: string;
+    logicOperator?: string;
+    order?: number;
+  }[];
+  
+  actions: {
+    deviceId: string;
+    actionType: ActionType;
+    duration?: number;
+    delayMinutes?: number;
+    value?: number;
+    order?: number;
+  }[];
+}
+
+// ============================================
+// NOTIFICACIONES
+// ============================================
+
+export type NotificationType = 'AUTOMATION' | 'FEEDING_PLAN' | 'PREVENTION_PLAN' | 'MILESTONE' | 'ALERT' | 'SYSTEM';
+export type NotificationPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  priority: NotificationPriority;
+  title: string;
+  message: string;
+  read: boolean;
+  actionUrl?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+// ============================================
+// PPFD / DLI
+// ============================================
+
+export interface PPFDReading {
+  id: string;
+  sectionId: string;
+  zone: number;
+  ppfdValue: number;
+  lightHeight: number;
+  recordedAt: string;
+}
+
+export interface DLIResult {
+  sectionId: string;
+  avgPPFD: number | null;
+  lightHoursPerDay: number;
+  dli: number | null;
+  zonesWithData?: number;
+  readings?: Array<{ zone: number; reading: PPFDReading | null }>;
+  message?: string;
+}
+
+// ============================================
+// HISTORIAL DE SENSORES
+// ============================================
+
+export interface SensorReading {
+  id: string;
+  deviceId: string;
+  temperature?: number;
+  humidity?: number;
+  co2?: number;
+  recordedAt: string;
+}
+
+export interface SensorStats {
+  period: string;
+  count: number;
+  temperature: { min: number; max: number; avg: number; current: number } | null;
+  humidity: { min: number; max: number; avg: number; current: number } | null;
+  co2: { min: number; max: number; avg: number; current: number } | null;
+}
+
+// ============================================
+// COSECHAS
+// ============================================
+
+export type HarvestProductType = 'FLOR' | 'TRIM' | 'LARF' | 'KIEF' | 'HASH' | 'ROSIN' | 'ACEITE' | 'OTRO';
+export type StorageLocation = 'AMBIENTE' | 'HELADERA' | 'FREEZER';
+
+export interface HarvestProduct {
+  id: string;
+  harvestId: string;
+  type: HarvestProductType;
+  initialWeight: number;
+  currentWeight: number;
+  packageType?: string;
+  packageNumber?: string;
+  storageLocation: StorageLocation;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Harvest {
+  id: string;
+  plantId: string;
+  plant?: Plant;
+  harvestDate: string;
+  wetWeight?: number;
+  dryWeight?: number;
+  trimWeight?: number;
+  notes?: string;
+  products?: HarvestProduct[];
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    products: number;
+  };
+}
+
+export interface CreateHarvestDto {
+  plantId: string;
+  harvestDate: string;
+  wetWeight?: number;
+  dryWeight?: number;
+  trimWeight?: number;
+  notes?: string;
+}
+
+export interface CreateHarvestProductDto {
+  harvestId: string;
+  type: HarvestProductType;
+  initialWeight: number;
+  packageType?: string;
+  packageNumber?: string;
+  storageLocation?: StorageLocation;
+  notes?: string;
+}
+
+// ============================================
+// LAYOUT DE SECCIÓN
+// ============================================
+
+export type SectionLayoutKey = 
+  | 'environment'
+  | 'sensors'
+  | 'controllables'
+  | 'cameras'
+  | 'ppfd'
+  | 'sensorHistory'
+  | 'feedingPlans'
+  | 'preventionPlans'
+  | 'plants';
+
+export interface SectionLayoutItem {
+  key: SectionLayoutKey;
+  enabled: boolean;
+  order: number;
+}
+
+export interface SectionLayoutConfig {
+  sections: SectionLayoutItem[];
+}
+
+export interface SectionLayout {
+  id?: string;
+  sectionId: string;
+  config: SectionLayoutConfig;
+  isDefault: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Configuración por defecto del layout
+export const DEFAULT_SECTION_LAYOUT: SectionLayoutConfig = {
+  sections: [
+    { key: 'environment', enabled: true, order: 0 },
+    { key: 'sensors', enabled: true, order: 1 },
+    { key: 'controllables', enabled: true, order: 2 },
+    { key: 'cameras', enabled: true, order: 3 },
+    { key: 'ppfd', enabled: true, order: 4 },
+    { key: 'sensorHistory', enabled: true, order: 5 },
+    { key: 'feedingPlans', enabled: true, order: 6 },
+    { key: 'preventionPlans', enabled: true, order: 7 },
+    { key: 'plants', enabled: true, order: 8 },
+  ],
+};
+
+// Etiquetas e iconos para cada sección del layout
+export const SECTION_LAYOUT_META: Record<SectionLayoutKey, { label: string; description: string }> = {
+  environment: { label: 'Panel Ambiental', description: 'Temperatura, humedad y condiciones' },
+  sensors: { label: 'Sensores', description: 'Tarjetas de sensores' },
+  controllables: { label: 'Dispositivos', description: 'Luces, extractores y controles' },
+  cameras: { label: 'Cámaras', description: 'Visualización de cámaras' },
+  ppfd: { label: 'PPFD/DLI', description: 'Intensidad lumínica' },
+  sensorHistory: { label: 'Historial Sensores', description: 'Gráfico de historial' },
+  feedingPlans: { label: 'Plan Alimentación', description: 'Planes de nutrientes' },
+  preventionPlans: { label: 'Plan Prevención', description: 'Planes de prevención' },
+  plants: { label: 'Plantas', description: 'Tarjetas de plantas' },
+};

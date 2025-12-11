@@ -324,3 +324,7 @@ Para dispositivos VIRTUAL, envía el comando al dispositivo controlador.
 4. **Compatibilidad Sonoff**: El estado puede venir como `switch` o `state`, se normaliza a `'on' | 'off'`
 
 
+
+
+
+
