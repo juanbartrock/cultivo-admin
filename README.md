@@ -539,9 +539,14 @@ npm run dev
 
 - **[Changelog - Visualización de Eventos de Planta](./docs/CHANGELOG_EVENTOS_PLANTA.md)**: Documentación técnica de la funcionalidad de visualización interactiva de eventos de planta en la página de detalle de carpa, incluyendo selección de plantas, carga de eventos y diseño visual.
 
+- **[Changelog - Automatizaciones de Fotos y Control de Alertas](./docs/CHANGELOG_AUTOMATIZACIONES_FOTOS_ALERTAS.md)**: Documentación técnica de las mejoras al sistema de automatizaciones, incluyendo automatización de captura de fotos periódicas con registro en historial de plantas, control de alertas/notificaciones, y paginación del historial de ejecuciones.
+
 ### Características Documentadas
 
 - ✅ **Sistema de automatizaciones avanzadas** (horarios programados, condiciones de sensores, híbridas)
+- ✅ **Automatización de captura de fotos periódicas** con registro automático en historial de plantas
+- ✅ **Control de alertas/notificaciones** en automatizaciones
+- ✅ **Paginación del historial de ejecuciones** (5 ejecuciones por página)
 - ✅ Gestión de planes de alimentación (importación, asignación, eliminación)
 - ✅ Integración con eventos de riego (valores por defecto, cálculo de totales)
 - ✅ Visualización mejorada en historial (nutrientes, notas)

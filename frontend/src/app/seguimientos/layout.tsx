@@ -1,9 +1,13 @@
 import { ReactNode } from 'react';
+import Header from '@/components/Header';
 
 export default function SeguimientosLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {children}
+    <div className="min-h-screen bg-cultivo-darker">
+      <Header />
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {children}
+      </main>
     </div>
   );
 }

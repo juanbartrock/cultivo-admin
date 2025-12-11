@@ -156,6 +156,11 @@ export class CreateAutomationDto {
   notifications?: boolean;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  plantIds?: string[]; // IDs de plantas para registrar eventos (ej: para fotos)
+
+  @IsOptional()
   @IsString()
   dependsOnId?: string;
 
@@ -246,6 +251,11 @@ export class UpdateAutomationDto {
   @IsOptional()
   @IsBoolean()
   notifications?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  plantIds?: string[]; // IDs de plantas para registrar eventos (ej: para fotos)
 
   @IsOptional()
   @IsString()

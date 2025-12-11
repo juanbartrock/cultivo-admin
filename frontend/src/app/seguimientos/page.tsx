@@ -109,6 +109,7 @@ function SeguimientosContent() {
   // Estados de carga
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPlants, setIsLoadingPlants] = useState(false);
+  const [isLoadingMoreEvents, setIsLoadingMoreEvents] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Modales
@@ -120,6 +121,12 @@ function SeguimientosContent() {
   // Filtros
   const [statusFilter, setStatusFilter] = useState<CycleStatus | 'all'>('all');
   const [plantFilter, setPlantFilter] = useState<string | null>(plantIdFromUrl);
+  
+  // Paginación de eventos
+  const [eventsPage, setEventsPage] = useState(1);
+  const [eventsPerPage] = useState(5);
+  const [totalEvents, setTotalEvents] = useState(0);
+  const [allEvents, setAllEvents] = useState<GrowEvent[]>([]);
 
   // Actualizar filtro de planta cuando cambia la URL
   useEffect(() => {
@@ -137,6 +144,22 @@ function SeguimientosContent() {
       loadCycleData(selectedCycle.id);
     }
   }, [selectedCycle?.id]);
+
+  // Recalcular eventos paginados cuando cambia el filtro de planta o los eventos
+  useEffect(() => {
+    // Filtrar eventos por planta si hay filtro activo
+    const filtered = plantFilter 
+      ? allEvents.filter(e => e.plantId === plantFilter)
+      : allEvents;
+    
+    setTotalEvents(filtered.length);
+    
+    // Mostrar la primera página de eventos filtrados
+    const startIndex = 0;
+    const endIndex = eventsPerPage;
+    setEvents(filtered.slice(startIndex, endIndex));
+    setEventsPage(1);
+  }, [plantFilter, allEvents, eventsPerPage]);
 
   async function loadInitialData() {
     setIsLoading(true);
@@ -184,17 +207,66 @@ function SeguimientosContent() {
 
   async function loadCycleData(cycleId: string) {
     setIsLoadingPlants(true);
+    setEventsPage(1); // Resetear a la primera página
     try {
       const [plantsData, eventsData] = await Promise.all([
         plantService.getAll({ cycleId }),
-        eventService.getAll({ cycleId, limit: 20 }),
+        eventService.getAll({ cycleId, limit: 100 }), // Cargar muchos eventos para saber el total
       ]);
       setPlants(plantsData);
-      setEvents(eventsData);
+      setAllEvents(eventsData);
+      // El useEffect se encargará de filtrar y paginar
     } catch (err) {
       console.error('Error cargando datos del ciclo:', err);
     } finally {
       setIsLoadingPlants(false);
+    }
+  }
+
+  function loadEventsPage(page: number) {
+    // Filtrar eventos por planta si hay filtro activo
+    const filtered = plantFilter 
+      ? allEvents.filter(e => e.plantId === plantFilter)
+      : allEvents;
+    
+    const startIndex = (page - 1) * eventsPerPage;
+    const endIndex = startIndex + eventsPerPage;
+    const pageEvents = filtered.slice(startIndex, endIndex);
+    setEvents(pageEvents);
+    setEventsPage(page);
+  }
+
+  function handleNextPage() {
+    const totalPages = Math.ceil(totalEvents / eventsPerPage);
+    if (eventsPage < totalPages) {
+      loadEventsPage(eventsPage + 1);
+    }
+  }
+
+  function handlePreviousPage() {
+    if (eventsPage > 1) {
+      loadEventsPage(eventsPage - 1);
+    }
+  }
+
+  async function handleStatusChange(cycleId: string, newStatus: CycleStatus) {
+    try {
+      const updatedCycle = await cycleService.update(cycleId, { status: newStatus });
+      
+      // Actualizar el ciclo en la lista
+      setCycles(cycles.map(c => 
+        c.id === cycleId 
+          ? { ...c, status: updatedCycle.status }
+          : c
+      ));
+      
+      // Si es el ciclo seleccionado, actualizarlo también
+      if (selectedCycle?.id === cycleId) {
+        setSelectedCycle({ ...selectedCycle, status: updatedCycle.status });
+      }
+    } catch (err) {
+      console.error('Error actualizando estado del ciclo:', err);
+      alert('Error al actualizar el estado del ciclo');
     }
   }
 
@@ -309,32 +381,16 @@ function SeguimientosContent() {
             {filteredCycles.length > 0 ? (
               <div className="space-y-2">
                 {filteredCycles.map((cycle) => (
-                  <button
+                  <CycleListItem
                     key={cycle.id}
-                    onClick={() => setSelectedCycle(cycle)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                      selectedCycle?.id === cycle.id
-                        ? 'bg-cultivo-green-600/20 border-cultivo-green-600/50'
-                        : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-white">{cycle.name}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded border ${statusColors[cycle.status]}`}>
-                        {statusLabels[cycle.status]}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-zinc-400">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatCycleDays(cycle.startDate)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Leaf className="w-3 h-3" />
-                        {cycle._count?.plants || 0} planta{(cycle._count?.plants || 0) !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </button>
+                    cycle={cycle}
+                    isSelected={selectedCycle?.id === cycle.id}
+                    onSelect={() => setSelectedCycle(cycle)}
+                    onStatusChange={handleStatusChange}
+                    statusLabels={statusLabels}
+                    statusColors={statusColors}
+                    formatCycleDays={formatCycleDays}
+                  />
                 ))}
               </div>
             ) : (
@@ -359,7 +415,18 @@ function SeguimientosContent() {
               <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-xl font-bold text-white">{selectedCycle.name}</h2>
+                    <div className="flex items-center gap-3 mb-1">
+                      <h2 className="text-xl font-bold text-white">{selectedCycle.name}</h2>
+                      <select
+                        value={selectedCycle.status}
+                        onChange={(e) => handleStatusChange(selectedCycle.id, e.target.value as CycleStatus)}
+                        className={`text-xs px-2 py-1 rounded border transition-colors ${statusColors[selectedCycle.status]} focus:outline-none cursor-pointer`}
+                      >
+                        <option value="ACTIVE">Activo</option>
+                        <option value="COMPLETED">Completado</option>
+                        <option value="CURED">Curado</option>
+                      </select>
+                    </div>
                     <p className="text-sm text-zinc-400">
                       Iniciado el {new Date(selectedCycle.startDate).toLocaleDateString('es-AR')}
                       {' • '}{formatCycleDays(selectedCycle.startDate)}
@@ -476,15 +543,10 @@ function SeguimientosContent() {
                   </div>
                 </div>
                 
-                {(() => {
-                  // Filtrar eventos por planta si hay filtro activo
-                  const filteredEvents = plantFilter 
-                    ? events.filter(e => e.plantId === plantFilter)
-                    : events;
-                  
-                  return filteredEvents.length > 0 ? (
+                {events.length > 0 ? (
+                  <>
                     <div className="space-y-3">
-                      {filteredEvents.map((event) => {
+                      {events.map((event) => {
                         const typeInfo = getEventTypeInfo(event.type);
                         const eventPlant = plants.find(p => p.id === event.plantId);
                         return (
@@ -591,15 +653,45 @@ function SeguimientosContent() {
                         );
                       })}
                     </div>
-                  ) : (
-                    <div className="text-center py-6 bg-zinc-800/30 rounded-lg">
-                      <Activity className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
-                      <p className="text-zinc-500">
-                        {plantFilter ? 'Sin eventos para esta planta' : 'Sin eventos registrados'}
-                      </p>
-                    </div>
-                  );
-                })()}
+                    
+                    {/* Controles de paginación */}
+                    {totalEvents > eventsPerPage && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-700/50">
+                        <div className="text-sm text-zinc-400">
+                          Mostrando {((eventsPage - 1) * eventsPerPage) + 1} - {Math.min(eventsPage * eventsPerPage, totalEvents)} de {totalEvents} eventos
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handlePreviousPage}
+                            disabled={eventsPage === 1}
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-zinc-700 hover:bg-zinc-600 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4 rotate-180" />
+                            Anterior
+                          </button>
+                          <span className="text-sm text-zinc-400 px-2">
+                            Página {eventsPage} de {Math.ceil(totalEvents / eventsPerPage)}
+                          </span>
+                          <button
+                            onClick={handleNextPage}
+                            disabled={eventsPage >= Math.ceil(totalEvents / eventsPerPage)}
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-zinc-700 hover:bg-zinc-600 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                          >
+                            Siguiente
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-6 bg-zinc-800/30 rounded-lg">
+                    <Activity className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
+                    <p className="text-zinc-500">
+                      {plantFilter ? 'Sin eventos para esta planta' : 'Sin eventos registrados'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Sección de Cosechas */}
@@ -672,7 +764,19 @@ function SeguimientosContent() {
           sections={sections}
           onClose={() => setShowEventModal(false)}
           onCreated={(newEvent) => {
-            setEvents([newEvent, ...events]);
+            // Agregar el nuevo evento al inicio de todos los eventos
+            const updatedAllEvents = [newEvent, ...allEvents];
+            setAllEvents(updatedAllEvents);
+            setTotalEvents(updatedAllEvents.length);
+            
+            // Si estamos en la primera página, agregar el evento a la vista actual
+            if (eventsPage === 1) {
+              const filtered = plantFilter 
+                ? updatedAllEvents.filter(e => e.plantId === plantFilter)
+                : updatedAllEvents;
+              setEvents(filtered.slice(0, eventsPerPage));
+            }
+            
             setShowEventModal(false);
           }}
         />
@@ -687,6 +791,133 @@ function SeguimientosContent() {
             setStrains([...strains, newStrain]);
           }}
         />
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// COMPONENTE CICLO CON CAMBIO DE ESTADO
+// ============================================
+
+function CycleListItem({
+  cycle,
+  isSelected,
+  onSelect,
+  onStatusChange,
+  statusLabels,
+  statusColors,
+  formatCycleDays,
+}: {
+  cycle: CycleWithCount;
+  isSelected: boolean;
+  onSelect: () => void;
+  onStatusChange: (cycleId: string, newStatus: CycleStatus) => void;
+  statusLabels: Record<CycleStatus, string>;
+  statusColors: Record<CycleStatus, string>;
+  formatCycleDays: (startDate: string) => string;
+}) {
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+
+  const handleStatusChange = async (newStatus: CycleStatus) => {
+    if (newStatus === cycle.status) {
+      setShowStatusMenu(false);
+      return;
+    }
+    
+    setIsChangingStatus(true);
+    try {
+      await onStatusChange(cycle.id, newStatus);
+      setShowStatusMenu(false);
+    } catch (err) {
+      console.error('Error cambiando estado:', err);
+    } finally {
+      setIsChangingStatus(false);
+    }
+  };
+
+  return (
+    <div className={`relative rounded-lg border transition-colors ${
+      isSelected
+        ? 'bg-cultivo-green-600/20 border-cultivo-green-600/50'
+        : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
+    }`}>
+      <button
+        onClick={onSelect}
+        className="w-full text-left p-3"
+      >
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-medium text-white">{cycle.name}</span>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs px-2 py-0.5 rounded border ${statusColors[cycle.status]}`}>
+              {statusLabels[cycle.status]}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowStatusMenu(!showStatusMenu);
+              }}
+              className="p-1 hover:bg-zinc-700/50 rounded transition-colors"
+              disabled={isChangingStatus}
+            >
+              {isChangingStatus ? (
+                <Loader2 className="w-3 h-3 animate-spin text-zinc-400" />
+              ) : (
+                <MoreVertical className="w-3 h-3 text-zinc-400" />
+              )}
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-zinc-400">
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            {formatCycleDays(cycle.startDate)}
+          </span>
+          <span className="flex items-center gap-1">
+            <Leaf className="w-3 h-3" />
+            {cycle._count?.plants || 0} planta{(cycle._count?.plants || 0) !== 1 ? 's' : ''}
+          </span>
+        </div>
+      </button>
+      
+      {showStatusMenu && (
+        <>
+          <div 
+            className="fixed inset-0 z-10" 
+            onClick={() => setShowStatusMenu(false)} 
+          />
+          <div className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-20 min-w-[160px] py-1">
+            <div className="px-3 py-2 text-xs font-medium text-zinc-400 border-b border-zinc-700">
+              Cambiar estado
+            </div>
+            {(Object.entries(statusLabels) as [CycleStatus, string][]).map(([status, label]) => {
+              const isCurrentStatus = status === cycle.status;
+              const statusColorClass = status === 'ACTIVE' ? 'bg-cultivo-green-400' 
+                : status === 'COMPLETED' ? 'bg-blue-400' 
+                : 'bg-amber-400';
+              
+              return (
+                <button
+                  key={status}
+                  onClick={() => handleStatusChange(status)}
+                  disabled={isChangingStatus}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                    isCurrentStatus 
+                      ? 'bg-zinc-700/50 text-white' 
+                      : 'text-zinc-300 hover:bg-zinc-700/50'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${statusColorClass}`} />
+                  {label}
+                  {isCurrentStatus && (
+                    <Check className="w-3 h-3 ml-auto text-cultivo-green-400" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

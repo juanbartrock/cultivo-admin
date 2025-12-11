@@ -31,15 +31,19 @@ import {
   CalendarClock,
   Sparkles,
   Target,
+  Camera,
+  CheckSquare,
 } from 'lucide-react';
 import { automationService, EffectivenessStats } from '@/services/automationService';
 import { sectionService } from '@/services/locationService';
 import { deviceService } from '@/services/deviceService';
+import { plantService } from '@/services/growService';
 import {
   Automation,
   AutomationStatus,
   Section,
   Device,
+  Plant,
   AutomationExecution,
   CreateAutomationDto,
   ConditionOperator,
@@ -100,11 +104,15 @@ export default function AutomatizacionesPage() {
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [executions, setExecutions] = useState<AutomationExecution[]>([]);
   const [effectiveness, setEffectiveness] = useState<EffectivenessStats | null>(null);
+  const [automationPlants, setAutomationPlants] = useState<Plant[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [executionsPage, setExecutionsPage] = useState(1);
+  const executionsPerPage = 5;
 
   useEffect(() => {
     loadData();
@@ -144,11 +152,27 @@ export default function AutomatizacionesPage() {
     setIsLoadingDetails(true);
     try {
       const [executionsData, effectivenessData] = await Promise.all([
-        automationService.getExecutions(id, { limit: 20 }),
+        automationService.getExecutions(id, { limit: 50 }),
         automationService.getEffectiveness(id, 30),
       ]);
       setExecutions(executionsData);
       setEffectiveness(effectivenessData);
+      setExecutionsPage(1); // Resetear a la primera página cuando cambia la automatización
+      
+      // Cargar plantas asociadas si existen
+      if (selectedAutomation?.plantIds && selectedAutomation.plantIds.length > 0) {
+        try {
+          const plantsData = await Promise.all(
+            selectedAutomation.plantIds.map(plantId => plantService.getById(plantId))
+          );
+          setAutomationPlants(plantsData);
+        } catch (err) {
+          console.error('Error loading automation plants:', err);
+          setAutomationPlants([]);
+        }
+      } else {
+        setAutomationPlants([]);
+      }
     } catch (err) {
       console.error('Error loading automation details:', err);
     } finally {
@@ -208,6 +232,20 @@ export default function AutomatizacionesPage() {
     } catch (err) {
       console.error('Error creating automation:', err);
       alert('Error al crear la automatización');
+    }
+  }
+
+  async function handleUpdateAutomation(data: Partial<CreateAutomationDto>) {
+    if (!selectedAutomation) return;
+    
+    try {
+      const updated = await automationService.update(selectedAutomation.id, data);
+      setAutomations(automations.map(a => a.id === updated.id ? updated : a));
+      setSelectedAutomation(updated);
+      setShowEditModal(false);
+    } catch (err) {
+      console.error('Error updating automation:', err);
+      alert('Error al actualizar la automatización');
     }
   }
 
@@ -375,6 +413,13 @@ export default function AutomatizacionesPage() {
                   </div>
                   <div className="flex gap-2">
                     <button
+                      onClick={() => setShowEditModal(true)}
+                      className="p-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors"
+                      title="Editar"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => handleExecute(selectedAutomation)}
                       className="p-2 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-lg transition-colors"
                       title="Ejecutar ahora"
@@ -525,7 +570,11 @@ export default function AutomatizacionesPage() {
                     {selectedAutomation.actions.map((action) => (
                       <div key={action.id} className="flex items-center gap-2 text-sm">
                         <div className="p-1.5 bg-purple-500/20 rounded">
-                          <Power className="w-3.5 h-3.5 text-purple-400" />
+                          {action.actionType === 'CAPTURE_PHOTO' ? (
+                            <Camera className="w-3.5 h-3.5 text-purple-400" />
+                          ) : (
+                            <Power className="w-3.5 h-3.5 text-purple-400" />
+                          )}
                         </div>
                         <span className="text-zinc-300">
                           {action.device?.name || 'Dispositivo'}
@@ -544,6 +593,32 @@ export default function AutomatizacionesPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Plantas asociadas (si hay acción CAPTURE_PHOTO) */}
+                {selectedAutomation.actions.some(a => a.actionType === 'CAPTURE_PHOTO') && selectedAutomation.plantIds && selectedAutomation.plantIds.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
+                      <Camera className="w-4 h-4 text-cyan-400" />
+                      Plantas asociadas ({selectedAutomation.plantIds.length})
+                    </h3>
+                    {automationPlants.length > 0 ? (
+                      <div className="space-y-1">
+                        {automationPlants.map((plant) => (
+                          <div key={plant.id} className="flex items-center gap-2 text-sm">
+                            <span className="text-zinc-300">
+                              {plant.tagCode}
+                              {plant.strain && (
+                                <span className="text-zinc-500 ml-2">({plant.strain.name})</span>
+                              )}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-zinc-500">Cargando plantas...</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Estadísticas de efectividad */}
@@ -587,43 +662,78 @@ export default function AutomatizacionesPage() {
                     <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
                   </div>
                 ) : executions.length > 0 ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {executions.map((execution) => {
-                      const statusInfo = executionStatusConfig[execution.status];
-                      return (
-                        <div
-                          key={execution.id}
-                          className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            {execution.status === 'COMPLETED' ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-400" />
-                            ) : execution.status === 'FAILED' ? (
-                              <XCircle className="w-4 h-4 text-red-400" />
-                            ) : (
-                              <Clock className="w-4 h-4 text-zinc-400" />
-                            )}
-                            <div>
-                              <p className={`text-sm font-medium ${statusInfo.color}`}>
-                                {statusInfo.label}
-                              </p>
-                              <p className="text-xs text-zinc-500">
-                                {new Date(execution.startedAt).toLocaleString('es-AR')}
-                              </p>
+                  <>
+                    {/* Ejecuciones paginadas */}
+                    <div className="space-y-2">
+                      {executions
+                        .slice((executionsPage - 1) * executionsPerPage, executionsPage * executionsPerPage)
+                        .map((execution) => {
+                          const statusInfo = executionStatusConfig[execution.status];
+                          return (
+                            <div
+                              key={execution.id}
+                              className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg"
+                            >
+                              <div className="flex items-center gap-3">
+                                {execution.status === 'COMPLETED' ? (
+                                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                                ) : execution.status === 'FAILED' ? (
+                                  <XCircle className="w-4 h-4 text-red-400" />
+                                ) : (
+                                  <Clock className="w-4 h-4 text-zinc-400" />
+                                )}
+                                <div>
+                                  <p className={`text-sm font-medium ${statusInfo.color}`}>
+                                    {statusInfo.label}
+                                  </p>
+                                  <p className="text-xs text-zinc-500">
+                                    {new Date(execution.startedAt).toLocaleString('es-AR')}
+                                  </p>
+                                </div>
+                              </div>
+                              {execution.effectivenessChecks && execution.effectivenessChecks.length > 0 && (
+                                <div className="text-right">
+                                  <p className="text-xs text-zinc-400">
+                                    {execution.effectivenessChecks.filter(c => c.conditionMet).length}/
+                                    {execution.effectivenessChecks.length} checks OK
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                          {execution.effectivenessChecks && execution.effectivenessChecks.length > 0 && (
-                            <div className="text-right">
-                              <p className="text-xs text-zinc-400">
-                                {execution.effectivenessChecks.filter(c => c.conditionMet).length}/
-                                {execution.effectivenessChecks.length} checks OK
-                              </p>
-                            </div>
-                          )}
+                          );
+                        })}
+                    </div>
+
+                    {/* Controles de paginación */}
+                    {executions.length > executionsPerPage && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-700/50">
+                        <p className="text-sm text-zinc-400">
+                          Mostrando {((executionsPage - 1) * executionsPerPage) + 1} - {Math.min(executionsPage * executionsPerPage, executions.length)} de {executions.length}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setExecutionsPage(prev => Math.max(1, prev - 1))}
+                            disabled={executionsPage === 1}
+                            className="p-2 bg-zinc-800/50 hover:bg-zinc-700/50 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 rounded-lg transition-colors"
+                            title="Página anterior"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <span className="text-sm text-zinc-400 px-2">
+                            {executionsPage} / {Math.ceil(executions.length / executionsPerPage)}
+                          </span>
+                          <button
+                            onClick={() => setExecutionsPage(prev => Math.min(Math.ceil(executions.length / executionsPerPage), prev + 1))}
+                            disabled={executionsPage >= Math.ceil(executions.length / executionsPerPage)}
+                            className="p-2 bg-zinc-800/50 hover:bg-zinc-700/50 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 rounded-lg transition-colors"
+                            title="Página siguiente"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-6">
                     <Activity className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
@@ -660,6 +770,15 @@ export default function AutomatizacionesPage() {
           onCreated={handleCreateAutomation}
         />
       )}
+
+      {/* Modal de edición */}
+      {showEditModal && selectedAutomation && (
+        <EditAutomationModal
+          automation={selectedAutomation}
+          onClose={() => setShowEditModal(false)}
+          onUpdated={handleUpdateAutomation}
+        />
+      )}
     </div>
   );
 }
@@ -683,6 +802,8 @@ function CreateAutomationModal({
 }) {
   const [step, setStep] = useState<WizardStep>('type');
   const [isCreating, setIsCreating] = useState(false);
+  const [plants, setPlants] = useState<Plant[]>([]);
+  const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([]);
 
   // Form state
   const [form, setForm] = useState({
@@ -700,7 +821,23 @@ function CreateAutomationModal({
     evaluationInterval: 5,
     startTime: '',
     endTime: '',
+    notifications: true,
   });
+
+  // Cargar plantas cuando cambia la sección
+  useEffect(() => {
+    if (form.sectionId) {
+      plantService.getAll({ sectionId: form.sectionId })
+        .then(setPlants)
+        .catch(err => {
+          console.error('Error loading plants:', err);
+          setPlants([]);
+        });
+    } else {
+      setPlants([]);
+    }
+    setSelectedPlantIds([]); // Resetear selección al cambiar sección
+  }, [form.sectionId]);
 
   const [conditions, setConditions] = useState<Array<{
     deviceId: string;
@@ -720,7 +857,7 @@ function CreateAutomationModal({
 
   const sensorDevices = devices.filter(d => d.type === 'SENSOR');
   const controllableDevices = devices.filter(d => 
-    ['LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR', 'DESHUMIDIFICADOR', 'BOMBA_RIEGO', 'CALEFACTOR', 'AIRE_ACONDICIONADO'].includes(d.type)
+    ['LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR', 'DESHUMIDIFICADOR', 'BOMBA_RIEGO', 'CALEFACTOR', 'AIRE_ACONDICIONADO', 'CAMARA'].includes(d.type)
   );
 
   const steps: { key: WizardStep; label: string }[] = [
@@ -832,6 +969,8 @@ function CreateAutomationModal({
         evaluationInterval: form.triggerType !== 'SCHEDULED' ? form.evaluationInterval : undefined,
         startTime: form.startTime || undefined,
         endTime: form.endTime || undefined,
+        notifications: form.notifications,
+        plantIds: selectedPlantIds.length > 0 ? selectedPlantIds : undefined,
         conditions: conditions.length > 0 ? conditions.map((c, i) => ({ ...c, order: i })) : undefined,
         actions: actions.map((a, i) => ({ ...a, order: i })),
       };
@@ -960,6 +1099,30 @@ function CreateAutomationModal({
                       );
                     })}
                   </div>
+                </div>
+
+                {/* Toggle de alertas */}
+                <div className="flex items-center justify-between p-4 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-300">Enviar alertas</label>
+                      <p className="text-xs text-zinc-500">Recibir notificaciones cuando se ejecute esta automatización</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, notifications: !form.notifications })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      form.notifications ? 'bg-purple-600' : 'bg-zinc-700'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        form.notifications ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -1363,6 +1526,7 @@ function CreateAutomationModal({
                             <option value="TURN_ON">Encender</option>
                             <option value="TURN_OFF">Apagar</option>
                             <option value="TOGGLE">Alternar</option>
+                            <option value="CAPTURE_PHOTO">Capturar foto</option>
                           </select>
                           <button
                             type="button"
@@ -1408,6 +1572,82 @@ function CreateAutomationModal({
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* Selector de plantas para acciones CAPTURE_PHOTO */}
+                {actions.some(a => a.actionType === 'CAPTURE_PHOTO') && (
+                  <div className="mt-6 p-4 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Camera className="w-5 h-5 text-cyan-400" />
+                      <label className="text-sm font-medium text-zinc-300">
+                        Plantas asociadas (opcional)
+                      </label>
+                    </div>
+                    <p className="text-xs text-zinc-500 mb-3">
+                      Selecciona las plantas para registrar las fotos en su historial. Deja vacío para no registrar en ninguna planta.
+                    </p>
+                    
+                    {plants.length === 0 ? (
+                      <p className="text-sm text-zinc-500 text-center py-4">
+                        No hay plantas en esta sección
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        <div className="flex items-center gap-2 mb-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (selectedPlantIds.length === plants.length) {
+                                setSelectedPlantIds([]);
+                              } else {
+                                setSelectedPlantIds(plants.map(p => p.id));
+                              }
+                            }}
+                            className="text-xs px-2 py-1 bg-purple-600/20 text-purple-400 rounded hover:bg-purple-600/30"
+                          >
+                            {selectedPlantIds.length === plants.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
+                          </button>
+                        </div>
+                        {plants.map((plant) => {
+                          const isSelected = selectedPlantIds.includes(plant.id);
+                          return (
+                            <label
+                              key={plant.id}
+                              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'bg-purple-600/20 border border-purple-600/50'
+                                  : 'bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedPlantIds([...selectedPlantIds, plant.id]);
+                                  } else {
+                                    setSelectedPlantIds(selectedPlantIds.filter(id => id !== plant.id));
+                                  }
+                                }}
+                                className="w-4 h-4 text-purple-600 bg-zinc-800 border-zinc-600 rounded focus:ring-purple-500"
+                              />
+                              <span className="text-sm text-zinc-300 flex-1">
+                                {plant.tagCode}
+                                {plant.strain && (
+                                  <span className="text-xs text-zinc-500 ml-2">
+                                    ({plant.strain.name})
+                                  </span>
+                                )}
+                              </span>
+                              {isSelected && (
+                                <CheckSquare className="w-4 h-4 text-purple-400" />
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>
@@ -1491,6 +1731,48 @@ function CreateAutomationModal({
                     ))}
                   </div>
                 </div>
+
+                {/* Notifications summary */}
+                <div className="p-4 bg-zinc-800/30 rounded-xl">
+                  <h4 className="text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                    Alertas
+                  </h4>
+                  <p className="text-sm text-zinc-400">
+                    {form.notifications ? (
+                      <span className="text-green-400">✓ Las alertas están activadas</span>
+                    ) : (
+                      <span className="text-zinc-500">✗ Las alertas están desactivadas</span>
+                    )}
+                  </p>
+                </div>
+
+                {/* Plants summary (si hay acción CAPTURE_PHOTO) */}
+                {actions.some(a => a.actionType === 'CAPTURE_PHOTO') && (
+                  <div className="p-4 bg-zinc-800/30 rounded-xl">
+                    <h4 className="text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2">
+                      <Camera className="w-4 h-4 text-cyan-400" />
+                      Plantas asociadas
+                    </h4>
+                    {selectedPlantIds.length > 0 ? (
+                      <div className="space-y-1">
+                        {selectedPlantIds.map(plantId => {
+                          const plant = plants.find(p => p.id === plantId);
+                          return plant ? (
+                            <p key={plantId} className="text-sm text-zinc-400">
+                              • {plant.tagCode}
+                              {plant.strain && (
+                                <span className="text-zinc-500 ml-2">({plant.strain.name})</span>
+                              )}
+                            </p>
+                          ) : null;
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-zinc-500">No se registrarán fotos en el historial de plantas</p>
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1534,6 +1816,145 @@ function CreateAutomationModal({
               <ChevronRight className="w-4 h-4" />
             </button>
           )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// =====================================================
+// MODAL DE EDICIÓN DE AUTOMATIZACIÓN
+// =====================================================
+
+function EditAutomationModal({
+  automation,
+  onClose,
+  onUpdated,
+}: {
+  automation: Automation;
+  onClose: () => void;
+  onUpdated: (data: Partial<CreateAutomationDto>) => void;
+}) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [form, setForm] = useState({
+    name: automation.name,
+    description: automation.description || '',
+    notifications: automation.notifications,
+  });
+
+  async function handleSubmit() {
+    if (!form.name.trim()) {
+      alert('El nombre es requerido');
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await onUpdated({
+        name: form.name,
+        description: form.description || undefined,
+        notifications: form.notifications,
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative bg-zinc-900 rounded-2xl border border-zinc-700 w-full max-w-md overflow-hidden shadow-2xl"
+      >
+        {/* Header */}
+        <div className="border-b border-zinc-800 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Settings className="w-5 h-5 text-purple-400" />
+              Editar Automatización
+            </h2>
+            <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
+              <X className="w-5 h-5 text-zinc-400" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Nombre *</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="Ej: Luz de crecimiento 18h"
+              className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Descripción</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={3}
+              placeholder="Describe qué hace esta automatización..."
+              className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white resize-none focus:border-purple-500"
+            />
+          </div>
+
+          {/* Toggle de alertas */}
+          <div className="flex items-center justify-between p-4 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-yellow-400" />
+              <div>
+                <label className="block text-sm font-medium text-zinc-300">Enviar alertas</label>
+                <p className="text-xs text-zinc-500">Recibir notificaciones cuando se ejecute esta automatización</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, notifications: !form.notifications })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                form.notifications ? 'bg-purple-600' : 'bg-zinc-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  form.notifications ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-zinc-800 px-6 py-4 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isUpdating || !form.name.trim()}
+            className="flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg transition-colors"
+          >
+            {isUpdating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                Guardar Cambios
+              </>
+            )}
+          </button>
         </div>
       </motion.div>
     </div>

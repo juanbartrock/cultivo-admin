@@ -769,6 +769,7 @@ export interface Automation {
   priority: number;
   allowOverlap: boolean;
   notifications: boolean;
+  plantIds: string[]; // IDs de plantas asociadas (para automatizaciones de fotos)
   dependsOnId?: string;
   dependsOn?: Automation;
   conditions: AutomationCondition[];
@@ -807,6 +808,7 @@ export interface CreateAutomationDto {
   priority?: number;
   allowOverlap?: boolean;
   notifications?: boolean;
+  plantIds?: string[]; // IDs de plantas para registrar eventos (ej: para fotos)
   dependsOnId?: string;
   
   // Condiciones (opcionales para SCHEDULED)

@@ -14,6 +14,7 @@ import {
   ActionType,
   TriggerType,
   ScheduleType,
+  EventType,
   Prisma 
 } from '@prisma/client';
 
@@ -120,6 +121,18 @@ export class AutomationsService {
       await this.findById(data.dependsOnId);
     }
 
+    // Verificar que las plantas existen si se proporcionan
+    if (data.plantIds && data.plantIds.length > 0) {
+      const plants = await this.prisma.plant.findMany({
+        where: { id: { in: data.plantIds } },
+      });
+      if (plants.length !== data.plantIds.length) {
+        const foundIds = plants.map(p => p.id);
+        const missingIds = data.plantIds.filter(id => !foundIds.includes(id));
+        throw new NotFoundException(`Plantas no encontradas: ${missingIds.join(', ')}`);
+      }
+    }
+
     const triggerType = data.triggerType || TriggerType.CONDITION;
 
     return this.prisma.automation.create({
@@ -141,6 +154,7 @@ export class AutomationsService {
         priority: data.priority || 0,
         allowOverlap: data.allowOverlap ?? true,
         notifications: data.notifications ?? true,
+        plantIds: data.plantIds || [],
         ...(data.dependsOnId && {
           dependsOn: { connect: { id: data.dependsOnId } },
         }),
@@ -218,6 +232,7 @@ export class AutomationsService {
         ...(data.priority !== undefined && { priority: data.priority }),
         ...(data.allowOverlap !== undefined && { allowOverlap: data.allowOverlap }),
         ...(data.notifications !== undefined && { notifications: data.notifications }),
+        ...(data.plantIds !== undefined && { plantIds: data.plantIds }),
         ...(data.dependsOnId !== undefined && {
           dependsOn: data.dependsOnId 
             ? { connect: { id: data.dependsOnId } }
@@ -615,8 +630,43 @@ export class AutomationsService {
             success = true;
             break;
           case ActionType.CAPTURE_PHOTO:
-            await this.devicesService.captureSnapshot(action.deviceId);
-            success = true;
+            const snapshotResult = await this.devicesService.captureSnapshot(action.deviceId);
+            success = snapshotResult.success || false;
+            
+            // Si hay plantas asociadas y la foto se capturó correctamente, registrar eventos
+            if (success && automation.plantIds && automation.plantIds.length > 0 && snapshotResult.downloadUrl) {
+              try {
+                // Obtener información de las plantas asociadas
+                const plants = await this.prisma.plant.findMany({
+                  where: { id: { in: automation.plantIds } },
+                  select: { id: true, cycleId: true, sectionId: true },
+                });
+
+                // Crear evento de foto para cada planta asociada
+                for (const plant of plants) {
+                  await this.prisma.event.create({
+                    data: {
+                      type: EventType.FOTO,
+                      plantId: plant.id,
+                      cycleId: plant.cycleId,
+                      sectionId: plant.sectionId,
+                      data: {
+                        url: snapshotResult.downloadUrl,
+                        filename: snapshotResult.filename,
+                        caption: `Foto automática capturada por automatización "${automation.name}"`,
+                        automationId: automation.id,
+                        automationName: automation.name,
+                        capturedAt: new Date().toISOString(),
+                      },
+                    },
+                  });
+                }
+                this.logger.log(`Registradas ${plants.length} fotos en historial de plantas para automatización ${automation.id}`);
+              } catch (error) {
+                this.logger.error(`Error registrando eventos de foto en plantas: ${error.message}`);
+                // No fallar la ejecución si hay error al registrar eventos
+              }
+            }
             break;
           case ActionType.TRIGGER_IRRIGATION:
             await this.devicesService.controlDevice(action.deviceId, 'on');
