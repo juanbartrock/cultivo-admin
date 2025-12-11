@@ -32,7 +32,7 @@ app.use((req, res, next) => {
 // Swagger UI
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Tapo API - Documentación'
+  customSiteTitle: 'Tapo Cloud API - Documentación'
 }));
 
 // Redirección raíz a docs
@@ -71,20 +71,20 @@ app.use((err, req, res, next) => {
 });
 
 // Iniciar servidor
-function start() {
+async function start() {
   console.log('='.repeat(50));
-  console.log('Tapo Service');
+  console.log('Tapo Cloud Service v2.0');
   console.log('='.repeat(50));
 
   let initialized = false;
 
   try {
-    // Inicializar cliente Tapo
-    tapoClient.initialize();
+    // Inicializar cliente Tapo via Cloud
+    await tapoClient.initialize();
     initialized = true;
   } catch (error) {
-    console.error('[Warning] Error al configurar Tapo:', error.message);
-    console.log('[Info] Configura TAPO_CAMERA_IP, TAPO_USERNAME y TAPO_PASSWORD');
+    console.error('[Warning] Error al conectar con Tapo Cloud:', error.message);
+    console.log('[Info] Configura TAPO_EMAIL y TAPO_PASSWORD con tus credenciales de TP-Link');
   }
 
   // Iniciar servidor HTTP
@@ -92,19 +92,22 @@ function start() {
     console.log('='.repeat(50));
     console.log(`Servidor iniciado en puerto ${PORT}`);
     console.log('');
-    console.log(`Estado: ${initialized ? 'CONFIGURADO ✓' : 'NO CONFIGURADO ✗'}`);
+    console.log(`Conexión: ${initialized ? 'CLOUD ✓' : 'NO CONECTADO ✗'}`);
     if (initialized) {
-      console.log(`Cámara IP: ${tapoClient.cameraIp}`);
+      const info = tapoClient.getCameraInfo();
+      if (info.connected) {
+        console.log(`Cámara: ${info.name} (${info.model})`);
+      }
     }
     console.log('');
     console.log(`Documentación: http://localhost:${PORT}/docs`);
     console.log('');
     console.log('Endpoints:');
     console.log(`  GET  /health            - Health check`);
-    console.log(`  GET  /devices           - Listar dispositivos Tapo`);
+    console.log(`  GET  /devices           - Listar cámaras Tapo`);
     console.log(`  GET  /camera            - Info de la cámara`);
-    console.log(`  GET  /stream            - URL del stream RTSP`);
-    console.log(`  POST /snapshot          - Capturar imagen`);
+    console.log(`  GET  /stream            - URL del stream RTSP (local)`);
+    console.log(`  POST /snapshot          - Capturar imagen via Cloud`);
     console.log(`  GET  /snapshots         - Listar capturas`);
     console.log(`  GET  /snapshots/:file   - Descargar imagen`);
     console.log('='.repeat(50));

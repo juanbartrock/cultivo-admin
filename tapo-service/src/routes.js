@@ -9,44 +9,26 @@ const router = express.Router();
  * Health check del servicio
  */
 router.get('/health', (req, res) => {
+  const cameraInfo = tapoClient.getCameraInfo();
   res.json({
     status: 'ok',
     service: 'tapo-service',
+    version: '2.0.0',
+    connectionType: 'cloud',
+    cameraConnected: cameraInfo.connected,
     timestamp: new Date().toISOString(),
   });
 });
 
 /**
  * GET /devices
- * Lista los dispositivos Tapo (cámaras) configurados
+ * Lista los dispositivos Tapo (cámaras) de la cuenta
  * Este endpoint es requerido por el backend para escanear dispositivos
  */
-router.get('/devices', (req, res) => {
+router.get('/devices', async (req, res) => {
   try {
-    // Verificar si la cámara está configurada
-    if (!tapoClient.cameraIp) {
-      return res.json({
-        success: true,
-        count: 0,
-        devices: [],
-      });
-    }
-
-    const cameraInfo = tapoClient.getCameraInfo();
+    const devices = await tapoClient.getDevices();
     
-    // Devolver la cámara como un dispositivo en el formato esperado
-    const devices = [
-      {
-        id: `tapo-camera-${cameraInfo.ip.replace(/\./g, '-')}`,
-        name: `Tapo Camera ${cameraInfo.ip}`,
-        online: true, // Asumimos online si está configurada
-        category: 'camera',
-        model: cameraInfo.model || 'Tapo C100',
-        brand: 'TP-Link',
-        ip: cameraInfo.ip,
-      },
-    ];
-
     res.json({
       success: true,
       count: devices.length,
@@ -81,7 +63,7 @@ router.get('/camera', (req, res) => {
 
 /**
  * GET /stream
- * Obtiene las URLs del stream RTSP
+ * Obtiene las URLs del stream RTSP (requiere IP local configurada)
  */
 router.get('/stream', (req, res) => {
   try {
@@ -98,12 +80,8 @@ router.get('/stream', (req, res) => {
     
     res.json({
       success: true,
-      cameraIp: tapoClient.cameraIp,
       ...streamInfo,
-      usage: {
-        vlc: `vlc "${streamInfo.url}"`,
-        ffplay: `ffplay -rtsp_transport tcp "${streamInfo.url}"`,
-      },
+      note: 'Los streams RTSP solo funcionan si está en la misma red que la cámara',
     });
   } catch (error) {
     res.status(500).json({
@@ -115,20 +93,11 @@ router.get('/stream', (req, res) => {
 
 /**
  * POST /snapshot
- * Captura un snapshot del stream
+ * Captura un snapshot via Cloud API
  */
 router.post('/snapshot', async (req, res) => {
   try {
-    const quality = req.body.quality || 'high';
-    
-    if (!['high', 'low'].includes(quality)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Quality debe ser "high" o "low"',
-      });
-    }
-
-    const snapshot = await tapoClient.captureSnapshot(quality);
+    const snapshot = await tapoClient.captureSnapshot();
     
     res.json({
       success: true,

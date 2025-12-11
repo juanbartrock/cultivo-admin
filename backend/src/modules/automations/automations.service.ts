@@ -369,7 +369,9 @@ export class AutomationsService {
           // Comparar con un margen de 1 minuto
           const [h, m] = time.split(':').map(Number);
           const [ch, cm] = currentTime.split(':').map(Number);
-          return h === ch && Math.abs(m - cm) <= 1;
+          const matches = h === ch && Math.abs(m - cm) <= 1;
+          this.logger.debug(`SPECIFIC_TIMES check: target=${time} (${h}:${m}), current=${currentTime} (${ch}:${cm}), matches=${matches}`);
+          return matches;
         });
         
         if (matchedTime) {
@@ -377,9 +379,11 @@ export class AutomationsService {
           if (automation.lastEvaluatedAt) {
             const minutesSinceLastEval = (now.getTime() - automation.lastEvaluatedAt.getTime()) / (1000 * 60);
             if (minutesSinceLastEval < 2) {
+              this.logger.debug(`SPECIFIC_TIMES: skipping, executed ${minutesSinceLastEval.toFixed(1)} minutes ago`);
               return { shouldExecute: false, actionType: null };
             }
           }
+          this.logger.log(`SPECIFIC_TIMES: matched ${matchedTime}, will execute`);
           return { shouldExecute: true, actionType: 'on' };
         }
         return { shouldExecute: false, actionType: null };

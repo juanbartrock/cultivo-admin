@@ -27,7 +27,9 @@ export class AutomationSchedulerService {
     }
 
     this.isRunning = true;
-    this.logger.debug('Starting automation evaluation cycle...');
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    this.logger.debug(`Starting automation evaluation cycle at ${currentTime} (${now.toISOString()})`);
 
     try {
       // Obtener automatizaciones que deben evaluarse
