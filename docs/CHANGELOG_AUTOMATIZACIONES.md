@@ -332,3 +332,4 @@ npx prisma db push
 **Autor:** Sistema implementado como mejora del sistema de automatizaciones existente  
 **Fecha:** Diciembre 2024
 
+

@@ -399,3 +399,4 @@ UI oculta la grilla de eventos
 5. **Acciones rápidas:** Botones para acciones comunes (registrar riego, nota, etc.) desde la grilla
 6. **Comparación:** Mostrar eventos de múltiples plantas lado a lado para comparación
 
+

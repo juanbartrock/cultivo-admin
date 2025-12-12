@@ -371,3 +371,4 @@ Los eventos de riego se muestran con:
 - **Servicios**: `frontend/src/services/feedingPlanService.ts`
 - **Tipos**: `frontend/src/types/index.ts`
 - **Schema**: `backend/prisma/schema.prisma`
+

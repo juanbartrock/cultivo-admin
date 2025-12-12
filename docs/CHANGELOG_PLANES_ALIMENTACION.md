@@ -383,3 +383,4 @@ GET /api/events?plantId=X → EventsService.findAll()
 - Los nutrientes se guardan con formato `"dosis unidad"` (ej: `"0.7 g/L"`)
 - El sistema soporta múltiples planes por carpa pero un plan por planta por etapa
 - La fecha de inicio de etapa (`stageStartDate`) es crítica para el cálculo de semanas
+
