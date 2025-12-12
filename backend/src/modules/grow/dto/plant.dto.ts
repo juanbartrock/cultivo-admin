@@ -8,7 +8,7 @@ import {
   MaxLength,
   IsDateString,
 } from 'class-validator';
-import { PlantStage, PlantSex } from '@prisma/client';
+import { PlantStage, PlantSex, PlantHealthStatus } from '@prisma/client';
 
 export class CreatePlantDto {
   @ApiProperty({
@@ -60,6 +60,15 @@ export class CreatePlantDto {
   sex?: PlantSex;
 
   @ApiPropertyOptional({
+    description: 'Estado de salud de la planta',
+    enum: PlantHealthStatus,
+    default: PlantHealthStatus.HEALTHY,
+  })
+  @IsEnum(PlantHealthStatus)
+  @IsOptional()
+  healthStatus?: PlantHealthStatus;
+
+  @ApiPropertyOptional({
     description: 'URL de foto principal',
   })
   @IsString()
@@ -83,7 +92,7 @@ export class CreatePlantDto {
   startDate?: string;
 }
 
-export class UpdatePlantDto extends PartialType(CreatePlantDto) {}
+export class UpdatePlantDto extends PartialType(CreatePlantDto) { }
 
 export class MovePlantDto {
   @ApiPropertyOptional({

@@ -64,6 +64,12 @@ enum PlantSex {
   UNKNOWN
 }
 
+enum PlantHealthStatus {
+  HEALTHY
+  INFECTED
+  DEAD
+}
+
 enum EventType {
   RIEGO
   PODA
@@ -293,6 +299,7 @@ model Plant {
   section         Section               @relation(fields: [sectionId], references: [id])
   stage           PlantStage            @default(GERMINACION)
   sex             PlantSex              @default(UNKNOWN)
+  healthStatus    PlantHealthStatus     @default(HEALTHY) @map("health_status")
   photo           String? // URL de foto principal
   notes           String?
   startDate       DateTime?             @map("start_date") // Fecha de inicio (germinación/plantado)

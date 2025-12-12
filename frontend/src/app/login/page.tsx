@@ -24,7 +24,20 @@ export default function LoginPage() {
             login(access_token);
         } catch (err) {
             console.error(err);
-            setError('Credenciales inválidas. Intenta nuevamente.');
+            let errorMessage = 'Error al iniciar sesión. Intenta nuevamente.';
+
+            if (err instanceof Error) {
+                // Si es un error de conexión (fetch failed) o similar
+                if (err.message.includes('Failed to fetch') || err.message.includes('Network request failed')) {
+                    errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión.';
+                } else if (err.message.includes('401') || err.message.includes('Credenciales')) {
+                    errorMessage = 'Credenciales inválidas. Intenta nuevamente.';
+                } else {
+                    errorMessage = err.message;
+                }
+            }
+
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }

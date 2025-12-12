@@ -7,6 +7,7 @@ import { useToast } from '@/contexts/ToastContext';
 import SensorCard from '@/components/SensorCard';
 import CarpaCard from '@/components/CarpaCard';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import EmptyState from '@/components/ui/EmptyState';
 import { roomService, sectionService } from '@/services/locationService';
 import { useWeather } from '@/hooks/useWeather';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
@@ -166,23 +167,19 @@ export default function SalaPage() {
   // Empty state - No rooms configured at all
   if (!isLoading && rooms.length === 0) {
     return (
-      <div className="space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center justify-center min-h-[50vh] text-center"
-        >
-          <div className="w-20 h-20 rounded-full bg-cultivo-green-600/10 flex items-center justify-center mb-6">
-            <Building2 className="w-10 h-10 text-cultivo-green-500" />
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Configura tu primer espacio de cultivo</h1>
-          <p className="text-zinc-400 mb-6 max-w-md">
-            Crea tu primer espacio de cultivo (sala, invernadero, etc.) para empezar a gestionar tu cultivo.
-          </p>
-          <CreateRoomButton onCreated={loadData} />
-        </motion.div>
-      </div>
+      <EmptyState
+        icon={Building2}
+        title="Configura tu primer espacio"
+        description="Crea tu primer espacio de cultivo (sala, invernadero, etc.) para comenzar."
+        className="mt-8"
+      >
+        <CreateRoomButton onCreated={loadData} />
+      </EmptyState>
     );
+    // Note: We need to trigger the modal. Since the modal is inside CreateRoomButton, 
+    // we'll refactor slightly to render CreateRoomButton here or expose the modal state.
+    // For simplicity, let's render the button wrapper inside EmptyState or render the page normally 
+    // but showing EmptyState instead of list.
   }
 
   return (

@@ -12,6 +12,8 @@ import {
   CheckCircle2, XCircle, AlertCircle, BarChart3, CheckSquare, Camera
 } from 'lucide-react';
 
+import EmptyState from '@/components/ui/EmptyState';
+
 import { automationService, EffectivenessStats } from '@/services/automationService';
 import { sectionService, getAllLocations } from '@/services/locationService';
 import { deviceService } from '@/services/deviceService';
@@ -276,6 +278,28 @@ export default function AutomatizacionesPage() {
           Reintentar
         </button>
       </div>
+    );
+  }
+
+  // Empty State - No automations
+  if (automations.length === 0) {
+    return (
+      <EmptyState
+        icon={Zap}
+        title="Sin automatizaciones"
+        description="Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales."
+        actionLabel="Crear Automatización"
+        onAction={() => setShowCreateModal(true)}
+      >
+        {showCreateModal && (
+          <CreateAutomationModal
+            onClose={() => setShowCreateModal(false)}
+            onCreated={handleCreateAutomation}
+            sections={sections}
+            devices={devices}
+          />
+        )}
+      </EmptyState>
     );
   }
 

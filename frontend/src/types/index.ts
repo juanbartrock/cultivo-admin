@@ -30,15 +30,20 @@ export type PlantStage = 'GERMINACION' | 'VEGETATIVO' | 'PRE_FLORA' | 'FLORACION
 // Sexo de la planta
 export type PlantSex = 'FEM' | 'REG' | 'AUTO' | 'UNKNOWN';
 
+// Estado de salud de la planta
+export type PlantHealthStatus = 'HEALTHY' | 'INFECTED' | 'DEAD';
+
 // Tipos de eventos
 export type EventType =
   | 'RIEGO'
   | 'PODA'
-  | 'CAMBIO_FOTOPERIODO'
   | 'TRANSPLANTE'
   | 'NOTA'
   | 'FOTO'
-  | 'PARAMETRO_AMBIENTAL';
+  | 'PARAMETRO_AMBIENTAL'
+  | 'CAMBIO_FOTOPERIODO';
+
+
 
 // ============================================
 // INTERFACES DE ENTIDADES - Backend
@@ -179,6 +184,7 @@ export interface Plant {
   section?: Section;
   stage: PlantStage;
   sex: PlantSex;
+  healthStatus?: PlantHealthStatus; // Estado de salud
   photo?: string;
   notes?: string;
   startDate?: string; // Fecha de inicio (germinación/plantado)
@@ -487,7 +493,7 @@ export interface AssignPreventionPlanDto {
 // ============================================
 
 // Tipos de artefactos disponibles (legacy)
-export type TipoArtefacto = 
+export type TipoArtefacto =
   | 'sensor'
   | 'luz'
   | 'extractor'
@@ -747,10 +753,10 @@ export interface Automation {
   sectionId: string;
   section?: Section;
   status: AutomationStatus;
-  
+
   // Tipo de trigger
   triggerType: TriggerType;
-  
+
   // Configuración de programación
   scheduleType?: ScheduleType;
   activeStartTime?: string;
@@ -758,14 +764,14 @@ export interface Automation {
   intervalMinutes?: number;
   actionDuration?: number;
   specificTimes: string[];
-  
+
   // Campos existentes (mantener compatibilidad)
   interval: number; // Intervalo de evaluación en minutos
   executionTime?: number;
   daysOfWeek: number[];
   startTime?: string;
   endTime?: string;
-  
+
   priority: number;
   allowOverlap: boolean;
   notifications: boolean;
@@ -787,10 +793,10 @@ export interface CreateAutomationDto {
   name: string;
   description?: string;
   sectionId: string;
-  
+
   // Tipo de trigger
   triggerType?: TriggerType;
-  
+
   // Configuración de programación
   scheduleType?: ScheduleType;
   activeStartTime?: string;
@@ -798,19 +804,19 @@ export interface CreateAutomationDto {
   intervalMinutes?: number;
   actionDuration?: number;
   specificTimes?: string[];
-  
+
   // Días y ventana de evaluación
   daysOfWeek?: number[];
   evaluationInterval?: number;
   startTime?: string;
   endTime?: string;
-  
+
   priority?: number;
   allowOverlap?: boolean;
   notifications?: boolean;
   plantIds?: string[]; // IDs de plantas para registrar eventos (ej: para fotos)
   dependsOnId?: string;
-  
+
   // Condiciones (opcionales para SCHEDULED)
   conditions?: {
     deviceId: string;
@@ -823,7 +829,7 @@ export interface CreateAutomationDto {
     logicOperator?: string;
     order?: number;
   }[];
-  
+
   actions: {
     deviceId: string;
     actionType: ActionType;
@@ -958,7 +964,7 @@ export interface CreateHarvestProductDto {
 // LAYOUT DE SECCIÓN
 // ============================================
 
-export type SectionLayoutKey = 
+export type SectionLayoutKey =
   | 'environment'
   | 'sensors'
   | 'controllables'

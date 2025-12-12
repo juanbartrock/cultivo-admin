@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Plant, PlantStage, PlantSex } from '@/types';
+import { Plant, PlantStage, PlantSex, PlantHealthStatus } from '@/types';
 import {
   Leaf,
   Calendar,
@@ -17,7 +17,11 @@ import {
   CalendarPlus,
   RefreshCw,
   Check,
-  Loader2
+  Loader2,
+  HeartPulse,
+  Biohazard,
+  Skull,
+  Activity
 } from 'lucide-react';
 import { useState } from 'react';
 import { plantService } from '@/services/growService';
@@ -49,6 +53,12 @@ const sexLabels: Record<PlantSex, string> = {
   UNKNOWN: 'Desconocido',
 };
 
+const healthIcons: Record<PlantHealthStatus, { icon: React.ElementType; color: string; bg: string; label: string }> = {
+  HEALTHY: { icon: HeartPulse, color: 'text-emerald-400', bg: 'bg-emerald-500/20', label: 'Sana' },
+  INFECTED: { icon: Biohazard, color: 'text-red-400', bg: 'bg-red-500/20', label: 'Infectada' },
+  DEAD: { icon: Skull, color: 'text-zinc-400', bg: 'bg-zinc-500/20', label: 'Muerta' },
+};
+
 interface PlantCardProps {
   plant: Plant;
   delay?: number;
@@ -65,9 +75,16 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   const StageIcon = stageConfig.icon;
   const [showMenu, setShowMenu] = useState(false);
   const [showStageModal, setShowStageModal] = useState(false);
+  const [showHealthModal, setShowHealthModal] = useState(false);
   const [isChangingStage, setIsChangingStage] = useState(false);
+  const [isChangingHealth, setIsChangingHealth] = useState(false);
   const [selectedStage, setSelectedStage] = useState<PlantStage | null>(null);
+  const [selectedHealth, setSelectedHealth] = useState<PlantHealthStatus | null>(null);
   const [stageDate, setStageDate] = useState<string>(new Date().toISOString().split('T')[0]);
+
+  const currentHealth = currentPlant.healthStatus || 'HEALTHY';
+  const healthConfig = healthIcons[currentHealth];
+  const HealthIcon = healthConfig.icon;
 
   // Calcular días en la etapa actual o desde el inicio del ciclo
   // Prioridad: stageStartDate > startDate > cycle.startDate > createdAt
@@ -112,6 +129,31 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
+  // Función para cambiar estado de salud
+  const handleHealthChange = async () => {
+    if (!selectedHealth || selectedHealth === currentHealth) {
+      setShowHealthModal(false);
+      setSelectedHealth(null);
+      return;
+    }
+
+    setIsChangingHealth(true);
+    try {
+      const updatedPlant = await plantService.update(currentPlant.id, {
+        healthStatus: selectedHealth
+      });
+      setCurrentPlant(updatedPlant);
+      setShowHealthModal(false);
+      setSelectedHealth(null);
+      toast.success(`Estado de salud actualizado a ${healthIcons[selectedHealth].label}`);
+    } catch (err) {
+      console.error('Error cambiando salud:', err);
+      toast.error('Error al actualizar estado de salud');
+    } finally {
+      setIsChangingHealth(false);
+    }
+  };
+
   // Función para abrir el modal de cambio de etapa
   const openStageModal = () => {
     setSelectedStage(null);
@@ -126,8 +168,8 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
       transition={{ delay: delay * 0.05 }}
       onClick={() => onClick?.(currentPlant)}
       className={`bg-zinc-800/50 backdrop-blur-sm border rounded-xl p-4 transition-all cursor-pointer ${isSelected
-          ? 'border-cultivo-green-500 ring-2 ring-cultivo-green-500/30'
-          : 'border-zinc-700/50 hover:border-cultivo-green-600/30'
+        ? 'border-cultivo-green-500 ring-2 ring-cultivo-green-500/30'
+        : 'border-zinc-700/50 hover:border-cultivo-green-600/30'
         } ${showStageModal ? 'relative z-50' : 'relative'}`}
     >
       <div className="flex items-start gap-4">
@@ -142,6 +184,15 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             <div className="flex items-center gap-2">
               <Tag className="w-4 h-4 text-zinc-500" />
               <h3 className="font-bold text-white text-lg">{currentPlant.tagCode}</h3>
+
+              {/* Health Badge */}
+              <div
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${healthConfig.bg} ${healthConfig.color} border-${healthConfig.color.replace('text-', '')}/30`}
+                title={`Estado: ${healthConfig.label}`}
+              >
+                <HealthIcon className="w-3 h-3" />
+                <span className="hidden sm:inline">{healthConfig.label}</span>
+              </div>
             </div>
 
             {/* Menú de acciones */}
@@ -169,6 +220,17 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                     >
                       <RefreshCw className="w-4 h-4 text-amber-400" />
                       Cambiar Etapa
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        setSelectedHealth(currentHealth);
+                        setShowHealthModal(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                    >
+                      <Activity className="w-4 h-4 text-red-400" />
+                      Reportar Salud
                     </button>
                     <button
                       onClick={() => {
@@ -219,10 +281,10 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             {/* Días en etapa */}
             <span
               className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${hasStageStartDate
-                  ? 'bg-cultivo-green-500/20 text-cultivo-green-400'
-                  : hasStartDate
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'bg-amber-500/20 text-amber-400'
+                ? 'bg-cultivo-green-500/20 text-cultivo-green-400'
+                : hasStartDate
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : 'bg-amber-500/20 text-amber-400'
                 }`}
               title={hasStageStartDate
                 ? `En ${stageLabels[currentPlant.stage]} desde: ${new Date(currentPlant.stageStartDate!).toLocaleDateString()}`
@@ -329,10 +391,10 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                     onClick={() => setSelectedStage(stage)}
                     disabled={isChangingStage || isCurrentStage}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${isCurrentStage
-                        ? `${config.bg} border-${config.color.replace('text-', '')}/50 opacity-60`
-                        : isSelected
-                          ? `${config.bg} border-cultivo-green-500 ring-2 ring-cultivo-green-500/30`
-                          : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                      ? `${config.bg} border-${config.color.replace('text-', '')}/50 opacity-60`
+                      : isSelected
+                        ? `${config.bg} border-cultivo-green-500 ring-2 ring-cultivo-green-500/30`
+                        : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
                       } ${isChangingStage ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <div className={`p-2 rounded-lg ${config.bg}`}>
@@ -394,6 +456,96 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Cambiando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Confirmar
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+      {/* Modal de Estado de Salud */}
+      {showHealthModal && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowHealthModal(false);
+              setSelectedHealth(null);
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-zinc-800">
+              <h3 className="text-lg font-semibold text-white">Reportar Estado de Salud</h3>
+              <p className="text-sm text-zinc-400 mt-1">
+                {currentPlant.tagCode} - Selecciona el estado actual
+              </p>
+            </div>
+
+            <div className="p-4 space-y-2">
+              {(Object.entries(healthIcons) as [PlantHealthStatus, typeof healthIcons['HEALTHY']][]).map(([status, config]) => {
+                const IconComponent = config.icon;
+                const isCurrentStatus = status === currentHealth;
+                const isSelected = status === selectedHealth;
+
+                return (
+                  <button
+                    key={status}
+                    onClick={() => setSelectedHealth(status)}
+                    disabled={isChangingHealth || isCurrentStatus}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${isCurrentStatus
+                      ? `${config.bg} border-${config.color.replace('text-', '')}/50 opacity-60`
+                      : isSelected
+                        ? `${config.bg} border-${config.color.replace('text-', '')} ring-2 ring-${config.color.replace('text-', '')}/30`
+                        : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                      } ${isChangingHealth ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div className={`p-2 rounded-lg ${config.bg}`}>
+                      <IconComponent className={`w-5 h-5 ${config.color}`} />
+                    </div>
+                    <span className={`flex-1 text-left font-medium ${isCurrentStatus || isSelected ? config.color : 'text-zinc-300'}`}>
+                      {config.label}
+                    </span>
+                    {isSelected && !isCurrentStatus && (
+                      <Check className={`w-5 h-5 ${config.color}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowHealthModal(false);
+                  setSelectedHealth(null);
+                }}
+                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                disabled={isChangingHealth}
+              >
+                Cancelar
+              </button>
+              {selectedHealth && selectedHealth !== currentHealth && (
+                <button
+                  onClick={handleHealthChange}
+                  disabled={isChangingHealth}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  {isChangingHealth ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Guardando...
                     </>
                   ) : (
                     <>

@@ -26,6 +26,8 @@ import {
   Filter,
   XCircle,
   ArrowLeft,
+  Pencil,
+  Trash2,
 
   MoreVertical
 } from 'lucide-react';
@@ -43,7 +45,8 @@ import {
   GrowEvent,
   CycleStatus,
   PlantStage,
-  PlantSex
+  PlantSex,
+  PlantHealthStatus
 } from '@/types';
 
 // Componente de loading para Suspense
@@ -120,6 +123,7 @@ function SeguimientosContent() {
   const [showPlantModal, setShowPlantModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showStrainModal, setShowStrainModal] = useState(false);
+  const [editingPlant, setEditingPlant] = useState<Plant | null>(null);
 
   // Filtros
   const [statusFilter, setStatusFilter] = useState<CycleStatus | 'all'>('all');
@@ -474,6 +478,7 @@ function SeguimientosContent() {
                               p.id === updatedPlant.id ? updatedPlant : p
                             ));
                           }}
+                          onEdit={(plant) => setEditingPlant(plant)}
                         />
                       ))}
                     </div>
@@ -795,6 +800,22 @@ function SeguimientosContent() {
           }}
         />
       )}
+
+      {/* Modal: Editar Planta */}
+      {editingPlant && (
+        <PlantEditModal
+          plant={editingPlant}
+          strains={strains}
+          sections={sections}
+          onClose={() => setEditingPlant(null)}
+          onUpdated={(updatedPlant) => {
+            setPlants(plants.map(p =>
+              p.id === updatedPlant.id ? updatedPlant : p
+            ));
+            setEditingPlant(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -933,11 +954,13 @@ function PlantListItem({
   stageIcons,
   stageLabels,
   onStageChange,
+  onEdit,
 }: {
   plant: Plant;
   stageIcons: Record<PlantStage, { icon: React.ElementType; color: string }>;
   stageLabels: Record<PlantStage, string>;
   onStageChange: (plant: Plant) => void;
+  onEdit: (plant: Plant) => void;
 }) {
   const { toast } = useToast();
   const [showStageMenu, setShowStageMenu] = useState(false);
@@ -1028,6 +1051,15 @@ function PlantListItem({
           </>
         )}
       </div>
+
+      {/* Botón de editar */}
+      <button
+        onClick={() => onEdit(plant)}
+        className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-700/50 rounded-lg transition-colors"
+        title="Editar planta"
+      >
+        <Pencil className="w-4 h-4" />
+      </button>
     </div>
   );
 }
@@ -1850,6 +1882,178 @@ function StrainModal({
       <div className="flex justify-end mt-6">
         <button onClick={onClose} className="px-4 py-2 text-zinc-400 hover:text-white">
           Cerrar
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+
+// ============================================
+// MODAL: EDITAR PLANTA
+// ============================================
+
+function PlantEditModal({
+  plant,
+  strains,
+  sections,
+  onClose,
+  onUpdated
+}: {
+  plant: Plant;
+  strains: Strain[];
+  sections: Section[];
+  onClose: () => void;
+  onUpdated: (plant: Plant) => void;
+}) {
+  const [form, setForm] = useState({
+    tagCode: plant.tagCode,
+    strainId: plant.strainId,
+    sectionId: plant.sectionId,
+    stage: plant.stage,
+    sex: plant.sex,
+    healthStatus: plant.healthStatus || 'HEALTHY',
+    startDate: plant.startDate ? new Date(plant.startDate).toISOString().split('T')[0] : '',
+    notes: plant.notes || '',
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
+
+  async function handleUpdate() {
+    if (!form.tagCode.trim() || !form.strainId || !form.sectionId) return;
+
+    setIsUpdating(true);
+    try {
+      const updatedPlant = await plantService.update(plant.id, {
+        tagCode: form.tagCode,
+        strainId: form.strainId,
+        sectionId: form.sectionId,
+        stage: form.stage,
+        sex: form.sex,
+        healthStatus: form.healthStatus as any,
+        startDate: form.startDate || undefined,
+        notes: form.notes || undefined,
+      });
+      onUpdated(updatedPlant);
+      toast.success('Planta actualizada correctamente');
+    } catch (err) {
+      console.error('Error actualizando planta:', err);
+      toast.error('Error al actualizar la planta');
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  return (
+    <Modal title="Editar Planta" onClose={onClose}>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Código/Tag</label>
+          <input
+            type="text"
+            value={form.tagCode}
+            onChange={(e) => setForm({ ...form, tagCode: e.target.value })}
+            className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Genética</label>
+            <select
+              value={form.strainId}
+              onChange={(e) => setForm({ ...form, strainId: e.target.value })}
+              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+            >
+              {strains.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Sección</label>
+            <select
+              value={form.sectionId}
+              onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
+              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+            >
+              {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Etapa</label>
+            <select
+              value={form.stage}
+              onChange={(e) => setForm({ ...form, stage: e.target.value as PlantStage })}
+              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+            >
+              <option value="GERMINACION">Germinación</option>
+              <option value="VEGETATIVO">Vegetativo</option>
+              <option value="PRE_FLORA">Pre-Flora</option>
+              <option value="FLORACION">Floración</option>
+              <option value="SECADO">Secado</option>
+              <option value="CURADO">Curado</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Sexo</label>
+            <select
+              value={form.sex}
+              onChange={(e) => setForm({ ...form, sex: e.target.value as PlantSex })}
+              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+            >
+              <option value="FEM">Feminizada</option>
+              <option value="REG">Regular</option>
+              <option value="AUTO">Autofloreciente</option>
+              <option value="UNKNOWN">Desconocido</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Estado de Salud</label>
+            <select
+              value={form.healthStatus}
+              onChange={(e) => setForm({ ...form, healthStatus: e.target.value as PlantHealthStatus })}
+              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+            >
+              <option value="HEALTHY">Saludable</option>
+              <option value="INFECTED">Infectada</option>
+              <option value="DEAD">Muerta</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Fecha Inicio</label>
+            <input
+              type="date"
+              value={form.startDate}
+              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Notas</label>
+          <textarea
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            rows={3}
+            className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 resize-none"
+          />
+        </div>
+      </div>
+      <div className="flex justify-end gap-3 mt-6">
+        <button onClick={onClose} className="px-4 py-2 text-zinc-400 hover:text-white">Cancelar</button>
+        <button
+          onClick={handleUpdate}
+          disabled={!form.tagCode.trim() || !form.strainId || !form.sectionId || isUpdating}
+          className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white rounded-lg"
+        >
+          {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          {isUpdating ? 'Guardando...' : 'Guardar Cambios'}
         </button>
       </div>
     </Modal>

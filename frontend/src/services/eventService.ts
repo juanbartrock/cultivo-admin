@@ -9,7 +9,7 @@
  * - Podas, transplantes, etc.
  */
 
-import { api } from './apiService';
+import { api, API_BASE } from './apiService';
 import {
   GrowEvent,
   EventType,
@@ -19,7 +19,7 @@ import {
   PhotoEventDto,
 } from '@/types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+// const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 // ============================================
 // TIPOS DE FILTROS

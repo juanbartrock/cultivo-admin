@@ -30,6 +30,7 @@ import {
   RefreshCw,
   AlertCircle
 } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { deviceService } from '@/services/deviceService';
 import { sectionService } from '@/services/locationService';
@@ -312,6 +313,11 @@ export default function ArtefactosPage() {
     }
   }
 
+
+
+  // A better approach: Render the header, but if list is empty, render EmptyState.
+  // Let's modify the RETURN list part, not the whole component return.
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -463,15 +469,15 @@ export default function ArtefactosPage() {
         </h2>
 
         {/* Filtros */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1 bg-zinc-800/50 rounded-lg flex items-center px-4 border border-zinc-700/50">
+            <Search className="w-4 h-4 text-zinc-400 mr-2" />
             <input
               type="text"
-              placeholder="Buscar dispositivos..."
+              placeholder="Buscar dispositivo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
+              className="bg-transparent border-none text-white text-sm w-full focus:ring-0 py-2 placeholder-zinc-500"
             />
           </div>
 
@@ -480,14 +486,14 @@ export default function ArtefactosPage() {
             onChange={(e) => setFilterTipo(e.target.value as DeviceType | 'ALL')}
             className="px-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
           >
-            <option value="todos">Todos los tipos</option>
+            <option value="ALL">Todos los tipos</option>
             {Object.entries(deviceTypeLabels).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
         </div>
 
-        {/* Tabla de dispositivos */}
+        {/* Tabla de Dispositivos */}
         <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden">
           {/* Header */}
           <div className="hidden sm:grid sm:grid-cols-6 gap-4 px-4 py-3 bg-zinc-800/50 border-b border-zinc-700/50 text-sm font-medium text-zinc-400">
@@ -499,13 +505,24 @@ export default function ArtefactosPage() {
             <div>Acciones</div>
           </div>
 
-          {/* Loading */}
+          {/* Listado */}
           {isLoadingDevices ? (
             <div className="px-4 py-12 text-center">
-              <RefreshCw className="w-8 h-8 text-cultivo-green-400 animate-spin mx-auto mb-3" />
+              <Loader2 className="w-8 h-8 text-purple-500 animate-spin mx-auto mb-3" />
               <p className="text-zinc-400">Cargando dispositivos...</p>
             </div>
-          ) : devicesFiltrados.length > 0 ? (
+          ) : devicesFiltrados.length === 0 ? (
+            <div className="py-12 flex justify-center">
+              <EmptyState
+                icon={Unplug}
+                title="No se encontraron dispositivos"
+                description={searchTerm ? 'No hay dispositivos que coincidan con la búsqueda.' : 'No tienes dispositivos configurados.'}
+                className="border-none bg-transparent shadow-none"
+                actionLabel={!searchTerm ? "Escanear Dispositivos" : undefined}
+                onAction={!searchTerm ? handleScanDevices : undefined}
+              />
+            </div>
+          ) : (
             <div className="divide-y divide-zinc-700/50">
               {devicesFiltrados.map((device, index) => {
                 const Icon = iconMap[device.type] || Activity;
@@ -549,7 +566,7 @@ export default function ArtefactosPage() {
                       <span className="text-zinc-300">{section?.name || 'Sin asignar'}</span>
                     </div>
 
-                    {/* Control - Solo mostrar para dispositivos controlables (no sensores ni cámaras) */}
+                    {/* Control */}
                     <div className="flex items-center gap-2">
                       {device.type !== 'SENSOR' && device.type !== 'CAMARA' ? (
                         <>
@@ -557,24 +574,18 @@ export default function ArtefactosPage() {
                             onClick={() => handleControl(device.id, 'on')}
                             disabled={controllingDevice === device.id}
                             className="flex items-center gap-1 px-2 py-1 text-xs text-cultivo-green-400 hover:bg-cultivo-green-500/10 rounded transition-colors disabled:opacity-50"
-                            title="Encender"
                           >
-                            <Power className="w-3 h-3" />
-                            ON
+                            <Power className="w-3 h-3" /> ON
                           </button>
                           <button
                             onClick={() => handleControl(device.id, 'off')}
                             disabled={controllingDevice === device.id}
                             className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-500/10 rounded transition-colors disabled:opacity-50"
-                            title="Apagar"
                           >
-                            <Power className="w-3 h-3" />
-                            OFF
+                            <Power className="w-3 h-3" /> OFF
                           </button>
                         </>
-                      ) : (
-                        <span className="text-xs text-zinc-500">—</span>
-                      )}
+                      ) : <span className="text-zinc-500">-</span>}
                     </div>
 
                     {/* Acciones */}
@@ -582,23 +593,13 @@ export default function ArtefactosPage() {
                       <button
                         onClick={() => handleDesasignar(device.id)}
                         className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:text-zinc-300 hover:bg-zinc-500/10 rounded transition-colors"
-                        title="Desasignar"
                       >
-                        <Unplug className="w-3 h-3" />
-                        Desasignar
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   </motion.div>
                 );
               })}
-            </div>
-          ) : (
-            <div className="px-4 py-12 text-center">
-              <Activity className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-              <p className="text-zinc-400">No hay dispositivos asignados</p>
-              <p className="text-xs text-zinc-500 mt-1">
-                Seleccioná dispositivos del panel superior para asignarlos
-              </p>
             </div>
           )}
         </div>
@@ -614,10 +615,6 @@ export default function ArtefactosPage() {
       {/* Modal de Asignación */}
       {showAsignarModal && dispositivoSeleccionado && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowAsignarModal(false)}
-          />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -732,139 +729,142 @@ export default function ArtefactosPage() {
             </div>
           </motion.div>
         </div>
-      )}
+      )
+      }
 
       {/* Modal de Dispositivo Virtual */}
-      {showVirtualModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowVirtualModal(false)}
-          />
+      {
+        showVirtualModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowVirtualModal(false)}
+            />
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md shadow-xl"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Agregar Dispositivo Virtual</h2>
-              <button
-                onClick={() => setShowVirtualModal(false)}
-                className="p-1 hover:bg-zinc-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-zinc-400" />
-              </button>
-            </div>
-
-            {/* Explicación */}
-            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 mb-4">
-              <p className="text-sm text-cyan-300">
-                Los dispositivos virtuales son artefactos físicos (extractor, deshumidificador, etc.)
-                que se controlan a través de la salida de otro dispositivo (ej: un termohigrómetro Sonoff).
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {/* Nombre */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">
-                  Nombre del dispositivo <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={virtualForm.name}
-                  onChange={(e) => setVirtualForm({ ...virtualForm, name: e.target.value })}
-                  placeholder="Ej: Extractor Carpa Flora"
-                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cyan-600"
-                />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md shadow-xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white">Agregar Dispositivo Virtual</h2>
+                <button
+                  onClick={() => setShowVirtualModal(false)}
+                  className="p-1 hover:bg-zinc-700 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-zinc-400" />
+                </button>
               </div>
 
-              {/* Tipo */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">
-                  Tipo de dispositivo <span className="text-red-400">*</span>
-                </label>
-                <select
-                  value={virtualForm.type}
-                  onChange={(e) => setVirtualForm({ ...virtualForm, type: e.target.value as DeviceType })}
-                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
-                >
-                  <option value="EXTRACTOR">Extractor</option>
-                  <option value="DESHUMIDIFICADOR">Deshumidificador</option>
-                  <option value="HUMIDIFICADOR">Humidificador</option>
-                  <option value="VENTILADOR">Ventilador</option>
-                  <option value="CALEFACTOR">Calefactor</option>
-                  <option value="AIRE_ACONDICIONADO">Aire Acondicionado</option>
-                  <option value="LUZ">Luz</option>
-                  <option value="BOMBA_RIEGO">Bomba de Riego</option>
-                </select>
-              </div>
-
-              {/* Sección */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">
-                  Sección <span className="text-red-400">*</span>
-                </label>
-                <select
-                  value={virtualForm.sectionId}
-                  onChange={(e) => setVirtualForm({ ...virtualForm, sectionId: e.target.value })}
-                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
-                >
-                  <option value="">Seleccionar sección...</option>
-                  {sections.map(section => (
-                    <option key={section.id} value={section.id}>{section.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Dispositivo controlador */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">
-                  Controlado por (opcional)
-                </label>
-                <select
-                  value={virtualForm.controlledByDeviceId}
-                  onChange={(e) => setVirtualForm({ ...virtualForm, controlledByDeviceId: e.target.value })}
-                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
-                >
-                  <option value="">Sin asignar (configurar después)</option>
-                  {controllableDevices.map(device => (
-                    <option key={device.id} value={device.id}>
-                      {device.name} ({device.connector})
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Seleccioná el dispositivo cuya salida ON/OFF controla este artefacto
+              {/* Explicación */}
+              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 mb-4">
+                <p className="text-sm text-cyan-300">
+                  Los dispositivos virtuales son artefactos físicos (extractor, deshumidificador, etc.)
+                  que se controlan a través de la salida de otro dispositivo (ej: un termohigrómetro Sonoff).
                 </p>
               </div>
-            </div>
 
-            {/* Botones */}
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                onClick={() => setShowVirtualModal(false)}
-                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleCrearVirtual}
-                disabled={!virtualForm.name.trim() || !virtualForm.sectionId || isCreatingVirtual}
-                className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg transition-colors"
-              >
-                {isCreatingVirtual ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Check className="w-4 h-4" />
-                )}
-                {isCreatingVirtual ? 'Creando...' : 'Crear Dispositivo'}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </div>
+              <div className="space-y-4">
+                {/* Nombre */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1">
+                    Nombre del dispositivo <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={virtualForm.name}
+                    onChange={(e) => setVirtualForm({ ...virtualForm, name: e.target.value })}
+                    placeholder="Ej: Extractor Carpa Flora"
+                    className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                {/* Tipo */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1">
+                    Tipo de dispositivo <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    value={virtualForm.type}
+                    onChange={(e) => setVirtualForm({ ...virtualForm, type: e.target.value as DeviceType })}
+                    className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
+                  >
+                    <option value="EXTRACTOR">Extractor</option>
+                    <option value="DESHUMIDIFICADOR">Deshumidificador</option>
+                    <option value="HUMIDIFICADOR">Humidificador</option>
+                    <option value="VENTILADOR">Ventilador</option>
+                    <option value="CALEFACTOR">Calefactor</option>
+                    <option value="AIRE_ACONDICIONADO">Aire Acondicionado</option>
+                    <option value="LUZ">Luz</option>
+                    <option value="BOMBA_RIEGO">Bomba de Riego</option>
+                  </select>
+                </div>
+
+                {/* Sección */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1">
+                    Sección <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    value={virtualForm.sectionId}
+                    onChange={(e) => setVirtualForm({ ...virtualForm, sectionId: e.target.value })}
+                    className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
+                  >
+                    <option value="">Seleccionar sección...</option>
+                    {sections.map(section => (
+                      <option key={section.id} value={section.id}>{section.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Dispositivo controlador */}
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1">
+                    Controlado por (opcional)
+                  </label>
+                  <select
+                    value={virtualForm.controlledByDeviceId}
+                    onChange={(e) => setVirtualForm({ ...virtualForm, controlledByDeviceId: e.target.value })}
+                    className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
+                  >
+                    <option value="">Sin asignar (configurar después)</option>
+                    {controllableDevices.map(device => (
+                      <option key={device.id} value={device.id}>
+                        {device.name} ({device.connector})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Seleccioná el dispositivo cuya salida ON/OFF controla este artefacto
+                  </p>
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowVirtualModal(false)}
+                  className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCrearVirtual}
+                  disabled={!virtualForm.name.trim() || !virtualForm.sectionId || isCreatingVirtual}
+                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg transition-colors"
+                >
+                  {isCreatingVirtual ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  {isCreatingVirtual ? 'Creando...' : 'Crear Dispositivo'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )
+      }
+    </div >
   );
 }

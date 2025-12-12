@@ -5,7 +5,18 @@
  * Maneja errores y headers de forma consistente.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const getApiUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    // Si estamos en el navegador, usar el mismo hostname pero con el puerto 4000
+    return `${window.location.protocol}//${window.location.hostname}:4000/api`;
+  }
+  return 'http://localhost:4000/api';
+};
+
+export const API_BASE = getApiUrl();
 
 /**
  * Realiza una petición HTTP al backend
