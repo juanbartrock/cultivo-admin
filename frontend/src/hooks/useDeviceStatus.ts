@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { deviceService } from '@/services/deviceService';
 import { Device, DeviceStatus } from '@/types';
+import { useSocket } from '@/contexts/SocketContext';
 
 interface DeviceWithStatus {
   device: Device;
@@ -28,7 +29,7 @@ export function useDeviceStatus(
   options: UseDeviceStatusOptions = {}
 ) {
   const { pollingInterval = 30000, autoRefresh = true } = options;
-  
+
   const [status, setStatus] = useState<DeviceStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +66,8 @@ export function useDevicesStatus(
   options: UseDeviceStatusOptions = {}
 ) {
   const { pollingInterval = 30000, autoRefresh = true } = options;
-  
+  const { socket, isConnected } = useSocket();
+
   const [statuses, setStatuses] = useState<Map<string, DeviceStatus>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +80,7 @@ export function useDevicesStatus(
     }
 
     try {
-      // Hacer todas las peticiones en paralelo
+      // Hacer todas las peticiones en paralelo para estado inicial
       const results = await Promise.allSettled(
         devices.map(async (device) => {
           const response = await deviceService.getStatus(device.id);
@@ -89,17 +91,26 @@ export function useDevicesStatus(
       if (!isMounted.current) return;
 
       const newStatuses = new Map<string, DeviceStatus>();
-      
+
       results.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           newStatuses.set(result.value.id, result.value.status);
         } else {
-          // Si falla, marcar como offline
-          newStatuses.set(devices[index].id, { online: false });
+          // Si falla, usar estado anterior o marcar offline
+          const prev = statuses.get(devices[index].id);
+          if (prev) {
+            newStatuses.set(devices[index].id, prev);
+          } else {
+            newStatuses.set(devices[index].id, { online: false });
+          }
         }
       });
 
-      setStatuses(newStatuses);
+      setStatuses((prev) => {
+        // Merge logic if needed, but for now full replace is safer for "refresh"
+        // However, preserving unknown states might be better?
+        return newStatuses;
+      });
       setError(null);
     } catch (err) {
       if (isMounted.current) {
@@ -110,24 +121,56 @@ export function useDevicesStatus(
         setLoading(false);
       }
     }
-  }, [devices]);
+  }, [devices]); // Removed statuses dependency to avoid loops
 
+  // Efecto para Socket.IO
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleDeviceUpdate = (data: { deviceId: string; status: DeviceStatus }) => {
+      setStatuses((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(data.deviceId, data.status);
+        return newMap;
+      });
+    };
+
+    // Subscribirse a actualizaciones de dispositivos
+    // En el futuro, podríamos suscribirnos solo a los `devices` de la lista,
+    // pero por ahora escuchamos todos los eventos globales de 'device_update'
+    socket.on('device_update', handleDeviceUpdate);
+
+    return () => {
+      socket.off('device_update', handleDeviceUpdate);
+    };
+  }, [socket, isConnected]);
+
+  // Efecto para Polling (solo si no hay socket o para carga inicial)
   useEffect(() => {
     isMounted.current = true;
+
+    // Siempre carga inicial
     fetchAllStatuses();
 
+    // Setup polling only if socket is NOT connected or if explicit polling requested
+    // Strategy: If socket is connected, we might still want polling as backup, 
+    // but typically we can relax it. For now, let's keep polling but maybe less frequent?
+    // Or strictly: if (autoRefresh && !isConnected)
+
+    let interval: NodeJS.Timeout | null = null;
+
     if (autoRefresh && pollingInterval > 0) {
-      const interval = setInterval(fetchAllStatuses, pollingInterval);
-      return () => {
-        isMounted.current = false;
-        clearInterval(interval);
-      };
+      // Si hay socket, podríamos aumentar el intervalo o desactivarlo.
+      // E.g. cada 5 min para sincronizar por si acaso.
+      // Por simplicidad, mantenemos polling pero el socket actualizará más rápido.
+      interval = setInterval(fetchAllStatuses, pollingInterval);
     }
 
     return () => {
       isMounted.current = false;
+      if (interval) clearInterval(interval);
     };
-  }, [fetchAllStatuses, autoRefresh, pollingInterval]);
+  }, [fetchAllStatuses, autoRefresh, pollingInterval]); // Removed isConnected dependency to prevent double fetch on connect
 
   const getStatus = useCallback(
     (deviceId: string): DeviceStatus | null => {

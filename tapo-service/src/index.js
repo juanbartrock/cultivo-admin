@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const routes = require('./routes');
 const swaggerDocument = require('./swagger');
@@ -39,6 +40,9 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
 app.get('/', (req, res) => {
   res.redirect('/docs');
 });
+
+// Servir snapshots estáticos
+app.use('/snapshots', express.static(path.join(__dirname, '../snapshots')));
 
 // Rutas de la API
 app.use('/', routes);

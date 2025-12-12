@@ -8,11 +8,13 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DevicesService, ScannedDevice } from './devices.service';
 import { SensorHistoryService } from './sensor-history.service';
 import { DeviceStatus } from './iot-gateway.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
   CreateDeviceDto,
   UpdateDeviceDto,
@@ -21,12 +23,14 @@ import {
 } from './dto/device.dto';
 
 @ApiTags('devices')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('devices')
 export class DevicesController {
   constructor(
     private readonly devicesService: DevicesService,
     private readonly sensorHistoryService: SensorHistoryService,
-  ) {}
+  ) { }
 
   @Get()
   @ApiOperation({ summary: 'Listar todos los dispositivos registrados' })

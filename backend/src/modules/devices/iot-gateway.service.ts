@@ -181,11 +181,11 @@ export class IoTGatewayService {
    */
   private parseSonoffData(data: Record<string, unknown>): DeviceStatus {
     // Sonoff devuelve: { deviceId, name, online, switch, temperature, humidity, unit }
-    const temperature = data.temperature !== null && data.temperature !== undefined 
-      ? Number(data.temperature) 
+    const temperature = data.temperature !== null && data.temperature !== undefined
+      ? Number(data.temperature)
       : undefined;
-    const humidity = data.humidity !== null && data.humidity !== undefined 
-      ? Number(data.humidity) 
+    const humidity = data.humidity !== null && data.humidity !== undefined
+      ? Number(data.humidity)
       : undefined;
 
     this.logger.debug(`Parsed SONOFF device: temp=${temperature}, humidity=${humidity}, switch=${data.switch}`);
@@ -205,7 +205,7 @@ export class IoTGatewayService {
   private parseEsp32Data(data: Record<string, unknown>): DeviceStatus {
     const sensors = data.sensors as Record<string, unknown> || {};
     const relays = data.relays as Record<string, unknown> || {};
-    
+
     return {
       online: data.online !== false,
       temperature: sensors.temperature as number | undefined,
@@ -222,10 +222,10 @@ export class IoTGatewayService {
    */
   private parseTuyaSensorData(data: Record<string, unknown>): DeviceStatus {
     const status = data.status as Record<string, unknown> || {};
-    
+
     // Códigos posibles para estado on/off (switches, enchufes, luces)
     const switchCodes = ['switch', 'switch_1', 'switch_led', 'led_switch', 'power'];
-    
+
     // Códigos posibles para cada métrica en sensores Tuya
     const tempCodes = ['va_temperature', 'temp_current', 'temperature', 'temp'];
     const humidityCodes = ['va_humidity', 'humidity_value', 'humidity', 'humi'];
@@ -447,10 +447,11 @@ export class IoTGatewayService {
         ),
       );
 
+      const tapoServiceUrl = this.getTapoServiceUrl();
       return {
         success: response.data.success,
         filename: response.data.filename,
-        downloadUrl: response.data.downloadUrl,
+        downloadUrl: `${tapoServiceUrl}${response.data.downloadUrl}`,
       };
     } catch {
       this.logger.error('Failed to capture snapshot');

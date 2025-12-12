@@ -1,192 +1,209 @@
 'use client';
 
+import { useToast } from '@/contexts/ToastContext';
+import { useConfirm } from '@/contexts/DialogContext';
+
+// ... imports
+
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Settings, 
-  Search,
-  Thermometer,
-  Lightbulb,
-  Wind,
-  Fan,
-  Droplets,
-  Droplet,
-  Snowflake,
-  Flame,
-  Activity,
-  X,
-  Check,
-  RefreshCw,
+import {
+  Plus,
   Wifi,
   WifiOff,
-  Plus,
-  Unplug,
+  Trash2,
+  Settings,
+  RotateCw,
+  Loader2,
+  Zap,
+  Thermometer,
+  Droplets,
+  Wind,
+  Lightbulb,
+  Fan,
   Video,
-  AlertCircle,
-  Power
+  Power,
+  Search,
+  Check,
+  X,
+  Activity,
+  Unplug,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
-import { deviceService, DeviceScanResult } from '@/services/deviceService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { deviceService } from '@/services/deviceService';
 import { sectionService } from '@/services/locationService';
-import { 
-  Device, 
-  ScannedDevice, 
-  Section,
-  Connector,
+import {
+  Device,
+  ScannedDevice,
   DeviceType,
-  deviceTypeToTipoArtefacto,
-  TipoArtefacto
+  Section,
+  Connector
 } from '@/types';
 
-// Mapa de iconos por tipo de dispositivo
-const iconMap: Record<DeviceType, React.ElementType> = {
-  SENSOR: Thermometer,
-  LUZ: Lightbulb,
-  EXTRACTOR: Wind,
-  VENTILADOR: Fan,
-  HUMIDIFICADOR: Droplets,
-  DESHUMIDIFICADOR: Droplet,
-  AIRE_ACONDICIONADO: Snowflake,
-  BOMBA_RIEGO: Droplets,
-  CALEFACTOR: Flame,
-  CAMARA: Video,
+// Icono por tipo de dispositivo
+const getDeviceIcon = (type: DeviceType) => {
+  switch (type) {
+    case 'LUZ': return Lightbulb;
+    case 'EXTRACTOR': return Fan;
+    case 'VENTILADOR': return Wind;
+    case 'HUMIDIFICADOR': return Droplets;
+    case 'DESHUMIDIFICADOR': return Droplets;
+    case 'AIRE_ACONDICIONADO': return Thermometer;
+    case 'BOMBA_RIEGO': return Droplets;
+    case 'CALEFACTOR': return Thermometer;
+    case 'CAMARA': return Video;
+    default: return Zap;
+  }
 };
-
-// Colores para badges de conectores
-const conectorColors: Record<Connector, string> = {
-  SONOFF: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  TUYA: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  TAPO: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  ESP32: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  VIRTUAL: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-};
-
-// Labels para tipos de dispositivo
-const deviceTypeLabels: Record<DeviceType, string> = {
-  SENSOR: 'Sensor',
-  LUZ: 'Luz',
-  EXTRACTOR: 'Extractor',
-  VENTILADOR: 'Ventilador',
-  HUMIDIFICADOR: 'Humidificador',
-  DESHUMIDIFICADOR: 'Deshumidificador',
-  AIRE_ACONDICIONADO: 'Aire Acondicionado',
-  BOMBA_RIEGO: 'Bomba de Riego',
-  CALEFACTOR: 'Calefactor',
-  CAMARA: 'Cámara',
-};
-
-// Mapeo de categorías a tipos de dispositivo
-function inferirTipoDispositivo(dispositivo: ScannedDevice): DeviceType {
-  const nombre = dispositivo.name.toLowerCase();
-  const categoria = dispositivo.category?.toLowerCase() || '';
-  
-  if (dispositivo.connector === 'TAPO') return 'CAMARA';
-  if (categoria.includes('sensor') || nombre.includes('sensor') || nombre.includes('co2')) return 'SENSOR';
-  if (categoria.includes('switch') || nombre.includes('led') || nombre.includes('luz')) return 'LUZ';
-  if (nombre.includes('extractor')) return 'EXTRACTOR';
-  if (nombre.includes('ventilador') || nombre.includes('fan')) return 'VENTILADOR';
-  
-  return 'SENSOR'; // Default
-}
 
 export default function ArtefactosPage() {
-  // Estado de dispositivos escaneados
-  const [scanResult, setScanResult] = useState<DeviceScanResult | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  
-  // Dispositivos asignados (desde la DB)
+  const { toast } = useToast();
+  const confirm = useConfirm();
+
   const [devices, setDevices] = useState<Device[]>([]);
-  const [isLoadingDevices, setIsLoadingDevices] = useState(true);
-  
-  // Secciones disponibles para asignar
+  const [scannedDevices, setScannedDevices] = useState<ScannedDevice[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
-  
-  // Filtros
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterTipo, setFilterTipo] = useState<string>('todos');
-  
-  // Modal de asignación
-  const [showAsignarModal, setShowAsignarModal] = useState(false);
-  const [dispositivoSeleccionado, setDispositivoSeleccionado] = useState<ScannedDevice | null>(null);
-  const [asignacionForm, setAsignacionForm] = useState({
-    nombre: '',
-    tipo: 'SENSOR' as DeviceType,
-    sectionId: '',
-  });
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
 
-  // Control de dispositivo
-  const [controllingDevice, setControllingDevice] = useState<string | null>(null);
+  const [showAsignarModal, setShowAsignarModal] = useState(false);
+  const [dispositivoSeleccionado, setDispositivoSeleccionado] = useState<ScannedDevice | null>(null);
 
-  // Modal de dispositivo virtual
+  const [asignacionForm, setAsignacionForm] = useState<{
+    nombre: string;
+    tipo: DeviceType;
+    sectionId: string;
+  }>({
+    nombre: '',
+    tipo: 'SENSOR',
+    sectionId: '',
+  });
+
+  // Estado para dispositivos virtuales
   const [showVirtualModal, setShowVirtualModal] = useState(false);
   const [virtualForm, setVirtualForm] = useState({
-    nombre: '',
-    tipo: 'EXTRACTOR' as DeviceType,
+    name: '',
+    type: 'SENSOR' as DeviceType,
     sectionId: '',
     controlledByDeviceId: '',
   });
   const [isCreatingVirtual, setIsCreatingVirtual] = useState(false);
 
-  // Dispositivos que pueden controlar otros (sensores con salida, switches)
-  const controllableDevices = devices.filter(d => 
-    d.type === 'SENSOR' || d.connector === 'SONOFF' || d.connector === 'TUYA'
+  // Estado para control manual
+  const [controllingDevice, setControllingDevice] = useState<string | null>(null);
+
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterTipo, setFilterTipo] = useState<DeviceType | 'ALL'>('ALL');
+
+  // Helpers faltantes
+  const deviceTypeLabels: Record<DeviceType, string> = {
+    SENSOR: 'Sensor',
+    LUZ: 'Luz',
+    EXTRACTOR: 'Extractor',
+    VENTILADOR: 'Ventilador',
+    HUMIDIFICADOR: 'Humidificador',
+    DESHUMIDIFICADOR: 'Deshumidificador',
+    AIRE_ACONDICIONADO: 'Aire Acondicionado',
+    BOMBA_RIEGO: 'Bomba de Riego',
+    CALEFACTOR: 'Calefactor',
+    CAMARA: 'Cámara',
+  };
+
+  const conectorColors: Record<Connector, string> = {
+    TUYA: 'text-orange-400',
+    SONOFF: 'text-blue-500',
+    TAPO: 'text-cyan-400',
+    VIRTUAL: 'text-purple-400',
+    ESP32: 'text-yellow-400',
+  };
+
+  const iconMap: Record<DeviceType, any> = {
+    SENSOR: Activity,
+    LUZ: Lightbulb,
+    EXTRACTOR: Fan,
+    VENTILADOR: Wind,
+    HUMIDIFICADOR: Droplets,
+    DESHUMIDIFICADOR: Droplets,
+    AIRE_ACONDICIONADO: Thermometer,
+    BOMBA_RIEGO: Droplets,
+    CALEFACTOR: Thermometer,
+    CAMARA: Video,
+  };
+
+  const [scanResult, setScanResult] = useState<{
+    dispositivos: ScannedDevice[];
+    errores: { conector: string; error: string }[];
+    timestamp: string;
+  } | null>(null);
+
+  // Derived variables
+  const isLoadingDevices = isLoading;
+
+  const devicesFiltrados = devices.filter(d => {
+    const matchesSearch = d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.connector.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterTipo === 'ALL' || d.type === filterTipo;
+    return matchesSearch && matchesType;
+  });
+
+  const controllableDevices = devices.filter(d =>
+    ['LUZ', 'EXTRACTOR', 'VENTILADOR', 'BOMBA_RIEGO', 'CALEFACTOR', 'HUMIDIFICADOR', 'DESHUMIDIFICADOR', 'AIRE_ACONDICIONADO'].includes(d.type)
   );
 
-  // Cargar datos iniciales
   useEffect(() => {
     loadInitialData();
   }, []);
 
   async function loadInitialData() {
-    setIsLoadingDevices(true);
     try {
       const [devicesData, sectionsData] = await Promise.all([
         deviceService.getAll(),
-        sectionService.getAll(),
+        sectionService.getAll()
       ]);
       setDevices(devicesData);
       setSections(sectionsData);
     } catch (error) {
-      console.error('Error cargando datos:', error);
+      console.error('Error loading data:', error);
+      toast.error('Error al cargar datos');
     } finally {
-      setIsLoadingDevices(false);
+      setIsLoading(false);
     }
-    
-    // Escanear dispositivos
-    handleScanDevices();
   }
 
-  // Escanear dispositivos de los conectores
   async function handleScanDevices() {
     setIsScanning(true);
+    setScannedDevices([]);
     try {
       const result = await deviceService.scan();
+      setScannedDevices(result.dispositivos);
       setScanResult(result);
+
+      if (result.dispositivos.length === 0) {
+        toast.info('No se encontraron nuevos dispositivos');
+      } else {
+        toast.success(`Se encontraron ${result.dispositivos.length} dispositivos`);
+      }
     } catch (error) {
-      console.error('Error escaneando dispositivos:', error);
+      console.error('Error scanning:', error);
+      toast.error('Error al escanear dispositivos');
     } finally {
       setIsScanning(false);
     }
   }
 
-  // Dispositivos disponibles (no asignados)
-  const dispositivosDisponibles = scanResult?.dispositivos.filter(
-    d => !d.isAssigned && !devices.some(dev => dev.externalId === d.id)
-  ) || [];
+  // Filtrar dispositivos escaneados que no estén asignados
+  // Nota: El backend ya debería marcar isAssigned, pero aseguramos visualmente
+  const dispositivosDisponibles = scannedDevices.filter(d => !d.isAssigned);
 
-  // Filtrar dispositivos asignados
-  const devicesFiltrados = devices.filter(dev => {
-    const matchSearch = dev.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchTipo = filterTipo === 'todos' || dev.type === filterTipo;
-    return matchSearch && matchTipo;
-  });
-
-  // Abrir modal de asignación
-  function handleAbrirAsignar(dispositivo: ScannedDevice) {
-    setDispositivoSeleccionado(dispositivo);
+  function handleAbrirAsignar(device: ScannedDevice) {
+    setDispositivoSeleccionado(device);
     setAsignacionForm({
-      nombre: dispositivo.name,
-      tipo: inferirTipoDispositivo(dispositivo),
+      nombre: device.name || '',
+      tipo: 'SENSOR', // Default, debería inferirse
       sectionId: sections[0]?.id || '',
     });
     setShowAsignarModal(true);
@@ -205,16 +222,17 @@ export default function ArtefactosPage() {
         name: asignacionForm.nombre,
         type: asignacionForm.tipo,
       });
-      
+
       setDevices([...devices, newDevice]);
       setShowAsignarModal(false);
       setDispositivoSeleccionado(null);
-      
+
       // Refrescar escaneo para actualizar isAssigned
       handleScanDevices();
+      toast.success('Dispositivo asignado correctamente');
     } catch (error) {
       console.error('Error asignando dispositivo:', error);
-      alert('Error al asignar dispositivo: ' + (error as Error).message);
+      toast.error('Error al asignar dispositivo: ' + (error as Error).message);
     } finally {
       setIsAssigning(false);
     }
@@ -222,48 +240,57 @@ export default function ArtefactosPage() {
 
   // Desasignar dispositivo
   async function handleDesasignar(deviceId: string) {
-    if (!confirm('¿Estás seguro de desasignar este dispositivo?')) return;
-    
+    const shouldDelete = await confirm({
+      title: 'Desasignar dispositivo',
+      message: '¿Estás seguro de desasignar este dispositivo? Dejará de estar disponible para automatizaciones.',
+      variant: 'danger',
+      confirmText: 'Desasignar',
+    });
+
+    if (!shouldDelete) return;
+
     try {
       await deviceService.delete(deviceId);
       setDevices(devices.filter(d => d.id !== deviceId));
       // Refrescar escaneo
       handleScanDevices();
+      toast.success('Dispositivo desasignado');
     } catch (error) {
       console.error('Error desasignando:', error);
-      alert('Error al desasignar: ' + (error as Error).message);
+      toast.error('Error al desasignar: ' + (error as Error).message);
     }
   }
 
   // Crear dispositivo virtual
   async function handleCrearVirtual() {
-    if (!virtualForm.nombre.trim() || !virtualForm.sectionId) return;
+    if (!virtualForm.name.trim() || !virtualForm.sectionId) return;
 
     setIsCreatingVirtual(true);
     try {
       // Generar un ID único para el dispositivo virtual
       const externalId = `virtual-${Date.now()}`;
-      
+
       const newDevice = await deviceService.assign({
         connector: 'VIRTUAL' as Connector,
         externalId,
         sectionId: virtualForm.sectionId,
-        name: virtualForm.nombre,
-        type: virtualForm.tipo,
+        name: virtualForm.name,
+        type: virtualForm.type,
         controlledByDeviceId: virtualForm.controlledByDeviceId || undefined,
       });
-      
+
       setDevices([...devices, newDevice]);
       setShowVirtualModal(false);
       setVirtualForm({
-        nombre: '',
-        tipo: 'EXTRACTOR',
+        name: '',
+        type: 'EXTRACTOR',
         sectionId: '',
         controlledByDeviceId: '',
       });
+      toast.success('Dispositivo virtual creado');
     } catch (error) {
       console.error('Error creando dispositivo virtual:', error);
-      alert('Error al crear dispositivo: ' + (error as Error).message);
+      toast.error('Error al crear dispositivo: ' + (error as Error).message);
     } finally {
       setIsCreatingVirtual(false);
     }
@@ -276,9 +303,10 @@ export default function ArtefactosPage() {
       await deviceService.control(deviceId, action);
       // Actualizar estado local (optimistic update)
       // En un escenario real, deberías refrescar el estado del dispositivo
+      toast.success(`Dispositivo ${action === 'on' ? 'encendido' : 'apagado'}`);
     } catch (error) {
       console.error('Error controlando dispositivo:', error);
-      alert('Error al controlar: ' + (error as Error).message);
+      toast.error('Error al controlar: ' + (error as Error).message);
     } finally {
       setControllingDevice(null);
     }
@@ -301,7 +329,7 @@ export default function ArtefactosPage() {
             Detecta dispositivos IoT y asígnalos a tu sistema de cultivo
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           <button
             onClick={() => setShowVirtualModal(true)}
@@ -384,17 +412,17 @@ export default function ArtefactosPage() {
                     </span>
                   </div>
                 </div>
-                
+
                 <h3 className="font-medium text-white mb-1 truncate" title={dispositivo.name}>
                   {dispositivo.name}
                 </h3>
-                
+
                 <div className="text-xs text-zinc-500 mb-3 space-y-1">
                   {dispositivo.model && <p>Modelo: {dispositivo.model}</p>}
                   {dispositivo.category && <p>Categoría: {dispositivo.category}</p>}
                   {dispositivo.ip && <p>IP: {dispositivo.ip}</p>}
                 </div>
-                
+
                 <button
                   onClick={() => handleAbrirAsignar(dispositivo)}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white text-sm rounded-lg transition-colors"
@@ -449,7 +477,7 @@ export default function ArtefactosPage() {
 
           <select
             value={filterTipo}
-            onChange={(e) => setFilterTipo(e.target.value)}
+            onChange={(e) => setFilterTipo(e.target.value as DeviceType | 'ALL')}
             className="px-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
           >
             <option value="todos">Todos los tipos</option>
@@ -482,7 +510,7 @@ export default function ArtefactosPage() {
               {devicesFiltrados.map((device, index) => {
                 const Icon = iconMap[device.type] || Activity;
                 const section = sections.find(s => s.id === device.sectionId);
-                
+
                 return (
                   <motion.div
                     key={device.id}
@@ -586,11 +614,11 @@ export default function ArtefactosPage() {
       {/* Modal de Asignación */}
       {showAsignarModal && dispositivoSeleccionado && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowAsignarModal(false)}
           />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -709,11 +737,11 @@ export default function ArtefactosPage() {
       {/* Modal de Dispositivo Virtual */}
       {showVirtualModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowVirtualModal(false)}
           />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -732,7 +760,7 @@ export default function ArtefactosPage() {
             {/* Explicación */}
             <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 mb-4">
               <p className="text-sm text-cyan-300">
-                Los dispositivos virtuales son artefactos físicos (extractor, deshumidificador, etc.) 
+                Los dispositivos virtuales son artefactos físicos (extractor, deshumidificador, etc.)
                 que se controlan a través de la salida de otro dispositivo (ej: un termohigrómetro Sonoff).
               </p>
             </div>
@@ -745,8 +773,8 @@ export default function ArtefactosPage() {
                 </label>
                 <input
                   type="text"
-                  value={virtualForm.nombre}
-                  onChange={(e) => setVirtualForm({ ...virtualForm, nombre: e.target.value })}
+                  value={virtualForm.name}
+                  onChange={(e) => setVirtualForm({ ...virtualForm, name: e.target.value })}
                   placeholder="Ej: Extractor Carpa Flora"
                   className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cyan-600"
                 />
@@ -758,8 +786,8 @@ export default function ArtefactosPage() {
                   Tipo de dispositivo <span className="text-red-400">*</span>
                 </label>
                 <select
-                  value={virtualForm.tipo}
-                  onChange={(e) => setVirtualForm({ ...virtualForm, tipo: e.target.value as DeviceType })}
+                  value={virtualForm.type}
+                  onChange={(e) => setVirtualForm({ ...virtualForm, type: e.target.value as DeviceType })}
                   className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
                 >
                   <option value="EXTRACTOR">Extractor</option>
@@ -823,7 +851,7 @@ export default function ArtefactosPage() {
               </button>
               <button
                 onClick={handleCrearVirtual}
-                disabled={!virtualForm.nombre.trim() || !virtualForm.sectionId || isCreatingVirtual}
+                disabled={!virtualForm.name.trim() || !virtualForm.sectionId || isCreatingVirtual}
                 className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg transition-colors"
               >
                 {isCreatingVirtual ? (

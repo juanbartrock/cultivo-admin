@@ -3,12 +3,12 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Plant, PlantStage, PlantSex } from '@/types';
-import { 
-  Leaf, 
-  Calendar, 
-  Sprout, 
-  Flower2, 
-  Wind, 
+import {
+  Leaf,
+  Calendar,
+  Sprout,
+  Flower2,
+  Wind,
   Archive,
   Tag,
   Plus,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { plantService } from '@/services/growService';
+import { useToast } from '@/contexts/ToastContext';
 
 // Iconos por etapa
 const stageIcons: Record<PlantStage, { icon: React.ElementType; color: string; bg: string }> = {
@@ -58,6 +59,7 @@ interface PlantCardProps {
 }
 
 export default function PlantCard({ plant, delay = 0, isSelected = false, onRegisterEvent, onStageChange, onClick }: PlantCardProps) {
+  const { toast } = useToast();
   const [currentPlant, setCurrentPlant] = useState(plant);
   const stageConfig = stageIcons[currentPlant.stage] || stageIcons.VEGETATIVO;
   const StageIcon = stageConfig.icon;
@@ -70,11 +72,11 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   // Calcular días en la etapa actual o desde el inicio del ciclo
   // Prioridad: stageStartDate > startDate > cycle.startDate > createdAt
   const hasStageStartDate = !!currentPlant.stageStartDate;
-  const dateForCalc = currentPlant.stageStartDate 
-    || currentPlant.startDate 
-    || currentPlant.cycle?.startDate 
+  const dateForCalc = currentPlant.stageStartDate
+    || currentPlant.startDate
+    || currentPlant.cycle?.startDate
     || currentPlant.createdAt;
-  
+
   const daysInStage = Math.max(0, Math.floor(
     (new Date().getTime() - new Date(dateForCalc).getTime()) / (1000 * 60 * 60 * 24)
   ));
@@ -90,20 +92,21 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
       setSelectedStage(null);
       return;
     }
-    
+
     setIsChangingStage(true);
     try {
-      const updatedPlant = await plantService.move(currentPlant.id, { 
+      const updatedPlant = await plantService.move(currentPlant.id, {
         stage: selectedStage,
-        stageDate: stageDate 
+        stageDate: stageDate
       });
       setCurrentPlant(updatedPlant);
       onStageChange?.(updatedPlant, selectedStage);
       setShowStageModal(false);
       setSelectedStage(null);
+      toast.success('Etapa actualizada correctamente');
     } catch (err) {
       console.error('Error cambiando etapa:', err);
-      alert('Error al cambiar la etapa de la planta');
+      toast.error('Error al cambiar la etapa de la planta');
     } finally {
       setIsChangingStage(false);
     }
@@ -122,11 +125,10 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.05 }}
       onClick={() => onClick?.(currentPlant)}
-      className={`bg-zinc-800/50 backdrop-blur-sm border rounded-xl p-4 transition-all cursor-pointer ${
-        isSelected 
-          ? 'border-cultivo-green-500 ring-2 ring-cultivo-green-500/30' 
+      className={`bg-zinc-800/50 backdrop-blur-sm border rounded-xl p-4 transition-all cursor-pointer ${isSelected
+          ? 'border-cultivo-green-500 ring-2 ring-cultivo-green-500/30'
           : 'border-zinc-700/50 hover:border-cultivo-green-600/30'
-      } ${showStageModal ? 'relative z-50' : 'relative'}`}
+        } ${showStageModal ? 'relative z-50' : 'relative'}`}
     >
       <div className="flex items-start gap-4">
         {/* Icono de etapa */}
@@ -134,61 +136,61 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
           <StageIcon className={`w-8 h-8 ${stageConfig.color}`} />
         </div>
 
-          {/* Info principal */}
+        {/* Info principal */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2">
               <Tag className="w-4 h-4 text-zinc-500" />
               <h3 className="font-bold text-white text-lg">{currentPlant.tagCode}</h3>
             </div>
-            
+
             {/* Menú de acciones */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowMenu(!showMenu)}
                 className="p-1 rounded-lg hover:bg-zinc-700/50 transition-colors"
               >
                 <MoreVertical className="w-4 h-4 text-zinc-400" />
               </button>
-              
-                  {showMenu && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-10" 
-                        onClick={() => setShowMenu(false)} 
-                      />
-                      <div className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-20 min-w-[180px] py-1">
-                        <button
-                          onClick={() => {
-                            setShowMenu(false);
-                            openStageModal();
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
-                        >
-                          <RefreshCw className="w-4 h-4 text-amber-400" />
-                          Cambiar Etapa
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowMenu(false);
-                            onRegisterEvent?.(currentPlant);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
-                        >
-                          <Plus className="w-4 h-4 text-cultivo-green-400" />
-                          Registrar Evento
-                        </button>
-                        <Link
-                          href={`/seguimientos?plant=${currentPlant.id}`}
-                          onClick={() => setShowMenu(false)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
-                        >
-                          <History className="w-4 h-4 text-blue-400" />
-                          Ver Historial
-                        </Link>
-                      </div>
-                    </>
-                  )}
+
+              {showMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-20 min-w-[180px] py-1">
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        openStageModal();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4 text-amber-400" />
+                      Cambiar Etapa
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        onRegisterEvent?.(currentPlant);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                    >
+                      <Plus className="w-4 h-4 text-cultivo-green-400" />
+                      Registrar Evento
+                    </button>
+                    <Link
+                      href={`/seguimientos?plant=${currentPlant.id}`}
+                      onClick={() => setShowMenu(false)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                    >
+                      <History className="w-4 h-4 text-blue-400" />
+                      Ver Historial
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -215,16 +217,15 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             </span>
 
             {/* Días en etapa */}
-            <span 
-              className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
-                hasStageStartDate 
-                  ? 'bg-cultivo-green-500/20 text-cultivo-green-400' 
+            <span
+              className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${hasStageStartDate
+                  ? 'bg-cultivo-green-500/20 text-cultivo-green-400'
                   : hasStartDate
                     ? 'bg-blue-500/20 text-blue-400'
                     : 'bg-amber-500/20 text-amber-400'
-              }`}
-              title={hasStageStartDate 
-                ? `En ${stageLabels[currentPlant.stage]} desde: ${new Date(currentPlant.stageStartDate!).toLocaleDateString()}` 
+                }`}
+              title={hasStageStartDate
+                ? `En ${stageLabels[currentPlant.stage]} desde: ${new Date(currentPlant.stageStartDate!).toLocaleDateString()}`
                 : hasStartDate
                   ? `Desde inicio del ciclo: ${new Date(currentPlant.startDate || currentPlant.cycle?.startDate || currentPlant.createdAt).toLocaleDateString()}`
                   : 'Días desde creación (sin fecha de etapa)'
@@ -293,7 +294,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
 
       {/* Modal de Cambio de Etapa */}
       {showStageModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -314,26 +315,25 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                 {currentPlant.tagCode} - {currentPlant.strain?.name || 'Sin genética'}
               </p>
             </div>
-            
+
             <div className="p-4 space-y-2">
               {(Object.entries(stageLabels) as [PlantStage, string][]).map(([stage, label]) => {
                 const config = stageIcons[stage];
                 const IconComponent = config.icon;
                 const isCurrentStage = stage === currentPlant.stage;
                 const isSelected = stage === selectedStage;
-                
+
                 return (
                   <button
                     key={stage}
                     onClick={() => setSelectedStage(stage)}
                     disabled={isChangingStage || isCurrentStage}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                      isCurrentStage
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${isCurrentStage
                         ? `${config.bg} border-${config.color.replace('text-', '')}/50 opacity-60`
                         : isSelected
                           ? `${config.bg} border-cultivo-green-500 ring-2 ring-cultivo-green-500/30`
                           : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
-                    } ${isChangingStage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      } ${isChangingStage ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <div className={`p-2 rounded-lg ${config.bg}`}>
                       <IconComponent className={`w-5 h-5 ${config.color}`} />

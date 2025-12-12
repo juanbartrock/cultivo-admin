@@ -1,23 +1,21 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Package,
-  Plus,
   Scale,
+  Package,
   Scissors,
-  Thermometer,
-  Archive,
+  Plus,
   Trash2,
-  Edit2,
-  ChevronRight,
-  Loader2,
   X,
   Minus,
+  Loader2,
+  Calendar,
+  AlertTriangle,
   Snowflake,
-  Home,
+  Thermometer
 } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
+import { useConfirm } from '@/contexts/DialogContext';
 import { harvestService, HarvestStatistics } from '@/services/harvestService';
 import {
   Harvest,
@@ -26,40 +24,41 @@ import {
   CreateHarvestProductDto,
   HarvestProductType,
   StorageLocation,
-  Plant,
+  Plant
 } from '@/types';
 
+interface HarvestSectionProps {
+  plants: Plant[];
+  cycleId: string;
+}
+
 const productTypeConfig: Record<HarvestProductType, { label: string; color: string }> = {
-  FLOR: { label: 'Flor', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  TRIM: { label: 'Trim', color: 'bg-lime-500/20 text-lime-400 border-lime-500/30' },
-  LARF: { label: 'Larf', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  KIEF: { label: 'Kief', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-  HASH: { label: 'Hash', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-  ROSIN: { label: 'Rosin', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
-  ACEITE: { label: 'Aceite', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-  OTRO: { label: 'Otro', color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30' },
+  FLOR: { label: 'Flor', color: 'border-green-500/50 text-green-400 bg-green-500/10' },
+  TRIM: { label: 'Trim', color: 'border-amber-500/50 text-amber-400 bg-amber-500/10' },
+  LARF: { label: 'Larf', color: 'border-lime-500/50 text-lime-400 bg-lime-500/10' },
+  KIEF: { label: 'Kief', color: 'border-yellow-500/50 text-yellow-400 bg-yellow-500/10' },
+  HASH: { label: 'Hash', color: 'border-orange-500/50 text-orange-400 bg-orange-500/10' },
+  ROSIN: { label: 'Rosin', color: 'border-amber-600/50 text-amber-500 bg-amber-600/10' },
+  ACEITE: { label: 'Aceite', color: 'border-blue-500/50 text-blue-400 bg-blue-500/10' },
+  OTRO: { label: 'Otro', color: 'border-zinc-500/50 text-zinc-400 bg-zinc-500/10' },
 };
 
-const storageConfig: Record<StorageLocation, { label: string; icon: React.ElementType }> = {
-  AMBIENTE: { label: 'Ambiente', icon: Home },
+const storageConfig: Record<StorageLocation, { label: string; icon: any }> = {
+  AMBIENTE: { label: 'Ambiente', icon: Package },
   HELADERA: { label: 'Heladera', icon: Thermometer },
   FREEZER: { label: 'Freezer', icon: Snowflake },
 };
 
-interface HarvestSectionProps {
-  plants: Plant[];
-  cycleId?: string;
-}
-
 export default function HarvestSection({ plants, cycleId }: HarvestSectionProps) {
+  // Estado
   const [harvests, setHarvests] = useState<Harvest[]>([]);
-  const [statistics, setStatistics] = useState<HarvestStatistics | null>(null);
   const [selectedHarvest, setSelectedHarvest] = useState<Harvest | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [showHarvestModal, setShowHarvestModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<HarvestProduct | null>(null);
+  const [statistics, setStatistics] = useState<HarvestStatistics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -70,31 +69,35 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
     try {
       const [harvestsData, statsData] = await Promise.all([
         harvestService.getAll(),
-        harvestService.getStatistics(cycleId),
+        harvestService.getStatistics(cycleId)
       ]);
-      
-      // Filtrar por plantas del ciclo si hay cycleId
-      const filteredHarvests = cycleId
-        ? harvestsData.filter(h => plants.some(p => p.id === h.plantId))
-        : harvestsData;
-      
+      // Filtrar cosechas que pertenecen a las plantas de este ciclo
+      const cyclePlantIds = plants.map(p => p.id);
+      const filteredHarvests = harvestsData.filter(h => cyclePlantIds.includes(h.plantId));
+
       setHarvests(filteredHarvests);
       setStatistics(statsData);
-    } catch (err) {
-      console.error('Error loading harvests:', err);
+    } catch (error) {
+      console.error('Error loading harvest data:', error);
+      toast.error('Error al cargar datos de cosecha');
     } finally {
       setIsLoading(false);
     }
   }
+  const { toast } = useToast();
+  const confirm = useConfirm();
+
+  // ... 
 
   async function handleCreateHarvest(data: CreateHarvestDto) {
     try {
       const newHarvest = await harvestService.create(data);
       setHarvests([newHarvest, ...harvests]);
       setShowHarvestModal(false);
+      toast.success('Cosecha registrada correctamente');
     } catch (err) {
       console.error('Error creating harvest:', err);
-      alert('Error al registrar la cosecha');
+      toast.error('Error al registrar la cosecha');
     }
   }
 
@@ -108,9 +111,10 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
         setSelectedHarvest(updatedHarvest);
       }
       setShowProductModal(false);
+      toast.success('Producto creado correctamente');
     } catch (err) {
       console.error('Error creating product:', err);
-      alert('Error al crear el producto');
+      toast.error('Error al crear el producto');
     }
   }
 
@@ -125,26 +129,39 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
       }
       setShowExtractModal(false);
       setSelectedProduct(null);
+      toast.success('Material extraído correctamente');
     } catch (err) {
       console.error('Error extracting material:', err);
-      alert('Error al extraer material');
+      toast.error('Error al extraer material');
     }
   }
 
   async function handleDeleteHarvest(harvest: Harvest) {
-    if (!confirm(`¿Eliminar la cosecha de ${harvest.plant?.tagCode}?`)) return;
-    
+    const shouldDelete = await confirm({
+      title: 'Eliminar Cosecha',
+      message: `¿Estás seguro de eliminar la cosecha de ${harvest.plant?.tagCode}? Esta acción no se puede deshacer.`,
+      variant: 'danger',
+      confirmText: 'Eliminar',
+    });
+
+    if (!shouldDelete) return;
+
     try {
       await harvestService.delete(harvest.id);
       setHarvests(harvests.filter(h => h.id !== harvest.id));
       if (selectedHarvest?.id === harvest.id) {
         setSelectedHarvest(null);
       }
+      toast.success('Cosecha eliminada correctamente');
     } catch (err) {
       console.error('Error deleting harvest:', err);
-      alert('Error al eliminar');
+      toast.error('Error al eliminar');
     }
   }
+
+  // ... rest of component
+
+
 
   if (isLoading) {
     return (
@@ -202,11 +219,10 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
               <button
                 key={harvest.id}
                 onClick={() => setSelectedHarvest(harvest)}
-                className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                  selectedHarvest?.id === harvest.id
-                    ? 'bg-amber-600/20 border-amber-600/50'
-                    : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
-                }`}
+                className={`w-full text-left p-4 rounded-lg border transition-colors ${selectedHarvest?.id === harvest.id
+                  ? 'bg-amber-600/20 border-amber-600/50'
+                  : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
+                  }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-white">
@@ -302,7 +318,7 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
                     const typeInfo = productTypeConfig[product.type];
                     const storageInfo = storageConfig[product.storageLocation];
                     const StorageIcon = storageInfo.icon;
-                    
+
                     return (
                       <div
                         key={product.id}
@@ -406,378 +422,380 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
       )}
     </div>
   );
-}
 
-// Modal para crear cosecha
-function HarvestModal({
-  plants,
-  onClose,
-  onCreated,
-}: {
-  plants: Plant[];
-  onClose: () => void;
-  onCreated: (data: CreateHarvestDto) => void;
-}) {
-  const [form, setForm] = useState({
-    plantId: plants[0]?.id || '',
-    harvestDate: new Date().toISOString().split('T')[0],
-    wetWeight: '',
-    dryWeight: '',
-    trimWeight: '',
-    notes: '',
-  });
-  const [isCreating, setIsCreating] = useState(false);
 
-  async function handleSubmit() {
-    if (!form.plantId) return;
-    setIsCreating(true);
-    try {
-      await onCreated({
-        plantId: form.plantId,
-        harvestDate: form.harvestDate,
-        wetWeight: form.wetWeight ? parseFloat(form.wetWeight) : undefined,
-        dryWeight: form.dryWeight ? parseFloat(form.dryWeight) : undefined,
-        trimWeight: form.trimWeight ? parseFloat(form.trimWeight) : undefined,
-        notes: form.notes || undefined,
-      });
-    } finally {
-      setIsCreating(false);
+  // Modal para crear cosecha
+  function HarvestModal({
+    plants,
+    onClose,
+    onCreated,
+  }: {
+    plants: Plant[];
+    onClose: () => void;
+    onCreated: (data: CreateHarvestDto) => void;
+  }) {
+    const [form, setForm] = useState({
+      plantId: plants[0]?.id || '',
+      harvestDate: new Date().toISOString().split('T')[0],
+      wetWeight: '',
+      dryWeight: '',
+      trimWeight: '',
+      notes: '',
+    });
+    const [isCreating, setIsCreating] = useState(false);
+
+    async function handleSubmit() {
+      if (!form.plantId) return;
+      setIsCreating(true);
+      try {
+        await onCreated({
+          plantId: form.plantId,
+          harvestDate: form.harvestDate,
+          wetWeight: form.wetWeight ? parseFloat(form.wetWeight) : undefined,
+          dryWeight: form.dryWeight ? parseFloat(form.dryWeight) : undefined,
+          trimWeight: form.trimWeight ? parseFloat(form.trimWeight) : undefined,
+          notes: form.notes || undefined,
+        });
+      } finally {
+        setIsCreating(false);
+      }
     }
-  }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md shadow-xl"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-white">Registrar Cosecha</h3>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
-            <X className="w-5 h-5 text-zinc-400" />
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Planta *</label>
-            <select
-              value={form.plantId}
-              onChange={(e) => setForm({ ...form, plantId: e.target.value })}
-              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-            >
-              {plants.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.tagCode} - {p.strain?.name}
-                </option>
-              ))}
-            </select>
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md shadow-xl"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-white">Registrar Cosecha</h3>
+            <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
+              <X className="w-5 h-5 text-zinc-400" />
+            </button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Fecha de cosecha</label>
-            <input
-              type="date"
-              value={form.harvestDate}
-              onChange={(e) => setForm({ ...form, harvestDate: e.target.value })}
-              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-3">
+
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Húmedo (g)</label>
-              <input
-                type="number"
-                value={form.wetWeight}
-                onChange={(e) => setForm({ ...form, wetWeight: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Seco (g)</label>
-              <input
-                type="number"
-                value={form.dryWeight}
-                onChange={(e) => setForm({ ...form, dryWeight: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Trim (g)</label>
-              <input
-                type="number"
-                value={form.trimWeight}
-                onChange={(e) => setForm({ ...form, trimWeight: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Notas</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              rows={2}
-              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white resize-none"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="px-4 py-2 text-zinc-400 hover:text-white">
-            Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isCreating || !form.plantId}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-zinc-700 text-white rounded-lg"
-          >
-            {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scissors className="w-4 h-4" />}
-            {isCreating ? 'Guardando...' : 'Guardar'}
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// Modal para crear producto
-function ProductModal({
-  harvestId,
-  onClose,
-  onCreated,
-}: {
-  harvestId: string;
-  onClose: () => void;
-  onCreated: (data: CreateHarvestProductDto) => void;
-}) {
-  const [form, setForm] = useState({
-    type: 'FLOR' as HarvestProductType,
-    initialWeight: '',
-    packageType: '',
-    packageNumber: '',
-    storageLocation: 'AMBIENTE' as StorageLocation,
-    notes: '',
-  });
-  const [isCreating, setIsCreating] = useState(false);
-
-  async function handleSubmit() {
-    if (!form.initialWeight) return;
-    setIsCreating(true);
-    try {
-      await onCreated({
-        harvestId,
-        type: form.type,
-        initialWeight: parseFloat(form.initialWeight),
-        packageType: form.packageType || undefined,
-        packageNumber: form.packageNumber || undefined,
-        storageLocation: form.storageLocation,
-        notes: form.notes || undefined,
-      });
-    } finally {
-      setIsCreating(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md shadow-xl"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-white">Agregar Producto</h3>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
-            <X className="w-5 h-5 text-zinc-400" />
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Tipo *</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Planta *</label>
               <select
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value as HarvestProductType })}
+                value={form.plantId}
+                onChange={(e) => setForm({ ...form, plantId: e.target.value })}
                 className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
               >
-                {Object.entries(productTypeConfig).map(([key, config]) => (
-                  <option key={key} value={key}>{config.label}</option>
+                {plants.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.tagCode} - {p.strain?.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Peso (g) *</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Fecha de cosecha</label>
               <input
-                type="number"
-                value={form.initialWeight}
-                onChange={(e) => setForm({ ...form, initialWeight: e.target.value })}
+                type="date"
+                value={form.harvestDate}
+                onChange={(e) => setForm({ ...form, harvestDate: e.target.value })}
                 className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Húmedo (g)</label>
+                <input
+                  type="number"
+                  value={form.wetWeight}
+                  onChange={(e) => setForm({ ...form, wetWeight: e.target.value })}
+                  className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Seco (g)</label>
+                <input
+                  type="number"
+                  value={form.dryWeight}
+                  onChange={(e) => setForm({ ...form, dryWeight: e.target.value })}
+                  className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Trim (g)</label>
+                <input
+                  type="number"
+                  value={form.trimWeight}
+                  onChange={(e) => setForm({ ...form, trimWeight: e.target.value })}
+                  className="w-full px-3 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Notas</label>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                rows={2}
+                className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white resize-none"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Tipo envase</label>
-              <input
-                type="text"
-                value={form.packageType}
-                onChange={(e) => setForm({ ...form, packageType: e.target.value })}
-                placeholder="Ej: Frasco vidrio"
-                className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">N° envase</label>
-              <input
-                type="text"
-                value={form.packageNumber}
-                onChange={(e) => setForm({ ...form, packageNumber: e.target.value })}
-                placeholder="Ej: F-001"
-                className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Ubicación</label>
-            <select
-              value={form.storageLocation}
-              onChange={(e) => setForm({ ...form, storageLocation: e.target.value as StorageLocation })}
-              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+
+          <div className="flex justify-end gap-3 mt-6">
+            <button onClick={onClose} className="px-4 py-2 text-zinc-400 hover:text-white">
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isCreating || !form.plantId}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-zinc-700 text-white rounded-lg"
             >
-              {Object.entries(storageConfig).map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
-              ))}
-            </select>
+              {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scissors className="w-4 h-4" />}
+              {isCreating ? 'Guardando...' : 'Guardar'}
+            </button>
           </div>
-        </div>
-
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="px-4 py-2 text-zinc-400 hover:text-white">
-            Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isCreating || !form.initialWeight}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-zinc-700 text-white rounded-lg"
-          >
-            {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
-            {isCreating ? 'Guardando...' : 'Guardar'}
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// Modal para extraer material
-function ExtractModal({
-  product,
-  onClose,
-  onExtract,
-}: {
-  product: HarvestProduct;
-  onClose: () => void;
-  onExtract: (productId: string, amount: number, notes?: string) => void;
-}) {
-  const [amount, setAmount] = useState('');
-  const [notes, setNotes] = useState('');
-  const [isExtracting, setIsExtracting] = useState(false);
-
-  async function handleSubmit() {
-    if (!amount || parseFloat(amount) <= 0) return;
-    if (parseFloat(amount) > product.currentWeight) {
-      alert(`No puedes extraer más de ${product.currentWeight}g`);
-      return;
-    }
-    
-    setIsExtracting(true);
-    try {
-      await onExtract(product.id, parseFloat(amount), notes || undefined);
-    } finally {
-      setIsExtracting(false);
-    }
+        </motion.div>
+      </div>
+    );
   }
 
-  const typeInfo = productTypeConfig[product.type];
+  // Modal para crear producto
+  function ProductModal({
+    harvestId,
+    onClose,
+    onCreated,
+  }: {
+    harvestId: string;
+    onClose: () => void;
+    onCreated: (data: CreateHarvestProductDto) => void;
+  }) {
+    const [form, setForm] = useState({
+      type: 'FLOR' as HarvestProductType,
+      initialWeight: '',
+      packageType: '',
+      packageNumber: '',
+      storageLocation: 'AMBIENTE' as StorageLocation,
+      notes: '',
+    });
+    const [isCreating, setIsCreating] = useState(false);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-sm shadow-xl"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-white">Extraer Material</h3>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
-            <X className="w-5 h-5 text-zinc-400" />
-          </button>
-        </div>
+    async function handleSubmit() {
+      if (!form.initialWeight) return;
+      setIsCreating(true);
+      try {
+        await onCreated({
+          harvestId,
+          type: form.type,
+          initialWeight: parseFloat(form.initialWeight),
+          packageType: form.packageType || undefined,
+          packageNumber: form.packageNumber || undefined,
+          storageLocation: form.storageLocation,
+          notes: form.notes || undefined,
+        });
+      } finally {
+        setIsCreating(false);
+      }
+    }
 
-        <div className="mb-4 p-3 bg-zinc-900/50 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`text-xs px-2 py-0.5 rounded border ${typeInfo.color}`}>
-              {typeInfo.label}
-            </span>
-            {product.packageNumber && (
-              <span className="text-xs text-zinc-500">#{product.packageNumber}</span>
-            )}
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md shadow-xl"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-white">Agregar Producto</h3>
+            <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
+              <X className="w-5 h-5 text-zinc-400" />
+            </button>
           </div>
-          <p className="text-lg font-bold text-white">
-            Disponible: {product.currentWeight}g
-          </p>
-        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">
-              Cantidad a extraer (g) *
-            </label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              max={product.currentWeight}
-              min={0.01}
-              step={0.01}
-              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-            />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Tipo *</label>
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value as HarvestProductType })}
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+                >
+                  {Object.entries(productTypeConfig).map(([key, config]) => (
+                    <option key={key} value={key}>{config.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Peso (g) *</label>
+                <input
+                  type="number"
+                  value={form.initialWeight}
+                  onChange={(e) => setForm({ ...form, initialWeight: e.target.value })}
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Tipo envase</label>
+                <input
+                  type="text"
+                  value={form.packageType}
+                  onChange={(e) => setForm({ ...form, packageType: e.target.value })}
+                  placeholder="Ej: Frasco vidrio"
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">N° envase</label>
+                <input
+                  type="text"
+                  value={form.packageNumber}
+                  onChange={(e) => setForm({ ...form, packageNumber: e.target.value })}
+                  placeholder="Ej: F-001"
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Ubicación</label>
+              <select
+                value={form.storageLocation}
+                onChange={(e) => setForm({ ...form, storageLocation: e.target.value as StorageLocation })}
+                className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+              >
+                {Object.entries(storageConfig).map(([key, config]) => (
+                  <option key={key} value={key}>{config.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Notas</label>
-            <input
-              type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej: Uso personal"
-              className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
-            />
-          </div>
-        </div>
 
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="px-4 py-2 text-zinc-400 hover:text-white">
-            Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isExtracting || !amount || parseFloat(amount) <= 0}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white rounded-lg"
-          >
-            {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Minus className="w-4 h-4" />}
-            {isExtracting ? 'Extrayendo...' : 'Extraer'}
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
+          <div className="flex justify-end gap-3 mt-6">
+            <button onClick={onClose} className="px-4 py-2 text-zinc-400 hover:text-white">
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isCreating || !form.initialWeight}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-zinc-700 text-white rounded-lg"
+            >
+              {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
+              {isCreating ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Modal para extraer material
+  function ExtractModal({
+    product,
+    onClose,
+    onExtract,
+  }: {
+    product: HarvestProduct;
+    onClose: () => void;
+    onExtract: (productId: string, amount: number, notes?: string) => void;
+  }) {
+    const [amount, setAmount] = useState('');
+    const [notes, setNotes] = useState('');
+    const [isExtracting, setIsExtracting] = useState(false);
+    const { toast } = useToast();
+
+    async function handleSubmit() {
+      if (!amount || parseFloat(amount) <= 0) return;
+      if (parseFloat(amount) > product.currentWeight) {
+        toast.error(`No puedes extraer más de ${product.currentWeight}g`);
+        return;
+      }
+
+      setIsExtracting(true);
+      try {
+        await onExtract(product.id, parseFloat(amount), notes || undefined);
+      } finally {
+        setIsExtracting(false);
+      }
+    }
+
+    const typeInfo = productTypeConfig[product.type];
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-sm shadow-xl"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-white">Extraer Material</h3>
+            <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
+              <X className="w-5 h-5 text-zinc-400" />
+            </button>
+          </div>
+
+          <div className="mb-4 p-3 bg-zinc-900/50 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`text-xs px-2 py-0.5 rounded border ${typeInfo.color}`}>
+                {typeInfo.label}
+              </span>
+              {product.packageNumber && (
+                <span className="text-xs text-zinc-500">#{product.packageNumber}</span>
+              )}
+            </div>
+            <p className="text-lg font-bold text-white">
+              Disponible: {product.currentWeight}g
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
+                Cantidad a extraer (g) *
+              </label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                max={product.currentWeight}
+                min={0.01}
+                step={0.01}
+                className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Notas</label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ej: Uso personal"
+                className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <button onClick={onClose} className="px-4 py-2 text-zinc-400 hover:text-white">
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isExtracting || !amount || parseFloat(amount) <= 0}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white rounded-lg"
+            >
+              {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Minus className="w-4 h-4" />}
+              {isExtracting ? 'Extrayendo...' : 'Extraer'}
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+
+
+
 }
-
-
-
-

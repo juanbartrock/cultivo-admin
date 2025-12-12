@@ -8,6 +8,7 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AutomationsService } from './automations.service';
 import {
@@ -16,10 +17,15 @@ import {
   ExecuteAutomationDto,
 } from './dto/automation.dto';
 import { AutomationStatus } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('automations')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('automations')
 export class AutomationsController {
-  constructor(private readonly automationsService: AutomationsService) {}
+  constructor(private readonly automationsService: AutomationsService) { }
 
   /**
    * Lista todas las automatizaciones

@@ -23,6 +23,7 @@ import {
   EyeOff,
   Settings2,
 } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 import {
   SectionLayoutItem,
   SectionLayoutConfig,
@@ -71,6 +72,7 @@ export default function SectionLayoutEditor({
   onClose,
   onSave,
 }: SectionLayoutEditorProps) {
+  const { toast } = useToast();
   const [sections, setSections] = useState<SectionLayoutItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -120,10 +122,10 @@ export default function SectionLayoutEditor({
     setSections(prev => {
       const newSections = [...prev];
       const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      
+
       // Intercambiar posiciones
       [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
-      
+
       // Actualizar órdenes
       const reordered = newSections.map((s, i) => ({ ...s, order: i }));
       setHasChanges(true);
@@ -151,9 +153,10 @@ export default function SectionLayoutEditor({
       setHasChanges(false);
       onSave(config);
       onClose();
+      toast.success('Layout guardado correctamente');
     } catch (error) {
       console.error('Error guardando layout:', error);
-      alert('Error al guardar la configuración');
+      toast.error('Error al guardar la configuración');
     } finally {
       setIsSaving(false);
     }
@@ -222,11 +225,10 @@ export default function SectionLayoutEditor({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.03 }}
-                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                      section.enabled
+                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${section.enabled
                         ? `bg-zinc-800/50 ${colors.border}`
                         : 'bg-zinc-800/20 border-zinc-800 opacity-60'
-                    }`}
+                      }`}
                   >
                     {/* Drag handle visual */}
                     <div className="text-zinc-600">
@@ -249,9 +251,8 @@ export default function SectionLayoutEditor({
                     </div>
 
                     {/* Position badge */}
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      section.enabled ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-800 text-zinc-600'
-                    }`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${section.enabled ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-800 text-zinc-600'
+                      }`}>
                       #{index + 1}
                     </span>
 
@@ -276,11 +277,10 @@ export default function SectionLayoutEditor({
                     {/* Toggle button */}
                     <button
                       onClick={() => toggleSection(section.key)}
-                      className={`p-2 rounded-lg transition-all ${
-                        section.enabled
+                      className={`p-2 rounded-lg transition-all ${section.enabled
                           ? 'bg-cultivo-green-500/20 text-cultivo-green-400 hover:bg-cultivo-green-500/30'
                           : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
-                      }`}
+                        }`}
                     >
                       {section.enabled ? (
                         <Eye className="w-4 h-4" />
@@ -307,7 +307,7 @@ export default function SectionLayoutEditor({
               </button>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}

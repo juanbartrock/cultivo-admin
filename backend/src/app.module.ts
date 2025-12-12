@@ -11,6 +11,8 @@ import { PreventionPlansModule } from './modules/prevention-plans/prevention-pla
 import { AutomationsModule } from './modules/automations/automations.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { HarvestModule } from './modules/harvest/harvest.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -30,7 +32,9 @@ import { HealthController } from './health.controller';
     AutomationsModule,
     NotificationsModule,
     HarvestModule,
+    AuthModule,
+    RealtimeModule,
   ],
   controllers: [HealthController],
 })
-export class AppModule {}
+export class AppModule { }

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Sun, Ruler, Calculator, Plus, Loader2, X, Info, Clock } from 'lucide-react';
 import { api } from '@/services/apiService';
 import { PPFDReading, DLIResult } from '@/types';
+import { useToast } from '@/contexts/ToastContext';
 
 interface PPFDGridProps {
   sectionId: string;
@@ -12,6 +13,7 @@ interface PPFDGridProps {
 }
 
 export default function PPFDGrid({ sectionId, sectionName }: PPFDGridProps) {
+  const { toast } = useToast();
   const [readings, setReadings] = useState<Array<{ zone: number; reading: PPFDReading | null }>>([]);
   const [dli, setDli] = useState<DLIResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,9 +56,10 @@ export default function PPFDGrid({ sectionId, sectionName }: PPFDGridProps) {
       await loadData();
       setShowModal(false);
       setSelectedZone(null);
+      toast.success('Lectura de PPFD guardada');
     } catch (err) {
       console.error('Error saving PPFD reading:', err);
-      alert('Error al guardar la lectura');
+      toast.error('Error al guardar la lectura');
     }
   }
 
@@ -231,10 +234,11 @@ function PPFDModal({
   const [ppfdValue, setPpfdValue] = useState(currentReading?.ppfdValue?.toString() || '');
   const [lightHeight, setLightHeight] = useState(currentReading?.lightHeight?.toString() || '');
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   async function handleSubmit() {
     if (!ppfdValue || !lightHeight) {
-      alert('Completa todos los campos');
+      toast.error('Completa todos los campos');
       return;
     }
 

@@ -3,11 +3,11 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-  ClipboardList, 
-  Plus, 
-  Calendar, 
-  Leaf, 
+import {
+  ClipboardList,
+  Plus,
+  Calendar,
+  Leaf,
   Activity,
   ChevronRight,
   Droplets,
@@ -26,17 +26,19 @@ import {
   Filter,
   XCircle,
   ArrowLeft,
+
   MoreVertical
 } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 import { cycleService, plantService, strainService } from '@/services/growService';
 import { eventService, formatEventDate, getEventTypeInfo } from '@/services/eventService';
 import { sectionService } from '@/services/locationService';
 import HarvestSection from '@/components/HarvestSection';
-import { 
-  Cycle, 
+import {
+  Cycle,
   CycleWithCount,
-  Plant, 
-  Strain, 
+  Plant,
+  Strain,
   Section,
   GrowEvent,
   CycleStatus,
@@ -97,7 +99,8 @@ const statusColors: Record<CycleStatus, string> = {
 function SeguimientosContent() {
   const searchParams = useSearchParams();
   const plantIdFromUrl = searchParams.get('plant');
-  
+  const { toast } = useToast();
+
   // Estado principal
   const [cycles, setCycles] = useState<CycleWithCount[]>([]);
   const [selectedCycle, setSelectedCycle] = useState<CycleWithCount | null>(null);
@@ -105,23 +108,23 @@ function SeguimientosContent() {
   const [events, setEvents] = useState<GrowEvent[]>([]);
   const [strains, setStrains] = useState<Strain[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
-  
+
   // Estados de carga
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPlants, setIsLoadingPlants] = useState(false);
   const [isLoadingMoreEvents, setIsLoadingMoreEvents] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modales
   const [showCycleModal, setShowCycleModal] = useState(false);
   const [showPlantModal, setShowPlantModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showStrainModal, setShowStrainModal] = useState(false);
-  
+
   // Filtros
   const [statusFilter, setStatusFilter] = useState<CycleStatus | 'all'>('all');
   const [plantFilter, setPlantFilter] = useState<string | null>(plantIdFromUrl);
-  
+
   // Paginación de eventos
   const [eventsPage, setEventsPage] = useState(1);
   const [eventsPerPage] = useState(5);
@@ -148,12 +151,12 @@ function SeguimientosContent() {
   // Recalcular eventos paginados cuando cambia el filtro de planta o los eventos
   useEffect(() => {
     // Filtrar eventos por planta si hay filtro activo
-    const filtered = plantFilter 
+    const filtered = plantFilter
       ? allEvents.filter(e => e.plantId === plantFilter)
       : allEvents;
-    
+
     setTotalEvents(filtered.length);
-    
+
     // Mostrar la primera página de eventos filtrados
     const startIndex = 0;
     const endIndex = eventsPerPage;
@@ -164,18 +167,18 @@ function SeguimientosContent() {
   async function loadInitialData() {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const [cyclesData, strainsData, sectionsData] = await Promise.all([
         cycleService.getAll(),
         strainService.getAll(),
         sectionService.getAll(),
       ]);
-      
+
       setCycles(cyclesData);
       setStrains(strainsData);
       setSections(sectionsData);
-      
+
       // Si hay un plantId en la URL, buscar la planta y seleccionar su ciclo
       if (plantIdFromUrl) {
         try {
@@ -191,7 +194,7 @@ function SeguimientosContent() {
           console.error('Error buscando planta:', err);
         }
       }
-      
+
       // Seleccionar el primer ciclo activo si existe
       const activeCycle = cyclesData.find(c => c.status === 'ACTIVE');
       if (activeCycle) {
@@ -225,10 +228,10 @@ function SeguimientosContent() {
 
   function loadEventsPage(page: number) {
     // Filtrar eventos por planta si hay filtro activo
-    const filtered = plantFilter 
+    const filtered = plantFilter
       ? allEvents.filter(e => e.plantId === plantFilter)
       : allEvents;
-    
+
     const startIndex = (page - 1) * eventsPerPage;
     const endIndex = startIndex + eventsPerPage;
     const pageEvents = filtered.slice(startIndex, endIndex);
@@ -252,26 +255,26 @@ function SeguimientosContent() {
   async function handleStatusChange(cycleId: string, newStatus: CycleStatus) {
     try {
       const updatedCycle = await cycleService.update(cycleId, { status: newStatus });
-      
+
       // Actualizar el ciclo en la lista
-      setCycles(cycles.map(c => 
-        c.id === cycleId 
+      setCycles(cycles.map(c =>
+        c.id === cycleId
           ? { ...c, status: updatedCycle.status }
           : c
       ));
-      
+
       // Si es el ciclo seleccionado, actualizarlo también
       if (selectedCycle?.id === cycleId) {
         setSelectedCycle({ ...selectedCycle, status: updatedCycle.status });
       }
     } catch (err) {
       console.error('Error actualizando estado del ciclo:', err);
-      alert('Error al actualizar el estado del ciclo');
+      toast.error('Error al actualizar el estado del ciclo');
     }
   }
 
   // Filtrar ciclos
-  const filteredCycles = cycles.filter(c => 
+  const filteredCycles = cycles.filter(c =>
     statusFilter === 'all' || c.status === statusFilter
   );
 
@@ -336,7 +339,7 @@ function SeguimientosContent() {
             Gestiona tus ciclos de cultivo, plantas y registra eventos
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           <button
             onClick={() => setShowStrainModal(true)}
@@ -453,7 +456,7 @@ function SeguimientosContent() {
                 {/* Plantas del ciclo */}
                 <div className="mt-4">
                   <h3 className="text-sm font-medium text-zinc-400 mb-3">Plantas ({plants.length})</h3>
-                  
+
                   {isLoadingPlants ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="w-6 h-6 text-cultivo-green-400 animate-spin" />
@@ -461,13 +464,13 @@ function SeguimientosContent() {
                   ) : plants.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {plants.map((plant) => (
-                        <PlantListItem 
-                          key={plant.id} 
+                        <PlantListItem
+                          key={plant.id}
                           plant={plant}
                           stageIcons={stageIcons}
                           stageLabels={stageLabels}
                           onStageChange={(updatedPlant) => {
-                            setPlants(plants.map(p => 
+                            setPlants(plants.map(p =>
                               p.id === updatedPlant.id ? updatedPlant : p
                             ));
                           }}
@@ -489,9 +492,9 @@ function SeguimientosContent() {
                 {plantFilter && (() => {
                   const filteredPlant = plants.find(p => p.id === plantFilter);
                   const sectionId = filteredPlant?.sectionId;
-                  
+
                   if (!sectionId) return null;
-                  
+
                   return (
                     <a
                       href={`/sala/carpa/${sectionId}`}
@@ -502,12 +505,12 @@ function SeguimientosContent() {
                     </a>
                   );
                 })()}
-                
+
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-white">
                     {plantFilter ? 'Historial de Planta' : 'Eventos Recientes'}
                   </h3>
-                  
+
                   {/* Filtro por planta */}
                   <div className="flex items-center gap-2">
                     {plantFilter && (
@@ -542,7 +545,7 @@ function SeguimientosContent() {
                     )}
                   </div>
                 </div>
-                
+
                 {events.length > 0 ? (
                   <>
                     <div className="space-y-3">
@@ -588,13 +591,13 @@ function SeguimientosContent() {
                                       {/* Nutrientes */}
                                       {event.data.nutrients && Array.isArray(event.data.nutrients) && event.data.nutrients.length > 0 && (
                                         <div className="flex flex-wrap gap-1.5 mt-1">
-                                          {(event.data.nutrients as Array<{name?: string; dose?: string}>).map((nutrient, idx) => {
+                                          {(event.data.nutrients as Array<{ name?: string; dose?: string }>).map((nutrient, idx) => {
                                             // Manejar diferentes estructuras de datos
                                             const name = nutrient?.name || '';
                                             const dose = nutrient?.dose || '';
                                             if (!name && !dose) return null;
                                             return (
-                                              <span 
+                                              <span
                                                 key={idx}
                                                 className="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded-full"
                                               >
@@ -653,7 +656,7 @@ function SeguimientosContent() {
                         );
                       })}
                     </div>
-                    
+
                     {/* Controles de paginación */}
                     {totalEvents > eventsPerPage && (
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-700/50">
@@ -696,9 +699,9 @@ function SeguimientosContent() {
 
               {/* Sección de Cosechas */}
               <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
-                <HarvestSection 
-                  plants={plants} 
-                  cycleId={selectedCycle?.id} 
+                <HarvestSection
+                  plants={plants}
+                  cycleId={selectedCycle?.id}
                 />
               </div>
             </>
@@ -768,15 +771,15 @@ function SeguimientosContent() {
             const updatedAllEvents = [newEvent, ...allEvents];
             setAllEvents(updatedAllEvents);
             setTotalEvents(updatedAllEvents.length);
-            
+
             // Si estamos en la primera página, agregar el evento a la vista actual
             if (eventsPage === 1) {
-              const filtered = plantFilter 
+              const filtered = plantFilter
                 ? updatedAllEvents.filter(e => e.plantId === plantFilter)
                 : updatedAllEvents;
               setEvents(filtered.slice(0, eventsPerPage));
             }
-            
+
             setShowEventModal(false);
           }}
         />
@@ -825,7 +828,7 @@ function CycleListItem({
       setShowStatusMenu(false);
       return;
     }
-    
+
     setIsChangingStatus(true);
     try {
       await onStatusChange(cycle.id, newStatus);
@@ -838,11 +841,10 @@ function CycleListItem({
   };
 
   return (
-    <div className={`relative rounded-lg border transition-colors ${
-      isSelected
-        ? 'bg-cultivo-green-600/20 border-cultivo-green-600/50'
-        : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
-    }`}>
+    <div className={`relative rounded-lg border transition-colors ${isSelected
+      ? 'bg-cultivo-green-600/20 border-cultivo-green-600/50'
+      : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
+      }`}>
       <button
         onClick={onSelect}
         className="w-full text-left p-3"
@@ -880,12 +882,12 @@ function CycleListItem({
           </span>
         </div>
       </button>
-      
+
       {showStatusMenu && (
         <>
-          <div 
-            className="fixed inset-0 z-10" 
-            onClick={() => setShowStatusMenu(false)} 
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setShowStatusMenu(false)}
           />
           <div className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-20 min-w-[160px] py-1">
             <div className="px-3 py-2 text-xs font-medium text-zinc-400 border-b border-zinc-700">
@@ -893,20 +895,19 @@ function CycleListItem({
             </div>
             {(Object.entries(statusLabels) as [CycleStatus, string][]).map(([status, label]) => {
               const isCurrentStatus = status === cycle.status;
-              const statusColorClass = status === 'ACTIVE' ? 'bg-cultivo-green-400' 
-                : status === 'COMPLETED' ? 'bg-blue-400' 
-                : 'bg-amber-400';
-              
+              const statusColorClass = status === 'ACTIVE' ? 'bg-cultivo-green-400'
+                : status === 'COMPLETED' ? 'bg-blue-400'
+                  : 'bg-amber-400';
+
               return (
                 <button
                   key={status}
                   onClick={() => handleStatusChange(status)}
                   disabled={isChangingStatus}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                    isCurrentStatus 
-                      ? 'bg-zinc-700/50 text-white' 
-                      : 'text-zinc-300 hover:bg-zinc-700/50'
-                  }`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isCurrentStatus
+                    ? 'bg-zinc-700/50 text-white'
+                    : 'text-zinc-300 hover:bg-zinc-700/50'
+                    }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${statusColorClass}`} />
                   {label}
@@ -938,9 +939,10 @@ function PlantListItem({
   stageLabels: Record<PlantStage, string>;
   onStageChange: (plant: Plant) => void;
 }) {
+  const { toast } = useToast();
   const [showStageMenu, setShowStageMenu] = useState(false);
   const [isChangingStage, setIsChangingStage] = useState(false);
-  
+
   const stageConfig = stageIcons[plant.stage];
   const StageIcon = stageConfig?.icon || Leaf;
 
@@ -949,15 +951,16 @@ function PlantListItem({
       setShowStageMenu(false);
       return;
     }
-    
+
     setIsChangingStage(true);
     try {
       const updatedPlant = await plantService.move(plant.id, { stage: newStage });
       onStageChange(updatedPlant);
       setShowStageMenu(false);
+      toast.success('Etapa actualizada correctamente');
     } catch (err) {
       console.error('Error cambiando etapa:', err);
-      alert('Error al cambiar la etapa de la planta');
+      toast.error('Error al cambiar la etapa de la planta');
     } finally {
       setIsChangingStage(false);
     }
@@ -974,14 +977,13 @@ function PlantListItem({
           {plant.strain?.name || 'Sin genética'}
         </p>
       </div>
-      
+
       {/* Botón de etapa con menú */}
       <div className="relative">
         <button
           onClick={() => setShowStageMenu(!showStageMenu)}
-          className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg border transition-all ${
-            stageConfig?.color || 'text-cultivo-green-400'
-          } bg-zinc-700/30 border-zinc-600 hover:border-zinc-500`}
+          className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded-lg border transition-all ${stageConfig?.color || 'text-cultivo-green-400'
+            } bg-zinc-700/30 border-zinc-600 hover:border-zinc-500`}
           disabled={isChangingStage}
         >
           {isChangingStage ? (
@@ -991,29 +993,28 @@ function PlantListItem({
           )}
           {stageLabels[plant.stage]}
         </button>
-        
+
         {showStageMenu && (
           <>
-            <div 
-              className="fixed inset-0 z-10" 
-              onClick={() => setShowStageMenu(false)} 
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => setShowStageMenu(false)}
             />
             <div className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-20 min-w-[140px] py-1">
               {(Object.entries(stageLabels) as [PlantStage, string][]).map(([stage, label]) => {
                 const config = stageIcons[stage];
                 const IconComponent = config?.icon || Leaf;
                 const isCurrentStage = stage === plant.stage;
-                
+
                 return (
                   <button
                     key={stage}
                     onClick={() => handleStageChange(stage)}
                     disabled={isChangingStage}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                      isCurrentStage 
-                        ? 'bg-zinc-700/50 text-white' 
-                        : 'text-zinc-300 hover:bg-zinc-700/50'
-                    }`}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isCurrentStage
+                      ? 'bg-zinc-700/50 text-white'
+                      : 'text-zinc-300 hover:bg-zinc-700/50'
+                      }`}
                   >
                     <IconComponent className={`w-4 h-4 ${config?.color || 'text-zinc-400'}`} />
                     {label}
@@ -1035,11 +1036,11 @@ function PlantListItem({
 // MODALES
 // ============================================
 
-function CycleModal({ 
-  onClose, 
-  onCreated 
-}: { 
-  onClose: () => void; 
+function CycleModal({
+  onClose,
+  onCreated
+}: {
+  onClose: () => void;
   onCreated: (cycle: Cycle) => void;
 }) {
   const [form, setForm] = useState({
@@ -1048,10 +1049,11 @@ function CycleModal({
     notes: '',
   });
   const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
 
   async function handleCreate() {
     if (!form.name.trim()) return;
-    
+
     setIsCreating(true);
     try {
       const newCycle = await cycleService.create({
@@ -1060,9 +1062,10 @@ function CycleModal({
         notes: form.notes || undefined,
       });
       onCreated(newCycle);
+      toast.success('Ciclo creado exitosamente');
     } catch (err) {
       console.error('Error creando ciclo:', err);
-      alert('Error al crear el ciclo');
+      toast.error('Error al crear el ciclo');
     } finally {
       setIsCreating(false);
     }
@@ -1115,18 +1118,18 @@ function CycleModal({
   );
 }
 
-function PlantModal({ 
-  cycleId, 
-  strains, 
+function PlantModal({
+  cycleId,
+  strains,
   sections,
-  onClose, 
+  onClose,
   onCreated,
   onOpenStrainModal
-}: { 
+}: {
   cycleId: string;
   strains: Strain[];
   sections: Section[];
-  onClose: () => void; 
+  onClose: () => void;
   onCreated: (plant: Plant) => void;
   onOpenStrainModal: () => void;
 }) {
@@ -1139,10 +1142,11 @@ function PlantModal({
     notes: '',
   });
   const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
 
   async function handleCreate() {
     if (!form.tagCode.trim() || !form.strainId || !form.sectionId) return;
-    
+
     setIsCreating(true);
     try {
       const newPlant = await plantService.create({
@@ -1155,9 +1159,10 @@ function PlantModal({
         notes: form.notes || undefined,
       });
       onCreated(newPlant);
+      toast.success('Planta creada exitosamente');
     } catch (err) {
       console.error('Error creando planta:', err);
-      alert('Error al crear la planta');
+      toast.error('Error al crear la planta');
     } finally {
       setIsCreating(false);
     }
@@ -1258,19 +1263,20 @@ function PlantModal({
   );
 }
 
-function EventModal({ 
-  cycleId, 
+function EventModal({
+  cycleId,
   plants,
   sections,
-  onClose, 
-  onCreated 
-}: { 
+  onClose,
+  onCreated
+}: {
   cycleId: string;
   plants: Plant[];
   sections: Section[];
-  onClose: () => void; 
+  onClose: () => void;
   onCreated: (event: GrowEvent) => void;
 }) {
+  const { toast } = useToast();
   const [eventType, setEventType] = useState<'water' | 'note' | 'environment' | 'photo'>('water');
   const [form, setForm] = useState({
     sectionId: sections[0]?.id || '',
@@ -1289,7 +1295,7 @@ function EventModal({
   // Selección múltiple de plantas
   const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([]);
   const [applyToCycle, setApplyToCycle] = useState(false); // Si true, no se asocia a plantas específicas
-  
+
   const [isCreating, setIsCreating] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -1316,8 +1322,8 @@ function EventModal({
 
   // Toggle planta seleccionada
   const togglePlant = (plantId: string) => {
-    setSelectedPlantIds(prev => 
-      prev.includes(plantId) 
+    setSelectedPlantIds(prev =>
+      prev.includes(plantId)
         ? prev.filter(id => id !== plantId)
         : [...prev, plantId]
     );
@@ -1347,7 +1353,7 @@ function EventModal({
 
       // Determinar los plantIds a usar
       const plantIdsToUse = applyToCycle ? [undefined] : (selectedPlantIds.length > 0 ? selectedPlantIds : [undefined]);
-      
+
       let lastEvent: GrowEvent | null = null;
       let createdCount = 0;
 
@@ -1371,7 +1377,7 @@ function EventModal({
           });
         } else if (eventType === 'photo') {
           if (!selectedFile) {
-            alert('Debes seleccionar una imagen');
+            toast.error('Debes seleccionar una imagen');
             setIsCreating(false);
             return;
           }
@@ -1388,22 +1394,24 @@ function EventModal({
         }
         createdCount++;
       }
-      
+
       // Limpiar preview antes de cerrar
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
-      
+
       if (lastEvent) {
         // Mostrar notificación si se crearon múltiples eventos
         if (createdCount > 1) {
-          alert(`Se crearon ${createdCount} eventos (uno por cada planta seleccionada)`);
+          toast.success(`Se crearon ${createdCount} eventos (uno por cada planta seleccionada)`);
+        } else {
+          toast.success('Evento registrado exitosamente');
         }
         onCreated(lastEvent);
       }
     } catch (err) {
       console.error('Error creando evento:', err);
-      alert('Error al crear el evento');
+      toast.error('Error al crear el evento');
     } finally {
       setIsCreating(false);
     }
@@ -1416,44 +1424,40 @@ function EventModal({
         <div className="grid grid-cols-4 gap-2">
           <button
             onClick={() => setEventType('water')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'water' 
-                ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' 
-                : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'water'
+              ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+              : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+              }`}
           >
             <Droplets className="w-4 h-4" />
             <span className="text-xs">Riego</span>
           </button>
           <button
             onClick={() => setEventType('note')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'note' 
-                ? 'bg-zinc-500/20 border-zinc-500/50 text-zinc-300' 
-                : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'note'
+              ? 'bg-zinc-500/20 border-zinc-500/50 text-zinc-300'
+              : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+              }`}
           >
             <FileText className="w-4 h-4" />
             <span className="text-xs">Nota</span>
           </button>
           <button
             onClick={() => setEventType('photo')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'photo' 
-                ? 'bg-purple-500/20 border-purple-500/50 text-purple-400' 
-                : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'photo'
+              ? 'bg-purple-500/20 border-purple-500/50 text-purple-400'
+              : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+              }`}
           >
             <Camera className="w-4 h-4" />
             <span className="text-xs">Foto</span>
           </button>
           <button
             onClick={() => setEventType('environment')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'environment' 
-                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' 
-                : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'environment'
+              ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+              : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+              }`}
           >
             <Thermometer className="w-4 h-4" />
             <span className="text-xs">Ambiente</span>
@@ -1476,14 +1480,13 @@ function EventModal({
               </button>
             )}
           </div>
-          
+
           {/* Opción: Aplicar a todo el ciclo */}
           <label
-            className={`flex items-center gap-3 p-2 mb-2 rounded-lg cursor-pointer transition-colors border ${
-              applyToCycle
-                ? 'bg-blue-500/20 border-blue-500/30'
-                : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
-            }`}
+            className={`flex items-center gap-3 p-2 mb-2 rounded-lg cursor-pointer transition-colors border ${applyToCycle
+              ? 'bg-blue-500/20 border-blue-500/30'
+              : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
+              }`}
           >
             <input
               type="checkbox"
@@ -1508,11 +1511,10 @@ function EventModal({
               {plants.map((plant) => (
                 <label
                   key={plant.id}
-                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                    selectedPlantIds.includes(plant.id)
-                      ? 'bg-cultivo-green-500/20 border border-cultivo-green-500/30'
-                      : 'hover:bg-zinc-700/50'
-                  }`}
+                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedPlantIds.includes(plant.id)
+                    ? 'bg-cultivo-green-500/20 border border-cultivo-green-500/30'
+                    : 'hover:bg-zinc-700/50'
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -1537,11 +1539,11 @@ function EventModal({
               <p className="text-sm text-zinc-500">No hay plantas en este ciclo</p>
             </div>
           )}
-          
+
           {/* Resumen de selección */}
           {selectedPlantIds.length > 0 && (
             <p className="text-xs text-cultivo-green-400 mt-2">
-              {selectedPlantIds.length} planta{selectedPlantIds.length > 1 ? 's' : ''} seleccionada{selectedPlantIds.length > 1 ? 's' : ''} 
+              {selectedPlantIds.length} planta{selectedPlantIds.length > 1 ? 's' : ''} seleccionada{selectedPlantIds.length > 1 ? 's' : ''}
               {selectedPlantIds.length > 1 && ' - Se creará un evento para cada una'}
             </p>
           )}
@@ -1718,10 +1720,10 @@ function EventModal({
           className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white rounded-lg"
         >
           {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-          {isCreating 
-            ? 'Guardando...' 
-            : selectedPlantIds.length > 1 
-              ? `Guardar (${selectedPlantIds.length} eventos)` 
+          {isCreating
+            ? 'Guardando...'
+            : selectedPlantIds.length > 1
+              ? `Guardar (${selectedPlantIds.length} eventos)`
               : 'Guardar'
           }
         </button>
@@ -1730,13 +1732,13 @@ function EventModal({
   );
 }
 
-function StrainModal({ 
+function StrainModal({
   strains,
-  onClose, 
-  onCreated 
-}: { 
+  onClose,
+  onCreated
+}: {
   strains: Strain[];
-  onClose: () => void; 
+  onClose: () => void;
   onCreated: (strain: Strain) => void;
 }) {
   const [form, setForm] = useState({
@@ -1746,10 +1748,11 @@ function StrainModal({
     floweringDays: '',
   });
   const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
 
   async function handleCreate() {
     if (!form.name.trim()) return;
-    
+
     setIsCreating(true);
     try {
       const newStrain = await strainService.create({
@@ -1760,9 +1763,10 @@ function StrainModal({
       });
       onCreated(newStrain);
       setForm({ name: '', breeder: '', type: 'HYBRID', floweringDays: '' });
+      toast.success('Genética creada exitosamente');
     } catch (err) {
       console.error('Error creando genética:', err);
-      alert('Error al crear la genética');
+      toast.error('Error al crear la genética');
     } finally {
       setIsCreating(false);
     }
@@ -1853,14 +1857,14 @@ function StrainModal({
 }
 
 // Componente Modal base
-function Modal({ 
-  title, 
-  children, 
+function Modal({
+  title,
+  children,
   onClose,
   size = 'md'
-}: { 
-  title: string; 
-  children: React.ReactNode; 
+}: {
+  title: string;
+  children: React.ReactNode;
   onClose: () => void;
   size?: 'md' | 'lg';
 }) {
@@ -1870,9 +1874,8 @@ function Modal({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={`relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full shadow-xl ${
-          size === 'lg' ? 'max-w-2xl' : 'max-w-md'
-        }`}
+        className={`relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full shadow-xl ${size === 'lg' ? 'max-w-2xl' : 'max-w-md'
+          }`}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white">{title}</h2>

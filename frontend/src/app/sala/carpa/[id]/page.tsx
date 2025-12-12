@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-  Activity, 
-  Leaf, 
-  AlertCircle, 
-  Flower2, 
-  Sprout, 
-  Wind, 
+import {
+  Activity,
+  Leaf,
+  AlertCircle,
+  Flower2,
+  Sprout,
+  Wind,
   TreeDeciduous,
   Loader2,
   RefreshCw,
@@ -39,6 +39,7 @@ import {
   Clock
 } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/contexts/ToastContext';
 import DeviceControlCard from '@/components/DeviceControlCard';
 import EnvironmentPanel from '@/components/EnvironmentPanel';
 import PlantCard from '@/components/PlantCard';
@@ -83,7 +84,7 @@ function groupDevicesByCategory(devices: Device[]) {
   const cameras: Device[] = [];
 
   const controllableTypes: DeviceType[] = [
-    'LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR', 
+    'LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR',
     'DESHUMIDIFICADOR', 'AIRE_ACONDICIONADO', 'BOMBA_RIEGO', 'CALEFACTOR'
   ];
 
@@ -138,15 +139,15 @@ interface PreventionProductWithCheck {
 }
 
 // Modal para registrar evento de una planta
-function PlantEventModal({ 
+function PlantEventModal({
   plant,
   sectionId,
   availablePlants = [],
   feedingPlanInfo,
   preventionPlanInfo,
-  onClose, 
-  onCreated 
-}: { 
+  onClose,
+  onCreated
+}: {
   plant: Plant;
   sectionId: string;
   availablePlants?: Plant[];
@@ -170,11 +171,12 @@ function PlantEventModal({
       notes?: string;
     } | null;
   };
-  onClose: () => void; 
+  onClose: () => void;
   onCreated: (event: GrowEvent) => void;
 }) {
+  const { toast } = useToast();
   const [eventType, setEventType] = useState<'water' | 'note' | 'environment' | 'photo' | 'prevention'>('water');
-  
+
   // Inicializar valores del formulario con los del plan si existen
   const [form, setForm] = useState({
     ph: feedingPlanInfo?.weekData?.ph?.toString() || '',
@@ -186,7 +188,7 @@ function PlantEventModal({
     notes: '',
     caption: '',
   });
-  
+
   // Estado para los productos del plan (con checkbox)
   const [products, setProducts] = useState<ProductWithCheck[]>(
     feedingPlanInfo?.weekData?.products.map(p => ({ ...p, checked: true })) || []
@@ -196,25 +198,25 @@ function PlantEventModal({
   const [preventionProducts, setPreventionProducts] = useState<PreventionProductWithCheck[]>(
     preventionPlanInfo?.applicationData?.products.map(p => ({ ...p, checked: true })) || []
   );
-  
+
   const [isCreating, setIsCreating] = useState(false);
-  
+
   // Estado para plantas adicionales seleccionadas
   const [additionalPlantIds, setAdditionalPlantIds] = useState<string[]>([]);
   const [showPlantSelector, setShowPlantSelector] = useState(false);
-  
+
   // Plantas disponibles para agregar (excluyendo la planta principal)
   const otherPlants = availablePlants.filter(p => p.id !== plant.id);
-  
+
   // Toggle planta adicional
   const toggleAdditionalPlant = (plantId: string) => {
-    setAdditionalPlantIds(prev => 
-      prev.includes(plantId) 
+    setAdditionalPlantIds(prev =>
+      prev.includes(plantId)
         ? prev.filter(id => id !== plantId)
         : [...prev, plantId]
     );
   };
-  
+
   // Seleccionar/deseleccionar todas las plantas adicionales
   const toggleAllAdditionalPlants = () => {
     if (additionalPlantIds.length === otherPlants.length) {
@@ -249,28 +251,28 @@ function PlantEventModal({
 
   // Togglear producto
   const toggleProduct = (index: number) => {
-    setProducts(prev => prev.map((p, i) => 
+    setProducts(prev => prev.map((p, i) =>
       i === index ? { ...p, checked: !p.checked } : p
     ));
   };
 
   // Actualizar dosis de un producto
   const updateProductDose = (index: number, dose: string) => {
-    setProducts(prev => prev.map((p, i) => 
+    setProducts(prev => prev.map((p, i) =>
       i === index ? { ...p, dose } : p
     ));
   };
 
   // Togglear producto de prevención
   const togglePreventionProduct = (index: number) => {
-    setPreventionProducts(prev => prev.map((p, i) => 
+    setPreventionProducts(prev => prev.map((p, i) =>
       i === index ? { ...p, checked: !p.checked } : p
     ));
   };
 
   // Actualizar dosis de un producto de prevención
   const updatePreventionProductDose = (index: number, dose: string) => {
-    setPreventionProducts(prev => prev.map((p, i) => 
+    setPreventionProducts(prev => prev.map((p, i) =>
       i === index ? { ...p, dose } : p
     ));
   };
@@ -295,7 +297,7 @@ function PlantEventModal({
           const selectedProducts = products
             .filter(p => p.checked)
             .map(p => ({ name: p.name, dose: `${p.dose} ${p.unit}` }));
-          
+
           lastEvent = await eventService.createWaterEvent({
             ...baseData,
             ph: form.ph ? parseFloat(form.ph) : undefined,
@@ -311,7 +313,7 @@ function PlantEventModal({
           });
         } else if (eventType === 'photo') {
           if (!selectedFile) {
-            alert('Debes seleccionar una imagen');
+            toast.error('Debes seleccionar una imagen');
             setIsCreating(false);
             return;
           }
@@ -324,14 +326,14 @@ function PlantEventModal({
           const selectedPreventionProducts = preventionProducts
             .filter(p => p.checked)
             .map(p => ({ name: p.name, dose: `${p.dose} ${p.unit}` }));
-          
+
           const preventionContent = `🛡️ Mantenimiento Preventivo - ${preventionPlanInfo?.planName || 'Sin plan'}\n` +
             `Día ${preventionPlanInfo?.currentDay || 0}\n` +
             `Tipo: ${preventionPlanInfo?.applicationData?.applicationType || 'Preventivo'}\n` +
             `Objetivo: ${preventionPlanInfo?.applicationData?.target || 'General'}\n` +
             `Productos aplicados:\n${selectedPreventionProducts.map(p => `  - ${p.name}: ${p.dose}`).join('\n')}` +
             (form.notes ? `\nNotas: ${form.notes}` : '');
-          
+
           lastEvent = await eventService.createNoteEvent({
             ...baseData,
             content: preventionContent,
@@ -345,22 +347,24 @@ function PlantEventModal({
         }
         createdCount++;
       }
-      
+
       // Limpiar preview
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
-      
+
       if (lastEvent) {
         // Mostrar notificación si se crearon múltiples eventos
         if (createdCount > 1) {
-          alert(`Se crearon ${createdCount} eventos (uno por cada planta)`);
+          toast.success(`Se crearon ${createdCount} eventos (uno por cada planta)`);
+        } else {
+          toast.success('Evento registrado correctamente');
         }
         onCreated(lastEvent);
       }
     } catch (err) {
       console.error('Error creando evento:', err);
-      alert('Error al crear el evento');
+      toast.error('Error al crear el evento');
     } finally {
       setIsCreating(false);
     }
@@ -397,7 +401,7 @@ function PlantEventModal({
               <div className="flex items-center gap-2">
                 <Plus className="w-4 h-4 text-cultivo-green-400" />
                 <span className="text-sm text-zinc-300">
-                  {additionalPlantIds.length > 0 
+                  {additionalPlantIds.length > 0
                     ? `${additionalPlantIds.length} planta${additionalPlantIds.length > 1 ? 's' : ''} adicional${additionalPlantIds.length > 1 ? 'es' : ''} seleccionada${additionalPlantIds.length > 1 ? 's' : ''}`
                     : 'Agregar más plantas al evento'
                   }
@@ -409,7 +413,7 @@ function PlantEventModal({
                 <ChevronDown className="w-4 h-4 text-zinc-400" />
               )}
             </button>
-            
+
             {showPlantSelector && (
               <div className="p-3 border-t border-zinc-700/50 bg-zinc-900/30">
                 <div className="flex items-center justify-between mb-2">
@@ -426,11 +430,10 @@ function PlantEventModal({
                   {otherPlants.map((p) => (
                     <label
                       key={p.id}
-                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                        additionalPlantIds.includes(p.id)
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${additionalPlantIds.includes(p.id)
                           ? 'bg-cultivo-green-500/20'
                           : 'hover:bg-zinc-800/50'
-                      }`}
+                        }`}
                     >
                       <input
                         type="checkbox"
@@ -452,55 +455,50 @@ function PlantEventModal({
         <div className="grid grid-cols-5 gap-2">
           <button
             onClick={() => setEventType('water')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'water' 
-                ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' 
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'water'
+                ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
                 : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+              }`}
           >
             <Droplets className="w-4 h-4" />
             <span className="text-xs">Riego</span>
           </button>
           <button
             onClick={() => setEventType('prevention')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'prevention' 
-                ? 'bg-orange-500/20 border-orange-500/50 text-orange-400' 
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'prevention'
+                ? 'bg-orange-500/20 border-orange-500/50 text-orange-400'
                 : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+              }`}
           >
             <Shield className="w-4 h-4" />
             <span className="text-xs">Prevención</span>
           </button>
           <button
             onClick={() => setEventType('photo')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'photo' 
-                ? 'bg-purple-500/20 border-purple-500/50 text-purple-400' 
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'photo'
+                ? 'bg-purple-500/20 border-purple-500/50 text-purple-400'
                 : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+              }`}
           >
             <Camera className="w-4 h-4" />
             <span className="text-xs">Foto</span>
           </button>
           <button
             onClick={() => setEventType('note')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'note' 
-                ? 'bg-zinc-500/20 border-zinc-500/50 text-zinc-300' 
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'note'
+                ? 'bg-zinc-500/20 border-zinc-500/50 text-zinc-300'
                 : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+              }`}
           >
             <FileText className="w-4 h-4" />
             <span className="text-xs">Nota</span>
           </button>
           <button
             onClick={() => setEventType('environment')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${
-              eventType === 'environment' 
-                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' 
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'environment'
+                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
                 : 'bg-zinc-800 border-zinc-700 text-zinc-400'
-            }`}
+              }`}
           >
             <Thermometer className="w-4 h-4" />
             <span className="text-xs">Ambiente</span>
@@ -570,15 +568,14 @@ function PlantEventModal({
                     const dose = parseFloat(product.dose) || 0;
                     const isPerLiter = product.unit.toLowerCase().includes('/l');
                     const total = isPerLiter && liters > 0 ? (dose * liters).toFixed(1) : null;
-                    const totalUnit = product.unit.toLowerCase().includes('g/l') ? 'g' : 
-                                      product.unit.toLowerCase().includes('ml/l') ? 'ml' : '';
-                    
+                    const totalUnit = product.unit.toLowerCase().includes('g/l') ? 'g' :
+                      product.unit.toLowerCase().includes('ml/l') ? 'ml' : '';
+
                     return (
-                      <div 
+                      <div
                         key={index}
-                        className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                          product.checked ? 'bg-cyan-500/10' : 'bg-zinc-800/50 opacity-50'
-                        }`}
+                        className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${product.checked ? 'bg-cyan-500/10' : 'bg-zinc-800/50 opacity-50'
+                          }`}
                       >
                         <input
                           type="checkbox"
@@ -773,11 +770,10 @@ function PlantEventModal({
                 </label>
                 <div className="space-y-2 bg-zinc-800/30 rounded-lg p-3">
                   {preventionProducts.map((product, index) => (
-                    <div 
+                    <div
                       key={index}
-                      className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                        product.checked ? 'bg-orange-500/10' : 'bg-zinc-800/50 opacity-50'
-                      }`}
+                      className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${product.checked ? 'bg-orange-500/10' : 'bg-zinc-800/50 opacity-50'
+                        }`}
                     >
                       <input
                         type="checkbox"
@@ -824,17 +820,17 @@ function PlantEventModal({
           <button
             onClick={handleCreate}
             disabled={
-              isCreating || 
-              (eventType === 'note' && !form.content.trim()) || 
+              isCreating ||
+              (eventType === 'note' && !form.content.trim()) ||
               (eventType === 'photo' && !selectedFile)
             }
             className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
             {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            {isCreating 
-              ? 'Creando...' 
-              : additionalPlantIds.length > 0 
-                ? `Registrar (${1 + additionalPlantIds.length} plantas)` 
+            {isCreating
+              ? 'Creando...'
+              : additionalPlantIds.length > 0
+                ? `Registrar (${1 + additionalPlantIds.length} plantas)`
                 : 'Registrar'
             }
           </button>
@@ -847,13 +843,14 @@ function PlantEventModal({
 export default function CarpaDetailPage() {
   const params = useParams();
   const sectionId = params.id as string;
-  
+  const { toast } = useToast();
+
   const [section, setSection] = useState<SectionDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [selectedPlantForEvent, setSelectedPlantForEvent] = useState<Plant | null>(null);
-  
+
   // Estado para planes de alimentación
   const [feedingPlans, setFeedingPlans] = useState<SectionFeedingPlansResponse | null>(null);
   const [feedingPlansLoading, setFeedingPlansLoading] = useState(false);
@@ -944,7 +941,7 @@ export default function CarpaDetailPage() {
   async function loadSection() {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await sectionService.getDashboard(sectionId);
       setSection(data);
@@ -1008,9 +1005,10 @@ export default function CarpaDetailPage() {
       });
       await loadPreventionPlans();
       setShowPreventionAssignModal(null);
+      toast.success('Plan de prevención asignado');
     } catch (err) {
       console.error('Error asignando plan de prevención:', err);
-      alert(err instanceof Error ? err.message : 'Error al asignar el plan');
+      toast.error(err instanceof Error ? err.message : 'Error al asignar el plan');
     } finally {
       setAssigningPreventionPlan(false);
     }
@@ -1023,9 +1021,10 @@ export default function CarpaDetailPage() {
       await loadAvailablePreventionPlans();
       await loadPreventionPlans();
       setPreventionPlanToDelete(null);
+      toast.success('Plan de prevención eliminado');
     } catch (err) {
       console.error('Error eliminando plan de prevención:', err);
-      alert(err instanceof Error ? err.message : 'Error al eliminar el plan');
+      toast.error(err instanceof Error ? err.message : 'Error al eliminar el plan');
     } finally {
       setDeletingPreventionPlan(false);
     }
@@ -1041,9 +1040,10 @@ export default function CarpaDetailPage() {
       // Recargar datos
       await loadFeedingPlans();
       setShowAssignModal(null);
+      toast.success('Plan de alimentación asignado');
     } catch (err) {
       console.error('Error asignando plan:', err);
-      alert(err instanceof Error ? err.message : 'Error al asignar el plan');
+      toast.error(err instanceof Error ? err.message : 'Error al asignar el plan');
     } finally {
       setAssigningPlan(false);
     }
@@ -1057,9 +1057,10 @@ export default function CarpaDetailPage() {
       await loadAvailablePlans();
       await loadFeedingPlans();
       setPlanToDelete(null);
+      toast.success('Plan de alimentación eliminado');
     } catch (err) {
       console.error('Error eliminando plan:', err);
-      alert(err instanceof Error ? err.message : 'Error al eliminar el plan');
+      toast.error(err instanceof Error ? err.message : 'Error al eliminar el plan');
     } finally {
       setDeletingPlan(false);
     }
@@ -1071,9 +1072,10 @@ export default function CarpaDetailPage() {
       // Recargar datos
       await loadFeedingPlans();
       await loadAvailablePlans();
+      toast.success('Plan desasignado');
     } catch (err) {
       console.error('Error desasignando plan:', err);
-      alert(err instanceof Error ? err.message : 'Error al desasignar el plan');
+      toast.error(err instanceof Error ? err.message : 'Error al desasignar el plan');
       throw err;
     }
   }
@@ -1106,9 +1108,10 @@ export default function CarpaDetailPage() {
       // Recargar datos
       await loadPreventionPlans();
       await loadAvailablePreventionPlans();
+      toast.success('Plan de prevención desasignado');
     } catch (err) {
       console.error('Error desasignando plan de prevención:', err);
-      alert(err instanceof Error ? err.message : 'Error al desasignar el plan');
+      toast.error(err instanceof Error ? err.message : 'Error al desasignar el plan');
       throw err;
     }
   }
@@ -1130,7 +1133,7 @@ export default function CarpaDetailPage() {
   // Función para renderizar una sección por su key
   const renderSection = useCallback((key: string, index: number) => {
     const delay = 0.1 + index * 0.05;
-    
+
     switch (key) {
       case 'environment':
         if (sensors.length === 0) return null;
@@ -1248,7 +1251,7 @@ export default function CarpaDetailPage() {
             transition={{ delay }}
             className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
           >
-            <button 
+            <button
               onClick={() => setPpfdExpanded(!ppfdExpanded)}
               className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
             >
@@ -1281,7 +1284,7 @@ export default function CarpaDetailPage() {
             transition={{ delay }}
             className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
           >
-            <button 
+            <button
               onClick={() => setSensorHistoryExpanded(!sensorHistoryExpanded)}
               className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
             >
@@ -1366,7 +1369,7 @@ export default function CarpaDetailPage() {
           <ArrowLeft className="w-4 h-4" />
           Volver a la sala
         </Link>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowLayoutEditor(true)}
@@ -1403,7 +1406,7 @@ export default function CarpaDetailPage() {
           {section.dimensions && (
             <p className="text-lg text-cultivo-green-400 mb-4">{section.dimensions}</p>
           )}
-          
+
           {section.description && (
             <p className="text-zinc-400 mb-4">{section.description}</p>
           )}
@@ -1481,600 +1484,600 @@ export default function CarpaDetailPage() {
 
       {/* Secciones complejas ordenadas según layout usando CSS order */}
       <div className="flex flex-col gap-8">
-      {/* Planes de Alimentación */}
-      {isSectionEnabled('feedingPlans') && (
-      <motion.section
-        style={{ order: sortedLayoutSections.find(s => s.key === 'feedingPlans')?.order ?? 6 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.28 }}
-        className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
-      >
-        <button 
-          onClick={() => setFeedingPlanExpanded(!feedingPlanExpanded)}
-          className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Beaker className="w-5 h-5 text-cyan-500" />
-            <h2 className="text-xl font-semibold text-white">Plan de Alimentación</h2>
-            {!feedingPlanExpanded && feedingPlans?.plants.some(p => p.feedingPlans.length > 0) && (
-              <span className="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded-full ml-2">
-                {feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length} planta{feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length !== 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
+        {/* Planes de Alimentación */}
+        {isSectionEnabled('feedingPlans') && (
+          <motion.section
+            style={{ order: sortedLayoutSections.find(s => s.key === 'feedingPlans')?.order ?? 6 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.28 }}
+            className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
+          >
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowUploadModal(true);
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors"
+              onClick={() => setFeedingPlanExpanded(!feedingPlanExpanded)}
+              className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
             >
-              <Upload className="w-4 h-4" />
-              Importar
-            </button>
-            {feedingPlanExpanded ? (
-              <ChevronUp className="w-5 h-5 text-zinc-400" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-zinc-400" />
-            )}
-          </div>
-        </button>
-
-        {feedingPlanExpanded && (
-        <div className="p-4 pt-0">
-        {feedingPlansLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Planes asignados a plantas - Agrupados por plan */}
-            {feedingPlans && feedingPlans.plants.some(p => p.feedingPlans.length > 0) && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-zinc-400">Planes asignados</h3>
-                {(() => {
-                  // Agrupar plantas por planId
-                  const planGroups: Record<string, { 
-                    id: string; 
-                    tagCode: string; 
-                    strain?: { name: string }; 
-                    stage: PlantStage; 
-                    feedingPlan: typeof feedingPlans.plants[0]['feedingPlans'][0];
-                  }[]> = {};
-                  
-                  feedingPlans.plants.forEach(plant => {
-                    plant.feedingPlans.forEach(fp => {
-                      if (!planGroups[fp.feedingPlanId]) {
-                        planGroups[fp.feedingPlanId] = [];
-                      }
-                      planGroups[fp.feedingPlanId].push({
-                        id: plant.id,
-                        tagCode: plant.tagCode,
-                        strain: plant.strain,
-                        stage: plant.stage,
-                        feedingPlan: fp,
-                      });
-                    });
-                  });
-                  
-                  return Object.entries(planGroups).map(([planId, plants], index) => (
-                    <FeedingPlanCard
-                      key={planId}
-                      plants={plants}
-                      delay={index}
-                      onUnassign={handleUnassignFeedingPlan}
-                    />
-                  ));
-                })()}
+              <div className="flex items-center gap-2">
+                <Beaker className="w-5 h-5 text-cyan-500" />
+                <h2 className="text-xl font-semibold text-white">Plan de Alimentación</h2>
+                {!feedingPlanExpanded && feedingPlans?.plants.some(p => p.feedingPlans.length > 0) && (
+                  <span className="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded-full ml-2">
+                    {feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length} planta{feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length !== 1 ? 's' : ''}
+                  </span>
+                )}
               </div>
-            )}
-
-            {/* Planes disponibles - Slider horizontal */}
-            {availablePlans.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-zinc-400">Planes disponibles</h3>
-                  <span className="text-xs text-zinc-500">{availablePlans.length} plan{availablePlans.length !== 1 ? 'es' : ''}</span>
-                </div>
-                <div className="relative group">
-                  {/* Botón izquierda */}
-                  <button
-                    onClick={(e) => {
-                      const container = e.currentTarget.nextElementSibling as HTMLElement;
-                      container.scrollBy({ left: -280, behavior: 'smooth' });
-                    }}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                    title="Anterior"
-                  >
-                    <ChevronLeft className="w-4 h-4 text-white" />
-                  </button>
-                  
-                  {/* Contenedor scrollable */}
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent scroll-smooth snap-x snap-mandatory">
-                    {availablePlans.map((plan) => {
-                      // Filtrar plantas que coincidan con la etapa del plan y no tengan este plan asignado
-                      const compatiblePlants = section?.plants?.filter(p => 
-                        p.stage === plan.stage && 
-                        !feedingPlans?.plants.find(fp => fp.id === p.id)?.feedingPlans.some(f => f.feedingPlanId === plan.id)
-                      ) || [];
-
-                      return (
-                        <div key={plan.id} className="flex-shrink-0 w-64 bg-zinc-800/50 border border-zinc-700/50 hover:border-cyan-600/50 rounded-lg p-4 snap-start transition-colors">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="min-w-0 flex-1">
-                              <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
-                              <p className="text-xs text-cyan-400">{plan.stage} • {plan.weeks.length} semanas</p>
-                            </div>
-                            <button
-                              onClick={() => setPlanToDelete(plan)}
-                              className="flex-shrink-0 p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2"
-                              title="Eliminar plan"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                          {compatiblePlants.length > 0 ? (
-                            <button
-                              onClick={() => {
-                                setSelectedPlantsForAssign(compatiblePlants.map(p => p.id));
-                                setShowAssignModal({ plan, compatiblePlants });
-                              }}
-                              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm transition-colors"
-                            >
-                              <Link2 className="w-4 h-4" />
-                              Asignar a {compatiblePlants.length} planta{compatiblePlants.length > 1 ? 's' : ''}
-                            </button>
-                          ) : (
-                            <p className="text-xs text-zinc-500 text-center">
-                              {plan._count.plants > 0 
-                                ? `Asignado a ${plan._count.plants} planta(s)`
-                                : 'Sin plantas compatibles'
-                              }
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Botón derecha */}
-                  <button
-                    onClick={(e) => {
-                      const container = e.currentTarget.previousElementSibling as HTMLElement;
-                      container.scrollBy({ left: 280, behavior: 'smooth' });
-                    }}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                    title="Siguiente"
-                  >
-                    <ChevronRight className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Mensaje si no hay nada */}
-            {(!feedingPlans || !feedingPlans.plants.some(p => p.feedingPlans.length > 0)) && availablePlans.length === 0 && (
-              <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
-                <Beaker className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                <p className="text-zinc-400">No hay planes de alimentación</p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Importa un plan para comenzar
-                </p>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowUploadModal(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors mx-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  Importar primer plan
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-        </div>
-        )}
-      </motion.section>
-      )}
-
-      {/* Planes de Prevención */}
-      {isSectionEnabled('preventionPlans') && (
-      <motion.section
-        style={{ order: sortedLayoutSections.find(s => s.key === 'preventionPlans')?.order ?? 7 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.29 }}
-        className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
-      >
-        <button 
-          onClick={() => setPreventionPlanExpanded(!preventionPlanExpanded)}
-          className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-orange-500" />
-            <h2 className="text-xl font-semibold text-white">Plan de Prevención</h2>
-            {!preventionPlanExpanded && preventionPlans?.plants.some(p => p.preventionPlans.length > 0) && (
-              <span className="text-xs px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full ml-2">
-                {preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length} planta{preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length !== 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowPreventionUploadModal(true);
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors"
-            >
-              <Upload className="w-4 h-4" />
-              Importar
-            </button>
-            {preventionPlanExpanded ? (
-              <ChevronUp className="w-5 h-5 text-zinc-400" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-zinc-400" />
-            )}
-          </div>
-        </button>
-
-        {preventionPlanExpanded && (
-        <div className="p-4 pt-0">
-        {preventionPlansLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Planes asignados a plantas - Agrupados por plan */}
-            {preventionPlans && preventionPlans.plants.some(p => p.preventionPlans.length > 0) && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-zinc-400">Planes asignados</h3>
-                {(() => {
-                  // Agrupar plantas por planId
-                  const planGroups: Record<string, { 
-                    id: string; 
-                    tagCode: string; 
-                    strain?: { name: string }; 
-                    stage: PlantStage; 
-                    preventionPlan: typeof preventionPlans.plants[0]['preventionPlans'][0];
-                  }[]> = {};
-                  
-                  preventionPlans.plants.forEach(plant => {
-                    plant.preventionPlans.forEach(pp => {
-                      if (!planGroups[pp.preventionPlanId]) {
-                        planGroups[pp.preventionPlanId] = [];
-                      }
-                      planGroups[pp.preventionPlanId].push({
-                        id: plant.id,
-                        tagCode: plant.tagCode,
-                        strain: plant.strain,
-                        stage: plant.stage,
-                        preventionPlan: pp,
-                      });
-                    });
-                  });
-                  
-                  return Object.entries(planGroups).map(([planId, plants], index) => (
-                    <PreventionPlanCard
-                      key={planId}
-                      plants={plants}
-                      delay={index}
-                      onUnassign={handleUnassignPreventionPlan}
-                    />
-                  ));
-                })()}
-              </div>
-            )}
-
-            {/* Planes disponibles - Slider horizontal */}
-            {availablePreventionPlans.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-zinc-400">Planes disponibles</h3>
-                  <span className="text-xs text-zinc-500">{availablePreventionPlans.length} plan{availablePreventionPlans.length !== 1 ? 'es' : ''}</span>
-                </div>
-                <div className="relative group">
-                  {/* Botón izquierda */}
-                  <button
-                    onClick={(e) => {
-                      const container = e.currentTarget.nextElementSibling as HTMLElement;
-                      container.scrollBy({ left: -280, behavior: 'smooth' });
-                    }}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                    title="Anterior"
-                  >
-                    <ChevronLeft className="w-4 h-4 text-white" />
-                  </button>
-                  
-                  {/* Contenedor scrollable */}
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent scroll-smooth snap-x snap-mandatory">
-                    {availablePreventionPlans.map((plan) => {
-                      const compatiblePlants = section?.plants?.filter(p => 
-                        p.stage === plan.stage && 
-                        !preventionPlans?.plants.find(pp => pp.id === p.id)?.preventionPlans.some(pr => pr.preventionPlanId === plan.id)
-                      ) || [];
-
-                      return (
-                        <div key={plan.id} className="flex-shrink-0 w-64 bg-zinc-800/50 border border-zinc-700/50 hover:border-orange-600/50 rounded-lg p-4 snap-start transition-colors">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="min-w-0 flex-1">
-                              <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
-                              <p className="text-xs text-orange-400">{plan.stage} • {plan.totalDays} días</p>
-                            </div>
-                            <button
-                              onClick={() => setPreventionPlanToDelete(plan)}
-                              className="flex-shrink-0 p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2"
-                              title="Eliminar plan"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                          {compatiblePlants.length > 0 ? (
-                            <button
-                              onClick={() => {
-                                setSelectedPlantsForPreventionAssign(compatiblePlants.map(p => p.id));
-                                setShowPreventionAssignModal({ plan, compatiblePlants });
-                              }}
-                              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm transition-colors"
-                            >
-                              <Link2 className="w-4 h-4" />
-                              Asignar a {compatiblePlants.length} planta{compatiblePlants.length > 1 ? 's' : ''}
-                            </button>
-                          ) : (
-                            <p className="text-xs text-zinc-500 text-center">
-                              {plan._count.plants > 0 
-                                ? `Asignado a ${plan._count.plants} planta(s)`
-                                : 'Sin plantas compatibles'
-                              }
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Botón derecha */}
-                  <button
-                    onClick={(e) => {
-                      const container = e.currentTarget.previousElementSibling as HTMLElement;
-                      container.scrollBy({ left: 280, behavior: 'smooth' });
-                    }}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                    title="Siguiente"
-                  >
-                    <ChevronRight className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Mensaje si no hay nada */}
-            {(!preventionPlans || !preventionPlans.plants.some(p => p.preventionPlans.length > 0)) && availablePreventionPlans.length === 0 && (
-              <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
-                <Shield className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                <p className="text-zinc-400">No hay planes de prevención</p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Importa un plan para proteger tus plantas de hongos y plagas
-                </p>
-                <button
-                  onClick={() => setShowPreventionUploadModal(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors mx-auto"
-                >
-                  <Plus className="w-4 h-4" />
-                  Importar primer plan
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-        </div>
-        )}
-      </motion.section>
-      )}
-
-      {/* Plantas */}
-      {isSectionEnabled('plants') && (
-      <motion.section
-        style={{ order: sortedLayoutSections.find(s => s.key === 'plants')?.order ?? 8 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
-      >
-        <button 
-          onClick={() => setPlantsExpanded(!plantsExpanded)}
-          className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Leaf className="w-5 h-5 text-cultivo-green-500" />
-            <h2 className="text-xl font-semibold text-white">Plantas</h2>
-            <span className="text-xs px-2 py-0.5 bg-cultivo-green-500/20 text-cultivo-green-400 rounded-full ml-2">
-              {section.plants?.length || 0}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {plantsExpanded ? (
-              <ChevronUp className="w-5 h-5 text-zinc-400" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-zinc-400" />
-            )}
-          </div>
-        </button>
-
-        {plantsExpanded && (
-        <div className="p-4 pt-0 space-y-4">
-        {section.plants && section.plants.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {section.plants.map((plant, index) => (
-                <PlantCard 
-                  key={plant.id} 
-                  plant={plant} 
-                  delay={index}
-                  isSelected={selectedPlantForEvents?.id === plant.id}
-                  onClick={handleSelectPlantForEvents}
-                  onRegisterEvent={(plant) => setSelectedPlantForEvent(plant)}
-                  onStageChange={(updatedPlant) => {
-                    // Actualizar la planta en el estado local
-                    if (section) {
-                      const updatedPlants = section.plants?.map(p => 
-                        p.id === updatedPlant.id ? updatedPlant : p
-                      );
-                      setSection({
-                        ...section,
-                        plants: updatedPlants || []
-                      });
-                    }
-                    // Recargar los planes de alimentación porque pueden cambiar con la etapa
-                    loadFeedingPlans();
-                    loadPreventionPlans();
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowUploadModal(true);
                   }}
-                />
-              ))}
-            </div>
+                  className="flex items-center gap-2 px-3 py-1.5 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Importar
+                </button>
+                {feedingPlanExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-zinc-400" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-zinc-400" />
+                )}
+              </div>
+            </button>
 
-            {/* Grilla de últimos 3 eventos de la planta seleccionada */}
-            {selectedPlantForEvents && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-zinc-900/50 rounded-xl border border-cultivo-green-500/30 p-4"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-cultivo-green-400" />
-                    <h4 className="text-sm font-medium text-white">
-                      Últimos eventos de <span className="text-cultivo-green-400">{selectedPlantForEvents.tagCode}</span>
-                    </h4>
-                  </div>
-                  <Link 
-                    href={`/seguimientos?plant=${selectedPlantForEvents.id}`}
-                    className="text-xs text-zinc-400 hover:text-cultivo-green-400 transition-colors"
-                  >
-                    Ver historial completo →
-                  </Link>
-                </div>
-
-                {loadingPlantEvents ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-5 h-5 text-cultivo-green-400 animate-spin" />
-                  </div>
-                ) : selectedPlantEvents.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {selectedPlantEvents.map((event) => (
-                      <div 
-                        key={event.id}
-                        className="bg-zinc-800/50 rounded-lg p-3 border border-zinc-700/50 hover:border-cultivo-green-600/30 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          {event.type === 'RIEGO' && <Droplets className="w-4 h-4 text-cyan-400" />}
-                          {event.type === 'NOTA' && <FileText className="w-4 h-4 text-yellow-400" />}
-                          {event.type === 'FOTO' && <Camera className="w-4 h-4 text-purple-400" />}
-                          {event.type === 'PARAMETRO_AMBIENTAL' && <Thermometer className="w-4 h-4 text-orange-400" />}
-                          {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL'].includes(event.type) && (
-                            <Activity className="w-4 h-4 text-zinc-400" />
-                          )}
-                          <span className="text-xs font-medium text-zinc-300">
-                            {event.type === 'RIEGO' && 'Riego'}
-                            {event.type === 'NOTA' && 'Nota'}
-                            {event.type === 'FOTO' && 'Foto'}
-                            {event.type === 'PARAMETRO_AMBIENTAL' && 'Ambiente'}
-                            {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL'].includes(event.type) && event.type}
-                          </span>
-                        </div>
-                        <div className="text-xs text-zinc-500 mb-1">
-                          {new Date(event.createdAt).toLocaleDateString('es-AR', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-                        {event.data && (
-                          <div className="text-xs text-zinc-400 space-y-1">
-                            {event.type === 'RIEGO' && (
-                              <>
-                                <div className="flex flex-wrap gap-2">
-                                  {'ph' in event.data && event.data.ph != null && (
-                                    <span className="px-1.5 py-0.5 bg-cyan-500/20 text-cyan-300 rounded">
-                                      pH: {String(event.data.ph)}
-                                    </span>
-                                  )}
-                                  {'ec' in event.data && event.data.ec != null && (
-                                    <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded">
-                                      EC: {String(event.data.ec)}
-                                    </span>
-                                  )}
-                                  {'liters' in event.data && event.data.liters != null && (
-                                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 rounded">
-                                      {String(event.data.liters)}L
-                                    </span>
-                                  )}
-                                </div>
-                                {/* Productos/Nutrientes utilizados */}
-                                {'nutrients' in event.data && Array.isArray(event.data.nutrients) && event.data.nutrients.length > 0 && (
-                                  <div className="mt-1.5 pt-1.5 border-t border-zinc-700/50">
-                                    <span className="text-zinc-500 block mb-1">Productos:</span>
-                                    <div className="flex flex-wrap gap-1">
-                                      {(event.data.nutrients as Array<{ name: string; dose: string }>).map((nutrient, idx) => (
-                                        <span 
-                                          key={idx}
-                                          className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded text-[10px]"
-                                        >
-                                          {nutrient.name} ({nutrient.dose})
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                            {event.type === 'NOTA' && 'content' in event.data && event.data.content != null && (
-                              <span className="line-clamp-2">{String(event.data.content)}</span>
-                            )}
-                            {event.type === 'PARAMETRO_AMBIENTAL' && (
-                              <div className="flex flex-wrap gap-2">
-                                {'temperature' in event.data && event.data.temperature != null && (
-                                  <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-300 rounded">
-                                    {String(event.data.temperature)}°C
-                                  </span>
-                                )}
-                                {'humidity' in event.data && event.data.humidity != null && (
-                                  <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 rounded">
-                                    {String(event.data.humidity)}%
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+            {feedingPlanExpanded && (
+              <div className="p-4 pt-0">
+                {feedingPlansLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
                   </div>
                 ) : (
-                  <div className="text-center py-4 text-zinc-500 text-sm">
-                    No hay eventos registrados para esta planta
+                  <div className="space-y-6">
+                    {/* Planes asignados a plantas - Agrupados por plan */}
+                    {feedingPlans && feedingPlans.plants.some(p => p.feedingPlans.length > 0) && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-zinc-400">Planes asignados</h3>
+                        {(() => {
+                          // Agrupar plantas por planId
+                          const planGroups: Record<string, {
+                            id: string;
+                            tagCode: string;
+                            strain?: { name: string };
+                            stage: PlantStage;
+                            feedingPlan: typeof feedingPlans.plants[0]['feedingPlans'][0];
+                          }[]> = {};
+
+                          feedingPlans.plants.forEach(plant => {
+                            plant.feedingPlans.forEach(fp => {
+                              if (!planGroups[fp.feedingPlanId]) {
+                                planGroups[fp.feedingPlanId] = [];
+                              }
+                              planGroups[fp.feedingPlanId].push({
+                                id: plant.id,
+                                tagCode: plant.tagCode,
+                                strain: plant.strain,
+                                stage: plant.stage,
+                                feedingPlan: fp,
+                              });
+                            });
+                          });
+
+                          return Object.entries(planGroups).map(([planId, plants], index) => (
+                            <FeedingPlanCard
+                              key={planId}
+                              plants={plants}
+                              delay={index}
+                              onUnassign={handleUnassignFeedingPlan}
+                            />
+                          ));
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Planes disponibles - Slider horizontal */}
+                    {availablePlans.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium text-zinc-400">Planes disponibles</h3>
+                          <span className="text-xs text-zinc-500">{availablePlans.length} plan{availablePlans.length !== 1 ? 'es' : ''}</span>
+                        </div>
+                        <div className="relative group">
+                          {/* Botón izquierda */}
+                          <button
+                            onClick={(e) => {
+                              const container = e.currentTarget.nextElementSibling as HTMLElement;
+                              container.scrollBy({ left: -280, behavior: 'smooth' });
+                            }}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                            title="Anterior"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-white" />
+                          </button>
+
+                          {/* Contenedor scrollable */}
+                          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent scroll-smooth snap-x snap-mandatory">
+                            {availablePlans.map((plan) => {
+                              // Filtrar plantas que coincidan con la etapa del plan y no tengan este plan asignado
+                              const compatiblePlants = section?.plants?.filter(p =>
+                                p.stage === plan.stage &&
+                                !feedingPlans?.plants.find(fp => fp.id === p.id)?.feedingPlans.some(f => f.feedingPlanId === plan.id)
+                              ) || [];
+
+                              return (
+                                <div key={plan.id} className="flex-shrink-0 w-64 bg-zinc-800/50 border border-zinc-700/50 hover:border-cyan-600/50 rounded-lg p-4 snap-start transition-colors">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
+                                      <p className="text-xs text-cyan-400">{plan.stage} • {plan.weeks.length} semanas</p>
+                                    </div>
+                                    <button
+                                      onClick={() => setPlanToDelete(plan)}
+                                      className="flex-shrink-0 p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2"
+                                      title="Eliminar plan"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                  {compatiblePlants.length > 0 ? (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedPlantsForAssign(compatiblePlants.map(p => p.id));
+                                        setShowAssignModal({ plan, compatiblePlants });
+                                      }}
+                                      className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm transition-colors"
+                                    >
+                                      <Link2 className="w-4 h-4" />
+                                      Asignar a {compatiblePlants.length} planta{compatiblePlants.length > 1 ? 's' : ''}
+                                    </button>
+                                  ) : (
+                                    <p className="text-xs text-zinc-500 text-center">
+                                      {plan._count.plants > 0
+                                        ? `Asignado a ${plan._count.plants} planta(s)`
+                                        : 'Sin plantas compatibles'
+                                      }
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Botón derecha */}
+                          <button
+                            onClick={(e) => {
+                              const container = e.currentTarget.previousElementSibling as HTMLElement;
+                              container.scrollBy({ left: 280, behavior: 'smooth' });
+                            }}
+                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                            title="Siguiente"
+                          >
+                            <ChevronRight className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mensaje si no hay nada */}
+                    {(!feedingPlans || !feedingPlans.plants.some(p => p.feedingPlans.length > 0)) && availablePlans.length === 0 && (
+                      <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
+                        <Beaker className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+                        <p className="text-zinc-400">No hay planes de alimentación</p>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          Importa un plan para comenzar
+                        </p>
+                        <button
+                          onClick={() => setShowUploadModal(true)}
+                          className="mt-4 flex items-center gap-2 px-4 py-2 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors mx-auto"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Importar primer plan
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
-              </motion.div>
+              </div>
             )}
-          </>
-        ) : (
-          <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
-            <Leaf className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-            <p className="text-zinc-400">No hay plantas registradas en esta sección</p>
-            <p className="text-xs text-zinc-500 mt-1">
-              Agrega plantas desde la página de Ciclos
-            </p>
-          </div>
+          </motion.section>
         )}
-        </div>
+
+        {/* Planes de Prevención */}
+        {isSectionEnabled('preventionPlans') && (
+          <motion.section
+            style={{ order: sortedLayoutSections.find(s => s.key === 'preventionPlans')?.order ?? 7 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.29 }}
+            className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
+          >
+            <button
+              onClick={() => setPreventionPlanExpanded(!preventionPlanExpanded)}
+              className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-orange-500" />
+                <h2 className="text-xl font-semibold text-white">Plan de Prevención</h2>
+                {!preventionPlanExpanded && preventionPlans?.plants.some(p => p.preventionPlans.length > 0) && (
+                  <span className="text-xs px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full ml-2">
+                    {preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length} planta{preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPreventionUploadModal(true);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Importar
+                </button>
+                {preventionPlanExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-zinc-400" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-zinc-400" />
+                )}
+              </div>
+            </button>
+
+            {preventionPlanExpanded && (
+              <div className="p-4 pt-0">
+                {preventionPlansLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Planes asignados a plantas - Agrupados por plan */}
+                    {preventionPlans && preventionPlans.plants.some(p => p.preventionPlans.length > 0) && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-zinc-400">Planes asignados</h3>
+                        {(() => {
+                          // Agrupar plantas por planId
+                          const planGroups: Record<string, {
+                            id: string;
+                            tagCode: string;
+                            strain?: { name: string };
+                            stage: PlantStage;
+                            preventionPlan: typeof preventionPlans.plants[0]['preventionPlans'][0];
+                          }[]> = {};
+
+                          preventionPlans.plants.forEach(plant => {
+                            plant.preventionPlans.forEach(pp => {
+                              if (!planGroups[pp.preventionPlanId]) {
+                                planGroups[pp.preventionPlanId] = [];
+                              }
+                              planGroups[pp.preventionPlanId].push({
+                                id: plant.id,
+                                tagCode: plant.tagCode,
+                                strain: plant.strain,
+                                stage: plant.stage,
+                                preventionPlan: pp,
+                              });
+                            });
+                          });
+
+                          return Object.entries(planGroups).map(([planId, plants], index) => (
+                            <PreventionPlanCard
+                              key={planId}
+                              plants={plants}
+                              delay={index}
+                              onUnassign={handleUnassignPreventionPlan}
+                            />
+                          ));
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Planes disponibles - Slider horizontal */}
+                    {availablePreventionPlans.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium text-zinc-400">Planes disponibles</h3>
+                          <span className="text-xs text-zinc-500">{availablePreventionPlans.length} plan{availablePreventionPlans.length !== 1 ? 'es' : ''}</span>
+                        </div>
+                        <div className="relative group">
+                          {/* Botón izquierda */}
+                          <button
+                            onClick={(e) => {
+                              const container = e.currentTarget.nextElementSibling as HTMLElement;
+                              container.scrollBy({ left: -280, behavior: 'smooth' });
+                            }}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                            title="Anterior"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-white" />
+                          </button>
+
+                          {/* Contenedor scrollable */}
+                          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent scroll-smooth snap-x snap-mandatory">
+                            {availablePreventionPlans.map((plan) => {
+                              const compatiblePlants = section?.plants?.filter(p =>
+                                p.stage === plan.stage &&
+                                !preventionPlans?.plants.find(pp => pp.id === p.id)?.preventionPlans.some(pr => pr.preventionPlanId === plan.id)
+                              ) || [];
+
+                              return (
+                                <div key={plan.id} className="flex-shrink-0 w-64 bg-zinc-800/50 border border-zinc-700/50 hover:border-orange-600/50 rounded-lg p-4 snap-start transition-colors">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
+                                      <p className="text-xs text-orange-400">{plan.stage} • {plan.totalDays} días</p>
+                                    </div>
+                                    <button
+                                      onClick={() => setPreventionPlanToDelete(plan)}
+                                      className="flex-shrink-0 p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors ml-2"
+                                      title="Eliminar plan"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                  {compatiblePlants.length > 0 ? (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedPlantsForPreventionAssign(compatiblePlants.map(p => p.id));
+                                        setShowPreventionAssignModal({ plan, compatiblePlants });
+                                      }}
+                                      className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm transition-colors"
+                                    >
+                                      <Link2 className="w-4 h-4" />
+                                      Asignar a {compatiblePlants.length} planta{compatiblePlants.length > 1 ? 's' : ''}
+                                    </button>
+                                  ) : (
+                                    <p className="text-xs text-zinc-500 text-center">
+                                      {plan._count.plants > 0
+                                        ? `Asignado a ${plan._count.plants} planta(s)`
+                                        : 'Sin plantas compatibles'
+                                      }
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Botón derecha */}
+                          <button
+                            onClick={(e) => {
+                              const container = e.currentTarget.previousElementSibling as HTMLElement;
+                              container.scrollBy({ left: 280, behavior: 'smooth' });
+                            }}
+                            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                            title="Siguiente"
+                          >
+                            <ChevronRight className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mensaje si no hay nada */}
+                    {(!preventionPlans || !preventionPlans.plants.some(p => p.preventionPlans.length > 0)) && availablePreventionPlans.length === 0 && (
+                      <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
+                        <Shield className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+                        <p className="text-zinc-400">No hay planes de prevención</p>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          Importa un plan para proteger tus plantas de hongos y plagas
+                        </p>
+                        <button
+                          onClick={() => setShowPreventionUploadModal(true)}
+                          className="mt-4 flex items-center gap-2 px-4 py-2 border border-cultivo-green-600 hover:bg-cultivo-green-600/20 text-cultivo-green-400 rounded-lg text-sm transition-colors mx-auto"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Importar primer plan
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.section>
         )}
-      </motion.section>
-      )}
+
+        {/* Plantas */}
+        {isSectionEnabled('plants') && (
+          <motion.section
+            style={{ order: sortedLayoutSections.find(s => s.key === 'plants')?.order ?? 8 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden"
+          >
+            <button
+              onClick={() => setPlantsExpanded(!plantsExpanded)}
+              className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Leaf className="w-5 h-5 text-cultivo-green-500" />
+                <h2 className="text-xl font-semibold text-white">Plantas</h2>
+                <span className="text-xs px-2 py-0.5 bg-cultivo-green-500/20 text-cultivo-green-400 rounded-full ml-2">
+                  {section.plants?.length || 0}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {plantsExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-zinc-400" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-zinc-400" />
+                )}
+              </div>
+            </button>
+
+            {plantsExpanded && (
+              <div className="p-4 pt-0 space-y-4">
+                {section.plants && section.plants.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {section.plants.map((plant, index) => (
+                        <PlantCard
+                          key={plant.id}
+                          plant={plant}
+                          delay={index}
+                          isSelected={selectedPlantForEvents?.id === plant.id}
+                          onClick={handleSelectPlantForEvents}
+                          onRegisterEvent={(plant) => setSelectedPlantForEvent(plant)}
+                          onStageChange={(updatedPlant) => {
+                            // Actualizar la planta en el estado local
+                            if (section) {
+                              const updatedPlants = section.plants?.map(p =>
+                                p.id === updatedPlant.id ? updatedPlant : p
+                              );
+                              setSection({
+                                ...section,
+                                plants: updatedPlants || []
+                              });
+                            }
+                            // Recargar los planes de alimentación porque pueden cambiar con la etapa
+                            loadFeedingPlans();
+                            loadPreventionPlans();
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Grilla de últimos 3 eventos de la planta seleccionada */}
+                    {selectedPlantForEvents && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-zinc-900/50 rounded-xl border border-cultivo-green-500/30 p-4"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-cultivo-green-400" />
+                            <h4 className="text-sm font-medium text-white">
+                              Últimos eventos de <span className="text-cultivo-green-400">{selectedPlantForEvents.tagCode}</span>
+                            </h4>
+                          </div>
+                          <Link
+                            href={`/seguimientos?plant=${selectedPlantForEvents.id}`}
+                            className="text-xs text-zinc-400 hover:text-cultivo-green-400 transition-colors"
+                          >
+                            Ver historial completo →
+                          </Link>
+                        </div>
+
+                        {loadingPlantEvents ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="w-5 h-5 text-cultivo-green-400 animate-spin" />
+                          </div>
+                        ) : selectedPlantEvents.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {selectedPlantEvents.map((event) => (
+                              <div
+                                key={event.id}
+                                className="bg-zinc-800/50 rounded-lg p-3 border border-zinc-700/50 hover:border-cultivo-green-600/30 transition-colors"
+                              >
+                                <div className="flex items-center gap-2 mb-2">
+                                  {event.type === 'RIEGO' && <Droplets className="w-4 h-4 text-cyan-400" />}
+                                  {event.type === 'NOTA' && <FileText className="w-4 h-4 text-yellow-400" />}
+                                  {event.type === 'FOTO' && <Camera className="w-4 h-4 text-purple-400" />}
+                                  {event.type === 'PARAMETRO_AMBIENTAL' && <Thermometer className="w-4 h-4 text-orange-400" />}
+                                  {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL'].includes(event.type) && (
+                                    <Activity className="w-4 h-4 text-zinc-400" />
+                                  )}
+                                  <span className="text-xs font-medium text-zinc-300">
+                                    {event.type === 'RIEGO' && 'Riego'}
+                                    {event.type === 'NOTA' && 'Nota'}
+                                    {event.type === 'FOTO' && 'Foto'}
+                                    {event.type === 'PARAMETRO_AMBIENTAL' && 'Ambiente'}
+                                    {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL'].includes(event.type) && event.type}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-zinc-500 mb-1">
+                                  {new Date(event.createdAt).toLocaleDateString('es-AR', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                                {event.data && (
+                                  <div className="text-xs text-zinc-400 space-y-1">
+                                    {event.type === 'RIEGO' && (
+                                      <>
+                                        <div className="flex flex-wrap gap-2">
+                                          {'ph' in event.data && event.data.ph != null && (
+                                            <span className="px-1.5 py-0.5 bg-cyan-500/20 text-cyan-300 rounded">
+                                              pH: {String(event.data.ph)}
+                                            </span>
+                                          )}
+                                          {'ec' in event.data && event.data.ec != null && (
+                                            <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded">
+                                              EC: {String(event.data.ec)}
+                                            </span>
+                                          )}
+                                          {'liters' in event.data && event.data.liters != null && (
+                                            <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 rounded">
+                                              {String(event.data.liters)}L
+                                            </span>
+                                          )}
+                                        </div>
+                                        {/* Productos/Nutrientes utilizados */}
+                                        {'nutrients' in event.data && Array.isArray(event.data.nutrients) && event.data.nutrients.length > 0 && (
+                                          <div className="mt-1.5 pt-1.5 border-t border-zinc-700/50">
+                                            <span className="text-zinc-500 block mb-1">Productos:</span>
+                                            <div className="flex flex-wrap gap-1">
+                                              {(event.data.nutrients as Array<{ name: string; dose: string }>).map((nutrient, idx) => (
+                                                <span
+                                                  key={idx}
+                                                  className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded text-[10px]"
+                                                >
+                                                  {nutrient.name} ({nutrient.dose})
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    )}
+                                    {event.type === 'NOTA' && 'content' in event.data && event.data.content != null && (
+                                      <span className="line-clamp-2">{String(event.data.content)}</span>
+                                    )}
+                                    {event.type === 'PARAMETRO_AMBIENTAL' && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {'temperature' in event.data && event.data.temperature != null && (
+                                          <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-300 rounded">
+                                            {String(event.data.temperature)}°C
+                                          </span>
+                                        )}
+                                        {'humidity' in event.data && event.data.humidity != null && (
+                                          <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 rounded">
+                                            {String(event.data.humidity)}%
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 text-zinc-500 text-sm">
+                            No hay eventos registrados para esta planta
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </>
+                ) : (
+                  <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
+                    <Leaf className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+                    <p className="text-zinc-400">No hay plantas registradas en esta sección</p>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      Agrega plantas desde la página de Ciclos
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.section>
+        )}
       </div>
       {/* Fin de secciones complejas ordenadas */}
 
@@ -2162,8 +2165,8 @@ export default function CarpaDetailPage() {
           >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800">
               <h3 className="text-lg font-semibold text-white">Eliminar Plan</h3>
-              <button 
-                onClick={() => setPlanToDelete(null)} 
+              <button
+                onClick={() => setPlanToDelete(null)}
                 className="p-1 hover:bg-zinc-800 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-zinc-400" />
@@ -2176,15 +2179,15 @@ export default function CarpaDetailPage() {
                 </p>
                 {planToDelete._count.plants > 0 && (
                   <p className="text-red-300 text-xs mt-2">
-                    ⚠️ Este plan está asignado a {planToDelete._count.plants} planta(s). 
+                    ⚠️ Este plan está asignado a {planToDelete._count.plants} planta(s).
                     No podrás eliminarlo hasta desasignarlo.
                   </p>
                 )}
               </div>
 
               <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setPlanToDelete(null)} 
+                <button
+                  onClick={() => setPlanToDelete(null)}
                   className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
                 >
                   Cancelar
@@ -2217,8 +2220,8 @@ export default function CarpaDetailPage() {
           >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800">
               <h3 className="text-lg font-semibold text-white">Asignar Plan de Alimentación</h3>
-              <button 
-                onClick={() => setShowAssignModal(null)} 
+              <button
+                onClick={() => setShowAssignModal(null)}
                 className="p-1 hover:bg-zinc-800 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-zinc-400" />
@@ -2230,7 +2233,7 @@ export default function CarpaDetailPage() {
                 <p className="text-white font-medium">{showAssignModal.plan.name}</p>
                 <p className="text-xs text-cyan-400">{showAssignModal.plan.stage} • {showAssignModal.plan.weeks.length} semanas</p>
               </div>
-              
+
               {/* Selector de plantas */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -2253,11 +2256,10 @@ export default function CarpaDetailPage() {
                   {showAssignModal.compatiblePlants.map((plant) => (
                     <label
                       key={plant.id}
-                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                        selectedPlantsForAssign.includes(plant.id)
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedPlantsForAssign.includes(plant.id)
                           ? 'bg-cyan-500/20 border border-cyan-500/30'
                           : 'bg-zinc-800/50 border border-transparent hover:border-zinc-600'
-                      }`}
+                        }`}
                     >
                       <input
                         type="checkbox"
@@ -2300,8 +2302,8 @@ export default function CarpaDetailPage() {
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
-                <button 
-                  onClick={() => setShowAssignModal(null)} 
+                <button
+                  onClick={() => setShowAssignModal(null)}
                   className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
                 >
                   Cancelar
@@ -2321,9 +2323,10 @@ export default function CarpaDetailPage() {
                       await loadFeedingPlans();
                       await loadAvailablePlans();
                       setShowAssignModal(null);
+                      toast.success('Plan asignado correctamente');
                     } catch (err) {
                       console.error('Error asignando plan:', err);
-                      alert(err instanceof Error ? err.message : 'Error al asignar el plan');
+                      toast.error(err instanceof Error ? err.message : 'Error al asignar el plan');
                     } finally {
                       setAssigningPlan(false);
                     }
@@ -2354,8 +2357,8 @@ export default function CarpaDetailPage() {
           >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800">
               <h3 className="text-lg font-semibold text-white">Eliminar Plan de Prevención</h3>
-              <button 
-                onClick={() => setPreventionPlanToDelete(null)} 
+              <button
+                onClick={() => setPreventionPlanToDelete(null)}
                 className="p-1 hover:bg-zinc-800 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-zinc-400" />
@@ -2368,15 +2371,15 @@ export default function CarpaDetailPage() {
                 </p>
                 {preventionPlanToDelete._count.plants > 0 && (
                   <p className="text-red-300 text-xs mt-2">
-                    ⚠️ Este plan está asignado a {preventionPlanToDelete._count.plants} planta(s). 
+                    ⚠️ Este plan está asignado a {preventionPlanToDelete._count.plants} planta(s).
                     No podrás eliminarlo hasta desasignarlo.
                   </p>
                 )}
               </div>
 
               <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setPreventionPlanToDelete(null)} 
+                <button
+                  onClick={() => setPreventionPlanToDelete(null)}
                   className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
                 >
                   Cancelar
@@ -2409,8 +2412,8 @@ export default function CarpaDetailPage() {
           >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800">
               <h3 className="text-lg font-semibold text-white">Asignar Plan de Prevención</h3>
-              <button 
-                onClick={() => setShowPreventionAssignModal(null)} 
+              <button
+                onClick={() => setShowPreventionAssignModal(null)}
                 className="p-1 hover:bg-zinc-800 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-zinc-400" />
@@ -2422,7 +2425,7 @@ export default function CarpaDetailPage() {
                 <p className="text-white font-medium">{showPreventionAssignModal.plan.name}</p>
                 <p className="text-xs text-orange-400">{showPreventionAssignModal.plan.stage} • {showPreventionAssignModal.plan.totalDays} días</p>
               </div>
-              
+
               {/* Selector de plantas */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -2445,11 +2448,10 @@ export default function CarpaDetailPage() {
                   {showPreventionAssignModal.compatiblePlants.map((plant) => (
                     <label
                       key={plant.id}
-                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                        selectedPlantsForPreventionAssign.includes(plant.id)
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedPlantsForPreventionAssign.includes(plant.id)
                           ? 'bg-orange-500/20 border border-orange-500/30'
                           : 'bg-zinc-800/50 border border-transparent hover:border-zinc-600'
-                      }`}
+                        }`}
                     >
                       <input
                         type="checkbox"
@@ -2492,8 +2494,8 @@ export default function CarpaDetailPage() {
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
-                <button 
-                  onClick={() => setShowPreventionAssignModal(null)} 
+                <button
+                  onClick={() => setShowPreventionAssignModal(null)}
                   className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
                 >
                   Cancelar
@@ -2513,9 +2515,10 @@ export default function CarpaDetailPage() {
                       await loadPreventionPlans();
                       await loadAvailablePreventionPlans();
                       setShowPreventionAssignModal(null);
+                      toast.success('Plan asignado correctamente');
                     } catch (err) {
                       console.error('Error asignando plan de prevención:', err);
-                      alert(err instanceof Error ? err.message : 'Error al asignar el plan');
+                      toast.error(err instanceof Error ? err.message : 'Error al asignar el plan');
                     } finally {
                       setAssigningPreventionPlan(false);
                     }

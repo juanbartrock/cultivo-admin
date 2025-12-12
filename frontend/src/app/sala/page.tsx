@@ -3,8 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Thermometer, Droplets, Activity, Tent, MapPin, Loader2, AlertCircle, Plus, RefreshCw, Home, ChevronRight, Building2, Trash2, Edit } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 import SensorCard from '@/components/SensorCard';
 import CarpaCard from '@/components/CarpaCard';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { roomService, sectionService } from '@/services/locationService';
 import { useWeather } from '@/hooks/useWeather';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
@@ -12,6 +14,7 @@ import { Room, Section, Device, DeviceStatus } from '@/types';
 
 export default function SalaPage() {
   // Estado de datos
+  const { toast } = useToast();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
@@ -49,12 +52,12 @@ export default function SalaPage() {
   async function loadData() {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Obtener todas las salas
       const roomsData = await roomService.getAll();
       setRooms(roomsData);
-      
+
       if (roomsData.length > 0) {
         // Seleccionar la primera sala por defecto
         const firstRoom = await roomService.getById(roomsData[0].id);
@@ -89,15 +92,27 @@ export default function SalaPage() {
     }
   }
 
-  async function handleDeleteRoom(roomId: string, e: React.MouseEvent) {
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; roomId: string | null }>({
+    isOpen: false,
+    roomId: null
+  });
+
+  function confirmDeleteRoom(roomId: string, e: React.MouseEvent) {
     e.stopPropagation();
-    if (!confirm('¿Estás seguro de eliminar este espacio de cultivo? Se eliminarán también todas sus unidades de cultivo.')) return;
-    
+    setDeleteConfirm({ isOpen: true, roomId });
+  }
+
+  async function handleDeleteRoom() {
+    if (!deleteConfirm.roomId) return;
+
+    const roomId = deleteConfirm.roomId;
+    setDeleteConfirm({ isOpen: false, roomId: null });
+
     try {
       await roomService.delete(roomId);
       const newRooms = rooms.filter(r => r.id !== roomId);
       setRooms(newRooms);
-      
+
       if (selectedRoom?.id === roomId) {
         if (newRooms.length > 0) {
           const firstRoom = await roomService.getById(newRooms[0].id);
@@ -107,9 +122,11 @@ export default function SalaPage() {
           setSections([]);
         }
       }
+      toast.success('Espacio eliminado correctamente');
     } catch (err) {
       console.error('Error eliminando sala:', err);
-      alert('Error al eliminar el espacio de cultivo');
+      // Here we should use a Toast in the future
+      toast.error('Error al eliminar el espacio de cultivo');
     }
   }
 
@@ -192,11 +209,10 @@ export default function SalaPage() {
               key={room.id}
               whileHover={{ scale: 1.02 }}
               onClick={() => handleSelectRoom(room.id)}
-              className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
-                selectedRoom?.id === room.id
-                  ? 'bg-cultivo-green-600/20 border-2 border-cultivo-green-500'
-                  : 'bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600'
-              }`}
+              className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${selectedRoom?.id === room.id
+                ? 'bg-cultivo-green-600/20 border-2 border-cultivo-green-500'
+                : 'bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600'
+                }`}
             >
               <Home className={`w-5 h-5 ${selectedRoom?.id === room.id ? 'text-cultivo-green-400' : 'text-zinc-400'}`} />
               <div>
@@ -212,7 +228,7 @@ export default function SalaPage() {
               )}
               {/* Botón de eliminar */}
               <button
-                onClick={(e) => handleDeleteRoom(room.id, e)}
+                onClick={(e) => confirmDeleteRoom(room.id, e)}
                 className="absolute -top-2 -right-2 p-1 bg-zinc-700 hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 title="Eliminar espacio"
               >
@@ -238,7 +254,7 @@ export default function SalaPage() {
                 {selectedRoom.description || 'Monitoreo y control de tu espacio de cultivo'}
               </p>
             </div>
-            
+
             {/* Indicadores principales */}
             <div className="flex items-center gap-4">
               {/* Ubicación */}
@@ -295,14 +311,14 @@ export default function SalaPage() {
             <p className="text-zinc-400 text-sm mb-6">
               Selecciona una unidad para ver sus detalles, dispositivos y plantas
             </p>
-            
+
             {sections.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {sections.map((section, index) => (
-                  <CarpaCard 
-                    key={section.id} 
-                    section={section} 
-                    delay={index} 
+                  <CarpaCard
+                    key={section.id}
+                    section={section}
+                    delay={index}
                     getDeviceStatus={getStatus}
                     statusLoading={statusLoading}
                   />
@@ -321,6 +337,15 @@ export default function SalaPage() {
           </motion.section>
         </>
       )}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Eliminar espacio de cultivo"
+        message="¿Estás seguro de que deseas eliminar este espacio? Esta acción no se puede deshacer y eliminará todas las unidades (carpas) y dispositivos asociados."
+        confirmText="Sí, eliminar"
+        onConfirm={handleDeleteRoom}
+        onCancel={() => setDeleteConfirm({ isOpen: false, roomId: null })}
+        variant="danger"
+      />
     </div>
   );
 }
@@ -329,12 +354,14 @@ export default function SalaPage() {
 function CreateRoomButton({ onCreated, variant = 'primary' }: { onCreated: () => void; variant?: 'primary' | 'secondary' }) {
   const [isCreating, setIsCreating] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const { toast } = useToast();
 
   async function handleCreate() {
     if (!name.trim()) return;
-    
+
     setIsCreating(true);
     try {
       await roomService.create({ name, description: description || undefined });
@@ -342,9 +369,10 @@ function CreateRoomButton({ onCreated, variant = 'primary' }: { onCreated: () =>
       setName('');
       setDescription('');
       onCreated();
+      toast.success('Espacio de cultivo creado exitosamente');
     } catch (err) {
       console.error('Error creando espacio:', err);
-      alert('Error al crear el espacio de cultivo');
+      toast.error('Error al crear el espacio de cultivo');
     } finally {
       setIsCreating(false);
     }
@@ -370,7 +398,7 @@ function CreateRoomButton({ onCreated, variant = 'primary' }: { onCreated: () =>
             className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md"
           >
             <h2 className="text-xl font-bold text-white mb-4">Nuevo Espacio de Cultivo</h2>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1">Nombre <span className="text-red-400">*</span></label>
@@ -414,12 +442,12 @@ function CreateRoomButton({ onCreated, variant = 'primary' }: { onCreated: () =>
 }
 
 // Componente para crear sección/unidad de cultivo
-function CreateSectionButton({ 
-  roomId, 
-  onCreated, 
-  variant = 'secondary' 
-}: { 
-  roomId: string; 
+function CreateSectionButton({
+  roomId,
+  onCreated,
+  variant = 'secondary'
+}: {
+  roomId: string;
   onCreated: () => void;
   variant?: 'primary' | 'secondary';
 }) {
@@ -430,10 +458,11 @@ function CreateSectionButton({
     dimensions: '',
     description: '',
   });
+  const { toast } = useToast();
 
   async function handleCreate() {
     if (!form.name.trim()) return;
-    
+
     setIsCreating(true);
     try {
       await sectionService.create({
@@ -445,9 +474,10 @@ function CreateSectionButton({
       setShowModal(false);
       setForm({ name: '', dimensions: '', description: '' });
       onCreated();
+      toast.success('Unidad de cultivo creada exitosamente');
     } catch (err) {
       console.error('Error creando unidad:', err);
-      alert('Error al crear la unidad de cultivo');
+      toast.error('Error al crear la unidad de cultivo');
     } finally {
       setIsCreating(false);
     }
@@ -473,7 +503,7 @@ function CreateSectionButton({
             className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md"
           >
             <h2 className="text-xl font-bold text-white mb-4">Nueva Unidad de Cultivo</h2>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1">Nombre <span className="text-red-400">*</span></label>

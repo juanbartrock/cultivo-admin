@@ -1,76 +1,56 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/contexts/ToastContext';
+import { useConfirm } from '@/contexts/DialogContext';
 import {
-  Zap,
-  Plus,
-  Play,
-  Pause,
-  Settings,
-  Trash2,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  ChevronRight,
-  ChevronLeft,
-  Activity,
-  Loader2,
-  RefreshCw,
-  BarChart3,
-  Calendar,
-  Power,
-  Thermometer,
-  Droplets,
-  X,
-  Timer,
-  Repeat,
-  Sun,
-  Moon,
-  CalendarClock,
-  Sparkles,
-  Target,
-  Camera,
-  CheckSquare,
+  Loader2, Plus, RefreshCw, Trash2, Edit, Settings, Check, X,
+  AlertTriangle, Play, Pause, Calendar, Clock, Timer, Repeat,
+  Sun, Moon, Thermometer, Droplets, Wind, Zap, Activity,
+  Video, Power, Target, ChevronRight, ChevronLeft,
+  CheckCircle2, XCircle, AlertCircle, BarChart3, CheckSquare, Camera
 } from 'lucide-react';
+
 import { automationService, EffectivenessStats } from '@/services/automationService';
-import { sectionService } from '@/services/locationService';
+import { sectionService, getAllLocations } from '@/services/locationService';
 import { deviceService } from '@/services/deviceService';
 import { plantService } from '@/services/growService';
+
 import {
   Automation,
   AutomationStatus,
-  Section,
-  Device,
-  Plant,
-  AutomationExecution,
   CreateAutomationDto,
-  ConditionOperator,
-  ActionType,
   TriggerType,
   ScheduleType,
+  ActionType,
+  ConditionOperator,
+  Plant,
+  Device,
+  Section,
+  AutomationExecution,
+  ExecutionStatus
 } from '@/types';
 
-const statusConfig: Record<AutomationStatus, { label: string; color: string; icon: React.ElementType }> = {
-  ACTIVE: { label: 'Activa', color: 'text-green-400 bg-green-500/20 border-green-500/30', icon: Play },
-  PAUSED: { label: 'Pausada', color: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30', icon: Pause },
-  DISABLED: { label: 'Deshabilitada', color: 'text-zinc-400 bg-zinc-500/20 border-zinc-500/30', icon: XCircle },
+const triggerTypeLabels: Record<TriggerType, { label: string; icon: any; desc: string }> = {
+  SCHEDULED: { label: 'Programada', icon: Clock, desc: 'Se ejecuta en horarios específicos' },
+  CONDITION: { label: 'Condicional', icon: Settings, desc: 'Se ejecuta cuando se cumplen condiciones' },
+  HYBRID: { label: 'Híbrida', icon: RefreshCw, desc: 'Combinación de horario y condiciones' },
 };
 
-const executionStatusConfig: Record<string, { label: string; color: string }> = {
-  PENDING: { label: 'Pendiente', color: 'text-zinc-400' },
-  RUNNING: { label: 'Ejecutando', color: 'text-blue-400' },
-  COMPLETED: { label: 'Completada', color: 'text-green-400' },
-  FAILED: { label: 'Fallida', color: 'text-red-400' },
-  CANCELLED: { label: 'Cancelada', color: 'text-yellow-400' },
+const scheduleTypeLabels: Record<ScheduleType, { label: string; icon: any; desc: string }> = {
+  TIME_RANGE: { label: 'Rango de Horas', icon: Clock, desc: 'Activo durante un rango horario' },
+  INTERVAL: { label: 'Intervalo', icon: Timer, desc: 'Se ejecuta cada X horas/minutos' },
+  SPECIFIC_TIMES: { label: 'Horas Específicas', icon: Calendar, desc: 'Se ejecuta en momentos puntuales' },
 };
+
+const daysOfWeekLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 const operatorLabels: Record<ConditionOperator, string> = {
   GREATER_THAN: 'Mayor que',
   LESS_THAN: 'Menor que',
   EQUALS: 'Igual a',
-  NOT_EQUALS: 'Diferente de',
+  NOT_EQUALS: 'Distinto de',
   BETWEEN: 'Entre',
   OUTSIDE: 'Fuera de',
 };
@@ -79,70 +59,82 @@ const actionLabels: Record<ActionType, string> = {
   TURN_ON: 'Encender',
   TURN_OFF: 'Apagar',
   TOGGLE: 'Alternar',
-  CAPTURE_PHOTO: 'Capturar foto',
-  TRIGGER_IRRIGATION: 'Activar riego',
+  CAPTURE_PHOTO: 'Capturar Foto',
+  TRIGGER_IRRIGATION: 'Regar',
 };
 
-const triggerTypeLabels: Record<TriggerType, { label: string; desc: string; icon: React.ElementType }> = {
-  SCHEDULED: { label: 'Programada', desc: 'Basada solo en horarios', icon: CalendarClock },
-  CONDITION: { label: 'Por condición', desc: 'Basada en sensores', icon: Target },
-  HYBRID: { label: 'Híbrida', desc: 'Horarios + condiciones', icon: Sparkles },
+const statusConfig: Record<AutomationStatus, { label: string; color: string; icon: any }> = {
+  ACTIVE: { label: 'Activa', color: 'text-green-400', icon: Activity },
+  PAUSED: { label: 'Pausada', color: 'text-yellow-400', icon: Pause },
+  DISABLED: { label: 'Desactivada', color: 'text-zinc-500', icon: Zap },
 };
 
-const scheduleTypeLabels: Record<ScheduleType, { label: string; desc: string; icon: React.ElementType }> = {
-  TIME_RANGE: { label: 'Rango horario', desc: 'ON desde X hasta Y', icon: Sun },
-  INTERVAL: { label: 'Intervalo', desc: 'Cada X horas', icon: Repeat },
-  SPECIFIC_TIMES: { label: 'Horas específicas', desc: 'A las 8:00, 14:00, etc.', icon: Clock },
+// Configuración de visualización de estados
+const executionStatusConfig: Record<ExecutionStatus, { label: string; color: string; icon: any }> = {
+  PENDING: { label: 'Pendiente', color: 'text-zinc-400', icon: Clock },
+  RUNNING: { label: 'Ejecutando', color: 'text-blue-400', icon: Loader2 },
+  COMPLETED: { label: 'Completado', color: 'text-green-400', icon: CheckCircle2 },
+  FAILED: { label: 'Falló', color: 'text-red-400', icon: XCircle },
+  CANCELLED: { label: 'Cancelado', color: 'text-zinc-500', icon: X },
 };
-
-const daysOfWeekLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export default function AutomatizacionesPage() {
+  const { toast } = useToast();
+  const confirm = useConfirm();
+
   const [automations, setAutomations] = useState<Automation[]>([]);
+  const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
+
   const [sections, setSections] = useState<Section[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
-  const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
-  const [executions, setExecutions] = useState<AutomationExecution[]>([]);
-  const [effectiveness, setEffectiveness] = useState<EffectivenessStats | null>(null);
-  const [automationPlants, setAutomationPlants] = useState<Plant[]>([]);
-  
+
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Execution history pagination
+  const [executions, setExecutions] = useState<AutomationExecution[]>([]);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [executionsPage, setExecutionsPage] = useState(1);
   const executionsPerPage = 5;
+
+  // Stats
+  const [effectiveness, setEffectiveness] = useState<EffectivenessStats | null>(null);
+
+  const automationPlants = useMemo(() => {
+    if (!selectedAutomation?.plantIds || selectedAutomation.plantIds.length === 0) return [];
+    // Ensure sections contain plants. If type Section doesn't have plants, we need another way.
+    // Assuming Section interface has plants[] as per locationService output.
+    const allPlants = sections.flatMap(s => s.plants || []);
+    return allPlants.filter(p => selectedAutomation.plantIds.includes(p.id));
+  }, [selectedAutomation, sections]);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  useEffect(() => {
-    if (selectedAutomation) {
-      loadAutomationDetails(selectedAutomation.id);
-    }
-  }, [selectedAutomation?.id]);
-
   async function loadData() {
     setIsLoading(true);
     setError(null);
     try {
-      const [automationsData, sectionsData, devicesData] = await Promise.all([
+      const [automationsData, sectionsData, locations] = await Promise.all([
         automationService.getAll(),
         sectionService.getAll(),
-        deviceService.getAll(),
+        getAllLocations()
       ]);
+
       setAutomations(automationsData);
       setSections(sectionsData);
-      setDevices(devicesData);
-      
-      if (automationsData.length > 0 && !selectedAutomation) {
-        setSelectedAutomation(automationsData[0]);
-      }
+
+      // Calculate flattened devices
+      const allDevices = sectionsData.flatMap(s => s.devices);
+      setDevices(allDevices);
+
     } catch (err) {
       console.error('Error loading data:', err);
-      setError('Error al cargar los datos. Verifica que el backend esté corriendo.');
+      setError('Error al cargar datos. Por favor intenta nuevamente.');
     } finally {
       setIsLoading(false);
     }
@@ -151,30 +143,17 @@ export default function AutomatizacionesPage() {
   async function loadAutomationDetails(id: string) {
     setIsLoadingDetails(true);
     try {
-      const [executionsData, effectivenessData] = await Promise.all([
-        automationService.getExecutions(id, { limit: 50 }),
-        automationService.getEffectiveness(id, 30),
+      const [details, execs, stats] = await Promise.all([
+        automationService.getById(id),
+        automationService.getExecutions(id, { limit: 20 }),
+        automationService.getEffectiveness(id)
       ]);
-      setExecutions(executionsData);
-      setEffectiveness(effectivenessData);
-      setExecutionsPage(1); // Resetear a la primera página cuando cambia la automatización
-      
-      // Cargar plantas asociadas si existen
-      if (selectedAutomation?.plantIds && selectedAutomation.plantIds.length > 0) {
-        try {
-          const plantsData = await Promise.all(
-            selectedAutomation.plantIds.map(plantId => plantService.getById(plantId))
-          );
-          setAutomationPlants(plantsData);
-        } catch (err) {
-          console.error('Error loading automation plants:', err);
-          setAutomationPlants([]);
-        }
-      } else {
-        setAutomationPlants([]);
-      }
+      setSelectedAutomation(details);
+      setExecutions(execs);
+      setEffectiveness(stats);
     } catch (err) {
-      console.error('Error loading automation details:', err);
+      console.error(err);
+      toast.error('Error cargando detalles');
     } finally {
       setIsLoadingDetails(false);
     }
@@ -187,9 +166,10 @@ export default function AutomatizacionesPage() {
       if (selectedAutomation?.id === updated.id) {
         setSelectedAutomation(updated);
       }
+      toast.success(`Automatización ${newStatus === 'ACTIVE' ? 'activada' : 'pausada'}`);
     } catch (err) {
       console.error('Error updating status:', err);
-      alert('Error al cambiar el estado');
+      toast.error('Error al cambiar el estado');
     }
   }
 
@@ -197,29 +177,37 @@ export default function AutomatizacionesPage() {
     try {
       const result = await automationService.execute(automation.id, true);
       if (result.success) {
-        alert('Automatización ejecutada correctamente');
+        toast.success('Automatización ejecutada correctamente');
         loadAutomationDetails(automation.id);
       } else {
-        alert('Algunas acciones fallaron');
+        toast.warning('Algunas acciones fallaron');
       }
     } catch (err) {
       console.error('Error executing automation:', err);
-      alert('Error al ejecutar la automatización');
+      toast.error('Error al ejecutar la automatización');
     }
   }
 
   async function handleDelete(automation: Automation) {
-    if (!confirm(`¿Estás seguro de eliminar "${automation.name}"?`)) return;
-    
+    const shouldDelete = await confirm({
+      title: 'Eliminar Automatización',
+      message: `¿Estás seguro de eliminar "${automation.name}"? Esta acción no se puede deshacer.`,
+      variant: 'danger',
+      confirmText: 'Eliminar',
+    });
+
+    if (!shouldDelete) return;
+
     try {
       await automationService.delete(automation.id);
       setAutomations(automations.filter(a => a.id !== automation.id));
       if (selectedAutomation?.id === automation.id) {
         setSelectedAutomation(automations[0] || null);
       }
+      toast.success('Automatización eliminada');
     } catch (err) {
       console.error('Error deleting automation:', err);
-      alert('Error al eliminar la automatización');
+      toast.error('Error al eliminar la automatización');
     }
   }
 
@@ -229,23 +217,25 @@ export default function AutomatizacionesPage() {
       setAutomations([newAutomation, ...automations]);
       setSelectedAutomation(newAutomation);
       setShowCreateModal(false);
+      toast.success('Automatización creada correctamente');
     } catch (err) {
       console.error('Error creating automation:', err);
-      alert('Error al crear la automatización');
+      toast.error('Error al crear la automatización');
     }
   }
 
   async function handleUpdateAutomation(data: Partial<CreateAutomationDto>) {
     if (!selectedAutomation) return;
-    
+
     try {
       const updated = await automationService.update(selectedAutomation.id, data);
       setAutomations(automations.map(a => a.id === updated.id ? updated : a));
       setSelectedAutomation(updated);
       setShowEditModal(false);
+      toast.success('Automatización actualizada');
     } catch (err) {
       console.error('Error updating automation:', err);
-      alert('Error al actualizar la automatización');
+      toast.error('Error al actualizar la automatización');
     }
   }
 
@@ -306,7 +296,7 @@ export default function AutomatizacionesPage() {
             Configura reglas para automatizar el control de tus dispositivos
           </p>
         </div>
-        
+
         <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
@@ -335,16 +325,15 @@ export default function AutomatizacionesPage() {
                   const statusInfo = statusConfig[automation.status];
                   const StatusIcon = statusInfo.icon;
                   const TriggerIcon = triggerTypeLabels[automation.triggerType]?.icon || Clock;
-                  
+
                   return (
                     <button
                       key={automation.id}
                       onClick={() => setSelectedAutomation(automation)}
-                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                        selectedAutomation?.id === automation.id
-                          ? 'bg-purple-600/20 border-purple-600/50'
-                          : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
-                      }`}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${selectedAutomation?.id === automation.id
+                        ? 'bg-purple-600/20 border-purple-600/50'
+                        : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium text-white truncate">{automation.name}</span>
@@ -546,8 +535,8 @@ export default function AutomatizacionesPage() {
                             )}
                           </div>
                           <span className="text-zinc-300">
-                            {condition.property === 'time' 
-                              ? 'Hora' 
+                            {condition.property === 'time'
+                              ? 'Hora'
                               : condition.device?.name || 'Dispositivo'}
                           </span>
                           <span className="text-zinc-500">→</span>
@@ -628,7 +617,7 @@ export default function AutomatizacionesPage() {
                     <BarChart3 className="w-5 h-5 text-purple-400" />
                     Efectividad ({effectiveness.period})
                   </h3>
-                  
+
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
                       <p className="text-2xl font-bold text-white">{effectiveness.totalExecutions}</p>
@@ -656,7 +645,7 @@ export default function AutomatizacionesPage() {
                   <Activity className="w-5 h-5 text-purple-400" />
                   Historial de Ejecuciones
                 </h3>
-                
+
                 {isLoadingDetails ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
@@ -801,6 +790,7 @@ function CreateAutomationModal({
   onCreated: (data: CreateAutomationDto) => void;
 }) {
   const [step, setStep] = useState<WizardStep>('type');
+  const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [plants, setPlants] = useState<Plant[]>([]);
   const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([]);
@@ -856,7 +846,7 @@ function CreateAutomationModal({
   }>>([]);
 
   const sensorDevices = devices.filter(d => d.type === 'SENSOR');
-  const controllableDevices = devices.filter(d => 
+  const controllableDevices = devices.filter(d =>
     ['LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR', 'DESHUMIDIFICADOR', 'BOMBA_RIEGO', 'CALEFACTOR', 'AIRE_ACONDICIONADO', 'CAMARA'].includes(d.type)
   );
 
@@ -951,7 +941,7 @@ function CreateAutomationModal({
 
   async function handleSubmit() {
     if (!canProceed()) return;
-    
+
     setIsCreating(true);
     try {
       const data: CreateAutomationDto = {
@@ -1000,16 +990,16 @@ function CreateAutomationModal({
               <X className="w-5 h-5 text-zinc-400" />
             </button>
           </div>
-          
+
           {/* Progress steps */}
           <div className="flex items-center gap-2">
             {steps.map((s, idx) => {
               // Skip showing conditions step for SCHEDULED
               if (s.key === 'conditions' && form.triggerType === 'SCHEDULED') return null;
-              
+
               const isCurrent = s.key === step;
               const isPast = getStepIndex(step) > getStepIndex(s.key);
-              
+
               return (
                 <div key={s.key} className="flex items-center gap-2">
                   <div className={`
@@ -1086,11 +1076,10 @@ function CreateAutomationModal({
                           key={type}
                           type="button"
                           onClick={() => setForm({ ...form, triggerType: type })}
-                          className={`p-4 rounded-xl border-2 text-left transition-all ${
-                            isSelected
-                              ? 'border-purple-500 bg-purple-500/10'
-                              : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800/30'
-                          }`}
+                          className={`p-4 rounded-xl border-2 text-left transition-all ${isSelected
+                            ? 'border-purple-500 bg-purple-500/10'
+                            : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800/30'
+                            }`}
                         >
                           <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-purple-400' : 'text-zinc-400'}`} />
                           <p className={`font-medium ${isSelected ? 'text-white' : 'text-zinc-300'}`}>{label}</p>
@@ -1113,14 +1102,12 @@ function CreateAutomationModal({
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, notifications: !form.notifications })}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      form.notifications ? 'bg-purple-600' : 'bg-zinc-700'
-                    }`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.notifications ? 'bg-purple-600' : 'bg-zinc-700'
+                      }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        form.notifications ? 'translate-x-6' : 'translate-x-1'
-                      }`}
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.notifications ? 'translate-x-6' : 'translate-x-1'
+                        }`}
                     />
                   </button>
                 </div>
@@ -1149,11 +1136,10 @@ function CreateAutomationModal({
                               key={type}
                               type="button"
                               onClick={() => setForm({ ...form, scheduleType: type })}
-                              className={`p-4 rounded-xl border-2 text-left transition-all ${
-                                isSelected
-                                  ? 'border-purple-500 bg-purple-500/10'
-                                  : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800/30'
-                              }`}
+                              className={`p-4 rounded-xl border-2 text-left transition-all ${isSelected
+                                ? 'border-purple-500 bg-purple-500/10'
+                                : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800/30'
+                                }`}
                             >
                               <Icon className={`w-5 h-5 mb-2 ${isSelected ? 'text-purple-400' : 'text-zinc-400'}`} />
                               <p className={`font-medium text-sm ${isSelected ? 'text-white' : 'text-zinc-300'}`}>{label}</p>
@@ -1326,11 +1312,10 @@ function CreateAutomationModal({
                               setForm({ ...form, daysOfWeek: [...form.daysOfWeek, idx].sort() });
                             }
                           }}
-                          className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
-                            isSelected
-                              ? 'bg-purple-600 text-white'
-                              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                          }`}
+                          className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${isSelected
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                            }`}
                         >
                           {day}
                         </button>
@@ -1388,7 +1373,7 @@ function CreateAutomationModal({
                             </select>
                           </div>
                         )}
-                        
+
                         <div className="flex items-center gap-2">
                           <select
                             value={condition.deviceId}
@@ -1536,7 +1521,7 @@ function CreateAutomationModal({
                             <X className="w-4 h-4" />
                           </button>
                         </div>
-                        
+
                         {/* Opciones avanzadas */}
                         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-zinc-700/50">
                           <div className="flex items-center gap-2">
@@ -1587,7 +1572,7 @@ function CreateAutomationModal({
                     <p className="text-xs text-zinc-500 mb-3">
                       Selecciona las plantas para registrar las fotos en su historial. Deja vacío para no registrar en ninguna planta.
                     </p>
-                    
+
                     {plants.length === 0 ? (
                       <p className="text-sm text-zinc-500 text-center py-4">
                         No hay plantas en esta sección
@@ -1614,11 +1599,10 @@ function CreateAutomationModal({
                           return (
                             <label
                               key={plant.id}
-                              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                                isSelected
-                                  ? 'bg-purple-600/20 border border-purple-600/50'
-                                  : 'bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600'
-                              }`}
+                              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${isSelected
+                                ? 'bg-purple-600/20 border border-purple-600/50'
+                                : 'bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600'
+                                }`}
                             >
                               <input
                                 type="checkbox"
@@ -1665,7 +1649,7 @@ function CreateAutomationModal({
                 <div className="p-4 bg-zinc-800/30 rounded-xl">
                   <h3 className="font-semibold text-white mb-3">{form.name}</h3>
                   {form.description && <p className="text-sm text-zinc-400 mb-3">{form.description}</p>}
-                  
+
                   <div className="flex flex-wrap gap-2 text-xs">
                     <span className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded">
                       {triggerTypeLabels[form.triggerType].label}
@@ -1709,7 +1693,7 @@ function CreateAutomationModal({
                     <div className="space-y-1">
                       {conditions.map((c, idx) => (
                         <p key={idx} className="text-sm text-zinc-400">
-                          {idx > 0 && <span className="text-cyan-400">{conditions[idx-1].logicOperator} </span>}
+                          {idx > 0 && <span className="text-cyan-400">{conditions[idx - 1].logicOperator} </span>}
                           {sensorDevices.find(d => d.id === c.deviceId)?.name} {c.property} {operatorLabels[c.operator]} {c.value}{c.valueMax ? `-${c.valueMax}` : ''}
                         </p>
                       ))}
@@ -1787,7 +1771,7 @@ function CreateAutomationModal({
             <ChevronLeft className="w-4 h-4" />
             {step === 'type' ? 'Cancelar' : 'Anterior'}
           </button>
-          
+
           {step === 'review' ? (
             <button
               onClick={handleSubmit}
@@ -1835,6 +1819,7 @@ function EditAutomationModal({
   onClose: () => void;
   onUpdated: (data: Partial<CreateAutomationDto>) => void;
 }) {
+  const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [form, setForm] = useState({
     name: automation.name,
@@ -1844,7 +1829,7 @@ function EditAutomationModal({
 
   async function handleSubmit() {
     if (!form.name.trim()) {
-      alert('El nombre es requerido');
+      toast.error('El nombre es requerido');
       return;
     }
 
@@ -1917,14 +1902,12 @@ function EditAutomationModal({
             <button
               type="button"
               onClick={() => setForm({ ...form, notifications: !form.notifications })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                form.notifications ? 'bg-purple-600' : 'bg-zinc-700'
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.notifications ? 'bg-purple-600' : 'bg-zinc-700'
+                }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  form.notifications ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.notifications ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </button>
           </div>
