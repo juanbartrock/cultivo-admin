@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from './storage.service';
-import { CreateWaterEventDto, CreateNoteEventDto, CreatePhotoEventDto, CreateEnvironmentEventDto } from './dto/event.dto';
+import { CreateWaterEventDto, CreateNoteEventDto, CreatePhotoEventDto, CreateEnvironmentEventDto, CreateGenericEventDto } from './dto/event.dto';
 import { EventType, Prisma } from '@prisma/client';
 
 @Injectable()
@@ -221,6 +221,28 @@ export class EventsService {
         cycleId: data.cycleId,
         sectionId: data.sectionId,
         data: eventData,
+      },
+      include: {
+        plant: true,
+        cycle: true,
+        section: true,
+      },
+    });
+  }
+
+  /**
+   * Crea un evento genérico (para tipos como CAMBIO_MACETA, etc.)
+   */
+  async createGenericEvent(data: CreateGenericEventDto) {
+    await this.validateEventTargets(data);
+
+    return this.prisma.event.create({
+      data: {
+        type: data.type,
+        plantId: data.plantId,
+        cycleId: data.cycleId,
+        sectionId: data.sectionId,
+        data: data.data as Prisma.InputJsonValue,
       },
       include: {
         plant: true,

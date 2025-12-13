@@ -8,7 +8,11 @@ import {
   Min,
   Max,
   MaxLength,
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
 } from 'class-validator';
+import { EventType } from '@prisma/client';
 
 // Base DTO para targets de eventos
 class BaseEventTargetDto {
@@ -162,4 +166,23 @@ export class CreateEnvironmentEventDto extends BaseEventTargetDto {
   @IsOptional()
   @MaxLength(1000)
   notes?: string;
+}
+
+export class CreateGenericEventDto extends BaseEventTargetDto {
+  @ApiProperty({
+    description: 'Tipo de evento',
+    enum: EventType,
+    example: EventType.CAMBIO_MACETA,
+  })
+  @IsEnum(EventType)
+  @IsNotEmpty()
+  type: EventType;
+
+  @ApiProperty({
+    description: 'Datos del evento (estructura depende del tipo)',
+    example: { previousPotSize: '3L', newPotSize: '11L', notes: 'Cambio de maceta' },
+  })
+  @IsObject()
+  @IsNotEmpty()
+  data: Record<string, unknown>;
 }

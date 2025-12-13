@@ -248,6 +248,11 @@ export class GrowService {
       throw new NotFoundException(`Section with ID ${data.sectionId} not found`);
     }
 
+    // Validar zona si se proporciona
+    if (data.zone !== undefined && (data.zone < 1 || data.zone > 6)) {
+      throw new BadRequestException('Zone must be between 1 and 6');
+    }
+
     // Verificar que el tagCode es único
     const existing = await this.prisma.plant.findUnique({
       where: { tagCode: data.tagCode },
@@ -267,7 +272,23 @@ export class GrowService {
   }
 
   async updatePlant(id: string, data: UpdatePlantDto) {
-    await this.findPlantById(id);
+    const plant = await this.findPlantById(id);
+
+    // Si se cambia la sección, validar que existe
+    if (data.sectionId && data.sectionId !== plant.sectionId) {
+      const section = await this.prisma.section.findUnique({
+        where: { id: data.sectionId },
+      });
+      if (!section) {
+        throw new NotFoundException(`Section with ID ${data.sectionId} not found`);
+      }
+    }
+
+    // Validar zona si se proporciona
+    if (data.zone !== undefined && (data.zone < 1 || data.zone > 6)) {
+      throw new BadRequestException('Zone must be between 1 and 6');
+    }
+
     return this.prisma.plant.update({
       where: { id },
       data,
@@ -338,10 +359,16 @@ export class GrowService {
       });
     }
 
+    // Validar zona si se proporciona
+    if (data.zone !== undefined && (data.zone < 1 || data.zone > 6)) {
+      throw new BadRequestException('Zone must be between 1 and 6');
+    }
+
     return this.prisma.plant.update({
       where: { id },
       data: {
         ...(data.sectionId && { sectionId: data.sectionId }),
+        ...(data.zone !== undefined && { zone: data.zone }),
         ...(data.stage && { stage: data.stage }),
         // Actualizar stageStartDate cuando cambia la etapa (con la fecha proporcionada)
         ...(data.stage && data.stage !== plant.stage && { stageStartDate: stageChangeDate }),
@@ -356,5 +383,27 @@ export class GrowService {
         },
       },
     });
+  }
+
+  /**
+   * Obtiene el PPFD actual de la zona asignada a una planta
+   */
+  async getPlantPPFD(plantId: string) {
+    const plant = await this.findPlantById(plantId);
+
+    if (!plant.zone) {
+      return null; // La planta no tiene zona asignada
+    }
+
+    // Obtener la última lectura de PPFD de la zona asignada
+    const reading = await this.prisma.pPFDReading.findFirst({
+      where: {
+        sectionId: plant.sectionId,
+        zone: plant.zone,
+      },
+      orderBy: { recordedAt: 'desc' },
+    });
+
+    return reading;
   }
 }

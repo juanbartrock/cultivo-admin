@@ -30,6 +30,7 @@ import {
   CreateNoteEventDto,
   CreatePhotoEventDto,
   CreateEnvironmentEventDto,
+  CreateGenericEventDto,
 } from './dto/event.dto';
 import { EventType } from '@prisma/client';
 
@@ -138,6 +139,13 @@ export class EventsController {
   @ApiResponse({ status: 201, description: 'Parámetros ambientales registrados' })
   async createEnvironmentEvent(@Body() dto: CreateEnvironmentEventDto) {
     return this.eventsService.createEnvironmentEvent(dto);
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Crear un evento genérico' })
+  @ApiResponse({ status: 201, description: 'Evento creado exitosamente' })
+  async createGenericEvent(@Body() dto: CreateGenericEventDto) {
+    return this.eventsService.createGenericEvent(dto);
   }
 
   @Delete(':id')

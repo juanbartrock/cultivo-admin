@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsUUID, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUUID, MaxLength, IsBoolean } from 'class-validator';
 
 export class CreateSectionDto {
   @ApiProperty({
@@ -44,6 +44,15 @@ export class CreateSectionDto {
   @IsUUID()
   @IsNotEmpty()
   roomId: string;
+
+  @ApiPropertyOptional({
+    description: 'Si la sección está activa/en uso',
+    example: true,
+    default: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  enabled?: boolean;
 }
 
 export class UpdateSectionDto extends PartialType(CreateSectionDto) {}

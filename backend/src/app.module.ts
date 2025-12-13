@@ -13,6 +13,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { HarvestModule } from './modules/harvest/harvest.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { AIAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -34,6 +35,7 @@ import { HealthController } from './health.controller';
     HarvestModule,
     AuthModule,
     RealtimeModule,
+    AIAssistantModule,
   ],
   controllers: [HealthController],
 })

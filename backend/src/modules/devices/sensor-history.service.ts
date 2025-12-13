@@ -28,11 +28,18 @@ export class SensorHistoryService {
     this.logger.log('🔄 Starting sensor recording cycle...');
 
     try {
-      // Obtener dispositivos con recordHistory = true
+      // Obtener dispositivos con recordHistory = true (incluir sectionId)
       const devices = await this.prisma.device.findMany({
         where: {
           recordHistory: true,
           type: DeviceType.SENSOR, // Solo sensores
+        },
+        select: {
+          id: true,
+          name: true,
+          connector: true,
+          externalId: true,
+          sectionId: true, // Incluir para guardar en las lecturas
         },
       });
 
@@ -83,6 +90,7 @@ export class SensorHistoryService {
             await this.prisma.sensorReading.create({
               data: {
                 device: { connect: { id: device.id } },
+                sectionId: device.sectionId, // Guardar la sección actual para mantener historial
                 temperature: validTemp,
                 humidity: validHumidity,
                 co2: validCo2,
@@ -90,7 +98,7 @@ export class SensorHistoryService {
             });
 
             this.logger.log(
-              `✅ Recorded reading for ${device.name}: temp=${validTemp}°C, humidity=${validHumidity}%, co2=${validCo2}ppm`,
+              `✅ Recorded reading for ${device.name}: temp=${validTemp}°C, humidity=${validHumidity}%, co2=${validCo2}ppm (section: ${device.sectionId || 'none'})`,
             );
           } else {
             this.logger.warn(
@@ -137,6 +145,31 @@ export class SensorHistoryService {
         recordedAt: {
           gte: from,
           lte: to,
+        },
+      },
+      orderBy: { recordedAt: 'asc' },
+    });
+  }
+
+  /**
+   * Obtiene el historial de una sección por horas
+   * Útil para ver el historial completo de una sección aunque los dispositivos hayan cambiado
+   */
+  async getHistoryBySection(sectionId: string, hours = 6) {
+    const fromDate = new Date();
+    fromDate.setHours(fromDate.getHours() - hours);
+
+    return this.prisma.sensorReading.findMany({
+      where: {
+        sectionId,
+        recordedAt: { gte: fromDate },
+      },
+      include: {
+        device: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
       orderBy: { recordedAt: 'asc' },

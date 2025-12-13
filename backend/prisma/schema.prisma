@@ -75,6 +75,7 @@ enum EventType {
   PODA
   CAMBIO_FOTOPERIODO
   TRANSPLANTE
+  CAMBIO_MACETA
   NOTA
   FOTO
   PARAMETRO_AMBIENTAL
@@ -193,6 +194,7 @@ model Section {
   dimensions   String? // Ej: "80x80x180"
   image        String? // URL de imagen
   description  String?
+  enabled      Boolean        @default(true) // Si la sección está activa/en uso
   roomId       String         @map("room_id")
   room         Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
   devices      Device[]
@@ -297,9 +299,11 @@ model Plant {
   cycle           Cycle                 @relation(fields: [cycleId], references: [id], onDelete: Cascade)
   sectionId       String                @map("section_id")
   section         Section               @relation(fields: [sectionId], references: [id])
+  zone            Int? // Zona 1-6 dentro de la sección (grilla 2x3)
   stage           PlantStage            @default(GERMINACION)
   sex             PlantSex              @default(UNKNOWN)
   healthStatus    PlantHealthStatus     @default(HEALTHY) @map("health_status")
+  potSizeFinal    String?               @map("pot_size_final") // Tamaño de maceta final (ej: "11L", "25L")
   photo           String? // URL de foto principal
   notes           String?
   startDate       DateTime?             @map("start_date") // Fecha de inicio (germinación/plantado)
@@ -595,12 +599,14 @@ model SensorReading {
   id          String   @id @default(uuid())
   deviceId    String   @map("device_id")
   device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  sectionId   String?  @map("section_id") // Sección donde se registró (para mantener historial al reasignar)
   temperature Float? // Temperatura en °C
   humidity    Float? // Humedad en %
   co2         Float? // CO2 en ppm (si aplica)
   recordedAt  DateTime @default(now()) @map("recorded_at")
 
   @@index([deviceId, recordedAt])
+  @@index([sectionId, recordedAt])
   @@index([recordedAt])
   @@map("sensor_readings")
 }
@@ -685,4 +691,77 @@ model HarvestProduct {
 
   @@index([harvestId])
   @@map("harvest_products")
+}
+
+// ============================================
+// ASISTENTE DE IA
+// ============================================
+
+enum AIContextType {
+  GENERAL // Conversación general
+  CYCLE // Contexto de un ciclo específico
+  SECTION // Contexto de una sección/carpa
+  PLANT // Contexto de una planta específica
+}
+
+enum AIMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AIMemoryType {
+  CONVERSATION // Resumen de conversación
+  CYCLE // Aprendizajes del ciclo
+  SECTION // Configuraciones de la sección
+  PLANT // Historial de la planta
+}
+
+/// Conversación con el asistente de IA
+model AIConversation {
+  id          String        @id @default(uuid())
+  title       String? // Título auto-generado
+  contextType AIContextType @default(GENERAL) @map("context_type")
+  contextId   String?       @map("context_id") // ID del ciclo/sección/planta según contextType
+  messages    AIMessage[]
+  isActive    Boolean       @default(true) @map("is_active")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([contextType, contextId])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("ai_conversations")
+}
+
+/// Mensaje individual en una conversación
+model AIMessage {
+  id             String         @id @default(uuid())
+  conversationId String         @map("conversation_id")
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AIMessageRole
+  content        String
+  imageUrls      String[]       @default([]) @map("image_urls") // URLs de imágenes adjuntas
+  metadata       Json? // Datos adicionales (tokens usados, modelo, etc.)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("ai_messages")
+}
+
+/// Memoria del asistente - Conocimiento persistente por contexto
+model AIMemory {
+  id         String       @id @default(uuid())
+  type       AIMemoryType
+  contextId  String?      @map("context_id") // ID relacionado según el tipo
+  summary    String // Resumen del conocimiento
+  keyFacts   Json? @map("key_facts") // Hechos clave extraídos [{fact: string, importance: number}]
+  importance Int          @default(3) // 1-5, mayor = más importante
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  @@index([type, contextId])
+  @@index([importance])
+  @@map("ai_memories")
 }

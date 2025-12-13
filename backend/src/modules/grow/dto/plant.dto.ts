@@ -7,6 +7,9 @@ import {
   IsEnum,
   MaxLength,
   IsDateString,
+  IsInt,
+  Min,
+  Max,
 } from 'class-validator';
 import { PlantStage, PlantSex, PlantHealthStatus } from '@prisma/client';
 
@@ -40,6 +43,18 @@ export class CreatePlantDto {
   @IsUUID()
   @IsNotEmpty()
   sectionId: string;
+
+  @ApiPropertyOptional({
+    description: 'Zona dentro de la sección (1-6, grilla 2x3)',
+    example: 1,
+    minimum: 1,
+    maximum: 6,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(6)
+  @IsOptional()
+  zone?: number;
 
   @ApiPropertyOptional({
     description: 'Etapa actual de la planta',
@@ -90,6 +105,15 @@ export class CreatePlantDto {
   @IsDateString()
   @IsOptional()
   startDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Tamaño de maceta final',
+    example: '11L',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(20)
+  potSizeFinal?: string;
 }
 
 export class UpdatePlantDto extends PartialType(CreatePlantDto) { }
@@ -101,6 +125,18 @@ export class MovePlantDto {
   @IsUUID()
   @IsOptional()
   sectionId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Zona dentro de la sección (1-6, grilla 2x3)',
+    example: 1,
+    minimum: 1,
+    maximum: 6,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(6)
+  @IsOptional()
+  zone?: number;
 
   @ApiPropertyOptional({
     description: 'Nueva etapa de la planta',

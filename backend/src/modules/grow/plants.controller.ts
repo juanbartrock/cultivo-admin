@@ -47,6 +47,15 @@ export class PlantsController {
     return this.growService.findPlantById(id);
   }
 
+  @Get(':id/ppfd')
+  @ApiOperation({ summary: 'Obtener el PPFD actual de la zona asignada a la planta' })
+  @ApiResponse({ status: 200, description: 'Lectura de PPFD de la zona asignada' })
+  @ApiResponse({ status: 404, description: 'Planta no encontrada' })
+  @ApiResponse({ status: 204, description: 'La planta no tiene zona asignada o no hay lecturas disponibles' })
+  async getPlantPPFD(@Param('id', ParseUUIDPipe) id: string) {
+    return this.growService.getPlantPPFD(id);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Registrar una nueva planta' })
   @ApiResponse({ status: 201, description: 'Planta creada exitosamente' })

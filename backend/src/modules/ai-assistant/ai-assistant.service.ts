@@ -1,0 +1,378 @@
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { AgentOrchestratorService } from './agent-orchestrator.service';
+import { MemoryService } from './memory.service';
+import { 
+  SendMessageDto, 
+  CreateConversationDto, 
+  ChatResponseDto,
+} from './dto/ai-assistant.dto';
+import { AIContextType, AIMessageRole } from '@prisma/client';
+
+// Colores para logs
+const LOG = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  cyan: '\x1b[36m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  red: '\x1b[31m',
+  magenta: '\x1b[35m',
+  bgCyan: '\x1b[46m',
+  white: '\x1b[37m',
+};
+
+@Injectable()
+export class AIAssistantService {
+  private readonly logger = new Logger(AIAssistantService.name);
+  private requestCount = 0;
+
+  constructor(
+    private prisma: PrismaService,
+    private orchestrator: AgentOrchestratorService,
+    private memoryService: MemoryService,
+  ) {}
+
+  /**
+   * Envía un mensaje al asistente usando el orquestador de agentes
+   */
+  async sendMessage(dto: SendMessageDto): Promise<ChatResponseDto> {
+    const requestId = ++this.requestCount;
+    const startTime = Date.now();
+
+    // ==================== LOG ENTRADA ====================
+    console.log(`\n${LOG.bgCyan}${LOG.white}${LOG.bright}`);
+    console.log(`╔${'═'.repeat(58)}╗`);
+    console.log(`║  📨 NUEVA SOLICITUD AL ASISTENTE IA #${requestId}`.padEnd(59) + '║');
+    console.log(`╚${'═'.repeat(58)}╝${LOG.reset}`);
+    
+    console.log(`${LOG.cyan}📅 Timestamp:${LOG.reset} ${new Date().toISOString()}`);
+    console.log(`${LOG.cyan}💬 Mensaje:${LOG.reset} "${dto.message}"`);
+    console.log(`${LOG.cyan}🆔 Conversación existente:${LOG.reset} ${dto.conversationId || 'Nueva'}`);
+    console.log(`${LOG.cyan}🏷️  Tipo de contexto:${LOG.reset} ${dto.contextType || 'GENERAL'}`);
+    console.log(`${LOG.cyan}🖼️  Imágenes:${LOG.reset} ${(dto.imageUrls?.length || 0) + (dto.imageBase64?.length || 0)}`);
+    
+    // Obtener o crear conversación
+    let conversation;
+    if (dto.conversationId) {
+      conversation = await this.getConversation(dto.conversationId);
+      console.log(`${LOG.green}✓ Conversación encontrada:${LOG.reset} ${conversation.title || 'Sin título'}`);
+    } else {
+      conversation = await this.createConversation({
+        contextType: dto.contextType || AIContextType.GENERAL,
+        contextId: dto.contextId,
+      });
+      console.log(`${LOG.green}✓ Nueva conversación creada:${LOG.reset} ${conversation.id}`);
+    }
+
+    // Preparar imágenes
+    const allImages = [
+      ...(dto.imageUrls || []),
+      ...(dto.imageBase64 || []).map((b64) => `data:image/png;base64,${b64}`),
+    ];
+
+    // Guardar mensaje del usuario
+    const userMessage = await this.prisma.aIMessage.create({
+      data: {
+        conversationId: conversation.id,
+        role: AIMessageRole.USER,
+        content: dto.message,
+        imageUrls: allImages,
+      },
+    });
+    console.log(`${LOG.green}✓ Mensaje del usuario guardado:${LOG.reset} ${userMessage.id}`);
+
+    try {
+      console.log(`\n${LOG.yellow}⏳ Delegando al orquestador de agentes...${LOG.reset}\n`);
+      
+      // Procesar con el orquestador de agentes
+      const agentResponse = await this.orchestrator.processMessage(
+        dto.message,
+        conversation.id,
+        allImages,
+      );
+
+      const duration = Date.now() - startTime;
+
+      // Guardar respuesta del asistente
+      const assistantMessage = await this.prisma.aIMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: AIMessageRole.ASSISTANT,
+          content: agentResponse.content,
+          metadata: {
+            toolsUsed: agentResponse.toolsUsed,
+            iterations: agentResponse.iterations,
+            tokensUsed: agentResponse.tokensUsed,
+          },
+        },
+      });
+
+      // Actualizar timestamp de conversación
+      await this.prisma.aIConversation.update({
+        where: { id: conversation.id },
+        data: { updatedAt: new Date() },
+      });
+
+      // Generar título si es el primer mensaje real
+      const messageCount = await this.prisma.aIMessage.count({
+        where: { conversationId: conversation.id },
+      });
+      
+      if (messageCount <= 2) {
+        this.generateConversationTitle(conversation.id, dto.message).catch((err) =>
+          this.logger.error(`Error generating title: ${err.message}`),
+        );
+      }
+
+      // ==================== LOG RESUMEN FINAL ====================
+      console.log(`\n${LOG.bgCyan}${LOG.white}${LOG.bright}`);
+      console.log(`╔${'═'.repeat(58)}╗`);
+      console.log(`║  📊 RESUMEN DE LA SOLICITUD #${requestId}`.padEnd(59) + '║');
+      console.log(`╚${'═'.repeat(58)}╝${LOG.reset}`);
+      
+      console.log(`${LOG.green}✓ Estado:${LOG.reset} COMPLETADO`);
+      console.log(`${LOG.cyan}⏱️  Duración total:${LOG.reset} ${duration}ms (${(duration/1000).toFixed(2)}s)`);
+      console.log(`${LOG.cyan}🔄 Iteraciones del agente:${LOG.reset} ${agentResponse.iterations}`);
+      console.log(`${LOG.cyan}🔧 Herramientas utilizadas:${LOG.reset} ${agentResponse.toolsUsed.length > 0 ? agentResponse.toolsUsed.join(', ') : 'Ninguna'}`);
+      
+      if (agentResponse.tokensUsed) {
+        console.log(`${LOG.cyan}🎫 Tokens:${LOG.reset}`);
+        console.log(`   - Prompt: ${agentResponse.tokensUsed.prompt}`);
+        console.log(`   - Completion: ${agentResponse.tokensUsed.completion}`);
+        console.log(`   - Total: ${agentResponse.tokensUsed.total}`);
+      }
+      
+      console.log(`${LOG.cyan}💾 Mensaje guardado:${LOG.reset} ${assistantMessage.id}`);
+      console.log(`${'─'.repeat(60)}\n`);
+
+      return {
+        conversationId: conversation.id,
+        message: {
+          id: assistantMessage.id,
+          role: 'assistant',
+          content: agentResponse.content,
+          createdAt: assistantMessage.createdAt,
+        },
+        tokensUsed: agentResponse.tokensUsed,
+      };
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      
+      console.log(`\n${LOG.red}${LOG.bright}`);
+      console.log(`╔${'═'.repeat(58)}╗`);
+      console.log(`║  ❌ ERROR EN SOLICITUD #${requestId}`.padEnd(59) + '║');
+      console.log(`╚${'═'.repeat(58)}╝${LOG.reset}`);
+      
+      console.log(`${LOG.red}Error:${LOG.reset} ${error.message}`);
+      console.log(`${LOG.cyan}Duración hasta error:${LOG.reset} ${duration}ms`);
+      if (error.stack) {
+        console.log(`${LOG.red}Stack:${LOG.reset}`);
+        error.stack.split('\n').slice(0, 5).forEach((line: string) => {
+          console.log(`  ${line}`);
+        });
+      }
+      console.log(`${'─'.repeat(60)}\n`);
+
+      // Guardar mensaje de error
+      const errorMessage = await this.prisma.aIMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: AIMessageRole.ASSISTANT,
+          content: `Lo siento, hubo un error al procesar tu mensaje: ${error.message}`,
+          metadata: { error: true },
+        },
+      });
+
+      return {
+        conversationId: conversation.id,
+        message: {
+          id: errorMessage.id,
+          role: 'assistant',
+          content: errorMessage.content,
+          createdAt: errorMessage.createdAt,
+        },
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva conversación
+   */
+  async createConversation(dto: CreateConversationDto) {
+    return this.prisma.aIConversation.create({
+      data: {
+        title: dto.title,
+        contextType: dto.contextType || AIContextType.GENERAL,
+        contextId: dto.contextId,
+      },
+    });
+  }
+
+  /**
+   * Obtiene una conversación por ID
+   */
+  async getConversation(id: string) {
+    const conversation = await this.prisma.aIConversation.findUnique({
+      where: { id },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!conversation) {
+      throw new NotFoundException(`Conversation ${id} not found`);
+    }
+
+    return conversation;
+  }
+
+  /**
+   * Lista conversaciones con filtros
+   */
+  async getConversations(
+    contextType?: AIContextType,
+    contextId?: string,
+    activeOnly = true,
+  ) {
+    return this.prisma.aIConversation.findMany({
+      where: {
+        ...(contextType && { contextType }),
+        ...(contextId && { contextId }),
+        ...(activeOnly && { isActive: true }),
+      },
+      include: {
+        _count: {
+          select: { messages: true },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  /**
+   * Elimina una conversación (soft delete)
+   */
+  async deleteConversation(id: string) {
+    await this.getConversation(id);
+
+    // Procesar memorias antes de desactivar
+    await this.memoryService.processConversationEnd(id);
+
+    return this.prisma.aIConversation.update({
+      where: { id },
+      data: { isActive: false },
+    });
+  }
+
+  /**
+   * Elimina permanentemente una conversación
+   */
+  async hardDeleteConversation(id: string) {
+    return this.prisma.aIConversation.delete({
+      where: { id },
+    });
+  }
+
+  /**
+   * Genera título automático para conversación usando el orquestador
+   */
+  private async generateConversationTitle(
+    conversationId: string,
+    firstMessage: string,
+  ) {
+    try {
+      // Usar un prompt simple sin herramientas para generar título
+      const OpenAI = require('openai');
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5.2',
+        messages: [
+          {
+            role: 'system',
+            content: 'Genera un título corto (máximo 5 palabras) para una conversación de cultivo. Responde SOLO el título, sin comillas.',
+          },
+          {
+            role: 'user',
+            content: firstMessage,
+          },
+        ],
+        max_completion_tokens: 20,
+        temperature: 0.5,
+      });
+
+      const title = response.choices[0]?.message?.content?.trim() || 'Nueva conversación';
+
+      await this.prisma.aIConversation.update({
+        where: { id: conversationId },
+        data: { title: title.substring(0, 100) },
+      });
+    } catch (error) {
+      this.logger.error(`Error generating title: ${error.message}`);
+    }
+  }
+
+  /**
+   * Obtiene fotos de una planta para referenciar en el chat
+   */
+  async getPlantPhotos(plantId: string) {
+    const events = await this.prisma.event.findMany({
+      where: {
+        plantId,
+        type: 'FOTO',
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+
+    return events.map((event) => {
+      const data = event.data as { url?: string; caption?: string };
+      return {
+        id: event.id,
+        url: data.url,
+        caption: data.caption,
+        date: event.createdAt,
+      };
+    });
+  }
+
+  /**
+   * Obtiene el plan de alimentación completo en JSON
+   */
+  async getFeedingPlanJson(planId: string) {
+    const plan = await this.prisma.feedingPlan.findUnique({
+      where: { id: planId },
+      include: {
+        weeks: {
+          orderBy: { weekNumber: 'asc' },
+        },
+      },
+    });
+
+    if (!plan) {
+      throw new NotFoundException(`Feeding plan ${planId} not found`);
+    }
+
+    return plan;
+  }
+
+  /**
+   * Obtiene automatizaciones de una sección
+   */
+  async getSectionAutomations(sectionId: string) {
+    return this.prisma.automation.findMany({
+      where: { sectionId },
+      include: {
+        conditions: {
+          include: { device: true },
+        },
+        actions: {
+          include: { device: true },
+        },
+      },
+    });
+  }
+}
