@@ -1,8 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AutomationsController } from './automations.controller';
 import { AutomationsService } from './automations.service';
 import { AutomationSchedulerService } from './automation-scheduler.service';
 import { EffectivenessCheckerService } from './effectiveness-checker.service';
+import { JobSchedulerService } from './job-scheduler.service';
+import { JobProcessorService } from './job-processor.service';
 import { DevicesModule } from '../devices/devices.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
@@ -16,8 +18,10 @@ import { NotificationsModule } from '../notifications/notifications.module';
     AutomationsService,
     AutomationSchedulerService,
     EffectivenessCheckerService,
+    JobSchedulerService,
+    JobProcessorService,
   ],
-  exports: [AutomationsService],
+  exports: [AutomationsService, JobSchedulerService],
 })
 export class AutomationsModule {}
 

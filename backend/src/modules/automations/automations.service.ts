@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DevicesService } from '../devices/devices.service';
+import { JobSchedulerService } from './job-scheduler.service';
 import { 
   CreateAutomationDto, 
   UpdateAutomationDto,
@@ -25,6 +26,8 @@ export class AutomationsService {
   constructor(
     private prisma: PrismaService,
     private devicesService: DevicesService,
+    @Inject(forwardRef(() => JobSchedulerService))
+    private jobScheduler: JobSchedulerService,
   ) {}
 
   /**
@@ -610,17 +613,18 @@ export class AutomationsService {
             await this.devicesService.controlDevice(action.deviceId, 'on');
             success = true;
             
-            // Si tiene duración, programar apagado
+            // Si tiene duración, programar apagado como job persistente
             if (action.duration || automation.actionDuration) {
               const durationMinutes = action.duration || automation.actionDuration;
-              setTimeout(async () => {
-                try {
-                  await this.devicesService.controlDevice(action.deviceId, 'off');
-                  this.logger.log(`Device ${action.deviceId} turned off after ${durationMinutes} minutes`);
-                } catch (error) {
-                  this.logger.error(`Error turning off device ${action.deviceId}: ${error.message}`);
-                }
-              }, (durationMinutes ?? 0) * 60 * 1000);
+              await this.jobScheduler.scheduleDeviceOff({
+                deviceId: action.deviceId,
+                delayMinutes: durationMinutes ?? 0,
+                automationId: automation.id,
+                executionId: execution.id,
+              });
+              this.logger.log(
+                `Scheduled device ${action.deviceId} to turn off in ${durationMinutes} minutes`,
+              );
             }
             break;
           case ActionType.TURN_OFF:
@@ -676,16 +680,17 @@ export class AutomationsService {
             await this.devicesService.controlDevice(action.deviceId, 'on');
             success = true;
             
-            // Si tiene duración, apagar después
+            // Si tiene duración, programar apagado como job persistente
             if (action.duration) {
-              setTimeout(async () => {
-                try {
-                  await this.devicesService.controlDevice(action.deviceId, 'off');
-                  this.logger.log(`Irrigation device ${action.deviceId} turned off after ${action.duration} minutes`);
-                } catch (error) {
-                  this.logger.error(`Error turning off irrigation ${action.deviceId}: ${error.message}`);
-                }
-              }, action.duration * 60 * 1000);
+              await this.jobScheduler.scheduleDeviceOff({
+                deviceId: action.deviceId,
+                delayMinutes: action.duration,
+                automationId: automation.id,
+                executionId: execution.id,
+              });
+              this.logger.log(
+                `Scheduled irrigation device ${action.deviceId} to turn off in ${action.duration} minutes`,
+              );
             }
             break;
         }

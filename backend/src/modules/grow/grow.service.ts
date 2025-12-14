@@ -190,6 +190,7 @@ export class GrowService {
             room: true,
           },
         },
+        zones: true,
         _count: {
           select: { events: true },
         },
@@ -209,6 +210,7 @@ export class GrowService {
             room: true,
           },
         },
+        zones: true,
         events: {
           orderBy: { createdAt: 'desc' },
           take: 20,
@@ -248,9 +250,16 @@ export class GrowService {
       throw new NotFoundException(`Section with ID ${data.sectionId} not found`);
     }
 
-    // Validar zona si se proporciona
-    if (data.zone !== undefined && (data.zone < 1 || data.zone > 6)) {
-      throw new BadRequestException('Zone must be between 1 and 6');
+    // Validar zonas si se proporcionan
+    if (data.zones) {
+      for (const zoneData of data.zones) {
+        if (zoneData.zone < 1 || zoneData.zone > 6) {
+          throw new BadRequestException('Zone must be between 1 and 6');
+        }
+        if (zoneData.coverage !== undefined && (zoneData.coverage < 0 || zoneData.coverage > 100)) {
+          throw new BadRequestException('Coverage must be between 0 and 100');
+        }
+      }
     }
 
     // Verificar que el tagCode es único
@@ -261,14 +270,42 @@ export class GrowService {
       throw new BadRequestException(`Plant with tag code ${data.tagCode} already exists`);
     }
 
-    return this.prisma.plant.create({
-      data,
+    // Separar datos de la planta de las zonas
+    const { zones, ...plantData } = data;
+
+    const plant = await this.prisma.plant.create({
+      data: plantData,
       include: {
         strain: true,
         cycle: true,
         section: true,
+        zones: true,
       },
     });
+
+    // Crear las zonas si se proporcionaron
+    if (zones && zones.length > 0) {
+      await this.prisma.plantZone.createMany({
+        data: zones.map(z => ({
+          plantId: plant.id,
+          zone: z.zone,
+          coverage: z.coverage ?? 100.0,
+        })),
+      });
+
+      // Recargar la planta con las zonas
+      return this.prisma.plant.findUnique({
+        where: { id: plant.id },
+        include: {
+          strain: true,
+          cycle: true,
+          section: true,
+          zones: true,
+        },
+      });
+    }
+
+    return plant;
   }
 
   async updatePlant(id: string, data: UpdatePlantDto) {
@@ -284,20 +321,64 @@ export class GrowService {
       }
     }
 
-    // Validar zona si se proporciona
-    if (data.zone !== undefined && (data.zone < 1 || data.zone > 6)) {
-      throw new BadRequestException('Zone must be between 1 and 6');
+    // Validar zonas si se proporcionan
+    if (data.zones) {
+      for (const zoneData of data.zones) {
+        if (zoneData.zone < 1 || zoneData.zone > 6) {
+          throw new BadRequestException('Zone must be between 1 and 6');
+        }
+        if (zoneData.coverage !== undefined && (zoneData.coverage < 0 || zoneData.coverage > 100)) {
+          throw new BadRequestException('Coverage must be between 0 and 100');
+        }
+      }
     }
 
-    return this.prisma.plant.update({
+    // Separar datos de la planta de las zonas
+    const { zones, ...plantData } = data;
+
+    // Actualizar la planta
+    const updatedPlant = await this.prisma.plant.update({
       where: { id },
-      data,
+      data: plantData,
       include: {
         strain: true,
         cycle: true,
         section: true,
+        zones: true,
       },
     });
+
+    // Si se proporcionaron zonas, actualizar las zonas (eliminar las existentes y crear las nuevas)
+    if (zones !== undefined) {
+      // Eliminar todas las zonas existentes
+      await this.prisma.plantZone.deleteMany({
+        where: { plantId: id },
+      });
+
+      // Crear las nuevas zonas si se proporcionaron
+      if (zones.length > 0) {
+        await this.prisma.plantZone.createMany({
+          data: zones.map(z => ({
+            plantId: id,
+            zone: z.zone,
+            coverage: z.coverage ?? 100.0,
+          })),
+        });
+      }
+
+      // Recargar la planta con las zonas actualizadas
+      return this.prisma.plant.findUnique({
+        where: { id },
+        include: {
+          strain: true,
+          cycle: true,
+          section: true,
+          zones: true,
+        },
+      });
+    }
+
+    return updatedPlant;
   }
 
   async deletePlant(id: string) {
@@ -359,19 +440,29 @@ export class GrowService {
       });
     }
 
-    // Validar zona si se proporciona
-    if (data.zone !== undefined && (data.zone < 1 || data.zone > 6)) {
-      throw new BadRequestException('Zone must be between 1 and 6');
+    // Validar zonas si se proporcionan
+    if (data.zones) {
+      for (const zoneData of data.zones) {
+        if (zoneData.zone < 1 || zoneData.zone > 6) {
+          throw new BadRequestException('Zone must be between 1 and 6');
+        }
+        if (zoneData.coverage !== undefined && (zoneData.coverage < 0 || zoneData.coverage > 100)) {
+          throw new BadRequestException('Coverage must be between 0 and 100');
+        }
+      }
     }
 
-    return this.prisma.plant.update({
+    // Separar datos de la planta de las zonas
+    const { zones, ...plantData } = data;
+
+    // Actualizar la planta
+    const updatedPlant = await this.prisma.plant.update({
       where: { id },
       data: {
-        ...(data.sectionId && { sectionId: data.sectionId }),
-        ...(data.zone !== undefined && { zone: data.zone }),
-        ...(data.stage && { stage: data.stage }),
+        ...(plantData.sectionId && { sectionId: plantData.sectionId }),
+        ...(plantData.stage && { stage: plantData.stage }),
         // Actualizar stageStartDate cuando cambia la etapa (con la fecha proporcionada)
-        ...(data.stage && data.stage !== plant.stage && { stageStartDate: stageChangeDate }),
+        ...(plantData.stage && plantData.stage !== plant.stage && { stageStartDate: stageChangeDate }),
       },
       include: {
         strain: true,
@@ -381,29 +472,120 @@ export class GrowService {
             room: true,
           },
         },
+        zones: true,
       },
     });
+
+    // Si se proporcionaron zonas, actualizar las zonas (eliminar las existentes y crear las nuevas)
+    if (zones !== undefined) {
+      // Eliminar todas las zonas existentes
+      await this.prisma.plantZone.deleteMany({
+        where: { plantId: id },
+      });
+
+      // Crear las nuevas zonas si se proporcionaron
+      if (zones.length > 0) {
+        await this.prisma.plantZone.createMany({
+          data: zones.map(z => ({
+            plantId: id,
+            zone: z.zone,
+            coverage: z.coverage ?? 100.0,
+          })),
+        });
+      }
+
+      // Recargar la planta con las zonas actualizadas
+      return this.prisma.plant.findUnique({
+        where: { id },
+        include: {
+          strain: true,
+          cycle: true,
+          section: {
+            include: {
+              room: true,
+            },
+          },
+          zones: true,
+        },
+      });
+    }
+
+    return updatedPlant;
   }
 
   /**
-   * Obtiene el PPFD actual de la zona asignada a una planta
+   * Obtiene el PPFD actual de las zonas asignadas a una planta
+   * Calcula un promedio ponderado basado en el coverage de cada zona
    */
   async getPlantPPFD(plantId: string) {
     const plant = await this.findPlantById(plantId);
 
-    if (!plant.zone) {
-      return null; // La planta no tiene zona asignada
+    if (!plant.zones || plant.zones.length === 0) {
+      return null; // La planta no tiene zonas asignadas
     }
 
-    // Obtener la última lectura de PPFD de la zona asignada
-    const reading = await this.prisma.pPFDReading.findFirst({
-      where: {
-        sectionId: plant.sectionId,
-        zone: plant.zone,
-      },
-      orderBy: { recordedAt: 'desc' },
-    });
+    // Obtener las últimas lecturas de PPFD de todas las zonas asignadas
+    const readings = await Promise.all(
+      plant.zones.map(async (plantZone) => {
+        const reading = await this.prisma.pPFDReading.findFirst({
+          where: {
+            sectionId: plant.sectionId,
+            zone: plantZone.zone,
+          },
+          orderBy: { recordedAt: 'desc' },
+        });
+        return {
+          zone: plantZone.zone,
+          coverage: plantZone.coverage ?? 100.0,
+          reading,
+        };
+      }),
+    );
 
-    return reading;
+    // Calcular promedio ponderado de PPFD
+    let totalWeightedPPFD = 0;
+    let totalCoverage = 0;
+    const zoneReadings: Array<{
+      zone: number;
+      coverage: number;
+      ppfdValue: number | null;
+      lightHeight: number | null;
+      recordedAt: Date | null;
+    }> = [];
+
+    for (const item of readings) {
+      const coverage = item.coverage;
+      totalCoverage += coverage;
+
+      if (item.reading) {
+        const weightedPPFD = item.reading.ppfdValue * coverage;
+        totalWeightedPPFD += weightedPPFD;
+        zoneReadings.push({
+          zone: item.zone,
+          coverage,
+          ppfdValue: item.reading.ppfdValue,
+          lightHeight: item.reading.lightHeight,
+          recordedAt: item.reading.recordedAt,
+        });
+      } else {
+        zoneReadings.push({
+          zone: item.zone,
+          coverage,
+          ppfdValue: null,
+          lightHeight: null,
+          recordedAt: null,
+        });
+      }
+    }
+
+    const averagePPFD = totalCoverage > 0 ? totalWeightedPPFD / totalCoverage : null;
+
+    return {
+      plantId: plant.id,
+      averagePPFD,
+      totalCoverage,
+      zoneReadings,
+      hasAllReadings: readings.every((r) => r.reading !== null),
+    };
   }
 }

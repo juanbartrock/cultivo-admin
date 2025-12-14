@@ -1,6 +1,14 @@
 import OpenAI from 'openai';
 
 /**
+ * Parámetros que recibe cada herramienta
+ * Incluye _userId inyectado automáticamente por el executor
+ */
+export interface ToolParams extends Record<string, unknown> {
+  _userId: string; // ID del usuario actual - inyectado automáticamente
+}
+
+/**
  * Definición de una herramienta para el agente
  */
 export interface ToolDefinition {
@@ -15,7 +23,11 @@ export interface ToolDefinition {
     }>;
     required: string[];
   };
-  handler: (params: Record<string, unknown>) => Promise<unknown>;
+  /**
+   * Handler de la herramienta
+   * @param params - Parámetros del modelo + _userId inyectado
+   */
+  handler: (params: ToolParams) => Promise<unknown>;
 }
 
 /**

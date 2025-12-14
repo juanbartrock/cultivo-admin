@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   Gauge,
   Power,
+  PowerOff,
   Video,
   Thermometer,
   X,
@@ -36,7 +37,8 @@ import {
   ChevronRight,
   Settings2,
   Sun,
-  Clock
+  Clock,
+  Package
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/contexts/ToastContext';
@@ -56,6 +58,7 @@ import { preventionPlanService } from '@/services/preventionPlanService';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
 import { SectionDashboard, Device, DeviceType, DeviceStatus, Plant, GrowEvent, SectionFeedingPlansResponse, FeedingPlan, FeedingPlanWithCount, PlantStage, SectionPreventionPlansResponse, PreventionPlanWithCount, SectionLayoutConfig, SectionLayoutItem, DEFAULT_SECTION_LAYOUT } from '@/types';
 import { eventService } from '@/services/eventService';
+import { plantService } from '@/services/growService';
 
 // Iconos según el nombre de la sección
 const sectionIcons: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
@@ -175,7 +178,7 @@ function PlantEventModal({
   onCreated: (event: GrowEvent) => void;
 }) {
   const { toast } = useToast();
-  const [eventType, setEventType] = useState<'water' | 'note' | 'environment' | 'photo' | 'prevention'>('water');
+  const [eventType, setEventType] = useState<'water' | 'note' | 'environment' | 'photo' | 'prevention' | 'pot'>('water');
 
   // Inicializar valores del formulario con los del plan si existen
   const [form, setForm] = useState({
@@ -187,6 +190,8 @@ function PlantEventModal({
     humidity: '',
     notes: '',
     caption: '',
+    previousPotSize: '',
+    newPotSize: '',
   });
 
   // Estado para los productos del plan (con checkbox)
@@ -338,6 +343,39 @@ function PlantEventModal({
             ...baseData,
             content: preventionContent,
           });
+        } else if (eventType === 'pot') {
+          // Evento de cambio de maceta
+          if (!form.newPotSize.trim()) {
+            toast.error('Debes indicar el nuevo tamaño de maceta');
+            setIsCreating(false);
+            return;
+          }
+
+          try {
+            lastEvent = await eventService.create({
+              type: 'CAMBIO_MACETA',
+              ...baseData,
+              data: {
+                previousPotSize: form.previousPotSize || null,
+                newPotSize: form.newPotSize,
+                notes: form.notes || undefined,
+              },
+            });
+
+            // Actualizar el tamaño de maceta final de la planta solo si el evento se creó correctamente
+            try {
+              await plantService.update(plantId, { potSizeFinal: form.newPotSize });
+            } catch (e) {
+              console.warn('No se pudo actualizar potSizeFinal de la planta:', e);
+              // No lanzamos error aquí porque el evento ya se creó
+            }
+          } catch (potError: any) {
+            console.error('Error creando evento de cambio de maceta:', potError);
+            const errorMessage = potError?.response?.data?.message || potError?.message || 'Error al crear el evento de cambio de maceta';
+            toast.error(errorMessage);
+            setIsCreating(false);
+            return;
+          }
         } else {
           lastEvent = await eventService.createEnvironmentEvent({
             ...baseData,
@@ -362,9 +400,10 @@ function PlantEventModal({
         }
         onCreated(lastEvent);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creando evento:', err);
-      toast.error('Error al crear el evento');
+      const errorMessage = err?.response?.data?.message || err?.message || 'Error al crear el evento';
+      toast.error(errorMessage);
     } finally {
       setIsCreating(false);
     }
@@ -482,6 +521,16 @@ function PlantEventModal({
           >
             <Camera className="w-4 h-4" />
             <span className="text-xs">Foto</span>
+          </button>
+          <button
+            onClick={() => setEventType('pot')}
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border transition-colors ${eventType === 'pot'
+                ? 'bg-orange-500/20 border-orange-500/50 text-orange-400'
+                : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+              }`}
+          >
+            <Package className="w-4 h-4" />
+            <span className="text-xs">Maceta</span>
           </button>
           <button
             onClick={() => setEventType('note')}
@@ -655,6 +704,48 @@ function PlantEventModal({
                 onChange={(e) => setForm({ ...form, humidity: e.target.value })}
                 placeholder="60"
                 className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
+              />
+            </div>
+          </div>
+        )}
+
+        {eventType === 'pot' && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Maceta anterior (opcional)</label>
+                <input
+                  type="text"
+                  value={form.previousPotSize}
+                  onChange={(e) => setForm({ ...form, previousPotSize: e.target.value })}
+                  placeholder="Ej: 3L, 1gal"
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Nueva maceta *</label>
+                <input
+                  type="text"
+                  value={form.newPotSize}
+                  onChange={(e) => setForm({ ...form, newPotSize: e.target.value })}
+                  placeholder="Ej: 11L, 3gal"
+                  className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-orange-500"
+                  required
+                />
+              </div>
+            </div>
+            <p className="text-xs text-zinc-500">
+              Este registro también actualizará el tamaño de maceta final de la planta.
+            </p>
+            {/* Notas opcionales */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Notas (opcional)</label>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Observaciones del cambio de maceta..."
+                rows={2}
+                className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 resize-none"
               />
             </div>
           </div>
@@ -876,6 +967,9 @@ export default function CarpaDetailPage() {
   // Estados para secciones colapsables (todas colapsadas por defecto)
   const [feedingPlanExpanded, setFeedingPlanExpanded] = useState(false);
   const [preventionPlanExpanded, setPreventionPlanExpanded] = useState(false);
+
+  // Estado para habilitar/deshabilitar sección
+  const [isTogglingEnabled, setIsTogglingEnabled] = useState(false);
   const [plantsExpanded, setPlantsExpanded] = useState(false);
   const [ppfdExpanded, setPpfdExpanded] = useState(false);
   const [sensorHistoryExpanded, setSensorHistoryExpanded] = useState(false);
@@ -1130,6 +1224,24 @@ export default function CarpaDetailPage() {
     }, 1000);
   }, [refreshStatuses]);
 
+  // Función para habilitar/deshabilitar la sección
+  const handleToggleEnabled = useCallback(async () => {
+    if (!section) return;
+    
+    setIsTogglingEnabled(true);
+    try {
+      const newEnabled = section.enabled === false ? true : false;
+      const updated = await sectionService.update(sectionId, { enabled: newEnabled });
+      setSection({ ...section, enabled: updated.enabled });
+      toast.success(newEnabled ? 'Sección activada' : 'Sección desactivada');
+    } catch (err) {
+      console.error('Error toggling section:', err);
+      toast.error('Error al cambiar el estado de la sección');
+    } finally {
+      setIsTogglingEnabled(false);
+    }
+  }, [section, sectionId, toast]);
+
   // Función para renderizar una sección por su key
   const renderSection = useCallback((key: string, index: number) => {
     const delay = 0.1 + index * 0.05;
@@ -1155,6 +1267,7 @@ export default function CarpaDetailPage() {
               loading={statusLoading}
               lastUpdate={lastUpdate || undefined}
               onRefresh={handleRefresh}
+              onReassign={loadSection}
             />
           </motion.section>
         );
@@ -1378,6 +1491,25 @@ export default function CarpaDetailPage() {
           >
             <Settings2 className="w-4 h-4" />
             Layout
+          </button>
+          <button
+            onClick={handleToggleEnabled}
+            disabled={isTogglingEnabled}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              section.enabled !== false
+                ? 'bg-cultivo-green-600/20 text-cultivo-green-400 hover:bg-cultivo-green-600/30 border border-cultivo-green-600/30'
+                : 'bg-zinc-700/50 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
+            }`}
+            title={section.enabled !== false ? 'Sección activa - Click para desactivar' : 'Sección inactiva - Click para activar'}
+          >
+            {isTogglingEnabled ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : section.enabled !== false ? (
+              <Power className="w-4 h-4" />
+            ) : (
+              <PowerOff className="w-4 h-4" />
+            )}
+            {section.enabled !== false ? 'Activa' : 'Inactiva'}
           </button>
           <button
             onClick={handleRefresh}
@@ -1977,7 +2109,8 @@ export default function CarpaDetailPage() {
                                   {event.type === 'NOTA' && <FileText className="w-4 h-4 text-yellow-400" />}
                                   {event.type === 'FOTO' && <Camera className="w-4 h-4 text-purple-400" />}
                                   {event.type === 'PARAMETRO_AMBIENTAL' && <Thermometer className="w-4 h-4 text-orange-400" />}
-                                  {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL'].includes(event.type) && (
+                                  {event.type === 'CAMBIO_MACETA' && <Package className="w-4 h-4 text-orange-400" />}
+                                  {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL', 'CAMBIO_MACETA'].includes(event.type) && (
                                     <Activity className="w-4 h-4 text-zinc-400" />
                                   )}
                                   <span className="text-xs font-medium text-zinc-300">
@@ -1985,7 +2118,8 @@ export default function CarpaDetailPage() {
                                     {event.type === 'NOTA' && 'Nota'}
                                     {event.type === 'FOTO' && 'Foto'}
                                     {event.type === 'PARAMETRO_AMBIENTAL' && 'Ambiente'}
-                                    {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL'].includes(event.type) && event.type}
+                                    {event.type === 'CAMBIO_MACETA' && 'Cambio Maceta'}
+                                    {!['RIEGO', 'NOTA', 'FOTO', 'PARAMETRO_AMBIENTAL', 'CAMBIO_MACETA'].includes(event.type) && event.type}
                                   </span>
                                 </div>
                                 <div className="text-xs text-zinc-500 mb-1">
@@ -2052,6 +2186,47 @@ export default function CarpaDetailPage() {
                                         )}
                                       </div>
                                     )}
+                                    {/* Foto */}
+                                    {event.type === 'FOTO' && (
+                                      <div className="mt-1">
+                                        {'url' in event.data && typeof event.data.url === 'string' && event.data.url && (
+                                          <div className="relative group cursor-pointer" onClick={() => window.open(event.data.url as string, '_blank')}>
+                                            <img
+                                              src={event.data.url}
+                                              alt={'caption' in event.data && typeof event.data.caption === 'string' ? event.data.caption : 'Foto del cultivo'}
+                                              className="w-full h-24 object-cover rounded-lg border border-zinc-700 hover:border-purple-500/50 transition-colors"
+                                            />
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                              <span className="text-white text-xs">Click para ampliar</span>
+                                            </div>
+                                          </div>
+                                        )}
+                                        {'caption' in event.data && typeof event.data.caption === 'string' && event.data.caption && (
+                                          <p className="text-[10px] text-zinc-500 mt-1 italic truncate">
+                                            &quot;{event.data.caption}&quot;
+                                          </p>
+                                        )}
+                                      </div>
+                                    )}
+                                    {/* Cambio de Maceta */}
+                                    {event.type === 'CAMBIO_MACETA' && event.data && (() => {
+                                      const data = event.data as { previousPotSize?: string; newPotSize?: string };
+                                      return (
+                                        <div className="flex flex-wrap gap-2">
+                                          {data.previousPotSize && (
+                                            <span className="px-1.5 py-0.5 bg-zinc-600/20 text-zinc-400 rounded line-through">
+                                              {data.previousPotSize}
+                                            </span>
+                                          )}
+                                          <span className="text-zinc-500">→</span>
+                                          {data.newPotSize && (
+                                            <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-300 rounded">
+                                              {data.newPotSize}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                   </div>
                                 )}
                               </div>
@@ -2124,9 +2299,18 @@ export default function CarpaDetailPage() {
             return undefined;
           })()}
           onClose={() => setSelectedPlantForEvent(null)}
-          onCreated={() => {
+          onCreated={async (newEvent) => {
+            // Agregar el evento al historial de la planta si está seleccionada
+            if (selectedPlantForEvents && newEvent.plantId === selectedPlantForEvents.id) {
+              setSelectedPlantEvents(prev => [newEvent, ...prev].slice(0, 3));
+            }
+            
+            // Si es un evento de cambio de maceta, refrescar la información de la sección para actualizar potSizeFinal
+            if (newEvent.type === 'CAMBIO_MACETA') {
+              await loadSection();
+            }
+            
             setSelectedPlantForEvent(null);
-            // Mostrar notificación o refrescar
           }}
         />
       )}

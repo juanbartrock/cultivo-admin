@@ -211,6 +211,7 @@ export function getEventTypeInfo(type: EventType): {
     PODA: { label: 'Poda', color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
     CAMBIO_FOTOPERIODO: { label: 'Fotoperiodo', color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
     TRANSPLANTE: { label: 'Transplante', color: 'text-green-400', bgColor: 'bg-green-500/20' },
+    CAMBIO_MACETA: { label: 'Cambio Maceta', color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
     NOTA: { label: 'Nota', color: 'text-zinc-400', bgColor: 'bg-zinc-500/20' },
     FOTO: { label: 'Foto', color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
     PARAMETRO_AMBIENTAL: { label: 'Ambiente', color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRoomDto, UpdateRoomDto } from './dto/room.dto';
 import { CreateSectionDto, UpdateSectionDto } from './dto/section.dto';
@@ -12,8 +12,9 @@ export class LocationsService {
   // ROOMS
   // ============================================
 
-  async findAllRooms() {
+  async findAllRooms(userId?: string) {
     return this.prisma.room.findMany({
+      where: userId ? { userId } : undefined,
       include: {
         sections: {
           include: {
@@ -30,7 +31,7 @@ export class LocationsService {
     });
   }
 
-  async findRoomById(id: string) {
+  async findRoomById(id: string, userId?: string) {
     const room = await this.prisma.room.findUnique({
       where: { id },
       include: {
@@ -51,20 +52,28 @@ export class LocationsService {
       throw new NotFoundException(`Room with ID ${id} not found`);
     }
 
+    // Verificar que el usuario tiene acceso
+    if (userId && room.userId && room.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a esta sala');
+    }
+
     return room;
   }
 
-  async createRoom(data: CreateRoomDto) {
+  async createRoom(data: CreateRoomDto, userId: string) {
     return this.prisma.room.create({
-      data,
+      data: {
+        ...data,
+        userId,
+      },
       include: {
         sections: true,
       },
     });
   }
 
-  async updateRoom(id: string, data: UpdateRoomDto) {
-    await this.findRoomById(id);
+  async updateRoom(id: string, data: UpdateRoomDto, userId?: string) {
+    await this.findRoomById(id, userId);
 
     return this.prisma.room.update({
       where: { id },
@@ -75,16 +84,16 @@ export class LocationsService {
     });
   }
 
-  async deleteRoom(id: string) {
-    await this.findRoomById(id);
+  async deleteRoom(id: string, userId?: string) {
+    await this.findRoomById(id, userId);
 
     return this.prisma.room.delete({
       where: { id },
     });
   }
 
-  async getRoomSections(roomId: string) {
-    await this.findRoomById(roomId);
+  async getRoomSections(roomId: string, userId?: string) {
+    await this.findRoomById(roomId, userId);
 
     return this.prisma.section.findMany({
       where: { roomId },
@@ -104,8 +113,9 @@ export class LocationsService {
   // SECTIONS
   // ============================================
 
-  async findAllSections() {
+  async findAllSections(userId?: string) {
     return this.prisma.section.findMany({
+      where: userId ? { room: { userId } } : undefined,
       include: {
         room: true,
         devices: true,
@@ -121,7 +131,7 @@ export class LocationsService {
     });
   }
 
-  async findSectionById(id: string) {
+  async findSectionById(id: string, userId?: string) {
     const section = await this.prisma.section.findUnique({
       where: { id },
       include: {
@@ -139,17 +149,26 @@ export class LocationsService {
       throw new NotFoundException(`Section with ID ${id} not found`);
     }
 
+    // Verificar acceso a través del room
+    if (userId && section.room?.userId && section.room.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a esta sección');
+    }
+
     return section;
   }
 
-  async createSection(data: CreateSectionDto) {
-    // Verificar que la room existe
+  async createSection(data: CreateSectionDto, userId?: string) {
+    // Verificar que la room existe y pertenece al usuario
     const room = await this.prisma.room.findUnique({
       where: { id: data.roomId },
     });
 
     if (!room) {
       throw new NotFoundException(`Room with ID ${data.roomId} not found`);
+    }
+
+    if (userId && room.userId && room.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a esta sala');
     }
 
     return this.prisma.section.create({
@@ -160,8 +179,8 @@ export class LocationsService {
     });
   }
 
-  async updateSection(id: string, data: UpdateSectionDto) {
-    await this.findSectionById(id);
+  async updateSection(id: string, data: UpdateSectionDto, userId?: string) {
+    await this.findSectionById(id, userId);
 
     return this.prisma.section.update({
       where: { id },
@@ -172,8 +191,8 @@ export class LocationsService {
     });
   }
 
-  async deleteSection(id: string) {
-    await this.findSectionById(id);
+  async deleteSection(id: string, userId?: string) {
+    await this.findSectionById(id, userId);
 
     return this.prisma.section.delete({
       where: { id },
@@ -184,7 +203,7 @@ export class LocationsService {
    * Dashboard de una sección
    * Devuelve datos de la carpa, dispositivos asignados y resumen de plantas
    */
-  async getSectionDashboard(id: string) {
+  async getSectionDashboard(id: string, userId?: string) {
     const section = await this.prisma.section.findUnique({
       where: { id },
       include: {
@@ -210,6 +229,11 @@ export class LocationsService {
 
     if (!section) {
       throw new NotFoundException(`Section with ID ${id} not found`);
+    }
+
+    // Verificar acceso a través del room
+    if (userId && section.room?.userId && section.room.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a esta sección');
     }
 
     // Agrupar plantas por etapa

@@ -19,6 +19,9 @@ import {
   CreateStrainDto,
   CreateCycleDto,
   CreatePlantDto,
+  UpdatePlantDto,
+  PPFDReading,
+  PlantPPFDResult,
 } from '@/types';
 
 // ============================================
@@ -137,15 +140,20 @@ export const plantService = {
   /**
    * Actualiza una planta
    */
-  update: (id: string, data: Partial<Plant>) =>
+  update: (id: string, data: UpdatePlantDto) =>
     api.put<Plant>(`/plants/${id}`, data),
 
   /**
    * Mueve una planta (cambiar sección y/o etapa)
    * @param stageDate - Fecha opcional del cambio de etapa (formato YYYY-MM-DD)
    */
-  move: (id: string, data: { sectionId?: string; stage?: PlantStage; stageDate?: string }) =>
+  move: (id: string, data: { sectionId?: string; zones?: Array<{ zone: number; coverage?: number }>; stage?: PlantStage; stageDate?: string }) =>
     api.patch<Plant>(`/plants/${id}/move`, data),
+
+  /**
+   * Obtiene el PPFD actual de las zonas asignadas a la planta (promedio ponderado)
+   */
+  getPPFD: (id: string) => api.get<PlantPPFDResult | null>(`/plants/${id}/ppfd`),
 
   /**
    * Elimina una planta

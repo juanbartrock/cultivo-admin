@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { DevicesModule } from './modules/devices/devices.module';
@@ -14,7 +15,10 @@ import { HarvestModule } from './modules/harvest/harvest.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { AIAssistantModule } from './modules/ai-assistant/ai-assistant.module';
+import { UsersModule } from './modules/users/users.module';
+import { IoTCredentialsModule } from './modules/iot-credentials/iot-credentials.module';
 import { HealthController } from './health.controller';
+import { SupabaseAuthGuard } from './modules/auth/guards/supabase-auth.guard';
 
 @Module({
   imports: [
@@ -24,6 +28,9 @@ import { HealthController } from './health.controller';
     }),
     ScheduleModule.forRoot(),
     PrismaModule,
+    AuthModule,
+    UsersModule,
+    IoTCredentialsModule,
     LocationsModule,
     DevicesModule,
     GrowModule,
@@ -33,10 +40,16 @@ import { HealthController } from './health.controller';
     AutomationsModule,
     NotificationsModule,
     HarvestModule,
-    AuthModule,
     RealtimeModule,
     AIAssistantModule,
   ],
   controllers: [HealthController],
+  providers: [
+    // Global auth guard - todas las rutas requieren auth excepto las marcadas con @Public()
+    {
+      provide: APP_GUARD,
+      useClass: SupabaseAuthGuard,
+    },
+  ],
 })
-export class AppModule { }
+export class AppModule {}

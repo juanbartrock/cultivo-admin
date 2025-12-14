@@ -47,8 +47,8 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 4000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD wget -q --spider http://localhost:4000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget -q --spider http://localhost:4000/api/health || exit 1
 
 # Start the application
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]

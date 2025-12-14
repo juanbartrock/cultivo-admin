@@ -4,6 +4,7 @@ import { DevicesController } from './devices.controller';
 import { DevicesService } from './devices.service';
 import { IoTGatewayService } from './iot-gateway.service';
 import { SensorHistoryService } from './sensor-history.service';
+import { SensorPollerService } from './sensor-poller.service';
 
 @Module({
   imports: [
@@ -13,7 +14,17 @@ import { SensorHistoryService } from './sensor-history.service';
     }),
   ],
   controllers: [DevicesController],
-  providers: [DevicesService, IoTGatewayService, SensorHistoryService],
-  exports: [DevicesService, IoTGatewayService, SensorHistoryService],
+  providers: [
+    DevicesService,
+    IoTGatewayService,
+    SensorHistoryService,
+    SensorPollerService,
+  ],
+  exports: [
+    DevicesService,
+    IoTGatewayService,
+    SensorHistoryService,
+    SensorPollerService,
+  ],
 })
 export class DevicesModule {}

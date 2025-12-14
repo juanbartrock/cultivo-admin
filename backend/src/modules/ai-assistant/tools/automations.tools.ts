@@ -3,6 +3,7 @@ import { ToolDefinition } from './types';
 
 /**
  * Crea las herramientas relacionadas con automatizaciones
+ * Todas filtran por userId para aislamiento de datos
  */
 export function createAutomationTools(prisma: PrismaService): ToolDefinition[] {
   return [
@@ -21,11 +22,16 @@ export function createAutomationTools(prisma: PrismaService): ToolDefinition[] {
         required: ['automation_name'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const automationName = params.automation_name as string;
 
+        // Solo automatizaciones del usuario
         const automation = await prisma.automation.findFirst({
           where: {
             name: { contains: automationName, mode: 'insensitive' },
+            section: {
+              room: { userId },
+            },
           },
           include: {
             section: true,
@@ -46,10 +52,15 @@ export function createAutomationTools(prisma: PrismaService): ToolDefinition[] {
 
         if (!automation) {
           const allAutomations = await prisma.automation.findMany({
+            where: {
+              section: {
+                room: { userId },
+              },
+            },
             select: { name: true, section: { select: { name: true } } },
           });
           return {
-            error: `No se encontró la automatización "${automationName}"`,
+            error: `No se encontró la automatización "${automationName}" en tu sistema`,
             availableAutomations: allAutomations.map((a) => ({
               name: a.name,
               section: a.section.name,
@@ -124,11 +135,19 @@ export function createAutomationTools(prisma: PrismaService): ToolDefinition[] {
         required: [],
       },
       handler: async (params) => {
-        const where: any = {};
+        const userId = params._userId;
+        const where: any = {
+          section: {
+            room: { userId },
+          },
+        };
 
         if (params.section_name) {
           const section = await prisma.section.findFirst({
-            where: { name: { contains: params.section_name as string, mode: 'insensitive' } },
+            where: { 
+              name: { contains: params.section_name as string, mode: 'insensitive' },
+              room: { userId },
+            },
           });
           if (section) {
             where.sectionId = section.id;
@@ -192,17 +211,22 @@ export function createAutomationTools(prisma: PrismaService): ToolDefinition[] {
         required: ['automation_name'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const automationName = params.automation_name as string;
         const limit = parseInt(params.limit as string) || 20;
 
+        // Solo automatizaciones del usuario
         const automation = await prisma.automation.findFirst({
           where: {
             name: { contains: automationName, mode: 'insensitive' },
+            section: {
+              room: { userId },
+            },
           },
         });
 
         if (!automation) {
-          return { error: `No se encontró la automatización "${automationName}"` };
+          return { error: `No se encontró la automatización "${automationName}" en tu sistema` };
         }
 
         const where: any = { automationId: automation.id };

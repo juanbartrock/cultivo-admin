@@ -3,6 +3,7 @@ import { ToolDefinition } from './types';
 
 /**
  * Crea las herramientas relacionadas con plantas
+ * Todas filtran por userId para aislamiento de datos
  */
 export function createPlantTools(prisma: PrismaService): ToolDefinition[] {
   return [
@@ -21,8 +22,10 @@ export function createPlantTools(prisma: PrismaService): ToolDefinition[] {
         required: ['plant_tag'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const tag = String(params.plant_tag).padStart(3, '0');
         
+        // Filtrar plantas que pertenecen al usuario (via section -> room -> userId)
         const plant = await prisma.plant.findFirst({
           where: {
             OR: [
@@ -30,10 +33,14 @@ export function createPlantTools(prisma: PrismaService): ToolDefinition[] {
               { tagCode: params.plant_tag as string },
               { tagCode: { contains: params.plant_tag as string } },
             ],
+            // FILTRO POR USUARIO
+            section: {
+              room: { userId },
+            },
           },
           include: {
             strain: true,
-            section: true,
+            section: { include: { room: true } },
             cycle: true,
             feedingPlans: {
               include: {
@@ -57,7 +64,7 @@ export function createPlantTools(prisma: PrismaService): ToolDefinition[] {
         });
 
         if (!plant) {
-          return { error: `No se encontró la planta con código "${params.plant_tag}"` };
+          return { error: `No se encontró la planta con código "${params.plant_tag}" en tu sistema` };
         }
 
         // Calcular días en etapa
@@ -183,7 +190,13 @@ export function createPlantTools(prisma: PrismaService): ToolDefinition[] {
         required: [],
       },
       handler: async (params) => {
-        const where: any = {};
+        const userId = params._userId;
+        const where: any = {
+          // FILTRO POR USUARIO
+          section: {
+            room: { userId },
+          },
+        };
 
         if (params.stage) {
           where.stage = params.stage;
@@ -192,7 +205,10 @@ export function createPlantTools(prisma: PrismaService): ToolDefinition[] {
           where.healthStatus = params.health;
         }
         if (params.section) {
-          where.section = { name: { contains: params.section as string, mode: 'insensitive' } };
+          where.section = { 
+            ...where.section,
+            name: { contains: params.section as string, mode: 'insensitive' },
+          };
         }
         if (params.query) {
           where.OR = [
@@ -260,20 +276,25 @@ export function createPlantTools(prisma: PrismaService): ToolDefinition[] {
         required: ['plant_tag'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const tag = String(params.plant_tag).padStart(3, '0');
         const limit = parseInt(params.limit as string) || 10;
 
+        // Verificar que la planta pertenece al usuario
         const plant = await prisma.plant.findFirst({
           where: {
             OR: [
               { tagCode: tag },
               { tagCode: params.plant_tag as string },
             ],
+            section: {
+              room: { userId },
+            },
           },
         });
 
         if (!plant) {
-          return { error: `No se encontró la planta con código "${params.plant_tag}"` };
+          return { error: `No se encontró la planta con código "${params.plant_tag}" en tu sistema` };
         }
 
         const events = await prisma.event.findMany({
@@ -323,20 +344,25 @@ export function createPlantTools(prisma: PrismaService): ToolDefinition[] {
         required: ['plant_tag'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const tag = String(params.plant_tag).padStart(3, '0');
         const limit = parseInt(params.limit as string) || 20;
 
+        // Verificar que la planta pertenece al usuario
         const plant = await prisma.plant.findFirst({
           where: {
             OR: [
               { tagCode: tag },
               { tagCode: params.plant_tag as string },
             ],
+            section: {
+              room: { userId },
+            },
           },
         });
 
         if (!plant) {
-          return { error: `No se encontró la planta con código "${params.plant_tag}"` };
+          return { error: `No se encontró la planta con código "${params.plant_tag}" en tu sistema` };
         }
 
         const where: any = { plantId: plant.id };

@@ -58,15 +58,21 @@ export function useDeviceStatus(
   return { status, loading, error, refresh: fetchStatus };
 }
 
+interface UseDevicesStatusOptionsWithSection extends UseDeviceStatusOptions {
+  /** ID de la sección para suscribirse a actualizaciones via WebSocket */
+  sectionId?: string;
+}
+
 /**
  * Hook para obtener estados de múltiples dispositivos
+ * Ahora soporta suscripción a rooms de sección para recibir actualizaciones en tiempo real
  */
 export function useDevicesStatus(
   devices: Device[],
-  options: UseDeviceStatusOptions = {}
+  options: UseDevicesStatusOptionsWithSection = {}
 ) {
-  const { pollingInterval = 30000, autoRefresh = true } = options;
-  const { socket, isConnected } = useSocket();
+  const { pollingInterval = 30000, autoRefresh = true, sectionId } = options;
+  const { socket, isConnected, joinSection, leaveSection } = useSocket();
 
   const [statuses, setStatuses] = useState<Map<string, DeviceStatus>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -107,8 +113,6 @@ export function useDevicesStatus(
       });
 
       setStatuses((prev) => {
-        // Merge logic if needed, but for now full replace is safer for "refresh"
-        // However, preserving unknown states might be better?
         return newStatuses;
       });
       setError(null);
@@ -121,56 +125,86 @@ export function useDevicesStatus(
         setLoading(false);
       }
     }
-  }, [devices]); // Removed statuses dependency to avoid loops
+  }, [devices]);
 
-  // Efecto para Socket.IO
+  // Efecto para suscribirse a la sección via WebSocket
+  useEffect(() => {
+    if (!sectionId || !isConnected) return;
+
+    // Unirse a la room de la sección para recibir actualizaciones
+    joinSection(sectionId);
+
+    return () => {
+      // Salir de la room al desmontar
+      leaveSection(sectionId);
+    };
+  }, [sectionId, isConnected, joinSection, leaveSection]);
+
+  // Efecto para Socket.IO - escuchar actualizaciones
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    const handleDeviceUpdate = (data: { deviceId: string; status: DeviceStatus }) => {
-      setStatuses((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(data.deviceId, data.status);
-        return newMap;
-      });
+    const handleDeviceUpdate = (data: { deviceId: string; status: DeviceStatus; sectionId?: string }) => {
+      // Solo actualizar si el dispositivo está en nuestra lista
+      const deviceIds = devices.map(d => d.id);
+      if (deviceIds.includes(data.deviceId)) {
+        setStatuses((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(data.deviceId, data.status);
+          return newMap;
+        });
+      }
     };
 
-    // Subscribirse a actualizaciones de dispositivos
-    // En el futuro, podríamos suscribirnos solo a los `devices` de la lista,
-    // pero por ahora escuchamos todos los eventos globales de 'device_update'
+    const handleSensorUpdate = (data: { deviceId: string; reading: any; sectionId?: string }) => {
+      // Actualizar el status con los datos del sensor
+      const deviceIds = devices.map(d => d.id);
+      if (deviceIds.includes(data.deviceId)) {
+        setStatuses((prev) => {
+          const newMap = new Map(prev);
+          const currentStatus = prev.get(data.deviceId) || { online: true };
+          newMap.set(data.deviceId, {
+            ...currentStatus,
+            online: true,
+            temperature: data.reading.temperature,
+            humidity: data.reading.humidity,
+            co2: data.reading.co2,
+            vpd: data.reading.vpd,
+          });
+          return newMap;
+        });
+      }
+    };
+
     socket.on('device_update', handleDeviceUpdate);
+    socket.on('sensor_update', handleSensorUpdate);
 
     return () => {
       socket.off('device_update', handleDeviceUpdate);
+      socket.off('sensor_update', handleSensorUpdate);
     };
-  }, [socket, isConnected]);
+  }, [socket, isConnected, devices]);
 
-  // Efecto para Polling (solo si no hay socket o para carga inicial)
+  // Efecto para Polling (carga inicial + backup si socket no está conectado)
   useEffect(() => {
     isMounted.current = true;
 
     // Siempre carga inicial
     fetchAllStatuses();
 
-    // Setup polling only if socket is NOT connected or if explicit polling requested
-    // Strategy: If socket is connected, we might still want polling as backup, 
-    // but typically we can relax it. For now, let's keep polling but maybe less frequent?
-    // Or strictly: if (autoRefresh && !isConnected)
-
     let interval: NodeJS.Timeout | null = null;
 
     if (autoRefresh && pollingInterval > 0) {
-      // Si hay socket, podríamos aumentar el intervalo o desactivarlo.
-      // E.g. cada 5 min para sincronizar por si acaso.
-      // Por simplicidad, mantenemos polling pero el socket actualizará más rápido.
-      interval = setInterval(fetchAllStatuses, pollingInterval);
+      // Si hay socket conectado, reducir frecuencia de polling (solo como backup)
+      const effectiveInterval = isConnected ? pollingInterval * 2 : pollingInterval;
+      interval = setInterval(fetchAllStatuses, effectiveInterval);
     }
 
     return () => {
       isMounted.current = false;
       if (interval) clearInterval(interval);
     };
-  }, [fetchAllStatuses, autoRefresh, pollingInterval]); // Removed isConnected dependency to prevent double fetch on connect
+  }, [fetchAllStatuses, autoRefresh, pollingInterval, isConnected]);
 
   const getStatus = useCallback(
     (deviceId: string): DeviceStatus | null => {

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Plant, PlantStage, PlantSex, PlantHealthStatus } from '@/types';
+import { Plant, PlantStage, PlantSex, PlantHealthStatus, PlantZone, PlantZoneDto, PlantPPFDResult } from '@/types';
 import {
   Leaf,
   Calendar,
@@ -18,14 +18,23 @@ import {
   RefreshCw,
   Check,
   Loader2,
+  X,
   HeartPulse,
   Biohazard,
   Skull,
-  Activity
+  Activity,
+  Package,
+  ArrowRightLeft,
+  MapPin,
+  Sun,
+  Edit
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { plantService } from '@/services/growService';
+import { sectionService } from '@/services/locationService';
 import { useToast } from '@/contexts/ToastContext';
+import { Section } from '@/types';
+import Portal from './Portal';
 
 // Iconos por etapa
 const stageIcons: Record<PlantStage, { icon: React.ElementType; color: string; bg: string }> = {
@@ -65,10 +74,11 @@ interface PlantCardProps {
   isSelected?: boolean;
   onRegisterEvent?: (plant: Plant) => void;
   onStageChange?: (plant: Plant, newStage: PlantStage) => void;
+  onMoved?: (plant: Plant, newSectionId: string) => void;
   onClick?: (plant: Plant) => void;
 }
 
-export default function PlantCard({ plant, delay = 0, isSelected = false, onRegisterEvent, onStageChange, onClick }: PlantCardProps) {
+export default function PlantCard({ plant, delay = 0, isSelected = false, onRegisterEvent, onStageChange, onMoved, onClick }: PlantCardProps) {
   const { toast } = useToast();
   const [currentPlant, setCurrentPlant] = useState(plant);
   const stageConfig = stageIcons[currentPlant.stage] || stageIcons.VEGETATIVO;
@@ -76,11 +86,68 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   const [showMenu, setShowMenu] = useState(false);
   const [showStageModal, setShowStageModal] = useState(false);
   const [showHealthModal, setShowHealthModal] = useState(false);
+  const [showMoveModal, setShowMoveModal] = useState(false);
   const [isChangingStage, setIsChangingStage] = useState(false);
   const [isChangingHealth, setIsChangingHealth] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
   const [selectedStage, setSelectedStage] = useState<PlantStage | null>(null);
   const [selectedHealth, setSelectedHealth] = useState<PlantHealthStatus | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [stageDate, setStageDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [loadingSections, setLoadingSections] = useState(false);
+  const [showZonesModal, setShowZonesModal] = useState(false);
+  const [plantPPFD, setPlantPPFD] = useState<PlantPPFDResult | null>(null);
+  const [loadingPPFD, setLoadingPPFD] = useState(false);
+  const [selectedZones, setSelectedZones] = useState<PlantZoneDto[]>([]);
+  const [isSavingZones, setIsSavingZones] = useState(false);
+
+  // Cargar PPFD cuando la planta tiene zonas asignadas
+  useEffect(() => {
+    if (currentPlant.zones && currentPlant.zones.length > 0) {
+      loadPlantPPFD();
+    } else {
+      setPlantPPFD(null);
+    }
+  }, [currentPlant.id, currentPlant.zones]);
+
+  async function loadPlantPPFD() {
+    setLoadingPPFD(true);
+    try {
+      const ppfdData = await plantService.getPPFD(currentPlant.id);
+      setPlantPPFD(ppfdData);
+    } catch (err) {
+      console.error('Error loading plant PPFD:', err);
+    } finally {
+      setLoadingPPFD(false);
+    }
+  }
+
+  // Inicializar zonas seleccionadas cuando se abre el modal
+  useEffect(() => {
+    if (showZonesModal) {
+      setSelectedZones(
+        currentPlant.zones?.map(z => ({ zone: z.zone, coverage: z.coverage })) || []
+      );
+    }
+  }, [showZonesModal, currentPlant.zones]);
+
+  async function handleSaveZones() {
+    setIsSavingZones(true);
+    try {
+      const updatedPlant = await plantService.update(currentPlant.id, {
+        zones: selectedZones
+      });
+      setCurrentPlant(updatedPlant);
+      setShowZonesModal(false);
+      toast.success('Zonas actualizadas correctamente');
+    } catch (err) {
+      console.error('Error saving zones:', err);
+      toast.error('Error al guardar las zonas');
+    } finally {
+      setIsSavingZones(false);
+    }
+  }
 
   const currentHealth = currentPlant.healthStatus || 'HEALTHY';
   const healthConfig = healthIcons[currentHealth];
@@ -161,6 +228,47 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     setShowStageModal(true);
   };
 
+  // Función para cargar secciones y abrir el modal de mover
+  const openMoveModal = async () => {
+    setShowMoveModal(true);
+    setSelectedSectionId(null);
+    setLoadingSections(true);
+    try {
+      const allSections = await sectionService.getAll();
+      // Filtrar la sección actual
+      setSections(allSections.filter(s => s.id !== currentPlant.sectionId));
+    } catch (err) {
+      console.error('Error cargando secciones:', err);
+      toast.error('Error al cargar las secciones disponibles');
+    } finally {
+      setLoadingSections(false);
+    }
+  };
+
+  // Función para mover la planta a otra sección
+  const handleMovePlant = async () => {
+    if (!selectedSectionId) {
+      setShowMoveModal(false);
+      return;
+    }
+
+    setIsMoving(true);
+    try {
+      const updatedPlant = await plantService.move(currentPlant.id, {
+        sectionId: selectedSectionId
+      });
+      setCurrentPlant(updatedPlant);
+      onMoved?.(updatedPlant, selectedSectionId);
+      setShowMoveModal(false);
+      toast.success('Planta movida correctamente');
+    } catch (err) {
+      console.error('Error moviendo planta:', err);
+      toast.error('Error al mover la planta');
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -170,7 +278,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
       className={`bg-zinc-800/50 backdrop-blur-sm border rounded-xl p-4 transition-all cursor-pointer ${isSelected
         ? 'border-cultivo-green-500 ring-2 ring-cultivo-green-500/30'
         : 'border-zinc-700/50 hover:border-cultivo-green-600/30'
-        } ${showStageModal ? 'relative z-50' : 'relative'}`}
+        } ${showStageModal || showMenu ? 'relative z-[100]' : 'relative'}`}
     >
       <div className="flex items-start gap-4">
         {/* Icono de etapa */}
@@ -196,9 +304,12 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             </div>
 
             {/* Menú de acciones */}
-            <div className="relative">
+            <div className={`relative ${showMenu ? 'z-[100]' : ''}`}>
               <button
-                onClick={() => setShowMenu(!showMenu)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(!showMenu);
+                }}
                 className="p-1 rounded-lg hover:bg-zinc-700/50 transition-colors"
               >
                 <MoreVertical className="w-4 h-4 text-zinc-400" />
@@ -207,10 +318,15 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
               {showMenu && (
                 <>
                   <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowMenu(false)}
+                    className="fixed inset-0 z-[9998]"
+                    onClick={() => {
+                      setShowMenu(false);
+                    }}
                   />
-                  <div className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-20 min-w-[180px] py-1">
+                  <div 
+                    className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-[9999] min-w-[180px] py-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       onClick={() => {
                         setShowMenu(false);
@@ -235,6 +351,26 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                     <button
                       onClick={() => {
                         setShowMenu(false);
+                        setShowZonesModal(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                    >
+                      <MapPin className="w-4 h-4 text-purple-400" />
+                      Asignar Zonas
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        openMoveModal();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                    >
+                      <ArrowRightLeft className="w-4 h-4 text-cyan-400" />
+                      Mudar a otra sección
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
                         onRegisterEvent?.(currentPlant);
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
@@ -244,7 +380,9 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                     </button>
                     <Link
                       href={`/seguimientos?plant=${currentPlant.id}`}
-                      onClick={() => setShowMenu(false)}
+                      onClick={() => {
+                        setShowMenu(false);
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
                     >
                       <History className="w-4 h-4 text-blue-400" />
@@ -300,7 +438,49 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
               )}
               {daysInStage}d ({weeksInStage}sem)
             </span>
+
+            {/* Maceta final */}
+            {currentPlant.potSizeFinal && (
+              <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400 flex items-center gap-1" title="Maceta final">
+                <Package className="w-3 h-3" />
+                {currentPlant.potSizeFinal}
+              </span>
+            )}
+
+            {/* Zonas asignadas */}
+            {currentPlant.zones && currentPlant.zones.length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowZonesModal(true);
+                }}
+                className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400 flex items-center gap-1 hover:bg-purple-500/30 transition-colors"
+                title="Zonas asignadas"
+              >
+                <MapPin className="w-3 h-3" />
+                {currentPlant.zones.length} zona{currentPlant.zones.length > 1 ? 's' : ''}
+              </button>
+            )}
           </div>
+
+          {/* PPFD promedio ponderado */}
+          {plantPPFD && plantPPFD.averagePPFD !== null && (
+            <div className="mt-2 flex items-center gap-2 text-xs">
+              <Sun className="w-3.5 h-3.5 text-yellow-400" />
+              <span className="text-yellow-400 font-medium">
+                PPFD: {Math.round(plantPPFD.averagePPFD)} µmol/m²/s
+              </span>
+              <span className="text-zinc-600">
+                (promedio ponderado)
+              </span>
+            </div>
+          )}
+          {loadingPPFD && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-zinc-600">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Cargando PPFD...</span>
+            </div>
+          )}
 
           {/* Notas si existen */}
           {currentPlant.notes && (
@@ -357,7 +537,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
       {/* Modal de Cambio de Etapa */}
       {showStageModal && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowStageModal(false);
@@ -368,7 +548,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm"
+            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-zinc-800">
@@ -472,7 +652,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
       {/* Modal de Estado de Salud */}
       {showHealthModal && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowHealthModal(false);
@@ -483,7 +663,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm"
+            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-zinc-800">
@@ -558,6 +738,245 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Modal de Mudar Planta */}
+      {showMoveModal && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowMoveModal(false);
+              setSelectedSectionId(null);
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-zinc-800">
+              <h3 className="text-lg font-semibold text-white">Mudar Planta</h3>
+              <p className="text-sm text-zinc-400 mt-1">
+                {currentPlant.tagCode} - Selecciona la sección destino
+              </p>
+            </div>
+
+            <div className="p-4">
+              {loadingSections ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-cultivo-green-400 animate-spin" />
+                </div>
+              ) : sections.length === 0 ? (
+                <div className="text-center py-8 text-zinc-500">
+                  No hay otras secciones disponibles
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {sections.map((section) => (
+                    <button
+                      key={section.id}
+                      onClick={() => setSelectedSectionId(section.id)}
+                      disabled={isMoving}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                        selectedSectionId === section.id
+                          ? 'bg-cyan-500/20 border-cyan-500 ring-2 ring-cyan-500/30'
+                          : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                      }`}
+                    >
+                      <ArrowRightLeft className={`w-5 h-5 ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-500'}`} />
+                      <div className="flex-1 text-left">
+                        <span className={`font-medium ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-300'}`}>
+                          {section.name}
+                        </span>
+                        {section.dimensions && (
+                          <span className="text-xs text-zinc-500 ml-2">({section.dimensions})</span>
+                        )}
+                      </div>
+                      {selectedSectionId === section.id && (
+                        <Check className="w-5 h-5 text-cyan-400" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowMoveModal(false);
+                  setSelectedSectionId(null);
+                }}
+                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                disabled={isMoving}
+              >
+                Cancelar
+              </button>
+              {selectedSectionId && (
+                <button
+                  onClick={handleMovePlant}
+                  disabled={isMoving}
+                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  {isMoving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Moviendo...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="w-4 h-4" />
+                      Mudar
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal de Asignar Zonas - usando Portal para renderizar fuera del componente */}
+      {showZonesModal && (
+        <Portal>
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowZonesModal(false);
+              }
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-md max-h-[80vh] flex flex-col relative z-[10000]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header fijo */}
+              <div className="p-4 border-b border-zinc-800 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-white">Asignar Zonas</h3>
+                <p className="text-sm text-zinc-400 mt-1">
+                  {currentPlant.tagCode} - Selecciona las zonas que ocupa esta planta
+                </p>
+              </div>
+
+              {/* Contenido scrolleable */}
+              <div className="p-4 space-y-3 overflow-y-auto flex-1">
+                {/* Grilla de zonas */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[1, 2, 3, 4, 5, 6].map((zone) => {
+                    const zoneData = selectedZones.find(z => z.zone === zone);
+                    const isSelected = !!zoneData;
+
+                    return (
+                      <button
+                        key={zone}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedZones(selectedZones.filter(z => z.zone !== zone));
+                          } else {
+                            setSelectedZones([...selectedZones, { zone, coverage: 100 }]);
+                          }
+                        }}
+                        className={`p-3 rounded-lg border transition-all ${
+                          isSelected
+                            ? 'bg-purple-500/20 border-purple-500 ring-2 ring-purple-500/30'
+                            : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                        }`}
+                      >
+                        <div className="text-xs text-zinc-500 mb-1">Zona {zone}</div>
+                        {isSelected ? (
+                          <>
+                            <Check className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+                            <div className="text-xs text-purple-400 font-medium">
+                              {zoneData.coverage}%
+                            </div>
+                          </>
+                        ) : (
+                          <Plus className="w-5 h-5 text-zinc-600 mx-auto" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Lista de zonas seleccionadas con coverage */}
+                {selectedZones.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-sm font-medium text-zinc-300">Ajustar Coverage:</h4>
+                    {selectedZones.map((zoneData, index) => (
+                      <div key={zoneData.zone} className="flex items-center gap-3 p-2 bg-zinc-800/50 rounded-lg">
+                        <span className="text-sm text-zinc-300 w-16">Zona {zoneData.zone}:</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={zoneData.coverage}
+                          onChange={(e) => {
+                            const newZones = [...selectedZones];
+                            newZones[index].coverage = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+                            setSelectedZones(newZones);
+                          }}
+                          className="flex-1 px-3 py-1.5 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white text-sm"
+                        />
+                        <span className="text-sm text-zinc-500 w-8">%</span>
+                        <button
+                          onClick={() => {
+                            setSelectedZones(selectedZones.filter(z => z.zone !== zoneData.zone));
+                          }}
+                          className="p-1 hover:bg-zinc-700 rounded-lg"
+                        >
+                          <X className="w-4 h-4 text-zinc-500" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedZones.length === 0 && (
+                  <div className="text-center py-8 text-zinc-500 text-sm">
+                    Selecciona al menos una zona para asignar a la planta
+                  </div>
+                )}
+              </div>
+
+              {/* Footer fijo con botones */}
+              <div className="p-4 border-t border-zinc-800 flex justify-end gap-2 flex-shrink-0">
+                <button
+                  onClick={() => {
+                    setShowZonesModal(false);
+                    setSelectedZones([]);
+                  }}
+                  className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                  disabled={isSavingZones}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveZones}
+                  disabled={isSavingZones || selectedZones.length === 0}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  {isSavingZones ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Guardar
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </Portal>
       )}
     </motion.div>
   );

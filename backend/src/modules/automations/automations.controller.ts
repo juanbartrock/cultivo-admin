@@ -11,21 +11,26 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AutomationsService } from './automations.service';
+import { JobProcessorService } from './job-processor.service';
 import {
   CreateAutomationDto,
   UpdateAutomationDto,
   ExecuteAutomationDto,
 } from './dto/automation.dto';
-import { AutomationStatus } from '@prisma/client';
+import { GetJobsQueryDto } from './dto/job.dto';
+import { AutomationStatus, JobStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('automations')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('automations')
 export class AutomationsController {
-  constructor(private readonly automationsService: AutomationsService) { }
+  constructor(
+    private readonly automationsService: AutomationsService,
+    private readonly jobProcessor: JobProcessorService,
+  ) {}
 
   /**
    * Lista todas las automatizaciones
@@ -137,6 +142,73 @@ export class AutomationsController {
       id,
       days ? parseInt(days, 10) : 30,
     );
+  }
+
+  // ============================================
+  // ENDPOINTS DE JOB QUEUE
+  // ============================================
+
+  /**
+   * Lista jobs programados
+   * GET /api/automations/jobs?status=PENDING&limit=50
+   */
+  @Get('jobs')
+  @ApiOperation({ summary: 'Lista jobs programados con filtros opcionales' })
+  getJobs(@Query() query: GetJobsQueryDto) {
+    return this.jobProcessor.getJobs({
+      status: query.status,
+      limit: query.limit,
+    });
+  }
+
+  /**
+   * Obtiene estadísticas de jobs
+   * GET /api/automations/jobs/stats
+   */
+  @Get('jobs/stats')
+  @ApiOperation({ summary: 'Obtiene estadísticas de jobs por estado' })
+  getJobStats() {
+    return this.jobProcessor.getStats();
+  }
+
+  /**
+   * Obtiene estado del procesador de jobs
+   * GET /api/automations/jobs/processor-status
+   */
+  @Get('jobs/processor-status')
+  @ApiOperation({ summary: 'Obtiene estado del procesador de jobs' })
+  getProcessorStatus() {
+    return this.jobProcessor.getProcessorStatus();
+  }
+
+  /**
+   * Obtiene un job por ID
+   * GET /api/automations/jobs/:jobId
+   */
+  @Get('jobs/:jobId')
+  @ApiOperation({ summary: 'Obtiene un job por su ID' })
+  getJobById(@Param('jobId') jobId: string) {
+    return this.jobProcessor.getJobById(jobId);
+  }
+
+  /**
+   * Reintenta un job fallido
+   * POST /api/automations/jobs/:jobId/retry
+   */
+  @Post('jobs/:jobId/retry')
+  @ApiOperation({ summary: 'Reintenta un job fallido o muerto' })
+  retryJob(@Param('jobId') jobId: string) {
+    return this.jobProcessor.retryJob(jobId);
+  }
+
+  /**
+   * Cancela un job pendiente
+   * POST /api/automations/jobs/:jobId/cancel
+   */
+  @Post('jobs/:jobId/cancel')
+  @ApiOperation({ summary: 'Cancela un job pendiente' })
+  cancelJob(@Param('jobId') jobId: string) {
+    return this.jobProcessor.cancelJob(jobId);
   }
 }
 

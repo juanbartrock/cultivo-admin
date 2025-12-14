@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AgentOrchestratorService } from './agent-orchestrator.service';
 import { MemoryService } from './memory.service';
@@ -36,7 +36,7 @@ export class AIAssistantService {
   /**
    * Envía un mensaje al asistente usando el orquestador de agentes
    */
-  async sendMessage(dto: SendMessageDto): Promise<ChatResponseDto> {
+  async sendMessage(dto: SendMessageDto, userId: string): Promise<ChatResponseDto> {
     const requestId = ++this.requestCount;
     const startTime = Date.now();
 
@@ -47,6 +47,7 @@ export class AIAssistantService {
     console.log(`╚${'═'.repeat(58)}╝${LOG.reset}`);
     
     console.log(`${LOG.cyan}📅 Timestamp:${LOG.reset} ${new Date().toISOString()}`);
+    console.log(`${LOG.cyan}👤 Usuario:${LOG.reset} ${userId}`);
     console.log(`${LOG.cyan}💬 Mensaje:${LOG.reset} "${dto.message}"`);
     console.log(`${LOG.cyan}🆔 Conversación existente:${LOG.reset} ${dto.conversationId || 'Nueva'}`);
     console.log(`${LOG.cyan}🏷️  Tipo de contexto:${LOG.reset} ${dto.contextType || 'GENERAL'}`);
@@ -55,13 +56,13 @@ export class AIAssistantService {
     // Obtener o crear conversación
     let conversation;
     if (dto.conversationId) {
-      conversation = await this.getConversation(dto.conversationId);
+      conversation = await this.getConversation(dto.conversationId, userId);
       console.log(`${LOG.green}✓ Conversación encontrada:${LOG.reset} ${conversation.title || 'Sin título'}`);
     } else {
       conversation = await this.createConversation({
         contextType: dto.contextType || AIContextType.GENERAL,
         contextId: dto.contextId,
-      });
+      }, userId);
       console.log(`${LOG.green}✓ Nueva conversación creada:${LOG.reset} ${conversation.id}`);
     }
 
@@ -85,10 +86,11 @@ export class AIAssistantService {
     try {
       console.log(`\n${LOG.yellow}⏳ Delegando al orquestador de agentes...${LOG.reset}\n`);
       
-      // Procesar con el orquestador de agentes
+      // Procesar con el orquestador de agentes - PASAMOS EL userId
       const agentResponse = await this.orchestrator.processMessage(
         dto.message,
         conversation.id,
+        userId,  // <-- NUEVO: Pasamos el userId al orquestador
         allImages,
       );
 
@@ -197,22 +199,23 @@ export class AIAssistantService {
   }
 
   /**
-   * Crea una nueva conversación
+   * Crea una nueva conversación para un usuario
    */
-  async createConversation(dto: CreateConversationDto) {
+  async createConversation(dto: CreateConversationDto, userId: string) {
     return this.prisma.aIConversation.create({
       data: {
         title: dto.title,
         contextType: dto.contextType || AIContextType.GENERAL,
         contextId: dto.contextId,
+        userId, // <-- Asociar al usuario
       },
     });
   }
 
   /**
-   * Obtiene una conversación por ID
+   * Obtiene una conversación por ID (verificando que pertenece al usuario)
    */
-  async getConversation(id: string) {
+  async getConversation(id: string, userId: string) {
     const conversation = await this.prisma.aIConversation.findUnique({
       where: { id },
       include: {
@@ -226,19 +229,26 @@ export class AIAssistantService {
       throw new NotFoundException(`Conversation ${id} not found`);
     }
 
+    // Verificar que la conversación pertenece al usuario
+    if (conversation.userId && conversation.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a esta conversación');
+    }
+
     return conversation;
   }
 
   /**
-   * Lista conversaciones con filtros
+   * Lista conversaciones con filtros (solo del usuario)
    */
   async getConversations(
+    userId: string,
     contextType?: AIContextType,
     contextId?: string,
     activeOnly = true,
   ) {
     return this.prisma.aIConversation.findMany({
       where: {
+        userId, // <-- Solo conversaciones del usuario
         ...(contextType && { contextType }),
         ...(contextId && { contextId }),
         ...(activeOnly && { isActive: true }),
@@ -255,11 +265,11 @@ export class AIAssistantService {
   /**
    * Elimina una conversación (soft delete)
    */
-  async deleteConversation(id: string) {
-    await this.getConversation(id);
+  async deleteConversation(id: string, userId: string) {
+    await this.getConversation(id, userId); // Verifica pertenencia
 
     // Procesar memorias antes de desactivar
-    await this.memoryService.processConversationEnd(id);
+    await this.memoryService.processConversationEnd(id, userId);
 
     return this.prisma.aIConversation.update({
       where: { id },
@@ -270,26 +280,27 @@ export class AIAssistantService {
   /**
    * Elimina permanentemente una conversación
    */
-  async hardDeleteConversation(id: string) {
+  async hardDeleteConversation(id: string, userId: string) {
+    await this.getConversation(id, userId); // Verifica pertenencia
+
     return this.prisma.aIConversation.delete({
       where: { id },
     });
   }
 
   /**
-   * Genera título automático para conversación usando el orquestador
+   * Genera título automático para conversación
    */
   private async generateConversationTitle(
     conversationId: string,
     firstMessage: string,
   ) {
     try {
-      // Usar un prompt simple sin herramientas para generar título
       const OpenAI = require('openai');
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-5.2',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -316,9 +327,27 @@ export class AIAssistantService {
   }
 
   /**
-   * Obtiene fotos de una planta para referenciar en el chat
+   * Obtiene fotos de una planta (verificando acceso del usuario)
    */
-  async getPlantPhotos(plantId: string) {
+  async getPlantPhotos(plantId: string, userId: string) {
+    // Verificar que la planta pertenece al usuario
+    const plant = await this.prisma.plant.findUnique({
+      where: { id: plantId },
+      include: {
+        section: {
+          include: { room: true },
+        },
+      },
+    });
+
+    if (!plant) {
+      throw new NotFoundException(`Plant ${plantId} not found`);
+    }
+
+    if (plant.section?.room?.userId && plant.section.room.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a esta planta');
+    }
+
     const events = await this.prisma.event.findMany({
       where: {
         plantId,
@@ -340,9 +369,9 @@ export class AIAssistantService {
   }
 
   /**
-   * Obtiene el plan de alimentación completo en JSON
+   * Obtiene el plan de alimentación (verificando acceso del usuario)
    */
-  async getFeedingPlanJson(planId: string) {
+  async getFeedingPlanJson(planId: string, userId: string) {
     const plan = await this.prisma.feedingPlan.findUnique({
       where: { id: planId },
       include: {
@@ -356,13 +385,32 @@ export class AIAssistantService {
       throw new NotFoundException(`Feeding plan ${planId} not found`);
     }
 
+    // Verificar que el plan pertenece al usuario
+    if (plan.userId && plan.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a este plan');
+    }
+
     return plan;
   }
 
   /**
-   * Obtiene automatizaciones de una sección
+   * Obtiene automatizaciones de una sección (verificando acceso del usuario)
    */
-  async getSectionAutomations(sectionId: string) {
+  async getSectionAutomations(sectionId: string, userId: string) {
+    // Verificar que la sección pertenece al usuario
+    const section = await this.prisma.section.findUnique({
+      where: { id: sectionId },
+      include: { room: true },
+    });
+
+    if (!section) {
+      throw new NotFoundException(`Section ${sectionId} not found`);
+    }
+
+    if (section.room?.userId && section.room.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a esta sección');
+    }
+
     return this.prisma.automation.findMany({
       where: { sectionId },
       include: {

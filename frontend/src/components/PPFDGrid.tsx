@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Ruler, Calculator, Plus, Loader2, X, Info, Clock } from 'lucide-react';
+import { Sun, Ruler, Calculator, Plus, Loader2, X, Info, Clock, MapPin } from 'lucide-react';
 import { api } from '@/services/apiService';
-import { PPFDReading, DLIResult } from '@/types';
+import { PPFDReading, DLIResult, Plant } from '@/types';
 import { useToast } from '@/contexts/ToastContext';
+import { plantService } from '@/services/growService';
 
 interface PPFDGridProps {
   sectionId: string;
@@ -20,10 +21,25 @@ export default function PPFDGrid({ sectionId, sectionName }: PPFDGridProps) {
   const [showModal, setShowModal] = useState(false);
   const [selectedZone, setSelectedZone] = useState<number | null>(null);
   const [lightHours, setLightHours] = useState(18); // Default 18/6
+  const [plants, setPlants] = useState<Plant[]>([]);
+  const [loadingPlants, setLoadingPlants] = useState(false);
 
   useEffect(() => {
     loadData();
+    loadPlants();
   }, [sectionId, lightHours]);
+
+  async function loadPlants() {
+    setLoadingPlants(true);
+    try {
+      const plantsData = await plantService.getBySection(sectionId);
+      setPlants(plantsData);
+    } catch (err) {
+      console.error('Error loading plants:', err);
+    } finally {
+      setLoadingPlants(false);
+    }
+  }
 
   async function loadData() {
     setIsLoading(true);
@@ -146,6 +162,11 @@ export default function PPFDGrid({ sectionId, sectionName }: PPFDGridProps) {
           const ppfd = zoneData?.reading?.ppfdValue;
           const height = zoneData?.reading?.lightHeight;
           const level = getPPFDLevel(ppfd);
+          
+          // Plantas asignadas a esta zona
+          const zonePlants = plants.filter(p => 
+            p.zones?.some(z => z.zone === zone)
+          );
 
           return (
             <motion.button
@@ -153,9 +174,17 @@ export default function PPFDGrid({ sectionId, sectionName }: PPFDGridProps) {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleZoneClick(zone)}
-              className={`p-3 rounded-lg border transition-colors ${getZoneColor(ppfd)} hover:border-yellow-500/50`}
+              className={`p-3 rounded-lg border transition-colors ${getZoneColor(ppfd)} hover:border-yellow-500/50 relative`}
             >
-              <div className="text-xs text-zinc-500 mb-1">Zona {zone}</div>
+              <div className="text-xs text-zinc-500 mb-1 flex items-center justify-between">
+                <span>Zona {zone}</span>
+                {zonePlants.length > 0 && (
+                  <span className="flex items-center gap-1 text-purple-400">
+                    <MapPin className="w-3 h-3" />
+                    <span>{zonePlants.length}</span>
+                  </span>
+                )}
+              </div>
               {ppfd !== null && ppfd !== undefined ? (
                 <>
                   <div className="text-lg font-bold text-white">{ppfd}</div>
@@ -169,6 +198,30 @@ export default function PPFDGrid({ sectionId, sectionName }: PPFDGridProps) {
                 <div className="py-2">
                   <Plus className="w-5 h-5 text-zinc-600 mx-auto" />
                   <div className="text-xs text-zinc-600 mt-1">Agregar</div>
+                </div>
+              )}
+              
+              {/* Lista de plantas en esta zona */}
+              {zonePlants.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-zinc-700/50">
+                  <div className="space-y-1">
+                    {zonePlants.slice(0, 2).map((plant) => {
+                      const plantZone = plant.zones?.find(z => z.zone === zone);
+                      return (
+                        <div key={plant.id} className="text-xs text-zinc-400 flex items-center justify-between">
+                          <span className="truncate">{plant.tagCode}</span>
+                          {plantZone && plantZone.coverage < 100 && (
+                            <span className="text-zinc-600 ml-1">{plantZone.coverage}%</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {zonePlants.length > 2 && (
+                      <div className="text-xs text-zinc-600">
+                        +{zonePlants.length - 2} más
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </motion.button>

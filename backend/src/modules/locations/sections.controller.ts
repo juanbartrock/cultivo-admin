@@ -9,29 +9,35 @@ import {
   Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { LocationsService } from './locations.service';
 import { CreateSectionDto, UpdateSectionDto } from './dto/section.dto';
 import { UpdateSectionLayoutDto } from './dto/layout.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '@prisma/client';
 
 @ApiTags('locations')
+@ApiBearerAuth()
 @Controller('sections')
 export class SectionsController {
   constructor(private readonly locationsService: LocationsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar todas las secciones' })
+  @ApiOperation({ summary: 'Listar todas las secciones del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de secciones' })
-  async findAll() {
-    return this.locationsService.findAllSections();
+  async findAll(@CurrentUser() user: User) {
+    return this.locationsService.findAllSections(user.id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener una sección por ID' })
   @ApiResponse({ status: 200, description: 'Detalle de la sección' })
   @ApiResponse({ status: 404, description: 'Sección no encontrada' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.locationsService.findSectionById(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.locationsService.findSectionById(id, user.id);
   }
 
   @Get(':id/dashboard')
@@ -41,15 +47,21 @@ export class SectionsController {
     description: 'Dashboard con datos de la sección, dispositivos y resumen de plantas',
   })
   @ApiResponse({ status: 404, description: 'Sección no encontrada' })
-  async getDashboard(@Param('id', ParseUUIDPipe) id: string) {
-    return this.locationsService.getSectionDashboard(id);
+  async getDashboard(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.locationsService.getSectionDashboard(id, user.id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Crear una nueva sección' })
   @ApiResponse({ status: 201, description: 'Sección creada exitosamente' })
-  async create(@Body() createSectionDto: CreateSectionDto) {
-    return this.locationsService.createSection(createSectionDto);
+  async create(
+    @Body() createSectionDto: CreateSectionDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.locationsService.createSection(createSectionDto, user.id);
   }
 
   @Put(':id')
@@ -59,16 +71,20 @@ export class SectionsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSectionDto: UpdateSectionDto,
+    @CurrentUser() user: User,
   ) {
-    return this.locationsService.updateSection(id, updateSectionDto);
+    return this.locationsService.updateSection(id, updateSectionDto, user.id);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar una sección' })
   @ApiResponse({ status: 200, description: 'Sección eliminada exitosamente' })
   @ApiResponse({ status: 404, description: 'Sección no encontrada' })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.locationsService.deleteSection(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.locationsService.deleteSection(id, user.id);
   }
 
   // ============================================

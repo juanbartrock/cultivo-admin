@@ -76,13 +76,24 @@ src/
 │   ├── CarpaCard.tsx           # Card de sección
 │   ├── SensorCard.tsx          # Card de dispositivo
 │   ├── PlantCard.tsx           # Card de planta
-│   └── DoorAnimation.tsx       # Animación de entrada
+│   ├── DoorAnimation.tsx       # Animación de entrada
+│   └── ai-assistant/           # Componentes del asistente IA
+│       ├── AIAssistantBubble.tsx    # Burbuja flotante
+│       ├── AIAssistantChat.tsx      # Panel de chat principal
+│       ├── AIAssistantMessage.tsx   # Renderizado de mensajes (Markdown)
+│       └── AIAssistantInput.tsx     # Input con adjuntos
 ├── services/                   # Servicios de API
 │   ├── apiService.ts           # Cliente HTTP base
 │   ├── deviceService.ts        # Dispositivos IoT
 │   ├── locationService.ts      # Salas y secciones
 │   ├── growService.ts          # Genéticas, ciclos, plantas
-│   └── eventService.ts         # Bitácora de eventos
+│   ├── eventService.ts         # Bitácora de eventos
+│   └── aiAssistantService.ts   # Asistente IA (chat, conversaciones, memorias)
+├── contexts/                   # Contextos React
+│   └── AIAssistantContext.tsx  # Estado global del asistente
+├── hooks/                      # Custom hooks
+│   ├── useWeather.ts           # Hook del clima
+│   └── useScreenCapture.ts     # Captura de pantalla para asistente
 ├── hooks/                      # Custom hooks
 │   └── useWeather.ts           # Hook del clima
 ├── data/                       # Datos mock (deprecated)
@@ -257,6 +268,33 @@ await eventService.createEnvironmentEvent({
 const events = await eventService.getAll({ cycleId, limit: 20 });
 ```
 
+### `aiAssistantService.ts`
+
+Asistente de IA:
+
+```typescript
+import { sendMessage, getConversations, getPlantPhotos } from '@/services/aiAssistantService';
+
+// Enviar mensaje al asistente
+const response = await sendMessage({
+  message: '¿Qué opinas del plan de prevención de la 048?',
+  conversationId: 'uuid-opcional',
+  contextType: 'PLANT',
+  contextId: 'plant-uuid',
+  imageUrls: ['https://...'], // URLs de imágenes
+  imageBase64: ['base64...'], // Imágenes en base64
+});
+
+// Obtener conversaciones
+const conversations = await getConversations({
+  contextType: 'PLANT',
+  contextId: 'plant-uuid',
+});
+
+// Obtener fotos de una planta para adjuntar
+const photos = await getPlantPhotos(plantId);
+```
+
 ---
 
 ## Tipos Principales
@@ -362,6 +400,27 @@ Gestión completa del cultivo:
 - Agregar/gestionar plantas
 - Gestión de genéticas
 - Registro de eventos (riego, notas, parámetros)
+
+### Asistente de IA
+
+El asistente está disponible en toda la aplicación mediante una burbuja flotante en la esquina inferior derecha.
+
+**Características:**
+- 💬 Chat interactivo con renderizado Markdown completo
+- 📸 Adjuntar imágenes (archivos locales, captura de pantalla, fotos de plantas)
+- 🎯 Selección de contexto (General, Ciclo, Sección, Planta)
+- 💾 Historial de conversaciones persistente
+- 🔍 Búsqueda en memorias del asistente
+
+**Componentes:**
+- `AIAssistantBubble`: Burbuja flotante con indicador de nuevos mensajes
+- `AIAssistantChat`: Panel principal con historial y selector de contexto
+- `AIAssistantMessage`: Renderizado de mensajes con soporte Markdown completo
+- `AIAssistantInput`: Input con opciones para adjuntar imágenes
+
+**Servicios:**
+- `aiAssistantService`: Cliente para todas las operaciones del asistente
+- `useScreenCapture`: Hook para captura de pantalla con `html2canvas`
 
 ---
 

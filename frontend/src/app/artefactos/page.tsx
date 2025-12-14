@@ -28,7 +28,8 @@ import {
   Activity,
   Unplug,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  ArrowRightLeft
 } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -95,6 +96,14 @@ export default function ArtefactosPage() {
 
   // Estado para control manual
   const [controllingDevice, setControllingDevice] = useState<string | null>(null);
+
+  // Estado para reasignación de dispositivos
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [deviceToReassign, setDeviceToReassign] = useState<Device | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [availableSections, setAvailableSections] = useState<Section[]>([]);
+  const [loadingSections, setLoadingSections] = useState(false);
+  const [isReassigning, setIsReassigning] = useState(false);
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -310,6 +319,49 @@ export default function ArtefactosPage() {
       toast.error('Error al controlar: ' + (error as Error).message);
     } finally {
       setControllingDevice(null);
+    }
+  }
+
+  // Abrir modal de reasignación
+  async function handleOpenReassign(device: Device) {
+    setDeviceToReassign(device);
+    setSelectedSectionId(null);
+    setLoadingSections(true);
+    setShowReassignModal(true);
+    try {
+      const allSections = await sectionService.getAll();
+      // Filtrar la sección actual
+      setAvailableSections(allSections.filter(s => s.id !== device.sectionId));
+    } catch (error) {
+      console.error('Error cargando secciones:', error);
+      toast.error('Error al cargar las secciones disponibles');
+    } finally {
+      setLoadingSections(false);
+    }
+  }
+
+  // Reasignar dispositivo a otra sección
+  async function handleReassign() {
+    if (!deviceToReassign || !selectedSectionId) return;
+
+    setIsReassigning(true);
+    try {
+      await deviceService.update(deviceToReassign.id, { sectionId: selectedSectionId });
+      // Actualizar el dispositivo en la lista local
+      setDevices(devices.map(d => 
+        d.id === deviceToReassign.id 
+          ? { ...d, sectionId: selectedSectionId }
+          : d
+      ));
+      setShowReassignModal(false);
+      setDeviceToReassign(null);
+      setSelectedSectionId(null);
+      toast.success('Dispositivo reasignado correctamente');
+    } catch (error) {
+      console.error('Error reasignando dispositivo:', error);
+      toast.error('Error al reasignar el dispositivo: ' + (error as Error).message);
+    } finally {
+      setIsReassigning(false);
     }
   }
 
@@ -589,10 +641,18 @@ export default function ArtefactosPage() {
                     </div>
 
                     {/* Acciones */}
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleOpenReassign(device)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded transition-colors"
+                        title="Reasignar sección"
+                      >
+                        <ArrowRightLeft className="w-3 h-3" />
+                      </button>
                       <button
                         onClick={() => handleDesasignar(device.id)}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:text-zinc-300 hover:bg-zinc-500/10 rounded transition-colors"
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                        title="Eliminar dispositivo"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -865,6 +925,127 @@ export default function ArtefactosPage() {
           </div>
         )
       }
+
+      {/* Modal de Reasignación de Dispositivo */}
+      {showReassignModal && deviceToReassign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => {
+              setShowReassignModal(false);
+              setDeviceToReassign(null);
+              setSelectedSectionId(null);
+            }}
+          />
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md shadow-xl"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Reasignar Dispositivo</h2>
+              <button
+                onClick={() => {
+                  setShowReassignModal(false);
+                  setDeviceToReassign(null);
+                  setSelectedSectionId(null);
+                }}
+                className="p-1 hover:bg-zinc-700 rounded-lg transition-colors"
+                disabled={isReassigning}
+              >
+                <X className="w-5 h-5 text-zinc-400" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-zinc-400 mb-2">
+                Dispositivo: <span className="text-white font-medium">{deviceToReassign.name}</span>
+              </p>
+              <p className="text-xs text-zinc-500">
+                Sección actual: <span className="text-zinc-300">{sections.find(s => s.id === deviceToReassign.sectionId)?.name || 'Sin asignar'}</span>
+              </p>
+            </div>
+
+            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <p className="text-xs text-amber-400">
+                ⚠️ El historial de lecturas permanecerá asociado a la sección actual.
+              </p>
+            </div>
+
+            {loadingSections ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 text-cultivo-green-400 animate-spin" />
+              </div>
+            ) : availableSections.length === 0 ? (
+              <div className="text-center py-8 text-zinc-500">
+                No hay otras secciones disponibles
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto mb-6">
+                {availableSections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => setSelectedSectionId(section.id)}
+                    disabled={isReassigning}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                      selectedSectionId === section.id
+                        ? 'bg-cyan-500/20 border-cyan-500 ring-2 ring-cyan-500/30'
+                        : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                    } ${isReassigning ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <ArrowRightLeft className={`w-5 h-5 ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-500'}`} />
+                    <div className="flex-1 text-left">
+                      <span className={`font-medium ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-300'}`}>
+                        {section.name}
+                      </span>
+                      {section.dimensions && (
+                        <span className="text-xs text-zinc-500 ml-2">({section.dimensions})</span>
+                      )}
+                    </div>
+                    {selectedSectionId === section.id && (
+                      <Check className="w-5 h-5 text-cyan-400" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowReassignModal(false);
+                  setDeviceToReassign(null);
+                  setSelectedSectionId(null);
+                }}
+                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                disabled={isReassigning}
+              >
+                Cancelar
+              </button>
+              {selectedSectionId && (
+                <button
+                  onClick={handleReassign}
+                  disabled={isReassigning}
+                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  {isReassigning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Reasignando...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="w-4 h-4" />
+                      Reasignar
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div >
   );
 }

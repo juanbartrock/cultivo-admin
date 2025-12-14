@@ -361,15 +361,21 @@ export class AgentOrchestratorService {
 
   /**
    * Procesa un mensaje usando el loop de agente
+   * @param userMessage - Mensaje del usuario
+   * @param conversationId - ID de la conversación
+   * @param userId - ID del usuario actual (para filtrar datos)
+   * @param imageUrls - URLs de imágenes adjuntas
    */
   async processMessage(
     userMessage: string,
     conversationId: string,
+    userId: string,
     imageUrls: string[] = [],
   ): Promise<AgentResponse> {
     // ==================== LOG INICIO ====================
     this.logSection('🚀 NUEVA CONVERSACIÓN CON AGENTE', COLORS.green);
     this.logKeyValue('Conversation ID', conversationId);
+    this.logKeyValue('User ID', userId);
     this.logKeyValue('Mensaje del usuario', userMessage);
     this.logKeyValue('Imágenes adjuntas', imageUrls.length);
     
@@ -455,15 +461,15 @@ export class AgentOrchestratorService {
           // Agregar mensaje del asistente con tool calls
           messages.push(choice.message);
 
-          // Ejecutar herramientas y loguear cada una
+          // Ejecutar herramientas y loguear cada una - PASAMOS EL userId
           for (const tc of toolCalls) {
             const args = JSON.parse(tc.function.arguments || '{}');
-            const result = await this.toolExecutor.execute(tc);
+            const result = await this.toolExecutor.execute(tc, userId);
             this.logToolCall(tc.function.name, args, result.result, result.error);
           }
 
-          // Ejecutar todas y obtener mensajes
-          const results = await this.toolExecutor.executeAll(toolCalls);
+          // Ejecutar todas y obtener mensajes - PASAMOS EL userId
+          const results = await this.toolExecutor.executeAll(toolCalls, userId);
           const toolMessages = this.toolExecutor.resultsToMessages(results);
 
           // Agregar resultados

@@ -38,8 +38,10 @@ export class ToolExecutor {
 
   /**
    * Ejecuta una llamada a herramienta
+   * @param toolCall - La llamada a la herramienta
+   * @param userId - ID del usuario actual para filtrar datos
    */
-  async execute(toolCall: ToolCall): Promise<ToolResult> {
+  async execute(toolCall: ToolCall, userId: string): Promise<ToolResult> {
     const { id, function: fn } = toolCall;
     const { name, arguments: argsString } = fn;
     const execId = ++this.executionCount;
@@ -47,6 +49,7 @@ export class ToolExecutor {
 
     console.log(`\n${C.magenta}${C.bright}┌─ 🔧 TOOL EXECUTION #${execId}: ${name} ─┐${C.reset}`);
     console.log(`${C.dim}│  ID: ${id}${C.reset}`);
+    console.log(`${C.dim}│  User: ${userId}${C.reset}`);
 
     const tool = this.registry.get(name);
     if (!tool) {
@@ -61,11 +64,16 @@ export class ToolExecutor {
     }
 
     try {
-      // Parsear argumentos
+      // Parsear argumentos y agregar userId
       const args = JSON.parse(argsString || '{}');
+      // Inyectar userId en los argumentos para filtrado
+      args._userId = userId;
+      
       console.log(`${C.cyan}│  📥 PARÁMETROS:${C.reset}`);
       Object.entries(args).forEach(([key, value]) => {
-        console.log(`${C.dim}│     ${key}: ${C.reset}${C.yellow}${JSON.stringify(value)}${C.reset}`);
+        if (key !== '_userId') { // No mostrar userId interno en logs
+          console.log(`${C.dim}│     ${key}: ${C.reset}${C.yellow}${JSON.stringify(value)}${C.reset}`);
+        }
       });
 
       // Ejecutar handler
@@ -124,12 +132,14 @@ export class ToolExecutor {
 
   /**
    * Ejecuta múltiples llamadas a herramientas en paralelo
+   * @param toolCalls - Las llamadas a ejecutar
+   * @param userId - ID del usuario actual para filtrar datos
    */
-  async executeAll(toolCalls: ToolCall[]): Promise<ToolResult[]> {
-    this.logger.log(`Executing ${toolCalls.length} tool calls`);
+  async executeAll(toolCalls: ToolCall[], userId: string): Promise<ToolResult[]> {
+    this.logger.log(`Executing ${toolCalls.length} tool calls for user ${userId}`);
     
     const results = await Promise.all(
-      toolCalls.map((call) => this.execute(call)),
+      toolCalls.map((call) => this.execute(call, userId)),
     );
 
     return results;

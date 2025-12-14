@@ -3,6 +3,7 @@ import { ToolDefinition } from './types';
 
 /**
  * Crea las herramientas relacionadas con infraestructura (secciones, dispositivos, sensores)
+ * Todas filtran por userId para aislamiento de datos
  */
 export function createInfrastructureTools(prisma: PrismaService): ToolDefinition[] {
   return [
@@ -15,8 +16,12 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
         properties: {},
         required: [],
       },
-      handler: async () => {
+      handler: async (params) => {
+        const userId = params._userId;
+        
+        // Solo salas del usuario
         const rooms = await prisma.room.findMany({
+          where: { userId },
           include: {
             sections: {
               include: {
@@ -28,20 +33,43 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
           },
         });
 
+        // Solo ciclos del usuario (Cycle tiene userId directo)
         const activeCycles = await prisma.cycle.findMany({
-          where: { status: 'ACTIVE' },
+          where: { 
+            status: 'ACTIVE',
+            userId,
+          },
           include: {
             _count: { select: { plants: true } },
           },
         });
 
+        // Plantas del usuario
         const plantsByStage = await prisma.plant.groupBy({
           by: ['stage'],
+          where: {
+            section: {
+              room: { userId },
+            },
+          },
           _count: { _all: true },
         });
 
-        const totalPlants = await prisma.plant.count();
-        const totalDevices = await prisma.device.count();
+        const totalPlants = await prisma.plant.count({
+          where: {
+            section: {
+              room: { userId },
+            },
+          },
+        });
+
+        const totalDevices = await prisma.device.count({
+          where: {
+            section: {
+              room: { userId },
+            },
+          },
+        });
 
         return {
           rooms: rooms.map((r) => ({
@@ -88,11 +116,14 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
         required: ['section_name'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const sectionName = params.section_name as string;
 
+        // Solo secciones del usuario
         const section = await prisma.section.findFirst({
           where: {
             name: { contains: sectionName, mode: 'insensitive' },
+            room: { userId },
           },
           include: {
             room: true,
@@ -115,10 +146,11 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
 
         if (!section) {
           const allSections = await prisma.section.findMany({
+            where: { room: { userId } },
             select: { name: true },
           });
           return {
-            error: `No se encontró la sección "${sectionName}"`,
+            error: `No se encontró la sección "${sectionName}" en tu sistema`,
             availableSections: allSections.map((s) => s.name),
           };
         }
@@ -175,11 +207,13 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
         required: ['section_name'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const sectionName = params.section_name as string;
 
         const section = await prisma.section.findFirst({
           where: {
             name: { contains: sectionName, mode: 'insensitive' },
+            room: { userId },
           },
           include: {
             devices: {
@@ -192,7 +226,7 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
         });
 
         if (!section) {
-          return { error: `No se encontró la sección "${sectionName}"` };
+          return { error: `No se encontró la sección "${sectionName}" en tu sistema` };
         }
 
         return {
@@ -231,18 +265,23 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
         required: ['device_name'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const deviceName = params.device_name as string;
         const period = (params.period as string) || '24h';
 
+        // Solo sensores del usuario
         const device = await prisma.device.findFirst({
           where: {
             name: { contains: deviceName, mode: 'insensitive' },
             type: 'SENSOR',
+            section: {
+              room: { userId },
+            },
           },
         });
 
         if (!device) {
-          return { error: `No se encontró el sensor "${deviceName}"` };
+          return { error: `No se encontró el sensor "${deviceName}" en tu sistema` };
         }
 
         // Calcular fecha de inicio según período
@@ -313,9 +352,15 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
         properties: {},
         required: [],
       },
-      handler: async () => {
+      handler: async (params) => {
+        const userId = params._userId;
+        
+        // Solo ciclos del usuario (Cycle tiene userId directo)
         const cycles = await prisma.cycle.findMany({
-          where: { status: 'ACTIVE' },
+          where: { 
+            status: 'ACTIVE',
+            userId,
+          },
           include: {
             plants: {
               include: {
@@ -328,7 +373,7 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
         });
 
         if (cycles.length === 0) {
-          return { message: 'No hay ciclos activos' };
+          return { message: 'No hay ciclos activos en tu sistema' };
         }
 
         return {
@@ -340,7 +385,7 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
             notes: c.notes,
             plantsCount: c.plants.length,
             eventsCount: c._count.events,
-            plantsByStage: c.plants.reduce((acc, p) => {
+            plantsByStage: c.plants.reduce((acc: Record<string, number>, p) => {
               acc[p.stage] = (acc[p.stage] || 0) + 1;
               return acc;
             }, {} as Record<string, number>),

@@ -87,6 +87,9 @@ export class SensorHistoryService {
 
           // Solo registrar si hay al menos un valor válido
           if (validTemp !== undefined || validHumidity !== undefined || validCo2 !== undefined) {
+            // Calcular VPD si tenemos temperatura y humedad
+            const vpd = this.calculateVPD(validTemp, validHumidity);
+
             await this.prisma.sensorReading.create({
               data: {
                 device: { connect: { id: device.id } },
@@ -94,11 +97,12 @@ export class SensorHistoryService {
                 temperature: validTemp,
                 humidity: validHumidity,
                 co2: validCo2,
+                vpd: vpd,
               },
             });
 
             this.logger.log(
-              `✅ Recorded reading for ${device.name}: temp=${validTemp}°C, humidity=${validHumidity}%, co2=${validCo2}ppm (section: ${device.sectionId || 'none'})`,
+              `✅ Recorded reading for ${device.name}: temp=${validTemp}°C, humidity=${validHumidity}%, co2=${validCo2}ppm, vpd=${vpd}kPa (section: ${device.sectionId || 'none'})`,
             );
           } else {
             this.logger.warn(
@@ -239,7 +243,7 @@ export class SensorHistoryService {
   }
 
   /**
-   * Limpia lecturas antiguas
+   * Limpia lecturas antiguas usando DELETE (para tablas no particionadas)
    */
   async cleanup(daysOld = 30) {
     const cutoffDate = new Date();
@@ -253,6 +257,57 @@ export class SensorHistoryService {
 
     this.logger.log(`Cleaned up ${result.count} old sensor readings`);
     return result;
+  }
+
+  /**
+   * Limpia particiones antiguas (para tablas particionadas)
+   * Usa DROP PARTITION que es mucho más eficiente que DELETE
+   */
+  async cleanupOldPartitions(monthsOld = 3) {
+    const cutoffDate = new Date();
+    cutoffDate.setMonth(cutoffDate.getMonth() - monthsOld);
+    
+    // Formatear nombre de partición: sensor_readings_YYYY_MM
+    const year = cutoffDate.getFullYear();
+    const month = String(cutoffDate.getMonth() + 1).padStart(2, '0');
+    const partitionName = `sensor_readings_${year}_${month}`;
+
+    try {
+      // Verificar si la partición existe antes de intentar borrarla
+      const exists = await this.prisma.$queryRaw<{ exists: boolean }[]>`
+        SELECT EXISTS (
+          SELECT 1 FROM pg_class WHERE relname = ${partitionName}
+        ) as exists
+      `;
+
+      if (exists[0]?.exists) {
+        await this.prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS ${partitionName}`);
+        this.logger.log(`Dropped partition: ${partitionName}`);
+        return { dropped: partitionName };
+      } else {
+        this.logger.debug(`Partition ${partitionName} does not exist, skipping`);
+        return { skipped: partitionName };
+      }
+    } catch (error) {
+      this.logger.error(`Error dropping partition ${partitionName}: ${error.message}`);
+      return { error: error.message };
+    }
+  }
+
+  /**
+   * Calcula el VPD (Vapor Pressure Deficit)
+   */
+  calculateVPD(temp?: number, humidity?: number): number | undefined {
+    if (temp === undefined || humidity === undefined) return undefined;
+
+    // Presión de vapor de saturación (SVP) usando fórmula de Tetens
+    const svp = 0.6108 * Math.exp((17.27 * temp) / (temp + 237.3));
+    
+    // Presión de vapor actual (AVP)
+    const avp = svp * (humidity / 100);
+    
+    // VPD = SVP - AVP, redondeado a 2 decimales
+    return Math.round((svp - avp) * 100) / 100;
   }
 
   /**

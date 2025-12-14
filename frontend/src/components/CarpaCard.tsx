@@ -16,7 +16,8 @@ import {
   Fan,
   Power,
   PowerOff,
-  Loader2
+  Loader2,
+  PauseCircle
 } from 'lucide-react';
 
 // Iconos según el nombre de la sección
@@ -137,33 +138,46 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
   const hasDeviceStatus = luz || humidificador || extractor || ventilador;
   const hasExtraInfo = hasEnvironmentData || hasDeviceStatus;
 
+  // Verificar si la sección está habilitada (default: true)
+  const isEnabled = section.enabled !== false;
+
   return (
-    <div className="flex flex-col">
+    <div className={`flex flex-col ${!isEnabled ? 'opacity-60' : ''}`}>
       <Link href={`/sala/carpa/${section.id}`}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: delay * 0.1 }}
-          whileHover={{ scale: 1.02, y: -4 }}
-          className={`group bg-zinc-800/50 backdrop-blur-sm border overflow-hidden hover:border-cultivo-green-600/50 transition-all cursor-pointer ${
+          whileHover={{ scale: isEnabled ? 1.02 : 1, y: isEnabled ? -4 : 0 }}
+          className={`group bg-zinc-800/50 backdrop-blur-sm border overflow-hidden transition-all cursor-pointer ${
             hasExtraInfo ? 'rounded-t-2xl' : 'rounded-2xl'
           } ${
-            isLuzEncendida 
-              ? 'border-yellow-400/60 shadow-[0_0_20px_rgba(250,204,21,0.3)] ring-1 ring-yellow-400/30' 
-              : 'border-zinc-700/50'
+            !isEnabled
+              ? 'border-zinc-600/50 grayscale'
+              : isLuzEncendida 
+                ? 'border-yellow-400/60 shadow-[0_0_20px_rgba(250,204,21,0.3)] ring-1 ring-yellow-400/30 hover:border-cultivo-green-600/50' 
+                : 'border-zinc-700/50 hover:border-cultivo-green-600/50'
           }`}
         >
           {/* Icono de la sección */}
           <div className="relative h-48 bg-zinc-900/50 overflow-hidden flex items-center justify-center">
-            <div className="relative z-10 p-6 rounded-full bg-zinc-800/80 group-hover:scale-110 transition-transform duration-300">
-              <IconComponent className={`w-20 h-20 ${iconConfig.color}`} />
+            <div className={`relative z-10 p-6 rounded-full bg-zinc-800/80 transition-transform duration-300 ${isEnabled ? 'group-hover:scale-110' : ''}`}>
+              <IconComponent className={`w-20 h-20 ${isEnabled ? iconConfig.color : 'text-zinc-500'}`} />
             </div>
             {/* Overlay con gradiente */}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent" />
             
+            {/* Badge de Inactiva */}
+            {!isEnabled && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 bg-zinc-700/90 px-2 py-1 rounded-full">
+                <PauseCircle className="w-3 h-3 text-zinc-400" />
+                <span className="text-xs font-medium text-zinc-400">Inactiva</span>
+              </div>
+            )}
+            
             {/* Badge de plantas */}
             {plantsCount > 0 && (
-              <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-cultivo-green-600/90 px-2 py-1 rounded-full">
+              <div className={`absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full ${isEnabled ? 'bg-cultivo-green-600/90' : 'bg-zinc-600/90'}`}>
                 <Leaf className="w-3 h-3 text-white" />
                 <span className="text-xs font-medium text-white">{plantsCount} planta{plantsCount !== 1 ? 's' : ''}</span>
               </div>

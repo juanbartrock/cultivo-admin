@@ -25,7 +25,10 @@ async function request<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  // Buscar token con ambos nombres por compatibilidad
+  const token = typeof window !== 'undefined' 
+    ? (localStorage.getItem('access_token') || localStorage.getItem('token')) 
+    : null;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -47,6 +50,7 @@ async function request<T>(
   if (!response.ok) {
     if (response.status === 401) {
       if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
         localStorage.removeItem('token');
         // Evitar bucle de redirección si ya estamos en login
         if (!window.location.pathname.includes('/login')) {

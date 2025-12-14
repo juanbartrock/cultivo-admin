@@ -124,6 +124,7 @@ function SeguimientosContent() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [showStrainModal, setShowStrainModal] = useState(false);
   const [editingPlant, setEditingPlant] = useState<Plant | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<{ url: string; caption?: string } | null>(null);
 
   // Filtros
   const [statusFilter, setStatusFilter] = useState<CycleStatus | 'all'>('all');
@@ -633,9 +634,12 @@ function SeguimientosContent() {
                                             src={event.data.url}
                                             alt={typeof event.data.caption === 'string' ? event.data.caption : 'Foto del cultivo'}
                                             className="w-full max-w-xs h-32 object-cover rounded-lg border border-zinc-700 cursor-pointer hover:border-purple-500/50 transition-colors"
-                                            onClick={() => window.open(event.data.url as string, '_blank')}
+                                            onClick={() => setEnlargedImage({ 
+                                              url: event.data.url as string, 
+                                              caption: typeof event.data.caption === 'string' ? event.data.caption : undefined 
+                                            })}
                                           />
-                                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center pointer-events-none">
                                             <span className="text-white text-xs">Click para ampliar</span>
                                           </div>
                                         </div>
@@ -815,6 +819,38 @@ function SeguimientosContent() {
             setEditingPlant(null);
           }}
         />
+      )}
+
+      {/* Modal: Imagen Ampliada */}
+      {enlargedImage && (
+        <div
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative max-w-4xl max-h-[90vh] w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            <img
+              src={enlargedImage.url}
+              alt={enlargedImage.caption || 'Foto ampliada'}
+              className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
+            />
+            {enlargedImage.caption && (
+              <p className="text-center text-white/80 mt-4 text-lg italic">
+                &quot;{enlargedImage.caption}&quot;
+              </p>
+            )}
+          </motion.div>
+        </div>
       )}
     </div>
   );
@@ -1914,6 +1950,7 @@ function PlantEditModal({
     sex: plant.sex,
     healthStatus: plant.healthStatus || 'HEALTHY',
     startDate: plant.startDate ? new Date(plant.startDate).toISOString().split('T')[0] : '',
+    potSizeFinal: plant.potSizeFinal || '',
     notes: plant.notes || '',
   });
   const [isUpdating, setIsUpdating] = useState(false);
@@ -1932,6 +1969,7 @@ function PlantEditModal({
         sex: form.sex,
         healthStatus: form.healthStatus as any,
         startDate: form.startDate || undefined,
+        potSizeFinal: form.potSizeFinal || undefined,
         notes: form.notes || undefined,
       });
       onUpdated(updatedPlant);
@@ -2033,6 +2071,18 @@ function PlantEditModal({
               className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Tamaño de Maceta Final</label>
+          <input
+            type="text"
+            value={form.potSizeFinal}
+            onChange={(e) => setForm({ ...form, potSizeFinal: e.target.value })}
+            placeholder="Ej: 11L, 3gal"
+            className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
+          />
+          <p className="text-xs text-zinc-500 mt-1">Tamaño de la maceta final donde está la planta</p>
         </div>
 
         <div>

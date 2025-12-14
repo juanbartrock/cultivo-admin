@@ -3,6 +3,7 @@ import { ToolDefinition } from './types';
 
 /**
  * Crea las herramientas relacionadas con planes de prevención y alimentación
+ * Todas filtran por userId para aislamiento de datos
  */
 export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
   return [
@@ -21,11 +22,14 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
         required: ['plan_name'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const planName = params.plan_name as string;
 
+        // Buscar plan del usuario
         const plan = await prisma.preventionPlan.findFirst({
           where: {
             name: { contains: planName, mode: 'insensitive' },
+            userId, // FILTRO POR USUARIO
           },
           include: {
             applications: {
@@ -45,12 +49,13 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
         });
 
         if (!plan) {
-          // Buscar planes similares
+          // Buscar planes del usuario disponibles
           const allPlans = await prisma.preventionPlan.findMany({
+            where: { userId },
             select: { name: true },
           });
           return {
-            error: `No se encontró el plan "${planName}"`,
+            error: `No se encontró el plan "${planName}" en tu sistema`,
             availablePlans: allPlans.map((p) => p.name),
           };
         }
@@ -107,11 +112,13 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
         required: ['plan_name'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const planName = params.plan_name as string;
 
         const plan = await prisma.feedingPlan.findFirst({
           where: {
             name: { contains: planName, mode: 'insensitive' },
+            userId, // FILTRO POR USUARIO
           },
           include: {
             weeks: {
@@ -132,10 +139,11 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
 
         if (!plan) {
           const allPlans = await prisma.feedingPlan.findMany({
+            where: { userId },
             select: { name: true },
           });
           return {
-            error: `No se encontró el plan "${planName}"`,
+            error: `No se encontró el plan "${planName}" en tu sistema`,
             availablePlans: allPlans.map((p) => p.name),
           };
         }
@@ -198,12 +206,16 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
         required: [],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const type = (params.type as string) || 'all';
         const result: any = {};
 
         if (type === 'prevention' || type === 'all') {
           const preventionPlans = await prisma.preventionPlan.findMany({
-            where: params.stage ? { stage: params.stage as any } : undefined,
+            where: {
+              userId, // FILTRO POR USUARIO
+              ...(params.stage ? { stage: params.stage as any } : {}),
+            },
             include: {
               _count: { select: { plants: true, applications: true } },
             },
@@ -221,7 +233,10 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
 
         if (type === 'feeding' || type === 'all') {
           const feedingPlans = await prisma.feedingPlan.findMany({
-            where: params.stage ? { stage: params.stage as any } : undefined,
+            where: {
+              userId, // FILTRO POR USUARIO
+              ...(params.stage ? { stage: params.stage as any } : {}),
+            },
             include: {
               _count: { select: { plants: true, weeks: true } },
             },
@@ -255,11 +270,15 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
         required: ['plan_name'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const planName = params.plan_name as string;
 
-        // Buscar en planes de prevención
+        // Buscar en planes de prevención del usuario
         const preventionPlan = await prisma.preventionPlan.findFirst({
-          where: { name: { contains: planName, mode: 'insensitive' } },
+          where: { 
+            name: { contains: planName, mode: 'insensitive' },
+            userId, // FILTRO POR USUARIO
+          },
           include: {
             plants: {
               include: {
@@ -292,9 +311,12 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
           };
         }
 
-        // Buscar en planes de alimentación
+        // Buscar en planes de alimentación del usuario
         const feedingPlan = await prisma.feedingPlan.findFirst({
-          where: { name: { contains: planName, mode: 'insensitive' } },
+          where: { 
+            name: { contains: planName, mode: 'insensitive' },
+            userId, // FILTRO POR USUARIO
+          },
           include: {
             plants: {
               include: {
@@ -327,7 +349,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
           };
         }
 
-        return { error: `No se encontró ningún plan con nombre "${planName}"` };
+        return { error: `No se encontró ningún plan con nombre "${planName}" en tu sistema` };
       },
     },
   ];

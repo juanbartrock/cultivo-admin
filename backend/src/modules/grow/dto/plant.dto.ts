@@ -10,8 +10,38 @@ import {
   IsInt,
   Min,
   Max,
+  IsArray,
+  ValidateNested,
+  IsNumber,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PlantStage, PlantSex, PlantHealthStatus } from '@prisma/client';
+
+export class PlantZoneDto {
+  @ApiProperty({
+    description: 'Zona dentro de la sección (1-6, grilla 2x3)',
+    example: 1,
+    minimum: 1,
+    maximum: 6,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(6)
+  zone: number;
+
+  @ApiPropertyOptional({
+    description: 'Porcentaje de ocupación de la zona (0-100)',
+    example: 100,
+    minimum: 0,
+    maximum: 100,
+    default: 100,
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  coverage?: number;
+}
 
 export class CreatePlantDto {
   @ApiProperty({
@@ -45,16 +75,15 @@ export class CreatePlantDto {
   sectionId: string;
 
   @ApiPropertyOptional({
-    description: 'Zona dentro de la sección (1-6, grilla 2x3)',
-    example: 1,
-    minimum: 1,
-    maximum: 6,
+    description: 'Zonas asignadas a la planta dentro de la sección',
+    type: [PlantZoneDto],
+    example: [{ zone: 1, coverage: 100 }, { zone: 2, coverage: 50 }],
   })
-  @IsInt()
-  @Min(1)
-  @Max(6)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PlantZoneDto)
   @IsOptional()
-  zone?: number;
+  zones?: PlantZoneDto[];
 
   @ApiPropertyOptional({
     description: 'Etapa actual de la planta',
@@ -127,16 +156,15 @@ export class MovePlantDto {
   sectionId?: string;
 
   @ApiPropertyOptional({
-    description: 'Zona dentro de la sección (1-6, grilla 2x3)',
-    example: 1,
-    minimum: 1,
-    maximum: 6,
+    description: 'Zonas asignadas a la planta dentro de la sección',
+    type: [PlantZoneDto],
+    example: [{ zone: 1, coverage: 100 }, { zone: 2, coverage: 50 }],
   })
-  @IsInt()
-  @Min(1)
-  @Max(6)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PlantZoneDto)
   @IsOptional()
-  zone?: number;
+  zones?: PlantZoneDto[];
 
   @ApiPropertyOptional({
     description: 'Nueva etapa de la planta',

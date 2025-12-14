@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,16 +7,620 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// ENUMS
-// ============================================
+/// Usuario del sistema - soporta Supabase Auth o login local con password
+model User {
+  id               String              @id @default(uuid())
+  supabaseId       String              @unique @map("supabase_id")
+  email            String              @unique
+  name             String
+  passwordHash     String?             @map("password_hash") /// Para login local sin Supabase
+  role             UserRole            @default(USER)
+  subscriptionTier SubscriptionTier    @default(BASIC) @map("subscription_tier")
+  isActive         Boolean             @default(true) @map("is_active")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  conversations    AIConversation[]
+  memories         AIMemory[]
+  cycles           Cycle[]
+  devices          Device[]
+  feedingPlans     FeedingPlan[]
+  notifications    Notification[]
+  preventionPlans  PreventionPlan[]
+  rooms            Room[]
+  strains          Strain[]
+  iotCredentials   UserIoTCredential[]
+
+  @@map("users")
+}
+
+/// Credenciales IoT por usuario - para servicios Sonoff, Tuya, Tapo, etc.
+model UserIoTCredential {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  connector   Connector
+  isEnabled   Boolean   @default(true) @map("is_enabled")
+  credentials Json
+  lastChecked DateTime? @map("last_checked")
+  isValid     Boolean?  @map("is_valid")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, connector])
+  @@map("user_iot_credentials")
+}
+
+/// Salas - Espacios físicos principales (ej: "Habitación Cultivo", "Garage")
+model Room {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  userId      String?   @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sections    Section[]
+
+  @@index([userId])
+  @@map("rooms")
+}
+
+/// Secciones/Carpas - Subdivisiones dentro de una sala (ej: "Carpa 80x80", "Zona Esquejes")
+model Section {
+  id           String         @id @default(uuid())
+  name         String
+  dimensions   String?
+  image        String?
+  description  String?
+  roomId       String         @map("room_id")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  enabled      Boolean        @default(true)
+  automations  Automation[]
+  devices      Device[]
+  events       Event[]
+  plants       Plant[]
+  ppfdReadings PPFDReading[]
+  layout       SectionLayout?
+  room         Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("sections")
+}
+
+/// Configuración de layout de sección - Define qué secciones mostrar y en qué orden
+model SectionLayout {
+  id        String   @id @default(uuid())
+  sectionId String   @unique @map("section_id")
+  config    Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@map("section_layouts")
+}
+
+/// Dispositivos - Representación lógica de los dispositivos físicos
+model Device {
+  id                   String                @id @default(uuid())
+  name                 String
+  connector            Connector
+  externalId           String                @map("external_id")
+  type                 DeviceType
+  sectionId            String?               @map("section_id")
+  metadata             Json?
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  controlledByDeviceId String?               @map("controlled_by_device_id")
+  recordHistory        Boolean               @default(false) @map("record_history")
+  userId               String?               @map("user_id")
+  automationActions    AutomationAction[]
+  automationConditions AutomationCondition[]
+  controlledBy         Device?               @relation("DeviceControl", fields: [controlledByDeviceId], references: [id])
+  controlledDevices    Device[]              @relation("DeviceControl")
+  section              Section?              @relation(fields: [sectionId], references: [id])
+  user                 User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sensorReadings       SensorReading[]
+
+  @@unique([connector, externalId])
+  @@index([userId])
+  @@map("devices")
+}
+
+/// Genéticas - Banco de datos de genéticas
+model Strain {
+  id                    String     @id @default(uuid())
+  name                  String
+  breeder               String?
+  type                  StrainType
+  floweringDaysExpected Int?       @map("flowering_days_expected")
+  description           String?
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
+  userId                String?    @map("user_id")
+  plants                Plant[]
+  user                  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("strains")
+}
+
+/// Ciclos/Seguimientos - Agrupador temporal para comparar tandas de cultivo
+model Cycle {
+  id        String      @id @default(uuid())
+  name      String
+  startDate DateTime    @map("start_date")
+  endDate   DateTime?   @map("end_date")
+  status    CycleStatus @default(ACTIVE)
+  notes     String?
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  userId    String?     @map("user_id")
+  user      User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events    Event[]
+  plants    Plant[]
+
+  @@index([userId])
+  @@map("cycles")
+}
+
+/// Plantas - Instancia física de una planta
+model Plant {
+  id              String                @id @default(uuid())
+  tagCode         String                @unique @map("tag_code")
+  strainId        String                @map("strain_id")
+  cycleId         String                @map("cycle_id")
+  sectionId       String                @map("section_id")
+  stage           PlantStage            @default(GERMINACION)
+  sex             PlantSex              @default(UNKNOWN)
+  photo           String?
+  notes           String?
+  startDate       DateTime?             @map("start_date")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+  stageStartDate  DateTime?             @map("stage_start_date")
+  healthStatus    PlantHealthStatus     @default(HEALTHY) @map("health_status")
+  potSizeFinal    String?               @map("pot_size_final")
+  events          Event[]
+  harvests        Harvest[]
+  feedingPlans    PlantFeedingPlan[]
+  preventionPlans PlantPreventionPlan[]
+  zones           PlantZone[]
+  cycle           Cycle                 @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  section         Section               @relation(fields: [sectionId], references: [id])
+  strain          Strain                @relation(fields: [strainId], references: [id])
+
+  @@map("plants")
+}
+
+/// Relación planta-zona - Asigna zonas a una planta (permite múltiples zonas)
+model PlantZone {
+  id        String   @id @default(uuid())
+  plantId   String   @map("plant_id")
+  zone      Int
+  coverage  Float?   @default(100.0)
+  createdAt DateTime @default(now()) @map("created_at")
+  plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+
+  @@unique([plantId, zone])
+  @@map("plant_zones")
+}
+
+/// Eventos - Registro inmutable de acciones en la bitácora
+model Event {
+  id        String    @id @default(uuid())
+  type      EventType
+  plantId   String?   @map("plant_id")
+  cycleId   String?   @map("cycle_id")
+  sectionId String?   @map("section_id")
+  data      Json
+  createdAt DateTime  @default(now()) @map("created_at")
+  cycle     Cycle?    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  plant     Plant?    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  section   Section?  @relation(fields: [sectionId], references: [id])
+
+  @@index([type])
+  @@index([plantId])
+  @@index([cycleId])
+  @@index([sectionId])
+  @@index([createdAt])
+  @@map("events")
+}
+
+/// Plan de alimentación - Template con semanas y productos
+model FeedingPlan {
+  id          String             @id @default(uuid())
+  name        String
+  description String?
+  stage       PlantStage
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+  userId      String?            @map("user_id")
+  weeks       FeedingPlanWeek[]
+  user        User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plants      PlantFeedingPlan[]
+
+  @@index([userId])
+  @@map("feeding_plans")
+}
+
+/// Semana del plan de alimentación - Detalle de productos por semana
+model FeedingPlanWeek {
+  id            String      @id @default(uuid())
+  feedingPlanId String      @map("feeding_plan_id")
+  weekNumber    Int         @map("week_number")
+  products      Json
+  ph            Float?
+  ec            Float?
+  notes         String?
+  feedingPlan   FeedingPlan @relation(fields: [feedingPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([feedingPlanId, weekNumber])
+  @@map("feeding_plan_weeks")
+}
+
+/// Relación planta-plan - Asigna un plan a una planta con fecha de inicio
+model PlantFeedingPlan {
+  id             String      @id @default(uuid())
+  plantId        String      @map("plant_id")
+  feedingPlanId  String      @map("feeding_plan_id")
+  stageStartDate DateTime    @map("stage_start_date")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  feedingPlan    FeedingPlan @relation(fields: [feedingPlanId], references: [id], onDelete: Cascade)
+  plant          Plant       @relation(fields: [plantId], references: [id], onDelete: Cascade)
+
+  @@unique([plantId, feedingPlanId])
+  @@index([plantId])
+  @@index([feedingPlanId])
+  @@map("plant_feeding_plans")
+}
+
+/// Plan de prevención - Template con días y productos
+model PreventionPlan {
+  id           String                      @id @default(uuid())
+  name         String
+  description  String?
+  stage        PlantStage
+  totalDays    Int                         @map("total_days")
+  createdAt    DateTime                    @default(now()) @map("created_at")
+  updatedAt    DateTime                    @updatedAt @map("updated_at")
+  userId       String?                     @map("user_id")
+  plants       PlantPreventionPlan[]
+  applications PreventionPlanApplication[]
+  user         User?                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("prevention_plans")
+}
+
+/// Aplicación del plan de prevención - Detalle de productos por día
+model PreventionPlanApplication {
+  id               String            @id @default(uuid())
+  preventionPlanId String            @map("prevention_plan_id")
+  dayNumber        Int               @map("day_number")
+  products         Json
+  applicationType  ApplicationType?  @map("application_type")
+  target           PreventionTarget?
+  notes            String?
+  preventionPlan   PreventionPlan    @relation(fields: [preventionPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([preventionPlanId, dayNumber])
+  @@map("prevention_plan_applications")
+}
+
+/// Relación planta-plan de prevención - Asigna un plan a una planta
+model PlantPreventionPlan {
+  id               String         @id @default(uuid())
+  plantId          String         @map("plant_id")
+  preventionPlanId String         @map("prevention_plan_id")
+  startDate        DateTime       @map("start_date")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  plant            Plant          @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  preventionPlan   PreventionPlan @relation(fields: [preventionPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([plantId, preventionPlanId])
+  @@index([plantId])
+  @@index([preventionPlanId])
+  @@map("plant_prevention_plans")
+}
+
+/// Automatización - Regla de automatización para dispositivos
+model Automation {
+  id              String                @id @default(uuid())
+  name            String
+  description     String?
+  sectionId       String                @map("section_id")
+  status          AutomationStatus      @default(ACTIVE)
+  interval        Int                   @default(60)
+  executionTime   Int?                  @map("execution_time")
+  daysOfWeek      Int[]                 @map("days_of_week")
+  startTime       String?               @map("start_time")
+  endTime         String?               @map("end_time")
+  priority        Int                   @default(0)
+  allowOverlap    Boolean               @default(true) @map("allow_overlap")
+  notifications   Boolean               @default(true)
+  dependsOnId     String?               @map("depends_on_id")
+  lastEvaluatedAt DateTime?             @map("last_evaluated_at")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+  actionDuration  Int?                  @map("action_duration")
+  activeEndTime   String?               @map("active_end_time")
+  activeStartTime String?               @map("active_start_time")
+  intervalMinutes Int?                  @map("interval_minutes")
+  scheduleType    ScheduleType?         @map("schedule_type")
+  specificTimes   String[]              @default([]) @map("specific_times")
+  triggerType     TriggerType           @default(CONDITION) @map("trigger_type")
+  plantIds        String[]              @default([]) @map("plant_ids")
+  actions         AutomationAction[]
+  conditions      AutomationCondition[]
+  executions      AutomationExecution[]
+  dependsOn       Automation?           @relation("AutomationDependency", fields: [dependsOnId], references: [id])
+  dependents      Automation[]          @relation("AutomationDependency")
+  section         Section               @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+  @@index([status])
+  @@map("automations")
+}
+
+/// Condición de automatización - Condiciones que deben cumplirse para activar
+model AutomationCondition {
+  id            String            @id @default(uuid())
+  automationId  String            @map("automation_id")
+  deviceId      String            @map("device_id")
+  property      String
+  operator      ConditionOperator
+  value         Float
+  valueMax      Float?            @map("value_max")
+  order         Int               @default(0)
+  logicOperator String            @default("AND") @map("logic_operator")
+  timeValue     String?           @map("time_value")
+  timeValueMax  String?           @map("time_value_max")
+  automation    Automation        @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  device        Device            @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([automationId])
+  @@map("automation_conditions")
+}
+
+/// Acción de automatización - Acciones a ejecutar cuando se cumplen las condiciones
+model AutomationAction {
+  id           String     @id @default(uuid())
+  automationId String     @map("automation_id")
+  deviceId     String     @map("device_id")
+  actionType   ActionType @map("action_type")
+  duration     Int?
+  order        Int        @default(0)
+  delayMinutes Int?       @map("delay_minutes")
+  value        Float?
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  device       Device     @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([automationId])
+  @@map("automation_actions")
+}
+
+/// Ejecución de automatización - Historial de ejecuciones
+model AutomationExecution {
+  id                  String               @id @default(uuid())
+  automationId        String               @map("automation_id")
+  status              ExecutionStatus      @default(PENDING)
+  triggeredConditions Json?                @map("triggered_conditions")
+  executedActions     Json?                @map("executed_actions")
+  errorMessage        String?              @map("error_message")
+  startedAt           DateTime             @default(now()) @map("started_at")
+  endedAt             DateTime?            @map("ended_at")
+  automation          Automation           @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  effectivenessChecks EffectivenessCheck[]
+
+  @@index([automationId])
+  @@index([startedAt])
+  @@map("automation_executions")
+}
+
+/// Verificación de efectividad - Chequeos cada 15 minutos post-ejecución
+model EffectivenessCheck {
+  id           String              @id @default(uuid())
+  executionId  String              @map("execution_id")
+  conditionMet Boolean             @map("condition_met")
+  valueAtCheck Float?              @map("value_at_check")
+  targetValue  Float?              @map("target_value")
+  notes        String?
+  checkedAt    DateTime            @default(now()) @map("checked_at")
+  execution    AutomationExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@index([executionId])
+  @@map("effectiveness_checks")
+}
+
+/// Job programado - Acciones diferidas persistentes (reemplaza setTimeout)
+model ScheduledJob {
+  id             String    @id @default(uuid())
+  type           JobType
+  deviceId       String    @map("device_id")
+  automationId   String?   @map("automation_id")
+  executionId    String?   @map("execution_id")
+  runAt          DateTime  @map("run_at")
+  status         JobStatus @default(PENDING)
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(3) @map("max_attempts")
+  lastError      String?   @map("last_error")
+  lockedAt       DateTime? @map("locked_at")
+  lockedBy       String?   @map("locked_by")
+  payload        Json?
+  idempotencyKey String?   @unique @map("idempotency_key")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  startedAt      DateTime? @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+
+  @@index([status, runAt])
+  @@index([deviceId])
+  @@index([automationId])
+  @@map("scheduled_jobs")
+}
+
+/// Lectura de sensor - Registro histórico de temperatura/humedad
+model SensorReading {
+  id          String   @id @default(uuid())
+  deviceId    String   @map("device_id")
+  temperature Float?
+  humidity    Float?
+  co2         Float?
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+  sectionId   String?  @map("section_id")
+  vpd         Float?
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, recordedAt])
+  @@index([sectionId, recordedAt])
+  @@index([recordedAt])
+  @@map("sensor_readings")
+}
+
+/// Lectura de PPFD - Registro de intensidad lumínica por zona
+model PPFDReading {
+  id          String   @id @default(uuid())
+  sectionId   String   @map("section_id")
+  zone        Int
+  ppfdValue   Float    @map("ppfd_value")
+  lightHeight Float    @map("light_height")
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+  section     Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId, zone])
+  @@index([recordedAt])
+  @@map("ppfd_readings")
+}
+
+/// Notificación - Sistema de alertas y notificaciones in-app
+model Notification {
+  id        String               @id @default(uuid())
+  type      NotificationType
+  priority  NotificationPriority @default(MEDIUM)
+  title     String
+  message   String
+  read      Boolean              @default(false)
+  actionUrl String?              @map("action_url")
+  metadata  Json?
+  createdAt DateTime             @default(now()) @map("created_at")
+  userId    String?              @map("user_id")
+  user      User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([type])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+/// Cosecha - Registro de cosecha de una planta
+model Harvest {
+  id          String           @id @default(uuid())
+  plantId     String           @map("plant_id")
+  harvestDate DateTime         @map("harvest_date")
+  wetWeight   Float?           @map("wet_weight")
+  dryWeight   Float?           @map("dry_weight")
+  trimWeight  Float?           @map("trim_weight")
+  notes       String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  products    HarvestProduct[]
+  plant       Plant            @relation(fields: [plantId], references: [id], onDelete: Cascade)
+
+  @@index([plantId])
+  @@map("harvests")
+}
+
+/// Producto de cosecha - Flor, extracciones, etc.
+model HarvestProduct {
+  id              String             @id @default(uuid())
+  harvestId       String             @map("harvest_id")
+  type            HarvestProductType
+  initialWeight   Float              @map("initial_weight")
+  currentWeight   Float              @map("current_weight")
+  packageType     String?            @map("package_type")
+  packageNumber   String?            @map("package_number")
+  storageLocation StorageLocation    @default(AMBIENTE) @map("storage_location")
+  notes           String?
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  harvest         Harvest            @relation(fields: [harvestId], references: [id], onDelete: Cascade)
+
+  @@index([harvestId])
+  @@map("harvest_products")
+}
+
+/// Conversación con el asistente de IA
+model AIConversation {
+  id          String        @id @default(uuid())
+  title       String?
+  contextType AIContextType @default(GENERAL) @map("context_type")
+  contextId   String?       @map("context_id")
+  isActive    Boolean       @default(true) @map("is_active")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  userId      String?       @map("user_id")
+  user        User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    AIMessage[]
+
+  @@index([userId])
+  @@index([contextType, contextId])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("ai_conversations")
+}
+
+/// Mensaje individual en una conversación
+model AIMessage {
+  id             String         @id @default(uuid())
+  conversationId String         @map("conversation_id")
+  role           AIMessageRole
+  content        String
+  imageUrls      String[]       @default([]) @map("image_urls")
+  metadata       Json?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("ai_messages")
+}
+
+/// Memoria del asistente - Conocimiento persistente por contexto
+model AIMemory {
+  id         String       @id @default(uuid())
+  type       AIMemoryType
+  contextId  String?      @map("context_id")
+  summary    String
+  keyFacts   Json?        @map("key_facts")
+  importance Int          @default(3)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  userId     String?      @map("user_id")
+  user       User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type, contextId])
+  @@index([importance])
+  @@map("ai_memories")
+}
+
+enum SubscriptionTier {
+  BASIC
+  PRO
+  PREMIUM
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
 
 enum Connector {
   SONOFF
   TUYA
   TAPO
   ESP32
-  VIRTUAL // Dispositivos controlados por otros (no tienen conexión directa)
+  VIRTUAL
 }
 
 enum DeviceType {
@@ -51,10 +652,10 @@ enum CycleStatus {
 enum PlantStage {
   GERMINACION
   VEGETATIVO
-  PRE_FLORA
   FLORACION
   SECADO
   CURADO
+  PRE_FLORA
 }
 
 enum PlantSex {
@@ -75,15 +676,11 @@ enum EventType {
   PODA
   CAMBIO_FOTOPERIODO
   TRANSPLANTE
-  CAMBIO_MACETA
   NOTA
   FOTO
   PARAMETRO_AMBIENTAL
+  CAMBIO_MACETA
 }
-
-// ============================================
-// ENUMS - AUTOMATIZACIONES
-// ============================================
 
 enum AutomationStatus {
   ACTIVE
@@ -108,18 +705,16 @@ enum ActionType {
   TRIGGER_IRRIGATION
 }
 
-// Tipo de trigger de la automatización
 enum TriggerType {
-  SCHEDULED // Solo basado en horario (sin condiciones de sensores)
-  CONDITION // Solo basado en condiciones de sensores
-  HYBRID // Combinación: horario + condiciones
+  SCHEDULED
+  CONDITION
+  HYBRID
 }
 
-// Tipo de programación horaria
 enum ScheduleType {
-  TIME_RANGE // ON desde hora X hasta hora Y
-  INTERVAL // Cada X horas/minutos
-  SPECIFIC_TIMES // A horas específicas del día
+  TIME_RANGE
+  INTERVAL
+  SPECIFIC_TIMES
 }
 
 enum ExecutionStatus {
@@ -130,9 +725,21 @@ enum ExecutionStatus {
   CANCELLED
 }
 
-// ============================================
-// ENUMS - NOTIFICACIONES
-// ============================================
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  DEAD
+  CANCELLED
+}
+
+enum JobType {
+  DEVICE_ON
+  DEVICE_OFF
+  DEVICE_TOGGLE
+  CAPTURE_PHOTO
+}
 
 enum NotificationType {
   AUTOMATION
@@ -149,10 +756,6 @@ enum NotificationPriority {
   HIGH
   CRITICAL
 }
-
-// ============================================
-// ENUMS - COSECHA
-// ============================================
 
 enum HarvestProductType {
   FLOR
@@ -171,231 +774,6 @@ enum StorageLocation {
   FREEZER
 }
 
-// ============================================
-// INFRAESTRUCTURA Y UBICACIONES
-// ============================================
-
-/// Salas - Espacios físicos principales (ej: "Habitación Cultivo", "Garage")
-model Room {
-  id          String    @id @default(uuid())
-  name        String
-  description String?
-  sections    Section[]
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  @@map("rooms")
-}
-
-/// Secciones/Carpas - Subdivisiones dentro de una sala (ej: "Carpa 80x80", "Zona Esquejes")
-model Section {
-  id           String         @id @default(uuid())
-  name         String
-  dimensions   String? // Ej: "80x80x180"
-  image        String? // URL de imagen
-  description  String?
-  enabled      Boolean        @default(true) // Si la sección está activa/en uso
-  roomId       String         @map("room_id")
-  room         Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  devices      Device[]
-  plants       Plant[]
-  events       Event[]
-  automations  Automation[]
-  ppfdReadings PPFDReading[]
-  layout       SectionLayout?
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
-
-  @@map("sections")
-}
-
-/// Configuración de layout de sección - Define qué secciones mostrar y en qué orden
-model SectionLayout {
-  id        String   @id @default(uuid())
-  sectionId String   @unique @map("section_id")
-  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  config    Json // { sections: [{ key, enabled, order }] }
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("section_layouts")
-}
-
-// ============================================
-// HARDWARE (IoT)
-// ============================================
-
-/// Dispositivos - Representación lógica de los dispositivos físicos
-model Device {
-  id            String     @id @default(uuid())
-  name          String
-  connector     Connector // Conector: SONOFF, TUYA, TAPO, ESP32, VIRTUAL
-  externalId    String     @map("external_id") // ID del dispositivo en el servicio externo
-  type          DeviceType // Tipo: sensor, luz, extractor, etc.
-  sectionId     String?    @map("section_id")
-  section       Section?   @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-  metadata      Json? // IP, modelo, configuración específica
-  recordHistory Boolean    @default(false) @map("record_history") // Si registra historial de sensores
-
-  // Dependencia: dispositivo que controla a este (ej: Sonoff controla al Extractor)
-  controlledByDeviceId String?  @map("controlled_by_device_id")
-  controlledBy         Device?  @relation("DeviceControl", fields: [controlledByDeviceId], references: [id], onDelete: SetNull)
-  controlledDevices    Device[] @relation("DeviceControl") // Dispositivos que este controla
-
-  // Relaciones con automatizaciones
-  automationConditions AutomationCondition[]
-  automationActions    AutomationAction[]
-  sensorReadings       SensorReading[]
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@unique([connector, externalId])
-  @@map("devices")
-}
-
-// ============================================
-// BIOLOGÍA Y SEGUIMIENTOS
-// ============================================
-
-/// Genéticas - Banco de datos de genéticas
-model Strain {
-  id                    String     @id @default(uuid())
-  name                  String
-  breeder               String? // Banco de semillas
-  type                  StrainType // Sativa, Indica, Ruderalis, Hybrid
-  floweringDaysExpected Int?       @map("flowering_days_expected") // Días de floración esperados
-  description           String?
-  plants                Plant[]
-  createdAt             DateTime   @default(now()) @map("created_at")
-  updatedAt             DateTime   @updatedAt @map("updated_at")
-
-  @@map("strains")
-}
-
-/// Ciclos/Seguimientos - Agrupador temporal para comparar tandas de cultivo
-model Cycle {
-  id        String      @id @default(uuid())
-  name      String // Ej: "Invierno 2025"
-  startDate DateTime    @map("start_date")
-  endDate   DateTime?   @map("end_date")
-  status    CycleStatus @default(ACTIVE)
-  notes     String?
-  plants    Plant[]
-  events    Event[]
-  createdAt DateTime    @default(now()) @map("created_at")
-  updatedAt DateTime    @updatedAt @map("updated_at")
-
-  @@map("cycles")
-}
-
-/// Plantas - Instancia física de una planta
-model Plant {
-  id              String                @id @default(uuid())
-  tagCode         String                @unique @map("tag_code") // Código único o nombre
-  strainId        String                @map("strain_id")
-  strain          Strain                @relation(fields: [strainId], references: [id])
-  cycleId         String                @map("cycle_id")
-  cycle           Cycle                 @relation(fields: [cycleId], references: [id], onDelete: Cascade)
-  sectionId       String                @map("section_id")
-  section         Section               @relation(fields: [sectionId], references: [id])
-  zone            Int? // Zona 1-6 dentro de la sección (grilla 2x3)
-  stage           PlantStage            @default(GERMINACION)
-  sex             PlantSex              @default(UNKNOWN)
-  healthStatus    PlantHealthStatus     @default(HEALTHY) @map("health_status")
-  potSizeFinal    String?               @map("pot_size_final") // Tamaño de maceta final (ej: "11L", "25L")
-  photo           String? // URL de foto principal
-  notes           String?
-  startDate       DateTime?             @map("start_date") // Fecha de inicio (germinación/plantado)
-  stageStartDate  DateTime?             @map("stage_start_date") // Fecha del último cambio de etapa
-  events          Event[]
-  feedingPlans    PlantFeedingPlan[]
-  preventionPlans PlantPreventionPlan[]
-  harvests        Harvest[]
-  createdAt       DateTime              @default(now()) @map("created_at")
-  updatedAt       DateTime              @updatedAt @map("updated_at")
-
-  @@map("plants")
-}
-
-// ============================================
-// EVENTOS Y BITÁCORA
-// ============================================
-
-/// Eventos - Registro inmutable de acciones en la bitácora
-model Event {
-  id        String    @id @default(uuid())
-  type      EventType // Tipo de evento
-  plantId   String?   @map("plant_id")
-  plant     Plant?    @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  cycleId   String?   @map("cycle_id")
-  cycle     Cycle?    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
-  sectionId String?   @map("section_id")
-  section   Section?  @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-  data      Json // Datos específicos del evento (ph, ec, temperatura, url de foto, etc.)
-  createdAt DateTime  @default(now()) @map("created_at")
-
-  @@index([type])
-  @@index([plantId])
-  @@index([cycleId])
-  @@index([sectionId])
-  @@index([createdAt])
-  @@map("events")
-}
-
-// ============================================
-// PLANES DE ALIMENTACIÓN
-// ============================================
-
-/// Plan de alimentación - Template con semanas y productos
-model FeedingPlan {
-  id          String             @id @default(uuid())
-  name        String // Ej: "BioBizz Floración"
-  description String?
-  stage       PlantStage // Etapa para la cual aplica (VEGETATIVO, FLORACION, etc.)
-  weeks       FeedingPlanWeek[]
-  plants      PlantFeedingPlan[]
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
-
-  @@map("feeding_plans")
-}
-
-/// Semana del plan de alimentación - Detalle de productos por semana
-model FeedingPlanWeek {
-  id            String      @id @default(uuid())
-  feedingPlanId String      @map("feeding_plan_id")
-  feedingPlan   FeedingPlan @relation(fields: [feedingPlanId], references: [id], onDelete: Cascade)
-  weekNumber    Int         @map("week_number") // Semana 1, 2, 3...
-  products      Json // [{name: string, dose: string, unit: string}]
-  ph            Float? // pH recomendado
-  ec            Float? // EC recomendada
-  notes         String? // Notas adicionales
-
-  @@unique([feedingPlanId, weekNumber])
-  @@map("feeding_plan_weeks")
-}
-
-/// Relación planta-plan - Asigna un plan a una planta con fecha de inicio
-model PlantFeedingPlan {
-  id             String      @id @default(uuid())
-  plantId        String      @map("plant_id")
-  plant          Plant       @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  feedingPlanId  String      @map("feeding_plan_id")
-  feedingPlan    FeedingPlan @relation(fields: [feedingPlanId], references: [id], onDelete: Cascade)
-  stageStartDate DateTime    @map("stage_start_date") // Cuando la planta entró en esta etapa
-  createdAt      DateTime    @default(now()) @map("created_at")
-
-  @@unique([plantId, feedingPlanId])
-  @@index([plantId])
-  @@index([feedingPlanId])
-  @@map("plant_feeding_plans")
-}
-
-// ============================================
-// PLANES DE PREVENCIÓN (Hongos y Plagas)
-// ============================================
-
 enum ApplicationType {
   FOLIAR
   RIEGO
@@ -409,299 +787,11 @@ enum PreventionTarget {
   PREVENTIVO
 }
 
-/// Plan de prevención - Template con días y productos
-model PreventionPlan {
-  id           String                      @id @default(uuid())
-  name         String // Ej: "Preventivo Floración 21 días"
-  description  String?
-  stage        PlantStage // Etapa para la cual aplica
-  totalDays    Int                         @map("total_days") // Duración del ciclo (se repite)
-  applications PreventionPlanApplication[]
-  plants       PlantPreventionPlan[]
-  createdAt    DateTime                    @default(now()) @map("created_at")
-  updatedAt    DateTime                    @updatedAt @map("updated_at")
-
-  @@map("prevention_plans")
-}
-
-/// Aplicación del plan de prevención - Detalle de productos por día
-model PreventionPlanApplication {
-  id               String            @id @default(uuid())
-  preventionPlanId String            @map("prevention_plan_id")
-  preventionPlan   PreventionPlan    @relation(fields: [preventionPlanId], references: [id], onDelete: Cascade)
-  dayNumber        Int               @map("day_number") // Día 1, 7, 14...
-  products         Json // [{name: string, dose: string, unit: string}]
-  applicationType  ApplicationType?  @map("application_type") // FOLIAR, RIEGO, PREVENTIVO
-  target           PreventionTarget? // HONGOS, PLAGAS, AMBOS, PREVENTIVO
-  notes            String? // Notas adicionales
-
-  @@unique([preventionPlanId, dayNumber])
-  @@map("prevention_plan_applications")
-}
-
-/// Relación planta-plan de prevención - Asigna un plan a una planta
-model PlantPreventionPlan {
-  id               String         @id @default(uuid())
-  plantId          String         @map("plant_id")
-  plant            Plant          @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  preventionPlanId String         @map("prevention_plan_id")
-  preventionPlan   PreventionPlan @relation(fields: [preventionPlanId], references: [id], onDelete: Cascade)
-  startDate        DateTime       @map("start_date") // Cuando comenzó el plan
-  createdAt        DateTime       @default(now()) @map("created_at")
-
-  @@unique([plantId, preventionPlanId])
-  @@index([plantId])
-  @@index([preventionPlanId])
-  @@map("plant_prevention_plans")
-}
-
-// ============================================
-// AUTOMATIZACIONES
-// ============================================
-
-/// Automatización - Regla de automatización para dispositivos
-model Automation {
-  id          String           @id @default(uuid())
-  name        String
-  description String?
-  sectionId   String           @map("section_id")
-  section     Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  status      AutomationStatus @default(ACTIVE)
-
-  // === CAMPOS EXISTENTES (NO MODIFICAR) ===
-  interval      Int     @default(60) // Intervalo de evaluación en minutos (MANTENER para compatibilidad)
-  executionTime Int?    @map("execution_time") // Tiempo de ejecución en minutos
-  daysOfWeek    Int[]   @map("days_of_week") // [0-6] Domingo=0, array vacío = todos los días
-  startTime     String? @map("start_time") // "08:00" - Hora de inicio permitida
-  endTime       String? @map("end_time") // "20:00" - Hora de fin permitida
-  priority      Int     @default(0) // Mayor prioridad = se evalúa primero
-  allowOverlap  Boolean @default(true) @map("allow_overlap")
-  notifications Boolean @default(true)
-
-  // === NUEVOS CAMPOS PARA PROGRAMACIÓN AVANZADA ===
-  // Tipo de trigger (default CONDITION para compatibilidad con automatizaciones existentes)
-  triggerType TriggerType @default(CONDITION) @map("trigger_type")
-
-  // Configuración de programación horaria
-  scheduleType ScheduleType? @map("schedule_type") // Tipo de programación
-
-  // Para TIME_RANGE: horario de activación/desactivación
-  activeStartTime String? @map("active_start_time") // "08:00" - Hora de encendido
-  activeEndTime   String? @map("active_end_time") // "20:00" - Hora de apagado
-
-  // Para INTERVAL: repetir cada X tiempo
-  intervalMinutes Int? @map("interval_minutes") // Intervalo en minutos (ej: 120 = cada 2 horas)
-  actionDuration  Int? @map("action_duration") // Duración de la acción en minutos
-
-  // Para SPECIFIC_TIMES: horas específicas del día
-  specificTimes String[] @default([]) @map("specific_times") // ["08:00", "14:00", "20:00"]
-
-  // Plantas asociadas (para automatizaciones de fotos)
-  plantIds String[] @default([]) @map("plant_ids") // IDs de plantas para registrar eventos
-
-  // Dependencia de otra automatización
-  dependsOnId String?      @map("depends_on_id")
-  dependsOn   Automation?  @relation("AutomationDependency", fields: [dependsOnId], references: [id], onDelete: SetNull)
-  dependents  Automation[] @relation("AutomationDependency")
-
-  // Relaciones
-  conditions AutomationCondition[]
-  actions    AutomationAction[]
-  executions AutomationExecution[]
-
-  lastEvaluatedAt DateTime? @map("last_evaluated_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-
-  @@index([sectionId])
-  @@index([status])
-  @@map("automations")
-}
-
-/// Condición de automatización - Condiciones que deben cumplirse para activar
-model AutomationCondition {
-  id           String            @id @default(uuid())
-  automationId String            @map("automation_id")
-  automation   Automation        @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  deviceId     String            @map("device_id") // ID del dispositivo sensor
-  device       Device            @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  property     String // Propiedad a evaluar: "temperature", "humidity", "state"
-  operator     ConditionOperator
-  value        Float // Valor para comparar
-  valueMax     Float?            @map("value_max") // Para operador BETWEEN/OUTSIDE
-  order        Int               @default(0) // Orden de evaluación
-
-  // === NUEVOS CAMPOS (opcionales, no rompen datos existentes) ===
-  timeValue     String? @map("time_value") // Para condiciones de tiempo "HH:MM"
-  timeValueMax  String? @map("time_value_max") // Para condiciones de tiempo BETWEEN
-  logicOperator String  @default("AND") @map("logic_operator") // AND/OR con la siguiente condición
-
-  @@index([automationId])
-  @@map("automation_conditions")
-}
-
-/// Acción de automatización - Acciones a ejecutar cuando se cumplen las condiciones
-model AutomationAction {
-  id           String     @id @default(uuid())
-  automationId String     @map("automation_id")
-  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  deviceId     String     @map("device_id")
-  device       Device     @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  actionType   ActionType @map("action_type")
-  duration     Int? // Duración de la acción en minutos (ej: encender por 30 min)
-  delayMinutes Int?       @map("delay_minutes") // Retraso antes de ejecutar esta acción
-  value        Float? // Valor opcional (ej: brillo, velocidad)
-  order        Int        @default(0) // Orden de ejecución
-
-  @@index([automationId])
-  @@map("automation_actions")
-}
-
-/// Ejecución de automatización - Historial de ejecuciones
-model AutomationExecution {
-  id                  String               @id @default(uuid())
-  automationId        String               @map("automation_id")
-  automation          Automation           @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  status              ExecutionStatus      @default(PENDING)
-  triggeredConditions Json?                @map("triggered_conditions") // Snapshot de condiciones que se cumplieron
-  executedActions     Json?                @map("executed_actions") // Acciones ejecutadas
-  errorMessage        String?              @map("error_message")
-  startedAt           DateTime             @default(now()) @map("started_at")
-  endedAt             DateTime?            @map("ended_at")
-  effectivenessChecks EffectivenessCheck[]
-
-  @@index([automationId])
-  @@index([startedAt])
-  @@map("automation_executions")
-}
-
-/// Verificación de efectividad - Chequeos cada 15 minutos post-ejecución
-model EffectivenessCheck {
-  id           String              @id @default(uuid())
-  executionId  String              @map("execution_id")
-  execution    AutomationExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
-  conditionMet Boolean             @map("condition_met") // Si el objetivo se cumplió
-  valueAtCheck Float?              @map("value_at_check") // Valor actual del sensor al momento del check
-  targetValue  Float?              @map("target_value") // Valor objetivo que se esperaba
-  notes        String?
-  checkedAt    DateTime            @default(now()) @map("checked_at")
-
-  @@index([executionId])
-  @@map("effectiveness_checks")
-}
-
-// ============================================
-// HISTORIAL DE SENSORES
-// ============================================
-
-/// Lectura de sensor - Registro histórico de temperatura/humedad
-model SensorReading {
-  id          String   @id @default(uuid())
-  deviceId    String   @map("device_id")
-  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  sectionId   String?  @map("section_id") // Sección donde se registró (para mantener historial al reasignar)
-  temperature Float? // Temperatura en °C
-  humidity    Float? // Humedad en %
-  co2         Float? // CO2 en ppm (si aplica)
-  recordedAt  DateTime @default(now()) @map("recorded_at")
-
-  @@index([deviceId, recordedAt])
-  @@index([sectionId, recordedAt])
-  @@index([recordedAt])
-  @@map("sensor_readings")
-}
-
-// ============================================
-// PPFD Y DLI
-// ============================================
-
-/// Lectura de PPFD - Registro de intensidad lumínica por zona
-model PPFDReading {
-  id          String   @id @default(uuid())
-  sectionId   String   @map("section_id")
-  section     Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  zone        Int // Zona 1-6 (grilla 2x3)
-  ppfdValue   Float    @map("ppfd_value") // µmol/m²/s
-  lightHeight Float    @map("light_height") // Altura de la luz en cm desde el follaje
-  recordedAt  DateTime @default(now()) @map("recorded_at")
-
-  @@index([sectionId, zone])
-  @@index([recordedAt])
-  @@map("ppfd_readings")
-}
-
-// ============================================
-// NOTIFICACIONES
-// ============================================
-
-/// Notificación - Sistema de alertas y notificaciones in-app
-model Notification {
-  id        String               @id @default(uuid())
-  type      NotificationType
-  priority  NotificationPriority @default(MEDIUM)
-  title     String
-  message   String
-  read      Boolean              @default(false)
-  actionUrl String?              @map("action_url") // Link a la página relacionada
-  metadata  Json? // Datos adicionales (automationId, plantId, etc.)
-  createdAt DateTime             @default(now()) @map("created_at")
-
-  @@index([read])
-  @@index([type])
-  @@index([createdAt])
-  @@map("notifications")
-}
-
-// ============================================
-// COSECHA Y POST-COSECHA
-// ============================================
-
-/// Cosecha - Registro de cosecha de una planta
-model Harvest {
-  id          String           @id @default(uuid())
-  plantId     String           @map("plant_id")
-  plant       Plant            @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  harvestDate DateTime         @map("harvest_date")
-  wetWeight   Float?           @map("wet_weight") // Peso húmedo en gramos
-  dryWeight   Float?           @map("dry_weight") // Peso seco en gramos
-  trimWeight  Float?           @map("trim_weight") // Peso del trim en gramos
-  notes       String?
-  products    HarvestProduct[]
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-
-  @@index([plantId])
-  @@map("harvests")
-}
-
-/// Producto de cosecha - Flor, extracciones, etc.
-model HarvestProduct {
-  id              String             @id @default(uuid())
-  harvestId       String             @map("harvest_id")
-  harvest         Harvest            @relation(fields: [harvestId], references: [id], onDelete: Cascade)
-  type            HarvestProductType
-  initialWeight   Float              @map("initial_weight") // Peso inicial en gramos
-  currentWeight   Float              @map("current_weight") // Peso actual (se actualiza al extraer)
-  packageType     String?            @map("package_type") // "Frasco vidrio", "Bolsa vacío", etc.
-  packageNumber   String?            @map("package_number") // Código de identificación "F-001"
-  storageLocation StorageLocation    @default(AMBIENTE) @map("storage_location")
-  notes           String?
-  createdAt       DateTime           @default(now()) @map("created_at")
-  updatedAt       DateTime           @updatedAt @map("updated_at")
-
-  @@index([harvestId])
-  @@map("harvest_products")
-}
-
-// ============================================
-// ASISTENTE DE IA
-// ============================================
-
 enum AIContextType {
-  GENERAL // Conversación general
-  CYCLE // Contexto de un ciclo específico
-  SECTION // Contexto de una sección/carpa
-  PLANT // Contexto de una planta específica
+  GENERAL
+  CYCLE
+  SECTION
+  PLANT
 }
 
 enum AIMessageRole {
@@ -711,57 +801,8 @@ enum AIMessageRole {
 }
 
 enum AIMemoryType {
-  CONVERSATION // Resumen de conversación
-  CYCLE // Aprendizajes del ciclo
-  SECTION // Configuraciones de la sección
-  PLANT // Historial de la planta
-}
-
-/// Conversación con el asistente de IA
-model AIConversation {
-  id          String        @id @default(uuid())
-  title       String? // Título auto-generado
-  contextType AIContextType @default(GENERAL) @map("context_type")
-  contextId   String?       @map("context_id") // ID del ciclo/sección/planta según contextType
-  messages    AIMessage[]
-  isActive    Boolean       @default(true) @map("is_active")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-
-  @@index([contextType, contextId])
-  @@index([isActive])
-  @@index([createdAt])
-  @@map("ai_conversations")
-}
-
-/// Mensaje individual en una conversación
-model AIMessage {
-  id             String         @id @default(uuid())
-  conversationId String         @map("conversation_id")
-  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  role           AIMessageRole
-  content        String
-  imageUrls      String[]       @default([]) @map("image_urls") // URLs de imágenes adjuntas
-  metadata       Json? // Datos adicionales (tokens usados, modelo, etc.)
-  createdAt      DateTime       @default(now()) @map("created_at")
-
-  @@index([conversationId])
-  @@index([createdAt])
-  @@map("ai_messages")
-}
-
-/// Memoria del asistente - Conocimiento persistente por contexto
-model AIMemory {
-  id         String       @id @default(uuid())
-  type       AIMemoryType
-  contextId  String?      @map("context_id") // ID relacionado según el tipo
-  summary    String // Resumen del conocimiento
-  keyFacts   Json? @map("key_facts") // Hechos clave extraídos [{fact: string, importance: number}]
-  importance Int          @default(3) // 1-5, mayor = más importante
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
-
-  @@index([type, contextId])
-  @@index([importance])
-  @@map("ai_memories")
+  CONVERSATION
+  CYCLE
+  SECTION
+  PLANT
 }

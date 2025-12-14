@@ -169,6 +169,15 @@ API central que gestiona la lógica de negocio, persistencia y orquestación de 
 - **CONDITION**: Basada en condiciones de sensores
 - **HYBRID**: Combinación de horarios + condiciones
 
+#### Asistente de IA
+- `POST /api/ai-assistant/chat` - Enviar mensaje al asistente
+- `GET /api/ai-assistant/conversations` - Listar conversaciones
+- `GET /api/ai-assistant/conversations/:id` - Obtener conversación
+- `POST /api/ai-assistant/conversations` - Crear nueva conversación
+- `DELETE /api/ai-assistant/conversations/:id` - Eliminar conversación
+- `GET /api/ai-assistant/memories` - Obtener memorias
+- `POST /api/ai-assistant/memories` - Crear memoria
+
 Ver documentación completa en http://localhost:4000/docs
 
 ---
@@ -507,6 +516,224 @@ npm run dev
 
 ---
 
+## Asistente de IA
+
+El sistema incluye un **Asistente de Inteligencia Artificial** con arquitectura de agente orquestado que utiliza OpenAI Function Calling para acceder dinámicamente a la información del sistema.
+
+### Características
+
+- 🤖 **Agente Orquestado**: Utiliza OpenAI GPT-5.2 con Function Calling para razonamiento multi-paso
+- 🔧 **17 Herramientas Disponibles**: Acceso a plantas, planes, dispositivos, automatizaciones y contexto
+- 💾 **Memoria Persistente**: Memorias por conversación, ciclo, sección y planta
+- 📸 **Análisis de Imágenes**: Soporte para análisis de fotos compartidas o del historial
+- 🎯 **Contexto Dinámico**: Solo obtiene la información necesaria según la consulta
+- 🔐 **Aislamiento Multiusuario**: Cada usuario solo accede a sus propios datos
+
+### Herramientas del Agente
+
+| Categoría | Herramientas |
+|-----------|-------------|
+| **Plantas** | `get_plant_details`, `search_plants`, `get_plant_photos`, `get_plant_events` |
+| **Planes** | `get_prevention_plan`, `get_feeding_plan`, `list_plans`, `get_plants_by_plan` |
+| **Infraestructura** | `get_section_details`, `get_section_devices`, `get_sensor_readings`, `get_active_cycle` |
+| **Automatizaciones** | `get_automation`, `list_automations`, `get_automation_executions` |
+| **Contexto** | `search_memories`, `get_conversation_history`, `get_recent_events` |
+
+### Flujo del Agente
+
+```
+Usuario: "¿Qué opinas del plan de prevención de la 048?"
+    ↓
+1. Agente analiza → Llama get_plant_details("048")
+2. Obtiene datos → Ve que tiene plan "Preventivo X"
+3. Llama get_prevention_plan("Preventivo X")
+4. Analiza resultados → Genera respuesta final
+```
+
+### Configuración
+
+```env
+# backend/.env
+OPENAI_API_KEY=sk-proj-...
+```
+
+El asistente está disponible en toda la aplicación mediante una burbuja flotante en la esquina inferior derecha.
+
+Ver documentación completa en [docs/RESUMEN_AUTOMATIZACIONES.md](./docs/RESUMEN_AUTOMATIZACIONES.md)
+
+---
+
+## Sistema Multiusuario
+
+El sistema soporta múltiples usuarios con diferentes niveles de suscripción. Cada usuario tiene su propio espacio aislado con sus salas, plantas, dispositivos y configuraciones.
+
+### Niveles de Suscripción
+
+| Feature | BASIC | PRO | PREMIUM |
+|---------|-------|-----|---------|
+| Salas de cultivo | 1 | 3 | Ilimitado |
+| Secciones por sala | 2 | 5 | Ilimitado |
+| Automatizaciones | 0 | 10 | Ilimitado |
+| Dispositivos IoT | 3 | 10 | Ilimitado |
+| Asistente IA | No | Limitado | Completo |
+
+### Autenticación
+
+El sistema soporta **dos modos de autenticación**:
+
+#### Modo 1: Login Local (sin Supabase) ✅ Recomendado para desarrollo
+
+Funciona sin configuración adicional. Todos los usuarios se autentican contra la base de datos local.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LOGIN LOCAL                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ADMIN (credenciales por defecto):                         │
+│   └── Email: admin  /  Password: admin                      │
+│                                                             │
+│   USUARIOS (creados por admin):                             │
+│   └── Email: lo que definas  /  Password: lo que definas    │
+│                                                             │
+│   Todos usan el mismo formulario de login                   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Flujo para crear usuarios:**
+
+1. Inicia sesión como admin (`admin` / `admin`)
+2. Ve a **Admin** (botón en la esquina superior derecha)
+3. Click en **"Nuevo Usuario"**
+4. Completa el formulario:
+   - **Nombre**: Nombre del usuario
+   - **Email**: Será su username para login
+   - **Contraseña**: Mínimo 6 caracteres
+   - **Suscripción**: BASIC, PRO o PREMIUM
+5. El usuario ya puede hacer login con su email y contraseña
+
+#### Modo 2: Supabase Auth (Opcional)
+
+Para ambientes de producción con auto-registro de usuarios:
+
+1. Crear cuenta en [Supabase](https://supabase.com)
+2. Configurar en `frontend/.env.local`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT-REF].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+```
+3. Los usuarios pueden registrarse solos
+4. Al primer login, se crea perfil con plan BASIC
+
+### Cambiar Credenciales del Admin
+
+Por defecto el admin usa `admin/admin`. Para cambiarlo, configura en `backend/.env`:
+
+```env
+ADMIN_USER=tu_email_admin
+ADMIN_PASSWORD=tu_password_seguro
+```
+
+### Migración de Datos Existentes
+
+Si ya tienes datos en la base de datos de antes del sistema multiusuario:
+
+```bash
+cd backend
+npx ts-node scripts/migrate-to-multiuser.ts
+```
+
+Este script:
+1. Crea el usuario admin con rol ADMIN y suscripción PREMIUM
+2. Asocia todos los datos existentes (salas, plantas, ciclos, etc.) al admin
+3. **NO borra ningún dato**
+
+### Panel de Administración de Usuarios
+
+Accesible desde `/admin/usuarios` (solo para rol ADMIN):
+
+- Ver lista de usuarios con estadísticas (salas, dispositivos, ciclos)
+- Crear nuevos usuarios con contraseña
+- Editar usuarios (nombre, email, rol, suscripción)
+- Desactivar/Reactivar usuarios
+- Ver nivel de suscripción de cada usuario
+
+### Endpoints de Usuarios (Admin)
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/users` | Listar todos los usuarios |
+| POST | `/api/users` | Crear usuario (con password) |
+| PATCH | `/api/users/:id` | Actualizar usuario |
+| DELETE | `/api/users/:id` | Desactivar usuario |
+| PATCH | `/api/users/:id/reactivate` | Reactivar usuario |
+| GET | `/api/users/me/profile` | Perfil del usuario actual |
+| GET | `/api/users/me/subscription` | Límites de suscripción |
+
+### Credenciales IoT por Usuario
+
+Cada usuario puede configurar sus propias credenciales para servicios IoT (Sonoff, Tuya, Tapo):
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/iot-credentials` | Listar credenciales del usuario |
+| POST | `/api/iot-credentials/:connector` | Configurar credenciales |
+| POST | `/api/iot-credentials/:connector/test` | Probar conexión |
+| GET | `/api/iot-credentials/instructions` | Instrucciones de configuración |
+
+### Aislamiento de Datos
+
+Cada usuario solo ve y accede a sus propios datos:
+
+- ✅ Salas de cultivo (`Room`)
+- ✅ Secciones/Carpas (`Section`)
+- ✅ Dispositivos IoT (`Device`)
+- ✅ Ciclos de cultivo (`Cycle`)
+- ✅ Plantas (`Plant`)
+- ✅ Genéticas (`Strain`)
+- ✅ Planes de alimentación (`FeedingPlan`)
+- ✅ Planes de prevención (`PreventionPlan`)
+- ✅ Notificaciones (`Notification`)
+- ✅ Conversaciones con IA (`AIConversation`)
+- ✅ Memorias del Asistente (`AIMemory`)
+- ✅ Credenciales IoT (`UserIoTCredential`)
+
+### Asistente de IA Multiusuario
+
+El asistente de IA tiene aislamiento completo de datos por usuario:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 ASISTENTE IA - MULTIUSUARIO                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Usuario A                      Usuario B                   │
+│  ┌─────────────────┐           ┌─────────────────┐         │
+│  │ Conversaciones  │           │ Conversaciones  │         │
+│  │ Memorias        │           │ Memorias        │         │
+│  │ Plantas: 048,049│           │ Plantas: 001,002│         │
+│  │ Planes: Plan A  │           │ Planes: Plan X  │         │
+│  │ Carpas: Flora   │           │ Carpas: Vege    │         │
+│  └─────────────────┘           └─────────────────┘         │
+│           │                            │                    │
+│           └──────── AISLADOS ──────────┘                    │
+│                                                             │
+│  El LLM solo recibe contexto del usuario autenticado        │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Características del aislamiento:**
+
+- **Herramientas filtradas**: Todas las 17 herramientas del agente filtran por `userId`
+- **Conversaciones privadas**: Cada usuario tiene su propio historial de chat
+- **Memorias aisladas**: Las memorias persistentes son por usuario
+- **Datos exclusivos**: El LLM solo puede acceder a plantas, planes, dispositivos y automatizaciones del usuario logueado
+- **Sin mezcla de contexto**: Imposible que el asistente revele datos de otro usuario
+
+---
+
 ## Roadmap
 
 - [x] Backend con base de datos (PostgreSQL/Supabase)
@@ -521,9 +748,15 @@ npm run dev
 - [x] Bitácora de eventos (riego, fotos, notas)
 - [x] Gestión de genéticas
 - [x] **Sistema de automatizaciones avanzadas** (horarios programados, condiciones, híbridas)
-- [ ] Autenticación de usuarios
+- [x] **Asistente de IA con arquitectura de agente orquestado**
+- [x] **Asistente de IA con aislamiento de datos multiusuario**
+- [x] **Sistema multiusuario con autenticación local y Supabase Auth**
+- [x] **Niveles de suscripción (BASIC, PRO, PREMIUM)**
+- [x] **Panel de administración de usuarios (ABM completo)**
+- [x] **Login local con password hash (bcrypt)**
+- [x] **Credenciales IoT por usuario**
 - [ ] Gráficos históricos de sensores
-- [ ] Notificaciones y alertas
+- [ ] Notificaciones push
 - [ ] Ejecutor automático de automatizaciones (cron job)
 - [ ] WebSockets para actualizaciones en tiempo real
 
@@ -543,6 +776,11 @@ npm run dev
 
 ### Características Documentadas
 
+- ✅ **Sistema multiusuario** con login local (password hash) y Supabase Auth opcional
+- ✅ **Panel de administración de usuarios** (crear, editar, desactivar, cambiar suscripción)
+- ✅ **Niveles de suscripción** (BASIC, PRO, PREMIUM) con límites configurables
+- ✅ **Aislamiento de datos por usuario** (cada usuario ve solo sus datos)
+- ✅ **Asistente de IA multiusuario** (cada usuario tiene conversaciones, memorias y contexto aislados)
 - ✅ **Sistema de automatizaciones avanzadas** (horarios programados, condiciones de sensores, híbridas)
 - ✅ **Automatización de captura de fotos periódicas** con registro automático en historial de plantas
 - ✅ **Control de alertas/notificaciones** en automatizaciones

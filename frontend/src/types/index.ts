@@ -38,6 +38,7 @@ export type EventType =
   | 'RIEGO'
   | 'PODA'
   | 'TRANSPLANTE'
+  | 'CAMBIO_MACETA'
   | 'NOTA'
   | 'FOTO'
   | 'PARAMETRO_AMBIENTAL'
@@ -66,6 +67,7 @@ export interface Section {
   dimensions?: string;
   image?: string;
   description?: string;
+  enabled?: boolean; // Si la sección está activa/en uso (default: true)
   roomId: string;
   room?: Room;
   devices: Device[];
@@ -182,9 +184,11 @@ export interface Plant {
   cycle?: Cycle;
   sectionId: string;
   section?: Section;
+  zones?: PlantZone[]; // Zonas asignadas a la planta
   stage: PlantStage;
   sex: PlantSex;
   healthStatus?: PlantHealthStatus; // Estado de salud
+  potSizeFinal?: string; // Tamaño de maceta final (ej: "11L", "25L")
   photo?: string;
   notes?: string;
   startDate?: string; // Fecha de inicio (germinación/plantado)
@@ -326,12 +330,17 @@ export interface CreatePlantDto {
   strainId: string;
   cycleId: string;
   sectionId: string;
+  zones?: PlantZoneDto[];
   stage?: PlantStage;
   sex?: PlantSex;
+  healthStatus?: PlantHealthStatus;
+  potSizeFinal?: string;
   photo?: string;
   notes?: string;
   startDate?: string;
 }
+
+export type UpdatePlantDto = Partial<CreatePlantDto>;
 
 // DTOs de eventos
 export interface BaseEventDto {
@@ -857,6 +866,37 @@ export interface Notification {
   actionUrl?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
+}
+
+// ============================================
+// PLANT ZONES
+// ============================================
+
+export interface PlantZone {
+  id: string;
+  plantId: string;
+  zone: number; // Zona 1-6 dentro de la sección (grilla 2x3)
+  coverage: number; // Porcentaje de ocupación de la zona (0-100)
+  createdAt: string;
+}
+
+export interface PlantZoneDto {
+  zone: number; // Zona 1-6 dentro de la sección (grilla 2x3)
+  coverage?: number; // Porcentaje de ocupación de la zona (0-100), default 100
+}
+
+export interface PlantPPFDResult {
+  plantId: string;
+  averagePPFD: number | null;
+  totalCoverage: number;
+  zoneReadings: Array<{
+    zone: number;
+    coverage: number;
+    ppfdValue: number | null;
+    lightHeight: number | null;
+    recordedAt: string | null;
+  }>;
+  hasAllReadings: boolean;
 }
 
 // ============================================

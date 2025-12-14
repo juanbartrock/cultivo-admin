@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AIMemoryType, AIContextType, Prisma } from '@prisma/client';
 import OpenAI from 'openai';
@@ -31,11 +31,12 @@ export class MemoryService {
   }
 
   /**
-   * Obtiene memorias por tipo y contexto
+   * Obtiene memorias por tipo y contexto (filtrado por usuario)
    */
-  async getMemories(type?: AIMemoryType, contextId?: string) {
+  async getMemories(type?: AIMemoryType, contextId?: string, userId?: string) {
     return this.prisma.aIMemory.findMany({
       where: {
+        ...(userId && { userId }), // FILTRO POR USUARIO
         ...(type && { type }),
         ...(contextId && { contextId }),
       },
@@ -49,6 +50,7 @@ export class MemoryService {
   async getRelevantMemories(
     contextType: AIContextType,
     contextId?: string,
+    userId?: string,
     limit = 10,
   ) {
     const whereConditions = [];
@@ -84,6 +86,7 @@ export class MemoryService {
 
     return this.prisma.aIMemory.findMany({
       where: {
+        ...(userId && { userId }), // FILTRO POR USUARIO
         OR: whereConditions,
       },
       orderBy: [{ importance: 'desc' }, { updatedAt: 'desc' }],
@@ -92,7 +95,7 @@ export class MemoryService {
   }
 
   /**
-   * Crea o actualiza una memoria
+   * Crea o actualiza una memoria (asociada al usuario)
    */
   async upsertMemory(
     type: AIMemoryType,
@@ -100,12 +103,14 @@ export class MemoryService {
     summary: string,
     keyFacts?: KeyFact[],
     importance = 3,
+    userId?: string,
   ) {
-    // Buscar memoria existente
+    // Buscar memoria existente del usuario
     const existing = await this.prisma.aIMemory.findFirst({
       where: {
         type,
         contextId: contextId || undefined,
+        ...(userId && { userId }),
       },
     });
 
@@ -151,6 +156,7 @@ export class MemoryService {
         summary,
         keyFacts: keyFactsToJson(keyFacts || []),
         importance,
+        userId, // ASOCIAR AL USUARIO
       },
     });
   }
@@ -215,7 +221,7 @@ Responde SOLO en formato JSON:
   /**
    * Procesa una conversación finalizada y extrae memorias
    */
-  async processConversationEnd(conversationId: string) {
+  async processConversationEnd(conversationId: string, userId?: string) {
     const conversation = await this.prisma.aIConversation.findUnique({
       where: { id: conversationId },
       include: {
@@ -228,6 +234,11 @@ Responde SOLO en formato JSON:
     if (!conversation || conversation.messages.length < 4) {
       // No procesar conversaciones muy cortas
       return;
+    }
+
+    // Verificar que la conversación pertenece al usuario
+    if (userId && conversation.userId && conversation.userId !== userId) {
+      throw new ForbiddenException('No tienes acceso a esta conversación');
     }
 
     // Generar resumen
@@ -254,13 +265,14 @@ Responde SOLO en formato JSON:
         memoryType = AIMemoryType.CONVERSATION;
     }
 
-    // Guardar memoria
+    // Guardar memoria (asociada al usuario de la conversación)
     await this.upsertMemory(
       memoryType,
       conversation.contextId,
       summary,
       keyFacts,
       3,
+      conversation.userId || userId,
     );
 
     this.logger.log(
@@ -269,9 +281,9 @@ Responde SOLO en formato JSON:
   }
 
   /**
-   * Elimina memorias antiguas o de baja importancia
+   * Elimina memorias antiguas o de baja importancia (filtrado por usuario)
    */
-  async cleanupMemories(keepDays = 90, minImportance = 2) {
+  async cleanupMemories(keepDays = 90, minImportance = 2, userId?: string) {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - keepDays);
 
@@ -280,6 +292,7 @@ Responde SOLO en formato JSON:
         AND: [
           { updatedAt: { lt: cutoffDate } },
           { importance: { lt: minImportance } },
+          ...(userId ? [{ userId }] : []), // FILTRO POR USUARIO si se proporciona
         ],
       },
     });
@@ -289,7 +302,7 @@ Responde SOLO en formato JSON:
   }
 
   /**
-   * Crea una memoria manualmente
+   * Crea una memoria manualmente (asociada al usuario)
    */
   async createMemory(
     type: AIMemoryType,
@@ -297,6 +310,7 @@ Responde SOLO en formato JSON:
     summary: string,
     keyFacts?: KeyFact[],
     importance = 3,
+    userId?: string,
   ) {
     return this.prisma.aIMemory.create({
       data: {
@@ -305,14 +319,26 @@ Responde SOLO en formato JSON:
         summary,
         keyFacts: keyFactsToJson(keyFacts || []),
         importance,
+        userId, // ASOCIAR AL USUARIO
       },
     });
   }
 
   /**
-   * Elimina una memoria
+   * Elimina una memoria (verificando pertenencia al usuario)
    */
-  async deleteMemory(id: string) {
+  async deleteMemory(id: string, userId?: string) {
+    // Verificar que la memoria pertenece al usuario
+    if (userId) {
+      const memory = await this.prisma.aIMemory.findUnique({
+        where: { id },
+      });
+      
+      if (memory && memory.userId && memory.userId !== userId) {
+        throw new ForbiddenException('No tienes acceso a esta memoria');
+      }
+    }
+
     return this.prisma.aIMemory.delete({
       where: { id },
     });

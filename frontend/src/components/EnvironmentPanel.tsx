@@ -16,9 +16,15 @@ import {
   TrendingDown,
   Minus,
   Power,
-  History
+  History,
+  ArrowRightLeft,
+  MoreVertical,
+  Check
 } from 'lucide-react';
 import { deviceService } from '@/services/deviceService';
+import { sectionService } from '@/services/locationService';
+import { Section } from '@/types';
+import { useToast } from '@/contexts/ToastContext';
 
 interface EnvironmentData {
   temperature?: number;
@@ -41,6 +47,8 @@ interface EnvironmentPanelProps {
   lastUpdate?: Date;
   /** Callback para refrescar */
   onRefresh?: () => void;
+  /** Callback cuando se reasigna el dispositivo */
+  onReassign?: () => void;
 }
 
 // Rangos óptimos para cultivo
@@ -153,13 +161,23 @@ export default function EnvironmentPanel({
   status, 
   loading = false,
   lastUpdate,
-  onRefresh 
+  onRefresh,
+  onReassign
 }: EnvironmentPanelProps) {
+  const { toast } = useToast();
   // Hook de control (solo se usa si hay device)
   const { toggle, controlling } = useDeviceControl(device?.id || '');
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
   const [recordHistory, setRecordHistory] = useState<boolean>(device?.recordHistory ?? false);
   const [togglingHistory, setTogglingHistory] = useState(false);
+  
+  // Estados para reasignación
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [loadingSections, setLoadingSections] = useState(false);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [isReassigning, setIsReassigning] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Extraer y parsear valores del status (pueden venir como string o number)
   const temperature = status?.temperature !== undefined 
@@ -224,6 +242,45 @@ export default function EnvironmentPanel({
       setTogglingHistory(false);
     }
   }, [togglingHistory, recordHistory, device, onRefresh]);
+
+  // Función para abrir modal de reasignación
+  const openReassignModal = useCallback(async () => {
+    if (!device) return;
+    setShowMenu(false);
+    setShowReassignModal(true);
+    setSelectedSectionId(null);
+    setLoadingSections(true);
+    try {
+      const allSections = await sectionService.getAll();
+      // Filtrar la sección actual
+      setSections(allSections.filter(s => s.id !== device.sectionId));
+    } catch (err) {
+      console.error('Error cargando secciones:', err);
+      toast.error('Error al cargar las secciones disponibles');
+    } finally {
+      setLoadingSections(false);
+    }
+  }, [device, toast]);
+
+  // Función para reasignar el dispositivo
+  const handleReassign = useCallback(async () => {
+    if (!device || !selectedSectionId) return;
+
+    setIsReassigning(true);
+    try {
+      await deviceService.update(device.id, { sectionId: selectedSectionId });
+      setShowReassignModal(false);
+      setSelectedSectionId(null);
+      toast.success('Dispositivo reasignado correctamente');
+      onReassign?.();
+      onRefresh?.();
+    } catch (err) {
+      console.error('Error reasignando dispositivo:', err);
+      toast.error('Error al reasignar el dispositivo');
+    } finally {
+      setIsReassigning(false);
+    }
+  }, [device, selectedSectionId, toast, onReassign, onRefresh]);
 
   if (loading) {
     return (
@@ -304,11 +361,42 @@ export default function EnvironmentPanel({
               </button>
             )}
           </div>
-          {lastUpdate && (
-            <span className="text-xs text-zinc-500">
-              Actualizado: {lastUpdate.toLocaleTimeString()}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {lastUpdate && (
+              <span className="text-xs text-zinc-500">
+                Actualizado: {lastUpdate.toLocaleTimeString()}
+              </span>
+            )}
+            {/* Menú de opciones para reasignar */}
+            {device && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-1.5 rounded-lg hover:bg-zinc-700/50 transition-colors"
+                  title="Opciones del sensor"
+                >
+                  <MoreVertical className="w-4 h-4 text-zinc-400" />
+                </button>
+                {showMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowMenu(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-20 min-w-[150px] py-1">
+                      <button
+                        onClick={openReassignModal}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                      >
+                        <ArrowRightLeft className="w-4 h-4 text-cyan-400" />
+                        Reasignar sección
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -405,6 +493,111 @@ export default function EnvironmentPanel({
               )}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Modal de Reasignación de Dispositivo */}
+      {showReassignModal && device && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowReassignModal(false);
+              setSelectedSectionId(null);
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-zinc-800">
+              <h3 className="text-lg font-semibold text-white">Reasignar Dispositivo</h3>
+              <p className="text-sm text-zinc-400 mt-1">
+                {device.name} - Selecciona la nueva sección
+              </p>
+            </div>
+
+            <div className="p-4">
+              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <p className="text-xs text-amber-400">
+                  ⚠️ El historial de lecturas permanecerá asociado a la sección actual.
+                </p>
+              </div>
+
+              {loadingSections ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-cultivo-green-400 animate-spin" />
+                </div>
+              ) : sections.length === 0 ? (
+                <div className="text-center py-8 text-zinc-500">
+                  No hay otras secciones disponibles
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {sections.map((section) => (
+                    <button
+                      key={section.id}
+                      onClick={() => setSelectedSectionId(section.id)}
+                      disabled={isReassigning}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                        selectedSectionId === section.id
+                          ? 'bg-cyan-500/20 border-cyan-500 ring-2 ring-cyan-500/30'
+                          : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                      } ${isReassigning ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <ArrowRightLeft className={`w-5 h-5 ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-500'}`} />
+                      <div className="flex-1 text-left">
+                        <span className={`font-medium ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-300'}`}>
+                          {section.name}
+                        </span>
+                        {section.dimensions && (
+                          <span className="text-xs text-zinc-500 ml-2">({section.dimensions})</span>
+                        )}
+                      </div>
+                      {selectedSectionId === section.id && (
+                        <Check className="w-5 h-5 text-cyan-400" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowReassignModal(false);
+                  setSelectedSectionId(null);
+                }}
+                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                disabled={isReassigning}
+              >
+                Cancelar
+              </button>
+              {selectedSectionId && (
+                <button
+                  onClick={handleReassign}
+                  disabled={isReassigning}
+                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  {isReassigning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Reasignando...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="w-4 h-4" />
+                      Reasignar
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </motion.div>
         </div>
       )}
     </motion.div>

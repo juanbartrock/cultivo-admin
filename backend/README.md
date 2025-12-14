@@ -202,13 +202,105 @@ backend/
 │       ├── locations/          # Rooms + Sections
 │       ├── devices/            # Devices + IoT Gateway
 │       ├── grow/               # Cycles + Plants + Strains
-│       └── events/             # Events + Storage
+│       ├── events/             # Events + Storage
+│       ├── automations/        # Sistema de automatizaciones
+│       └── ai-assistant/       # Asistente IA con agente orquestado
+│           ├── tools/          # Herramientas del agente (17 tools)
+│           │   ├── plants.tools.ts
+│           │   ├── plans.tools.ts
+│           │   ├── infrastructure.tools.ts
+│           │   ├── automations.tools.ts
+│           │   ├── context.tools.ts
+│           │   ├── tool-registry.ts
+│           │   └── tool-executor.ts
+│           ├── agent-orchestrator.service.ts  # Loop del agente
+│           ├── ai-assistant.service.ts        # Servicio principal
+│           ├── memory.service.ts              # Gestión de memorias
+│           └── context-builder.service.ts     # Construcción de contexto
 ├── prisma/
 │   └── schema.prisma           # Schema de la DB
 ├── Dockerfile
 ├── env.example
 └── package.json
 ```
+
+## Asistente de IA
+
+El backend incluye un módulo completo de asistente de IA con arquitectura de agente orquestado.
+
+### Arquitectura
+
+El asistente utiliza **OpenAI Function Calling** para acceder dinámicamente a la información del sistema mediante herramientas especializadas. En lugar de hacer un "dump" masivo de contexto, el agente razona sobre qué información necesita y la obtiene bajo demanda.
+
+### Componentes Principales
+
+- **AgentOrchestratorService**: Maneja el loop del agente (máximo 10 iteraciones)
+- **ToolRegistry**: Registro central de todas las herramientas disponibles
+- **ToolExecutor**: Ejecuta las herramientas llamadas por el modelo
+- **MemoryService**: Gestiona memorias persistentes por conversación/ciclo/sección/planta
+- **Tools**: 17 herramientas especializadas organizadas por categoría
+
+### Herramientas Disponibles
+
+#### Plantas (4 herramientas)
+- `get_plant_details`: Detalles completos de una planta por código
+- `search_plants`: Buscar plantas por criterios múltiples
+- `get_plant_photos`: Obtener fotos del historial
+- `get_plant_events`: Historial de eventos de una planta
+
+#### Planes (4 herramientas)
+- `get_prevention_plan`: Plan de prevención completo con aplicaciones
+- `get_feeding_plan`: Plan de alimentación completo con semanas
+- `list_plans`: Listar todos los planes disponibles
+- `get_plants_by_plan`: Plantas asignadas a un plan
+
+#### Infraestructura (5 herramientas)
+- `get_system_overview`: Resumen general del sistema
+- `get_section_details`: Detalles de una sección/carpa
+- `get_section_devices`: Dispositivos de una sección
+- `get_sensor_readings`: Lecturas históricas de sensores
+- `get_active_cycle`: Información del ciclo activo
+
+#### Automatizaciones (3 herramientas)
+- `get_automation`: Detalles completos de una automatización
+- `list_automations`: Listar automatizaciones con filtros
+- `get_automation_executions`: Historial de ejecuciones
+
+#### Contexto (3 herramientas)
+- `search_memories`: Buscar en memorias del asistente
+- `get_conversation_history`: Historial de conversaciones
+- `get_recent_events`: Eventos recientes del sistema
+
+### Configuración
+
+```env
+# backend/.env
+OPENAI_API_KEY=sk-proj-...
+```
+
+### Logging Detallado
+
+El sistema incluye logging extensivo para análisis del flujo:
+
+- **AIAssistantService**: Logs de entrada/salida de solicitudes
+- **AgentOrchestratorService**: Logs del loop del agente, iteraciones, llamadas al LLM
+- **ToolExecutor**: Logs de ejecución de cada herramienta con parámetros y resultados
+
+Los logs incluyen:
+- Mensajes del usuario
+- Herramientas utilizadas y sus parámetros
+- Estructura de mensajes enviados al LLM
+- Iteraciones del agente
+- Tokens consumidos
+- Errores detallados
+
+### Modelo de Datos
+
+El asistente utiliza las siguientes tablas en Prisma:
+
+- **AIConversation**: Conversaciones con contexto (GENERAL, CYCLE, SECTION, PLANT)
+- **AIMessage**: Mensajes de usuario y asistente con imágenes
+- **AIMemory**: Memorias persistentes por tipo (CONVERSATION, CYCLE, SECTION, PLANT)
 
 ## Licencia
 

@@ -4,6 +4,8 @@ import { SocketProvider } from "@/contexts/SocketContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { DialogProvider } from "@/contexts/DialogContext";
+import { AIAssistantProvider } from "@/contexts/AIAssistantContext";
+import { AIAssistantBubble } from "@/components/ai-assistant";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -25,7 +27,10 @@ export default function RootLayout({
           <ToastProvider>
             <DialogProvider>
               <SocketProvider>
-                {children}
+                <AIAssistantProvider>
+                  {children}
+                  <AIAssistantBubble />
+                </AIAssistantProvider>
               </SocketProvider>
             </DialogProvider>
           </ToastProvider>

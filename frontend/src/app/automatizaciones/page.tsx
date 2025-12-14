@@ -117,6 +117,20 @@ export default function AutomatizacionesPage() {
     loadData();
   }, []);
 
+  // Cargar detalles automáticamente cuando se selecciona una automatización
+  useEffect(() => {
+    if (selectedAutomation?.id) {
+      // Cargar detalles completos incluyendo historial de ejecuciones
+      // El useEffect solo se ejecuta cuando cambia el ID, así que podemos actualizar selectedAutomation sin causar bucles
+      loadAutomationDetails(selectedAutomation.id, true);
+    } else {
+      // Limpiar datos cuando no hay automatización seleccionada
+      setExecutions([]);
+      setEffectiveness(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAutomation?.id]);
+
   async function loadData() {
     setIsLoading(true);
     setError(null);
@@ -142,7 +156,7 @@ export default function AutomatizacionesPage() {
     }
   }
 
-  async function loadAutomationDetails(id: string) {
+  async function loadAutomationDetails(id: string, updateSelected = true) {
     setIsLoadingDetails(true);
     try {
       const [details, execs, stats] = await Promise.all([
@@ -150,7 +164,9 @@ export default function AutomatizacionesPage() {
         automationService.getExecutions(id, { limit: 20 }),
         automationService.getEffectiveness(id)
       ]);
-      setSelectedAutomation(details);
+      if (updateSelected) {
+        setSelectedAutomation(details);
+      }
       setExecutions(execs);
       setEffectiveness(stats);
     } catch (err) {

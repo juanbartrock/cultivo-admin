@@ -3,6 +3,7 @@ import { ToolDefinition } from './types';
 
 /**
  * Crea las herramientas de contexto y memorias
+ * Todas filtran por userId para aislamiento de datos
  */
 export function createContextTools(prisma: PrismaService): ToolDefinition[] {
   return [
@@ -26,8 +27,10 @@ export function createContextTools(prisma: PrismaService): ToolDefinition[] {
         required: ['query'],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const query = params.query as string;
         const where: any = {
+          userId, // FILTRO POR USUARIO
           OR: [
             { summary: { contains: query, mode: 'insensitive' } },
           ],
@@ -71,10 +74,15 @@ export function createContextTools(prisma: PrismaService): ToolDefinition[] {
         required: [],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const limit = parseInt(params.limit as string) || 5;
 
+        // Solo conversaciones del usuario
         const conversations = await prisma.aIConversation.findMany({
-          where: { isActive: true },
+          where: { 
+            isActive: true,
+            userId, // FILTRO POR USUARIO
+          },
           include: {
             messages: {
               orderBy: { createdAt: 'desc' },
@@ -123,11 +131,18 @@ export function createContextTools(prisma: PrismaService): ToolDefinition[] {
         required: [],
       },
       handler: async (params) => {
+        const userId = params._userId;
         const days = parseInt(params.days as string) || 7;
         const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
         const where: any = {
           createdAt: { gte: startDate },
+          // Filtrar eventos de plantas del usuario
+          plant: {
+            section: {
+              room: { userId },
+            },
+          },
         };
 
         if (params.event_type) {
@@ -136,7 +151,10 @@ export function createContextTools(prisma: PrismaService): ToolDefinition[] {
 
         if (params.section_name) {
           const section = await prisma.section.findFirst({
-            where: { name: { contains: params.section_name as string, mode: 'insensitive' } },
+            where: { 
+              name: { contains: params.section_name as string, mode: 'insensitive' },
+              room: { userId },
+            },
           });
           if (section) {
             where.sectionId = section.id;

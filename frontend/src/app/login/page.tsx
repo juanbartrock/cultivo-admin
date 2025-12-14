@@ -1,140 +1,235 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Lock, User, Loader2, ArrowRight } from 'lucide-react';
+import { Leaf, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { authService } from '@/services/authService';
 
 export default function LoginPage() {
-    const [username, setUsername] = useState('admin');
-    const [password, setPassword] = useState('admin');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const { login } = useAuth();
+  const router = useRouter();
+  const { signIn, isAuthenticated, isLoading: authLoading, supabaseConfigured, refreshUser } = useAuth();
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Flag para evitar doble redirección
+  const [hasRedirected, setHasRedirected] = useState(false);
+  
+  // Helper para obtener la URL de la API
+  const getApiUrl = () => {
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
+    if (typeof window !== 'undefined') {
+      return `${window.location.protocol}//${window.location.hostname}:4000/api`;
+    }
+    return 'http://localhost:4000/api';
+  };
+  
+  // Login local (sin Supabase)
+  const handleLocalLogin = async (username: string, pass: string) => {
+    if (hasRedirected) return;
+    
+    setIsLoading(true);
+    setError('');
+    try {
+      const apiUrl = getApiUrl();
+      console.log('[Login] Calling API:', apiUrl);
+      const response = await fetch(`${apiUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password: pass }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[Login] Success, saving token');
+        localStorage.setItem('access_token', data.access_token);
+        
+        // Importante: cargar el perfil del usuario ANTES de redirigir
+        console.log('[Login] Loading user profile...');
+        await refreshUser();
+        console.log('[Login] Profile loaded, redirecting...');
+        
+        setHasRedirected(true);
+        // Usar replace en lugar de push para evitar volver atrás al login
+        router.replace('/');
+      } else {
+        setError('Credenciales incorrectas');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error('[Login] Error:', err);
+      setError('Error de conexión con el servidor');
+      setIsLoading(false);
+    }
+  };
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setIsLoading(true);
+  // Redirigir si ya está autenticado (solo una vez)
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && !hasRedirected) {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        console.log('[Login] Already authenticated, redirecting...');
+        setHasRedirected(true);
+        router.replace('/');
+      }
+    }
+  }, [isAuthenticated, authLoading, hasRedirected, router]);
 
-        try {
-            const { access_token } = await authService.login(username, password);
-            login(access_token);
-        } catch (err) {
-            console.error(err);
-            let errorMessage = 'Error al iniciar sesión. Intenta nuevamente.';
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    // Siempre intentar login local primero (funciona para todos los usuarios con password)
+    await handleLocalLogin(email, password);
+  };
 
-            if (err instanceof Error) {
-                // Si es un error de conexión (fetch failed) o similar
-                if (err.message.includes('Failed to fetch') || err.message.includes('Network request failed')) {
-                    errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión.';
-                } else if (err.message.includes('401') || err.message.includes('Credenciales')) {
-                    errorMessage = 'Credenciales inválidas. Intenta nuevamente.';
-                } else {
-                    errorMessage = err.message;
-                }
-            }
-
-            setError(errorMessage);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
+  if (authLoading) {
     return (
-        <div className="min-h-screen bg-cultivo-darker flex items-center justify-center p-4">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md"
-            >
-                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
-                    {/* Header */}
-                    <div className="p-8 bg-zinc-900/50 text-center border-b border-zinc-800">
-                        <div className="w-16 h-16 bg-cultivo-green-600/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Lock className="w-8 h-8 text-cultivo-green-500" />
-                        </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">Bienvenido</h1>
-                        <p className="text-zinc-400 text-sm">Ingresa tus credenciales para continuar</p>
-                    </div>
-
-                    {/* Form */}
-                    <div className="p-8">
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                    Usuario
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <User className="h-5 w-5 text-zinc-500" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        className="block w-full pl-10 pr-3 py-2 border border-zinc-700 rounded-lg focus:ring-cultivo-green-500 focus:border-cultivo-green-500 bg-zinc-800 text-white placeholder-zinc-500"
-                                        placeholder="Usuario"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                    Contraseña
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Lock className="h-5 w-5 text-zinc-500" />
-                                    </div>
-                                    <input
-                                        type="password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="block w-full pl-10 pr-3 py-2 border border-zinc-700 rounded-lg focus:ring-cultivo-green-500 focus:border-cultivo-green-500 bg-zinc-800 text-white placeholder-zinc-500"
-                                        placeholder="••••••••"
-                                    />
-                                </div>
-                            </div>
-
-                            {error && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    className="text-red-400 text-sm text-center"
-                                >
-                                    {error}
-                                </motion.div>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-cultivo-green-600 hover:bg-cultivo-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-cultivo-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {isLoading ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    <>
-                                        <span className="mr-2">Ingresar</span>
-                                        <ArrowRight className="w-4 h-4" />
-                                    </>
-                                )}
-                            </button>
-                        </form>
-                    </div>
-
-                    <div className="px-8 py-4 bg-zinc-900/50 border-t border-zinc-800 text-center">
-                        <p className="text-xs text-zinc-500">
-                            Credenciales Demo: admin / admin
-                        </p>
-                    </div>
-                </div>
-            </motion.div>
-        </div>
+      <div className="min-h-screen bg-cultivo-darker flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-cultivo-green-500 animate-spin" />
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-cultivo-darker flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-cultivo-green-600 to-cultivo-green-800 mb-4">
+            <Leaf className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white">Bienvenido</h1>
+          <p className="text-zinc-400 mt-1">Inicia sesión en tu cuenta</p>
+        </div>
+
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400"
+            >
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm">{error}</span>
+            </motion.div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
+              Email
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                required
+                className="w-full pl-10 pr-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">
+              Contraseña
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="w-full pl-10 pr-12 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Iniciando sesión...
+              </>
+            ) : (
+              'Iniciar sesión'
+            )}
+          </button>
+        </form>
+
+        {/* Link a registro - solo si Supabase está configurado */}
+        {supabaseConfigured && (
+          <p className="text-center text-zinc-400 mt-6">
+            ¿No tienes cuenta?{' '}
+            <Link
+              href="/register"
+              className="text-cultivo-green-400 hover:text-cultivo-green-300 font-medium"
+            >
+              Regístrate
+            </Link>
+          </p>
+        )}
+
+        {/* Separador y acceso rápido admin */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-zinc-700"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-cultivo-darker text-zinc-500">
+              {supabaseConfigured ? 'o' : 'acceso rápido'}
+            </span>
+          </div>
+        </div>
+
+        {/* Login de admin */}
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => handleLocalLogin('admin', 'admin')}
+            disabled={isLoading}
+            className="flex items-center justify-center gap-2 w-full py-3 bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700 text-zinc-300 rounded-lg transition-colors"
+          >
+            <User className="w-5 h-5" />
+            Entrar como Administrador
+          </button>
+          {!supabaseConfigured && (
+            <p className="text-xs text-zinc-500 mt-2">
+              Usuario: admin / Contraseña: admin
+            </p>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
 }
