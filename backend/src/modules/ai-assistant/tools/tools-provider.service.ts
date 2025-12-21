@@ -6,6 +6,7 @@ import { createPlanTools } from './plans.tools';
 import { createInfrastructureTools } from './infrastructure.tools';
 import { createAutomationTools } from './automations.tools';
 import { createContextTools } from './context.tools';
+import { createAutonomousProposalTools } from './autonomous-proposal.tools';
 
 /**
  * Proveedor que inicializa y registra todas las herramientas disponibles
@@ -50,6 +51,11 @@ export class ToolsProviderService implements OnModuleInit {
     const contextTools = createContextTools(this.prisma);
     this.toolRegistry.registerAll(contextTools);
     this.logger.log(`Registered ${contextTools.length} context tools`);
+
+    // Herramientas de propuestas autónomas
+    const autonomousTools = createAutonomousProposalTools(this.prisma);
+    this.toolRegistry.registerAll(autonomousTools);
+    this.logger.log(`Registered ${autonomousTools.length} autonomous proposal tools`);
 
     this.logger.log(`Total tools registered: ${this.toolRegistry.count()}`);
     this.logger.log(`Available tools: ${this.toolRegistry.getToolNames().join(', ')}`);

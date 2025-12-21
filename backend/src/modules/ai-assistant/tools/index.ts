@@ -7,3 +7,4 @@ export * from './plans.tools';
 export * from './infrastructure.tools';
 export * from './automations.tools';
 export * from './context.tools';
+export * from './autonomous-proposal.tools';

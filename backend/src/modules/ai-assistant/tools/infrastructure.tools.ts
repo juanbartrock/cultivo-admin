@@ -393,7 +393,7 @@ export function createInfrastructureTools(prisma: PrismaService): ToolDefinition
               tagCode: p.tagCode,
               strain: p.strain.name,
               stage: p.stage,
-              section: p.section.name,
+              section: p.section?.name ?? 'Sin sección',
             })),
           })),
         };

@@ -3,17 +3,37 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useAIAssistant } from '@/contexts/AIAssistantContext';
 import { useScreenCapture, dataUrlToBase64, resizeImage } from '@/hooks/useScreenCapture';
+import { VoiceButton } from './VoiceButton';
 
 interface AIAssistantInputProps {
   onSend: (message: string) => void;
   disabled?: boolean;
+  lastAssistantMessage?: string;
+  lastAssistantMessageId?: string;
+  ttsEnabled?: boolean;
+  onToggleTts?: () => void;
 }
 
-export function AIAssistantInput({ onSend, disabled }: AIAssistantInputProps) {
+export function AIAssistantInput({ 
+  onSend, 
+  disabled, 
+  lastAssistantMessage,
+  lastAssistantMessageId,
+  ttsEnabled,
+  onToggleTts,
+}: AIAssistantInputProps) {
   const [message, setMessage] = useState('');
   const [showImageOptions, setShowImageOptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Handler para cuando se recibe una transcripción de voz
+  const handleVoiceTranscript = useCallback((transcript: string) => {
+    // Enviar directamente el mensaje de voz
+    if (transcript.trim()) {
+      onSend(transcript);
+    }
+  }, [onSend]);
 
   const { 
     attachedImages, 
@@ -176,6 +196,18 @@ export function AIAssistantInput({ onSend, disabled }: AIAssistantInputProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
           </svg>
         </button>
+
+        {/* Botón de voz */}
+        <div className="relative">
+          <VoiceButton
+            onTranscript={handleVoiceTranscript}
+            disabled={disabled}
+            lastAssistantMessage={lastAssistantMessage}
+            lastAssistantMessageId={lastAssistantMessageId}
+            ttsEnabled={ttsEnabled}
+            onToggleTts={onToggleTts}
+          />
+        </div>
 
         {/* Textarea */}
         <div className="flex-1 relative">

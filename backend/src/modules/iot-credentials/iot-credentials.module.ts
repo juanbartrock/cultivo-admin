@@ -11,3 +11,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
   exports: [IoTCredentialsService],
 })
 export class IoTCredentialsModule {}
+
+
+
+

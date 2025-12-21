@@ -18,6 +18,8 @@ services:
       - MS_TUYA_URL=http://tuya-service:3000
       - MS_TAPO_URL=http://tapo-service:3000
       # - MS_ESP32_URL=http://esp32-service:3000
+      # Google Cloud TTS (Chirp3-HD)
+      - GOOGLE_CLOUD_TTS_API_KEY=AIzaSyAbsmI5jHkv_-DK6EviDIjckitL1S8_P2w
     networks:
       - cultivo-network
     extra_hosts:

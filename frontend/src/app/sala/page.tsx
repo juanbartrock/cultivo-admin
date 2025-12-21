@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Thermometer, Droplets, Activity, Tent, MapPin, Loader2, AlertCircle, Plus, RefreshCw, Home, ChevronRight, Building2, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
@@ -13,9 +14,24 @@ import { useWeather } from '@/hooks/useWeather';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
 import { Room, Section, Device, DeviceStatus } from '@/types';
 
+// Wrapper con Suspense para manejar useSearchParams
 export default function SalaPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-[50vh]">
+        <Loader2 className="w-12 h-12 text-cultivo-green-500 animate-spin mb-4" />
+        <p className="text-zinc-400">Cargando sala de cultivo...</p>
+      </div>
+    }>
+      <SalaPageContent />
+    </Suspense>
+  );
+}
+
+function SalaPageContent() {
   // Estado de datos
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
@@ -36,10 +52,10 @@ export default function SalaPage() {
     { pollingInterval: 30000, autoRefresh: true }
   );
 
-  // Cargar datos
+  // Cargar datos (incluyendo roomId de la URL si existe)
   useEffect(() => {
     loadData();
-  }, []);
+  }, [searchParams]);
 
   // Cargar secciones cuando cambia la sala seleccionada
   useEffect(() => {
@@ -60,9 +76,20 @@ export default function SalaPage() {
       setRooms(roomsData);
 
       if (roomsData.length > 0) {
-        // Seleccionar la primera sala por defecto
-        const firstRoom = await roomService.getById(roomsData[0].id);
-        setSelectedRoom(firstRoom);
+        // Verificar si hay un roomId en la URL para seleccionar esa sala
+        const roomIdFromUrl = searchParams.get('roomId');
+        let roomToSelect = roomsData[0]; // Por defecto, la primera sala
+        
+        if (roomIdFromUrl) {
+          // Buscar la sala por ID en los datos cargados
+          const foundRoom = roomsData.find(r => r.id === roomIdFromUrl);
+          if (foundRoom) {
+            roomToSelect = foundRoom;
+          }
+        }
+        
+        const selectedRoomData = await roomService.getById(roomToSelect.id);
+        setSelectedRoom(selectedRoomData);
       } else {
         setSelectedRoom(null);
         setSections([]);

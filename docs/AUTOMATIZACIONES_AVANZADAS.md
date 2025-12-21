@@ -325,3 +325,7 @@ Sistema implementado como mejora del sistema de automatizaciones existente.
 **Nota:** Esta documentación describe los cambios realizados. Para más detalles sobre el uso del sistema, consulta la interfaz de usuario en `/automatizaciones`.
 
 
+
+
+
+

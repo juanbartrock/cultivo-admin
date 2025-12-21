@@ -2227,6 +2227,65 @@ export default function CarpaDetailPage() {
                                         </div>
                                       );
                                     })()}
+                                    {/* Análisis IA */}
+                                    {event.type === 'AI_ANALYSIS' && event.data && (() => {
+                                      const data = event.data as {
+                                        analysisType?: string;
+                                        summary?: string;
+                                        analysis?: string;
+                                        recommendations?: string[];
+                                        healthScore?: number;
+                                        urgentIssues?: string[];
+                                      };
+                                      return (
+                                        <div className="space-y-2">
+                                          <div className="flex items-center gap-2">
+                                            {data.analysisType && (
+                                              <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-[10px]">
+                                                {data.analysisType}
+                                              </span>
+                                            )}
+                                            {data.healthScore && (
+                                              <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                                                data.healthScore >= 8 ? 'bg-green-500/20 text-green-300' :
+                                                data.healthScore >= 6 ? 'bg-yellow-500/20 text-yellow-300' :
+                                                'bg-red-500/20 text-red-300'
+                                              }`}>
+                                                Salud: {data.healthScore}/10
+                                              </span>
+                                            )}
+                                          </div>
+                                          {data.summary && (
+                                            <p className="text-zinc-300 text-xs line-clamp-2">
+                                              {data.summary}
+                                            </p>
+                                          )}
+                                          {data.urgentIssues && data.urgentIssues.length > 0 && (
+                                            <div className="mt-1.5 p-1.5 bg-red-500/10 border border-red-500/30 rounded">
+                                              <p className="text-[10px] text-red-300 font-medium">⚠️ Problemas urgentes:</p>
+                                              <ul className="text-[10px] text-red-300/80 list-disc list-inside">
+                                                {data.urgentIssues.slice(0, 2).map((issue, idx) => (
+                                                  <li key={idx}>{issue}</li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          )}
+                                          {data.recommendations && data.recommendations.length > 0 && (
+                                            <div className="mt-1">
+                                              <p className="text-[10px] text-zinc-500">Recomendaciones:</p>
+                                              <ul className="text-[10px] text-zinc-400 list-disc list-inside">
+                                                {data.recommendations.slice(0, 2).map((rec, idx) => (
+                                                  <li key={idx} className="truncate">{rec}</li>
+                                                ))}
+                                                {data.recommendations.length > 2 && (
+                                                  <li className="text-indigo-400">+{data.recommendations.length - 2} más...</li>
+                                                )}
+                                              </ul>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                   </div>
                                 )}
                               </div>

@@ -42,7 +42,11 @@ export type EventType =
   | 'NOTA'
   | 'FOTO'
   | 'PARAMETRO_AMBIENTAL'
-  | 'CAMBIO_FOTOPERIODO';
+  | 'CAMBIO_FOTOPERIODO'
+  | 'AI_ANALYSIS';
+
+// Tipo de análisis IA
+export type AnalysisType = 'NUTRICION' | 'PREVENCION' | 'VEGETATIVO' | 'FLORACION' | 'GENERAL';
 
 
 
@@ -699,9 +703,9 @@ export function etapaPlantaToPlantStage(etapa: EtapaPlanta): PlantStage {
 // AUTOMATIZACIONES
 // ============================================
 
-export type AutomationStatus = 'ACTIVE' | 'PAUSED' | 'DISABLED';
+export type AutomationStatus = 'ACTIVE' | 'PAUSED' | 'DISABLED' | 'PENDING_APPROVAL';
 export type ConditionOperator = 'GREATER_THAN' | 'LESS_THAN' | 'EQUALS' | 'NOT_EQUALS' | 'BETWEEN' | 'OUTSIDE';
-export type ActionType = 'TURN_ON' | 'TURN_OFF' | 'TOGGLE' | 'CAPTURE_PHOTO' | 'TRIGGER_IRRIGATION';
+export type ActionType = 'TURN_ON' | 'TURN_OFF' | 'TOGGLE' | 'CAPTURE_PHOTO' | 'TRIGGER_IRRIGATION' | 'AI_PLANT_ANALYSIS';
 export type ExecutionStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 export type TriggerType = 'SCHEDULED' | 'CONDITION' | 'HYBRID';
 export type ScheduleType = 'TIME_RANGE' | 'INTERVAL' | 'SPECIFIC_TIMES';
@@ -785,6 +789,15 @@ export interface Automation {
   allowOverlap: boolean;
   notifications: boolean;
   plantIds: string[]; // IDs de plantas asociadas (para automatizaciones de fotos)
+  
+  // Configuración de análisis IA (solo para AI_PLANT_ANALYSIS)
+  analysisType?: AnalysisType;
+  analysisIncludePhotos?: boolean;
+  analysisIncludeFeedingPlans?: boolean;
+  analysisIncludePreventionPlans?: boolean;
+  analysisIncludeEvents?: boolean;
+  analysisCustomPrompt?: string;
+  
   dependsOnId?: string;
   dependsOn?: Automation;
   conditions: AutomationCondition[];
@@ -796,6 +809,15 @@ export interface Automation {
   _count?: {
     executions: number;
   };
+  
+  // Campos de propuesta de IA
+  proposedByAI?: boolean;
+  aiReason?: string;
+  aiConfidence?: number;
+  aiContextSnapshot?: Record<string, unknown>;
+  proposedAt?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
 }
 
 export interface CreateAutomationDto {
@@ -824,6 +846,15 @@ export interface CreateAutomationDto {
   allowOverlap?: boolean;
   notifications?: boolean;
   plantIds?: string[]; // IDs de plantas para registrar eventos (ej: para fotos)
+  
+  // Configuración de análisis IA (solo para AI_PLANT_ANALYSIS)
+  analysisType?: AnalysisType;
+  analysisIncludePhotos?: boolean;
+  analysisIncludeFeedingPlans?: boolean;
+  analysisIncludePreventionPlans?: boolean;
+  analysisIncludeEvents?: boolean;
+  analysisCustomPrompt?: string;
+  
   dependsOnId?: string;
 
   // Condiciones (opcionales para SCHEDULED)
@@ -840,7 +871,7 @@ export interface CreateAutomationDto {
   }[];
 
   actions: {
-    deviceId: string;
+    deviceId?: string; // Opcional para AI_PLANT_ANALYSIS
     actionType: ActionType;
     duration?: number;
     delayMinutes?: number;
@@ -853,7 +884,7 @@ export interface CreateAutomationDto {
 // NOTIFICACIONES
 // ============================================
 
-export type NotificationType = 'AUTOMATION' | 'FEEDING_PLAN' | 'PREVENTION_PLAN' | 'MILESTONE' | 'ALERT' | 'SYSTEM';
+export type NotificationType = 'AUTOMATION' | 'FEEDING_PLAN' | 'PREVENTION_PLAN' | 'MILESTONE' | 'ALERT' | 'SYSTEM' | 'WEATHER';
 export type NotificationPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface Notification {

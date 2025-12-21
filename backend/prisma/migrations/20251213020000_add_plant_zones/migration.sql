@@ -17,3 +17,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "plant_zones_plant_id_zone_key" ON "plant_zone
 
 -- AddForeignKey: Relación con tabla plants
 ALTER TABLE "plant_zones" ADD CONSTRAINT "plant_zones_plant_id_fkey" FOREIGN KEY ("plant_id") REFERENCES "plants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+
+
+

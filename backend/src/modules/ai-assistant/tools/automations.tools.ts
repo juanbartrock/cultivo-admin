@@ -95,8 +95,8 @@ export function createAutomationTools(prisma: PrismaService): ToolDefinition[] {
             logicOperator: c.logicOperator,
           })),
           actions: automation.actions.map((a) => ({
-            device: a.device.name,
-            deviceType: a.device.type,
+            device: a.device?.name || 'N/A',
+            deviceType: a.device?.type || 'N/A',
             actionType: a.actionType,
             duration: a.duration,
             delayMinutes: a.delayMinutes,

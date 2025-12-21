@@ -74,7 +74,9 @@ export default function DoorAnimation() {
     setSelectedRoomId(roomId || null);
     // Navegar después de que la animación comience
     setTimeout(() => {
-      router.push('/sala');
+      // Pasar el roomId como query param para que la página de sala lo use
+      const url = roomId ? `/sala?roomId=${roomId}` : '/sala';
+      router.push(url);
     }, 800);
   };
 
@@ -150,60 +152,35 @@ export default function DoorAnimation() {
         )}
       </AnimatePresence>
 
-      {/* Contenido principal */}
+      {/* Contenido principal - Layout de dos columnas */}
       <AnimatePresence>
         {!isOpening && (
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative z-30 min-h-screen flex flex-col items-center px-4 py-8"
+            className="relative z-30 h-screen flex"
           >
-            {/* Header con opciones de usuario */}
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="w-full max-w-2xl flex justify-end gap-2 mb-4"
-            >
-              {isAdmin && (
-                <button
-                  onClick={() => router.push('/admin/usuarios')}
-                  className="flex items-center gap-2 px-3 py-2 text-sm bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white rounded-lg transition-colors"
-                >
-                  <Settings className="w-4 h-4" />
-                  Admin
-                </button>
-              )}
-              <button
-                onClick={signOut}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-zinc-800/50 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Salir
-              </button>
-            </motion.div>
-
-            {/* Sección superior - Logo y saludo */}
-            <div className="flex flex-col items-center mt-4">
-              {/* Logo/Icono */}
+            {/* === PUERTA IZQUIERDA: Info y bienvenida === */}
+            <div className="w-1/2 h-full flex flex-col justify-center items-center px-8 lg:px-12">
+              {/* Logo */}
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="mb-6"
+                className="mb-8"
               >
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cultivo-green-600 to-cultivo-green-800 flex items-center justify-center shadow-lg shadow-cultivo-green-900/50">
-                  <Leaf className="w-10 h-10 text-white" />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cultivo-green-600 to-cultivo-green-800 flex items-center justify-center shadow-xl shadow-cultivo-green-900/30">
+                  <Leaf className="w-12 h-12 text-white" />
                 </div>
               </motion.div>
 
-              {/* Saludo personalizado */}
+              {/* Saludo */}
               <motion.h1
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-3xl md:text-4xl font-bold text-center text-white mb-2"
+                className="text-2xl lg:text-3xl font-bold text-center text-white mb-4"
               >
                 Bienvenido, <span className="text-cultivo-green-400">{displayName}</span>
               </motion.h1>
@@ -213,7 +190,7 @@ export default function DoorAnimation() {
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-zinc-400 text-lg text-center"
+                className="text-zinc-400 text-lg text-center mb-2"
               >
                 ¿A qué sala quieres ingresar?
               </motion.p>
@@ -223,103 +200,141 @@ export default function DoorAnimation() {
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.45 }}
-                className="text-zinc-500 text-sm capitalize mt-1"
+                className="text-zinc-500 text-sm capitalize"
               >
                 {currentDate}
               </motion.p>
-            </div>
 
-            {/* Lista de salas */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="w-full max-w-md mt-10 flex-1"
-            >
-              {isLoadingRooms ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-8 h-8 text-cultivo-green-500 animate-spin" />
-                </div>
-              ) : rooms.length > 0 ? (
-                <div className="space-y-3">
-                  {rooms.map((room, index) => (
-                    <motion.button
-                      key={room.id}
-                      initial={{ x: -20, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.6 + index * 0.1 }}
-                      onClick={() => handleEnterRoom(room.id)}
-                      className="w-full group flex items-center gap-4 p-4 bg-zinc-800/50 hover:bg-cultivo-green-600/20 border border-zinc-700/50 hover:border-cultivo-green-500/50 rounded-xl transition-all duration-300"
-                    >
-                      <div className="w-12 h-12 rounded-lg bg-cultivo-green-600/20 flex items-center justify-center group-hover:bg-cultivo-green-600/30 transition-colors">
-                        <Home className="w-6 h-6 text-cultivo-green-400" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <h3 className="text-lg font-semibold text-white group-hover:text-cultivo-green-400 transition-colors">
-                          {room.name}
-                        </h3>
-                        {room.description && (
-                          <p className="text-sm text-zinc-400">{room.description}</p>
-                        )}
-                        <p className="text-xs text-zinc-500 mt-1">
-                          {room.sections?.length || 0} unidad(es) de cultivo
-                        </p>
-                      </div>
-                      <Sprout className="w-5 h-5 text-zinc-500 group-hover:text-cultivo-green-400 transition-colors" />
-                    </motion.button>
-                  ))}
-                </div>
-              ) : (
+              {/* Plan del usuario - en la parte inferior izquierda */}
+              {user && (
                 <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="text-center py-8"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-8"
                 >
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-800/50 flex items-center justify-center">
-                    <Home className="w-8 h-8 text-zinc-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    No tienes salas creadas
-                  </h3>
-                  <p className="text-zinc-400 mb-4">
-                    Crea tu primera sala para comenzar a gestionar tu cultivo
-                  </p>
+                  <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
+                    user.subscriptionTier === 'PREMIUM' 
+                      ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' 
+                      : user.subscriptionTier === 'PRO'
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      : 'bg-zinc-700/50 text-zinc-400 border border-zinc-600/30'
+                  }`}>
+                    Plan {user.subscriptionTier}
+                  </span>
                 </motion.div>
               )}
+            </div>
 
-              {/* Botón crear sala */}
-              <motion.button
-                initial={{ y: 20, opacity: 0 }}
+            {/* === PUERTA DERECHA: Lista de salas === */}
+            <div className="w-1/2 h-full flex flex-col justify-center px-8 lg:px-12">
+              {/* Header con botones de usuario */}
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7 }}
-                onClick={handleCreateRoom}
-                className="w-full mt-4 flex items-center justify-center gap-3 p-4 bg-zinc-800/30 hover:bg-cultivo-green-600/20 border border-dashed border-zinc-700/50 hover:border-cultivo-green-500/50 rounded-xl text-zinc-400 hover:text-cultivo-green-400 transition-all duration-300"
+                transition={{ delay: 0.1 }}
+                className="absolute top-4 right-4 flex gap-2"
               >
-                <Plus className="w-5 h-5" />
-                <span>{rooms.length > 0 ? 'Crear otra sala' : 'Crear mi primera sala'}</span>
-              </motion.button>
-            </motion.div>
+                {isAdmin && (
+                  <button
+                    onClick={() => router.push('/admin/usuarios')}
+                    className="flex items-center gap-2 px-3 py-2 text-sm bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-400 hover:text-white rounded-lg transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Admin
+                  </button>
+                )}
+                <button
+                  onClick={signOut}
+                  className="flex items-center gap-2 px-3 py-2 text-sm bg-zinc-800/50 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Salir
+                </button>
+              </motion.div>
 
-            {/* Suscripción del usuario */}
-            {user && (
+              {/* Lista de salas */}
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="mt-6 text-center"
+                transition={{ delay: 0.5 }}
+                className="w-full max-w-md mx-auto"
               >
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                  user.subscriptionTier === 'PREMIUM' 
-                    ? 'bg-yellow-500/20 text-yellow-400' 
-                    : user.subscriptionTier === 'PRO'
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'bg-zinc-700/50 text-zinc-400'
-                }`}>
-                  Plan {user.subscriptionTier}
-                </span>
+                {isLoadingRooms ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-8 h-8 text-cultivo-green-500 animate-spin" />
+                  </div>
+                ) : rooms.length > 0 ? (
+                  <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+                    {rooms.map((room, index) => (
+                      <motion.button
+                        key={room.id}
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.6 + index * 0.1 }}
+                        onClick={() => handleEnterRoom(room.id)}
+                        className="w-full group flex items-center gap-4 p-4 bg-zinc-800/60 hover:bg-cultivo-green-600/15 border border-zinc-700/50 hover:border-cultivo-green-500/50 rounded-xl transition-all duration-300"
+                      >
+                        {/* Icono */}
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cultivo-green-600/30 to-cultivo-green-800/20 flex items-center justify-center group-hover:from-cultivo-green-600/40 group-hover:to-cultivo-green-700/30 transition-all border border-cultivo-green-600/20 flex-shrink-0">
+                          <Home className="w-6 h-6 text-cultivo-green-400" />
+                        </div>
+                        
+                        {/* Contenido */}
+                        <div className="flex-1 text-left min-w-0">
+                          <h3 className="text-base font-semibold text-white group-hover:text-cultivo-green-400 transition-colors truncate">
+                            {room.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            {room.description && (
+                              <p className="text-xs text-zinc-500 truncate max-w-[150px]">{room.description}</p>
+                            )}
+                            <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                              <Sprout className="w-3 h-3 text-cultivo-green-500" />
+                              {room.sections?.length || 0}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Flecha */}
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-700/30 group-hover:bg-cultivo-green-600/20 flex items-center justify-center transition-all">
+                          <Sprout className="w-4 h-4 text-zinc-500 group-hover:text-cultivo-green-400 transition-colors" />
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                ) : (
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    className="text-center py-6"
+                  >
+                    <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-zinc-800/50 flex items-center justify-center">
+                      <Home className="w-7 h-7 text-zinc-500" />
+                    </div>
+                    <h3 className="text-base font-semibold text-white mb-1">
+                      No tienes salas creadas
+                    </h3>
+                    <p className="text-zinc-400 text-sm">
+                      Crea tu primera sala para comenzar
+                    </p>
+                  </motion.div>
+                )}
+
+                {/* Botón crear sala */}
+                <motion.button
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                  onClick={handleCreateRoom}
+                  className="w-full mt-3 flex items-center justify-center gap-2 p-3 bg-zinc-800/30 hover:bg-cultivo-green-600/20 border border-dashed border-zinc-700/50 hover:border-cultivo-green-500/50 rounded-xl text-zinc-400 hover:text-cultivo-green-400 transition-all duration-300 text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{rooms.length > 0 ? 'Crear otra sala' : 'Crear mi primera sala'}</span>
+                </motion.button>
               </motion.div>
-            )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

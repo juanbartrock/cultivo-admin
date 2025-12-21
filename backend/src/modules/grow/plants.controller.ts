@@ -93,6 +93,18 @@ export class PlantsController {
     return this.growService.movePlant(id, movePlantDto);
   }
 
+  @Patch(':id/dissociate')
+  @ApiOperation({
+    summary: 'Desasociar planta de su sección',
+    description: 'Remueve la planta de la sección pero mantiene el registro en el ciclo. Útil cuando una planta muere o se retira.',
+  })
+  @ApiResponse({ status: 200, description: 'Planta desasociada exitosamente' })
+  @ApiResponse({ status: 404, description: 'Planta no encontrada' })
+  @ApiResponse({ status: 400, description: 'La planta no está asociada a ninguna sección' })
+  async dissociate(@Param('id', ParseUUIDPipe) id: string) {
+    return this.growService.dissociateFromSection(id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar una planta' })
   @ApiResponse({ status: 200, description: 'Planta eliminada exitosamente' })

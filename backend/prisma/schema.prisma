@@ -169,7 +169,7 @@ model Plant {
   tagCode         String                @unique @map("tag_code")
   strainId        String                @map("strain_id")
   cycleId         String                @map("cycle_id")
-  sectionId       String                @map("section_id")
+  sectionId       String?               @map("section_id")
   stage           PlantStage            @default(GERMINACION)
   sex             PlantSex              @default(UNKNOWN)
   photo           String?
@@ -186,7 +186,7 @@ model Plant {
   preventionPlans PlantPreventionPlan[]
   zones           PlantZone[]
   cycle           Cycle                 @relation(fields: [cycleId], references: [id], onDelete: Cascade)
-  section         Section               @relation(fields: [sectionId], references: [id])
+  section         Section?              @relation(fields: [sectionId], references: [id])
   strain          Strain                @relation(fields: [strainId], references: [id])
 
   @@map("plants")
@@ -350,6 +350,24 @@ model Automation {
   specificTimes   String[]              @default([]) @map("specific_times")
   triggerType     TriggerType           @default(CONDITION) @map("trigger_type")
   plantIds        String[]              @default([]) @map("plant_ids")
+  
+  // Configuración de análisis IA (solo para AI_PLANT_ANALYSIS)
+  analysisType                   AnalysisType? @map("analysis_type")
+  analysisIncludePhotos          Boolean       @default(true) @map("analysis_include_photos")
+  analysisIncludeFeedingPlans    Boolean       @default(true) @map("analysis_include_feeding")
+  analysisIncludePreventionPlans Boolean       @default(true) @map("analysis_include_prevention")
+  analysisIncludeEvents          Boolean       @default(true) @map("analysis_include_events")
+  analysisCustomPrompt           String?       @map("analysis_custom_prompt")
+  
+  // Campos para propuestas de IA (cuando status = PENDING_APPROVAL)
+  proposedByAI      Boolean   @default(false) @map("proposed_by_ai")
+  aiReason          String?   @map("ai_reason")        /// Justificación de la IA para proponer esta automatización
+  aiConfidence      Float?    @map("ai_confidence")    /// Nivel de confianza 0-1
+  aiContextSnapshot Json?     @map("ai_context")       /// Contexto del sistema cuando se propuso
+  proposedAt        DateTime? @map("proposed_at")      /// Fecha de propuesta
+  reviewedAt        DateTime? @map("reviewed_at")      /// Fecha de revisión (aprobación/rechazo)
+  reviewedBy        String?   @map("reviewed_by")      /// userId que revisó
+  
   actions         AutomationAction[]
   conditions      AutomationCondition[]
   executions      AutomationExecution[]
@@ -386,14 +404,14 @@ model AutomationCondition {
 model AutomationAction {
   id           String     @id @default(uuid())
   automationId String     @map("automation_id")
-  deviceId     String     @map("device_id")
+  deviceId     String?    @map("device_id") // Opcional para AI_PLANT_ANALYSIS
   actionType   ActionType @map("action_type")
   duration     Int?
   order        Int        @default(0)
   delayMinutes Int?       @map("delay_minutes")
   value        Float?
   automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  device       Device     @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  device       Device?    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@index([automationId])
   @@map("automation_actions")
@@ -501,6 +519,7 @@ model Notification {
   read      Boolean              @default(false)
   actionUrl String?              @map("action_url")
   metadata  Json?
+  dedupeKey String?              @map("dedupe_key") /// Clave para deduplicación de notificaciones similares
   createdAt DateTime             @default(now()) @map("created_at")
   userId    String?              @map("user_id")
   user      User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -509,6 +528,7 @@ model Notification {
   @@index([read])
   @@index([type])
   @@index([createdAt])
+  @@index([dedupeKey, createdAt])
   @@map("notifications")
 }
 
@@ -604,6 +624,30 @@ model AIMemory {
   @@map("ai_memories")
 }
 
+/// Datos meteorológicos - Historial del clima exterior
+model WeatherData {
+  id            String   @id @default(uuid())
+  temperature   Float
+  feelsLike     Float    @map("feels_like")
+  humidity      Float
+  pressure      Float
+  windSpeed     Float    @map("wind_speed")
+  windDeg       Float?   @map("wind_deg")
+  clouds        Float?
+  visibility    Float?
+  description   String
+  icon          String
+  alerts        Json?
+  forecastDaily Json?    @map("forecast_daily")
+  location      String
+  latitude      Float
+  longitude     Float
+  recordedAt    DateTime @default(now()) @map("recorded_at")
+
+  @@index([recordedAt])
+  @@map("weather_data")
+}
+
 enum SubscriptionTier {
   BASIC
   PRO
@@ -680,12 +724,14 @@ enum EventType {
   FOTO
   PARAMETRO_AMBIENTAL
   CAMBIO_MACETA
+  AI_ANALYSIS
 }
 
 enum AutomationStatus {
   ACTIVE
   PAUSED
   DISABLED
+  PENDING_APPROVAL  /// Propuesta por IA, esperando aprobación del usuario
 }
 
 enum ConditionOperator {
@@ -703,6 +749,7 @@ enum ActionType {
   TOGGLE
   CAPTURE_PHOTO
   TRIGGER_IRRIGATION
+  AI_PLANT_ANALYSIS
 }
 
 enum TriggerType {
@@ -748,6 +795,7 @@ enum NotificationType {
   MILESTONE
   ALERT
   SYSTEM
+  WEATHER
 }
 
 enum NotificationPriority {
@@ -805,4 +853,12 @@ enum AIMemoryType {
   CYCLE
   SECTION
   PLANT
+}
+
+enum AnalysisType {
+  NUTRICION
+  PREVENCION
+  VEGETATIVO
+  FLORACION
+  GENERAL
 }

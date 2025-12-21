@@ -242,12 +242,14 @@ export class GrowService {
       throw new NotFoundException(`Cycle with ID ${data.cycleId} not found`);
     }
 
-    // Verificar que existe la sección
-    const section = await this.prisma.section.findUnique({
-      where: { id: data.sectionId },
-    });
-    if (!section) {
-      throw new NotFoundException(`Section with ID ${data.sectionId} not found`);
+    // Verificar que existe la sección (si se proporciona)
+    if (data.sectionId) {
+      const section = await this.prisma.section.findUnique({
+        where: { id: data.sectionId },
+      });
+      if (!section) {
+        throw new NotFoundException(`Section with ID ${data.sectionId} not found`);
+      }
     }
 
     // Validar zonas si se proporcionan
@@ -514,11 +516,63 @@ export class GrowService {
   }
 
   /**
+   * Desasociar planta de una sección (mantiene el registro en el ciclo)
+   * Útil cuando una planta muere o se retira pero se quiere mantener el historial
+   */
+  async dissociateFromSection(plantId: string) {
+    const plant = await this.findPlantById(plantId);
+
+    if (!plant.sectionId) {
+      throw new BadRequestException('Plant is not associated with any section');
+    }
+
+    // Crear evento de desasociación
+    await this.prisma.event.create({
+      data: {
+        type: 'NOTA',
+        plantId: plantId,
+        cycleId: plant.cycleId,
+        sectionId: plant.sectionId, // Guardar la sección anterior
+        data: {
+          note: 'Planta desasociada de la sección',
+          previousSectionId: plant.sectionId,
+          reason: 'dissociate',
+        },
+      },
+    });
+
+    // Actualizar la planta para quitar la sección
+    const updatedPlant = await this.prisma.plant.update({
+      where: { id: plantId },
+      data: {
+        sectionId: null,
+      },
+      include: {
+        strain: true,
+        cycle: true,
+        section: true,
+        zones: true,
+      },
+    });
+
+    // Eliminar todas las zonas asignadas ya que no tiene sección
+    await this.prisma.plantZone.deleteMany({
+      where: { plantId },
+    });
+
+    return updatedPlant;
+  }
+
+  /**
    * Obtiene el PPFD actual de las zonas asignadas a una planta
    * Calcula un promedio ponderado basado en el coverage de cada zona
    */
   async getPlantPPFD(plantId: string) {
     const plant = await this.findPlantById(plantId);
+
+    if (!plant.sectionId) {
+      return null; // La planta no está asociada a una sección
+    }
 
     if (!plant.zones || plant.zones.length === 0) {
       return null; // La planta no tiene zonas asignadas
@@ -529,7 +583,7 @@ export class GrowService {
       plant.zones.map(async (plantZone) => {
         const reading = await this.prisma.pPFDReading.findFirst({
           where: {
-            sectionId: plant.sectionId,
+            sectionId: plant.sectionId!,
             zone: plantZone.zone,
           },
           orderBy: { recordedAt: 'desc' },

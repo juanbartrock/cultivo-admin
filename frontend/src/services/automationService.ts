@@ -8,7 +8,57 @@ import {
   CreateAutomationDto,
   AutomationStatus,
   AutomationExecution,
+  DeviceType,
 } from '@/types';
+
+// Tipos para el análisis de capacidades
+export interface SensorCapability {
+  deviceId: string;
+  deviceName: string;
+  canMeasure: string[];
+}
+
+export interface ControllableDevice {
+  deviceId: string;
+  deviceName: string;
+  type: DeviceType;
+  supportedActions: string[];
+  hasAutomation: boolean;
+  automationNames: string[];
+}
+
+export interface CameraCapability {
+  deviceId: string;
+  deviceName: string;
+  canCapture: boolean;
+}
+
+export interface AutomationGap {
+  deviceId: string;
+  deviceName: string;
+  type: DeviceType;
+  issue: string;
+  suggestion: string;
+}
+
+export interface SectionCapabilities {
+  sectionId: string;
+  sectionName: string;
+  sensors: SensorCapability[];
+  controllableDevices: ControllableDevice[];
+  cameras: CameraCapability[];
+  gaps: AutomationGap[];
+}
+
+export interface SystemCapabilities {
+  sections: SectionCapabilities[];
+  summary: {
+    totalControllableDevices: number;
+    devicesWithAutomation: number;
+    devicesWithoutAutomation: number;
+    totalSensors: number;
+  };
+}
 
 export interface EffectivenessStats {
   period: string;
@@ -112,6 +162,51 @@ export const automationService = {
    */
   getEffectiveness: (id: string, days = 30) =>
     api.get<EffectivenessStats>(`/automations/${id}/effectiveness?days=${days}`),
+
+  // ============================================
+  // PROPUESTAS DE IA
+  // ============================================
+
+  /**
+   * Lista propuestas de automatización pendientes de aprobación
+   */
+  getPendingProposals: (sectionId?: string) => {
+    const params = sectionId ? `?sectionId=${sectionId}` : '';
+    return api.get<Automation[]>(`/automations/proposals/pending${params}`);
+  },
+
+  /**
+   * Obtiene el conteo de propuestas pendientes
+   */
+  getPendingProposalsCount: () =>
+    api.get<{ count: number }>('/automations/proposals/count'),
+
+  /**
+   * Aprueba una propuesta de automatización
+   */
+  approveProposal: (id: string) =>
+    api.post<{ success: boolean; message: string; automation: Automation }>(
+      `/automations/proposals/${id}/approve`
+    ),
+
+  /**
+   * Rechaza una propuesta de automatización
+   */
+  rejectProposal: (id: string) =>
+    api.post<{ success: boolean; message: string }>(
+      `/automations/proposals/${id}/reject`
+    ),
+
+  // ============================================
+  // ANÁLISIS DE CAPACIDADES
+  // ============================================
+
+  /**
+   * Analiza las capacidades del sistema para automatización
+   * Retorna sensores, dispositivos controlables y gaps
+   */
+  analyzeCapabilities: () =>
+    api.get<SystemCapabilities>('/automations/capabilities'),
 };
 
 export default automationService;

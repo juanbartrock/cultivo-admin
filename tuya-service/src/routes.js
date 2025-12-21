@@ -8,10 +8,48 @@ const router = express.Router();
  * Health check del servicio
  */
 router.get('/health', (req, res) => {
+  const cacheStatus = tuyaClient.getCacheStatus();
   res.json({
     status: 'ok',
     service: 'tuya-service',
     timestamp: new Date().toISOString(),
+    cache: cacheStatus,
+  });
+});
+
+/**
+ * GET /cache/status
+ * Obtiene el estado del caché y la cuota de API
+ */
+router.get('/cache/status', (req, res) => {
+  const cacheStatus = tuyaClient.getCacheStatus();
+  res.json({
+    success: true,
+    ...cacheStatus,
+  });
+});
+
+/**
+ * POST /cache/clear
+ * Limpia el caché de dispositivos
+ */
+router.post('/cache/clear', (req, res) => {
+  tuyaClient.clearCache();
+  res.json({
+    success: true,
+    message: 'Caché limpiado correctamente',
+  });
+});
+
+/**
+ * POST /cache/reset-quota
+ * Resetea el estado de cuota excedida (para intentar nuevamente)
+ */
+router.post('/cache/reset-quota', (req, res) => {
+  tuyaClient.resetQuotaStatus();
+  res.json({
+    success: true,
+    message: 'Estado de cuota reseteado. Las próximas llamadas intentarán usar la API.',
   });
 });
 

@@ -18,6 +18,9 @@ import {
   PlantPhoto,
 } from '@/services/aiAssistantService';
 
+// Clave para localStorage
+const TTS_ENABLED_KEY = 'ai-assistant-tts-enabled';
+
 interface AIAssistantState {
   isOpen: boolean;
   isLoading: boolean;
@@ -30,6 +33,7 @@ interface AIAssistantState {
   contextLabel?: string;
   attachedImages: string[];
   plantPhotos: PlantPhoto[];
+  ttsEnabled: boolean;
 }
 
 interface AIAssistantContextType extends AIAssistantState {
@@ -54,6 +58,9 @@ interface AIAssistantContextType extends AIAssistantState {
   clearImages: () => void;
   loadPlantPhotos: (plantId: string) => Promise<void>;
   
+  // TTS Actions
+  toggleTts: () => void;
+  
   // Error handling
   clearError: () => void;
 }
@@ -61,16 +68,26 @@ interface AIAssistantContextType extends AIAssistantState {
 const AIAssistantContext = createContext<AIAssistantContextType | null>(null);
 
 export function AIAssistantProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AIAssistantState>({
-    isOpen: false,
-    isLoading: false,
-    error: null,
-    conversations: [],
-    activeConversation: null,
-    messages: [],
-    contextType: 'GENERAL',
-    attachedImages: [],
-    plantPhotos: [],
+  const [state, setState] = useState<AIAssistantState>(() => {
+    // Cargar TTS habilitado desde localStorage (default: true)
+    let ttsEnabled = true;
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(TTS_ENABLED_KEY);
+      ttsEnabled = stored !== 'false'; // Solo false si explícitamente es 'false'
+    }
+    
+    return {
+      isOpen: false,
+      isLoading: false,
+      error: null,
+      conversations: [],
+      activeConversation: null,
+      messages: [],
+      contextType: 'GENERAL',
+      attachedImages: [],
+      plantPhotos: [],
+      ttsEnabled,
+    };
   });
 
   // Cargar cache al iniciar
@@ -309,6 +326,19 @@ export function AIAssistantProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
+  // ==================== TTS ACTIONS ====================
+
+  const toggleTts = useCallback(() => {
+    setState(prev => {
+      const newTtsEnabled = !prev.ttsEnabled;
+      // Persistir en localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(TTS_ENABLED_KEY, String(newTtsEnabled));
+      }
+      return { ...prev, ttsEnabled: newTtsEnabled };
+    });
+  }, []);
+
   // ==================== ERROR HANDLING ====================
 
   const clearError = useCallback(() => {
@@ -330,6 +360,7 @@ export function AIAssistantProvider({ children }: { children: React.ReactNode })
     removeImage,
     clearImages,
     loadPlantPhotos,
+    toggleTts,
     clearError,
   };
 

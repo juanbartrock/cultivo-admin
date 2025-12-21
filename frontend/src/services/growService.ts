@@ -151,6 +151,12 @@ export const plantService = {
     api.patch<Plant>(`/plants/${id}/move`, data),
 
   /**
+   * Desasocia una planta de su sección (mantiene el registro en el ciclo)
+   * Útil cuando una planta muere o se retira de la sección
+   */
+  dissociate: (id: string) => api.patch<Plant>(`/plants/${id}/dissociate`, {}),
+
+  /**
    * Obtiene el PPFD actual de las zonas asignadas a la planta (promedio ponderado)
    */
   getPPFD: (id: string) => api.get<PlantPPFDResult | null>(`/plants/${id}/ppfd`),

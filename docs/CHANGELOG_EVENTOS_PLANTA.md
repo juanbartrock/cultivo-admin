@@ -400,3 +400,7 @@ UI oculta la grilla de eventos
 6. **Comparación:** Mostrar eventos de múltiples plantas lado a lado para comparación
 
 
+
+
+
+

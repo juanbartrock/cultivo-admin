@@ -9,10 +9,12 @@ import {
   AlertTriangle, Play, Pause, Calendar, Clock, Timer, Repeat,
   Sun, Moon, Thermometer, Droplets, Wind, Zap, Activity,
   Video, Power, Target, ChevronRight, ChevronLeft,
-  CheckCircle2, XCircle, AlertCircle, BarChart3, CheckSquare, Camera
+  CheckCircle2, XCircle, AlertCircle, BarChart3, CheckSquare, Camera, Brain, Leaf, Sparkles
 } from 'lucide-react';
 
 import EmptyState from '@/components/ui/EmptyState';
+import AIProposalsPanel from '@/components/AIProposalsPanel';
+import CapabilitiesAnalysisModal from '@/components/CapabilitiesAnalysisModal';
 
 import { automationService, EffectivenessStats } from '@/services/automationService';
 import { sectionService, getAllLocations } from '@/services/locationService';
@@ -31,7 +33,8 @@ import {
   Device,
   Section,
   AutomationExecution,
-  ExecutionStatus
+  ExecutionStatus,
+  AnalysisType
 } from '@/types';
 
 const triggerTypeLabels: Record<TriggerType, { label: string; icon: any; desc: string }> = {
@@ -63,12 +66,22 @@ const actionLabels: Record<ActionType, string> = {
   TOGGLE: 'Alternar',
   CAPTURE_PHOTO: 'Capturar Foto',
   TRIGGER_IRRIGATION: 'Regar',
+  AI_PLANT_ANALYSIS: 'Análisis IA',
+};
+
+const analysisTypeLabels: Record<AnalysisType, { label: string; desc: string }> = {
+  GENERAL: { label: 'General', desc: 'Análisis completo de salud y estado' },
+  NUTRICION: { label: 'Nutrición', desc: 'Evalúa deficiencias y excesos' },
+  PREVENCION: { label: 'Prevención', desc: 'Detecta plagas y enfermedades' },
+  VEGETATIVO: { label: 'Vegetativo', desc: 'Analiza desarrollo vegetativo' },
+  FLORACION: { label: 'Floración', desc: 'Evalúa progreso de floración' },
 };
 
 const statusConfig: Record<AutomationStatus, { label: string; color: string; icon: any }> = {
   ACTIVE: { label: 'Activa', color: 'text-green-400', icon: Activity },
   PAUSED: { label: 'Pausada', color: 'text-yellow-400', icon: Pause },
   DISABLED: { label: 'Desactivada', color: 'text-zinc-500', icon: Zap },
+  PENDING_APPROVAL: { label: 'Pendiente', color: 'text-violet-400', icon: Brain },
 };
 
 // Configuración de visualización de estados
@@ -95,6 +108,7 @@ export default function AutomatizacionesPage() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCapabilitiesModal, setShowCapabilitiesModal] = useState(false);
 
   // Execution history pagination
   const [executions, setExecutions] = useState<AutomationExecution[]>([]);
@@ -337,14 +351,26 @@ export default function AutomatizacionesPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva Automatización
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCapabilitiesModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 rounded-lg transition-colors"
+          >
+            <Brain className="w-4 h-4" />
+            <span className="hidden sm:inline">Analizar Sistema</span>
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nueva Automatización
+          </button>
+        </div>
       </motion.div>
+
+      {/* Panel de propuestas de IA pendientes */}
+      <AIProposalsPanel onApproved={loadData} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Lista de automatizaciones */}
@@ -808,6 +834,12 @@ export default function AutomatizacionesPage() {
           onUpdated={handleUpdateAutomation}
         />
       )}
+
+      {/* Modal de análisis de capacidades */}
+      <CapabilitiesAnalysisModal
+        isOpen={showCapabilitiesModal}
+        onClose={() => setShowCapabilitiesModal(false)}
+      />
     </div>
   );
 }
@@ -879,11 +911,21 @@ function CreateAutomationModal({
   }>>([]);
 
   const [actions, setActions] = useState<Array<{
-    deviceId: string;
+    deviceId?: string;
     actionType: ActionType;
     duration?: number;
     delayMinutes?: number;
   }>>([]);
+
+  // Configuración de análisis IA
+  const [analysisConfig, setAnalysisConfig] = useState({
+    analysisType: 'GENERAL' as AnalysisType,
+    includePhotos: true,
+    includeFeedingPlans: true,
+    includePreventionPlans: true,
+    includeEvents: true,
+    customPrompt: '',
+  });
 
   const sensorDevices = devices.filter(d => d.type === 'SENSOR');
   const controllableDevices = devices.filter(d =>
@@ -924,7 +966,12 @@ function CreateAutomationModal({
         if (form.triggerType === 'SCHEDULED') return true;
         return conditions.length > 0;
       case 'actions':
-        return actions.length > 0;
+        if (actions.length === 0) return false;
+        // Si hay AI_PLANT_ANALYSIS, verificar que hay plantas seleccionadas
+        if (actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS')) {
+          return selectedPlantIds.length > 0;
+        }
+        return true;
       case 'review':
         return true;
       default:
@@ -967,12 +1014,20 @@ function CreateAutomationModal({
     }]);
   }
 
-  function addAction() {
-    if (controllableDevices.length === 0) return;
-    setActions([...actions, {
-      deviceId: controllableDevices[0].id,
-      actionType: 'TURN_ON',
-    }]);
+  function addAction(type: 'device' | 'ai_analysis' = 'device') {
+    if (type === 'ai_analysis') {
+      // Solo permitir una acción de análisis IA
+      if (actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS')) return;
+      setActions([...actions, {
+        actionType: 'AI_PLANT_ANALYSIS',
+      }]);
+    } else {
+      if (controllableDevices.length === 0) return;
+      setActions([...actions, {
+        deviceId: controllableDevices[0].id,
+        actionType: 'TURN_ON',
+      }]);
+    }
   }
 
   function addSpecificTime() {
@@ -1001,6 +1056,15 @@ function CreateAutomationModal({
         endTime: form.endTime || undefined,
         notifications: form.notifications,
         plantIds: selectedPlantIds.length > 0 ? selectedPlantIds : undefined,
+        // Configuración de análisis IA
+        ...(actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') && {
+          analysisType: analysisConfig.analysisType,
+          analysisIncludePhotos: analysisConfig.includePhotos,
+          analysisIncludeFeedingPlans: analysisConfig.includeFeedingPlans,
+          analysisIncludePreventionPlans: analysisConfig.includePreventionPlans,
+          analysisIncludeEvents: analysisConfig.includeEvents,
+          analysisCustomPrompt: analysisConfig.customPrompt || undefined,
+        }),
         conditions: conditions.length > 0 ? conditions.map((c, i) => ({ ...c, order: i })) : undefined,
         actions: actions.map((a, i) => ({ ...a, order: i })),
       };
@@ -1504,14 +1568,24 @@ function CreateAutomationModal({
               >
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-zinc-300">Acciones *</label>
-                  <button
-                    type="button"
-                    onClick={addAction}
-                    disabled={controllableDevices.length === 0}
-                    className="text-xs px-3 py-1.5 bg-purple-600/20 text-purple-400 rounded hover:bg-purple-600/30 disabled:opacity-50"
-                  >
-                    + Agregar acción
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => addAction('device')}
+                      disabled={controllableDevices.length === 0}
+                      className="text-xs px-3 py-1.5 bg-purple-600/20 text-purple-400 rounded hover:bg-purple-600/30 disabled:opacity-50 flex items-center gap-1"
+                    >
+                      <Power className="w-3 h-3" /> Dispositivo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addAction('ai_analysis')}
+                      disabled={actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS')}
+                      className="text-xs px-3 py-1.5 bg-indigo-600/20 text-indigo-400 rounded hover:bg-indigo-600/30 disabled:opacity-50 flex items-center gap-1"
+                    >
+                      <Brain className="w-3 h-3" /> Análisis IA
+                    </button>
+                  </div>
                 </div>
 
                 {actions.length === 0 ? (
@@ -1524,93 +1598,193 @@ function CreateAutomationModal({
                   <div className="space-y-3">
                     {actions.map((action, index) => (
                       <div key={index} className="p-4 bg-zinc-800/50 rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-purple-500/20 rounded">
-                            <Power className="w-4 h-4 text-purple-400" />
-                          </div>
-                          <select
-                            value={action.deviceId}
-                            onChange={(e) => {
-                              const updated = [...actions];
-                              updated[index].deviceId = e.target.value;
-                              setActions(updated);
-                            }}
-                            className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-sm text-white"
-                          >
-                            {controllableDevices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                          </select>
-                          <select
-                            value={action.actionType}
-                            onChange={(e) => {
-                              const updated = [...actions];
-                              updated[index].actionType = e.target.value as ActionType;
-                              setActions(updated);
-                            }}
-                            className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-sm text-white"
-                          >
-                            <option value="TURN_ON">Encender</option>
-                            <option value="TURN_OFF">Apagar</option>
-                            <option value="TOGGLE">Alternar</option>
-                            <option value="CAPTURE_PHOTO">Capturar foto</option>
-                          </select>
-                          <button
-                            type="button"
-                            onClick={() => setActions(actions.filter((_, i) => i !== index))}
-                            className="p-2 text-red-400 hover:bg-red-500/20 rounded"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {action.actionType === 'AI_PLANT_ANALYSIS' ? (
+                          // Acción de Análisis IA
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-500/20 rounded">
+                                  <Brain className="w-4 h-4 text-indigo-400" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-white">Análisis IA de Plantas</p>
+                                  <p className="text-xs text-zinc-500">Analiza las plantas seleccionadas con GPT-4</p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setActions(actions.filter((_, i) => i !== index))}
+                                className="p-2 text-red-400 hover:bg-red-500/20 rounded"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
 
-                        {/* Opciones avanzadas */}
-                        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-zinc-700/50">
-                          <div className="flex items-center gap-2">
-                            <Timer className="w-4 h-4 text-zinc-500" />
-                            <label className="text-xs text-zinc-500">Duración (min)</label>
-                            <input
-                              type="number"
-                              value={action.duration || ''}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                updated[index].duration = parseInt(e.target.value) || undefined;
-                                setActions(updated);
-                              }}
-                              placeholder="∞"
-                              className="w-16 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs text-white"
-                            />
+                            {/* Tipo de análisis */}
+                            <div>
+                              <label className="block text-xs font-medium text-zinc-400 mb-2">Tipo de análisis</label>
+                              <div className="grid grid-cols-5 gap-2">
+                                {(Object.keys(analysisTypeLabels) as AnalysisType[]).map((type) => {
+                                  const { label, desc } = analysisTypeLabels[type];
+                                  const isSelected = analysisConfig.analysisType === type;
+                                  return (
+                                    <button
+                                      key={type}
+                                      type="button"
+                                      onClick={() => setAnalysisConfig({ ...analysisConfig, analysisType: type })}
+                                      className={`p-2 rounded-lg border text-center transition-all ${isSelected
+                                        ? 'border-indigo-500 bg-indigo-500/10'
+                                        : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800/30'
+                                      }`}
+                                      title={desc}
+                                    >
+                                      <p className={`text-xs font-medium ${isSelected ? 'text-indigo-400' : 'text-zinc-400'}`}>{label}</p>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Opciones de qué incluir */}
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                { key: 'includePhotos', label: 'Incluir fotos', icon: Camera },
+                                { key: 'includeFeedingPlans', label: 'Planes de nutrición', icon: Leaf },
+                                { key: 'includePreventionPlans', label: 'Planes de prevención', icon: AlertTriangle },
+                                { key: 'includeEvents', label: 'Eventos recientes', icon: Activity },
+                              ].map(({ key, label, icon: Icon }) => (
+                                <label
+                                  key={key}
+                                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                                    analysisConfig[key as keyof typeof analysisConfig]
+                                      ? 'bg-indigo-600/20 border border-indigo-600/50'
+                                      : 'bg-zinc-800/50 border border-zinc-700/50'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={analysisConfig[key as keyof typeof analysisConfig] as boolean}
+                                    onChange={(e) => setAnalysisConfig({ ...analysisConfig, [key]: e.target.checked })}
+                                    className="sr-only"
+                                  />
+                                  <Icon className={`w-4 h-4 ${analysisConfig[key as keyof typeof analysisConfig] ? 'text-indigo-400' : 'text-zinc-500'}`} />
+                                  <span className="text-xs text-zinc-300">{label}</span>
+                                </label>
+                              ))}
+                            </div>
+
+                            {/* Prompt personalizado */}
+                            <div>
+                              <label className="block text-xs font-medium text-zinc-400 mb-1">
+                                Instrucciones adicionales (opcional)
+                              </label>
+                              <textarea
+                                value={analysisConfig.customPrompt}
+                                onChange={(e) => setAnalysisConfig({ ...analysisConfig, customPrompt: e.target.value })}
+                                rows={2}
+                                placeholder="Ej: Enfócate especialmente en las hojas inferiores..."
+                                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white resize-none"
+                              />
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-zinc-500" />
-                            <label className="text-xs text-zinc-500">Retraso (min)</label>
-                            <input
-                              type="number"
-                              value={action.delayMinutes || ''}
-                              onChange={(e) => {
-                                const updated = [...actions];
-                                updated[index].delayMinutes = parseInt(e.target.value) || undefined;
-                                setActions(updated);
-                              }}
-                              placeholder="0"
-                              className="w-16 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs text-white"
-                            />
-                          </div>
-                        </div>
+                        ) : (
+                          // Acción de dispositivo normal
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-purple-500/20 rounded">
+                                <Power className="w-4 h-4 text-purple-400" />
+                              </div>
+                              <select
+                                value={action.deviceId || ''}
+                                onChange={(e) => {
+                                  const updated = [...actions];
+                                  updated[index].deviceId = e.target.value;
+                                  setActions(updated);
+                                }}
+                                className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-sm text-white"
+                              >
+                                {controllableDevices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                              </select>
+                              <select
+                                value={action.actionType}
+                                onChange={(e) => {
+                                  const updated = [...actions];
+                                  updated[index].actionType = e.target.value as ActionType;
+                                  setActions(updated);
+                                }}
+                                className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-sm text-white"
+                              >
+                                <option value="TURN_ON">Encender</option>
+                                <option value="TURN_OFF">Apagar</option>
+                                <option value="TOGGLE">Alternar</option>
+                                <option value="CAPTURE_PHOTO">Capturar foto</option>
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => setActions(actions.filter((_, i) => i !== index))}
+                                className="p-2 text-red-400 hover:bg-red-500/20 rounded"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            {/* Opciones avanzadas */}
+                            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-zinc-700/50">
+                              <div className="flex items-center gap-2">
+                                <Timer className="w-4 h-4 text-zinc-500" />
+                                <label className="text-xs text-zinc-500">Duración (min)</label>
+                                <input
+                                  type="number"
+                                  value={action.duration || ''}
+                                  onChange={(e) => {
+                                    const updated = [...actions];
+                                    updated[index].duration = parseInt(e.target.value) || undefined;
+                                    setActions(updated);
+                                  }}
+                                  placeholder="∞"
+                                  className="w-16 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs text-white"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-zinc-500" />
+                                <label className="text-xs text-zinc-500">Retraso (min)</label>
+                                <input
+                                  type="number"
+                                  value={action.delayMinutes || ''}
+                                  onChange={(e) => {
+                                    const updated = [...actions];
+                                    updated[index].delayMinutes = parseInt(e.target.value) || undefined;
+                                    setActions(updated);
+                                  }}
+                                  placeholder="0"
+                                  className="w-16 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs text-white"
+                                />
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Selector de plantas para acciones CAPTURE_PHOTO */}
-                {actions.some(a => a.actionType === 'CAPTURE_PHOTO') && (
+                {/* Selector de plantas para acciones CAPTURE_PHOTO o AI_PLANT_ANALYSIS */}
+                {actions.some(a => a.actionType === 'CAPTURE_PHOTO' || a.actionType === 'AI_PLANT_ANALYSIS') && (
                   <div className="mt-6 p-4 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
                     <div className="flex items-center gap-2 mb-3">
-                      <Camera className="w-5 h-5 text-cyan-400" />
+                      {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') ? (
+                        <Brain className="w-5 h-5 text-indigo-400" />
+                      ) : (
+                        <Camera className="w-5 h-5 text-cyan-400" />
+                      )}
                       <label className="text-sm font-medium text-zinc-300">
-                        Plantas asociadas (opcional)
+                        Plantas a analizar {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') ? '*' : '(opcional)'}
                       </label>
                     </div>
                     <p className="text-xs text-zinc-500 mb-3">
-                      Selecciona las plantas para registrar las fotos en su historial. Deja vacío para no registrar en ninguna planta.
+                      {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') 
+                        ? 'Selecciona las plantas que serán analizadas por la IA.'
+                        : 'Selecciona las plantas para registrar las fotos en su historial.'}
                     </p>
 
                     {plants.length === 0 ? (
@@ -1771,12 +1945,38 @@ function CreateAutomationModal({
                   </p>
                 </div>
 
-                {/* Plants summary (si hay acción CAPTURE_PHOTO) */}
-                {actions.some(a => a.actionType === 'CAPTURE_PHOTO') && (
+                {/* Análisis IA summary */}
+                {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') && (
                   <div className="p-4 bg-zinc-800/30 rounded-xl">
                     <h4 className="text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2">
-                      <Camera className="w-4 h-4 text-cyan-400" />
-                      Plantas asociadas
+                      <Brain className="w-4 h-4 text-indigo-400" />
+                      Configuración de Análisis IA
+                    </h4>
+                    <div className="space-y-2 text-sm text-zinc-400">
+                      <p>Tipo: <span className="text-indigo-400">{analysisTypeLabels[analysisConfig.analysisType].label}</span></p>
+                      <p>Incluye: {[
+                        analysisConfig.includePhotos && 'Fotos',
+                        analysisConfig.includeFeedingPlans && 'Nutrición',
+                        analysisConfig.includePreventionPlans && 'Prevención',
+                        analysisConfig.includeEvents && 'Eventos',
+                      ].filter(Boolean).join(', ') || 'Solo datos básicos'}</p>
+                      {analysisConfig.customPrompt && (
+                        <p className="text-xs text-zinc-500">Instrucciones: "{analysisConfig.customPrompt.substring(0, 50)}..."</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Plants summary */}
+                {actions.some(a => a.actionType === 'CAPTURE_PHOTO' || a.actionType === 'AI_PLANT_ANALYSIS') && (
+                  <div className="p-4 bg-zinc-800/30 rounded-xl">
+                    <h4 className="text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2">
+                      {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') ? (
+                        <Leaf className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <Camera className="w-4 h-4 text-cyan-400" />
+                      )}
+                      Plantas ({selectedPlantIds.length})
                     </h4>
                     {selectedPlantIds.length > 0 ? (
                       <div className="space-y-1">
@@ -1793,7 +1993,11 @@ function CreateAutomationModal({
                         })}
                       </div>
                     ) : (
-                      <p className="text-sm text-zinc-500">No se registrarán fotos en el historial de plantas</p>
+                      <p className="text-sm text-zinc-500">
+                        {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS')
+                          ? 'Debes seleccionar al menos una planta'
+                          : 'No se registrarán fotos en el historial de plantas'}
+                      </p>
                     )}
                   </div>
                 )}

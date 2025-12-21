@@ -260,3 +260,7 @@ $$ LANGUAGE plpgsql;
 RAISE NOTICE 'Script de particionado completado. Verificar con:';
 RAISE NOTICE '  SELECT * FROM sensor_readings LIMIT 10;';
 RAISE NOTICE '  SELECT COUNT(*) FROM sensor_readings;';
+
+
+
+

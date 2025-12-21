@@ -17,6 +17,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { AIAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 import { UsersModule } from './modules/users/users.module';
 import { IoTCredentialsModule } from './modules/iot-credentials/iot-credentials.module';
+import { WeatherModule } from './modules/weather/weather.module';
 import { HealthController } from './health.controller';
 import { SupabaseAuthGuard } from './modules/auth/guards/supabase-auth.guard';
 
@@ -42,6 +43,7 @@ import { SupabaseAuthGuard } from './modules/auth/guards/supabase-auth.guard';
     HarvestModule,
     RealtimeModule,
     AIAssistantModule,
+    WeatherModule,
   ],
   controllers: [HealthController],
   providers: [

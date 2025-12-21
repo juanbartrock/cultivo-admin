@@ -12,15 +12,17 @@ import {
 } from '@nestjs/common';
 import { AutomationsService } from './automations.service';
 import { JobProcessorService } from './job-processor.service';
+import { ContextBuilderService, SystemCapabilities } from '../ai-assistant/context-builder.service';
 import {
   CreateAutomationDto,
   UpdateAutomationDto,
   ExecuteAutomationDto,
 } from './dto/automation.dto';
 import { GetJobsQueryDto } from './dto/job.dto';
-import { AutomationStatus, JobStatus } from '@prisma/client';
+import { AutomationStatus, JobStatus, User } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('automations')
 @ApiBearerAuth()
@@ -30,6 +32,7 @@ export class AutomationsController {
   constructor(
     private readonly automationsService: AutomationsService,
     private readonly jobProcessor: JobProcessorService,
+    private readonly contextBuilder: ContextBuilderService,
   ) {}
 
   /**
@@ -39,6 +42,18 @@ export class AutomationsController {
   @Get()
   findAll(@Query('sectionId') sectionId?: string) {
     return this.automationsService.findAll(sectionId);
+  }
+
+  /**
+   * Analiza las capacidades del sistema para automatización
+   * Retorna sensores, dispositivos controlables y gaps
+   * GET /api/automations/capabilities
+   * IMPORTANTE: Esta ruta debe estar ANTES de :id para no ser capturada
+   */
+  @Get('capabilities')
+  @ApiOperation({ summary: 'Analiza capacidades del sistema para automatización' })
+  analyzeCapabilities(@CurrentUser() user: User): Promise<SystemCapabilities> {
+    return this.contextBuilder.analyzeSystemCapabilities(user.id);
   }
 
   /**
@@ -210,6 +225,51 @@ export class AutomationsController {
   cancelJob(@Param('jobId') jobId: string) {
     return this.jobProcessor.cancelJob(jobId);
   }
+
+  // ============================================
+  // ENDPOINTS DE PROPUESTAS DE IA
+  // ============================================
+
+  /**
+   * Lista automatizaciones propuestas por IA pendientes de aprobación
+   * GET /api/automations/proposals/pending
+   */
+  @Get('proposals/pending')
+  @ApiOperation({ summary: 'Lista automatizaciones propuestas por IA pendientes de aprobación' })
+  getPendingProposals(@Query('sectionId') sectionId?: string) {
+    return this.automationsService.getPendingProposals(sectionId);
+  }
+
+  /**
+   * Aprueba una propuesta de automatización
+   * POST /api/automations/proposals/:id/approve
+   */
+  @Post('proposals/:id/approve')
+  @ApiOperation({ summary: 'Aprueba una propuesta de automatización de IA' })
+  approveProposal(@Param('id') id: string) {
+    return this.automationsService.approveProposal(id);
+  }
+
+  /**
+   * Rechaza una propuesta de automatización
+   * POST /api/automations/proposals/:id/reject
+   */
+  @Post('proposals/:id/reject')
+  @ApiOperation({ summary: 'Rechaza una propuesta de automatización de IA' })
+  rejectProposal(@Param('id') id: string) {
+    return this.automationsService.rejectProposal(id);
+  }
+
+  /**
+   * Obtiene el conteo de propuestas pendientes
+   * GET /api/automations/proposals/count
+   */
+  @Get('proposals/count')
+  @ApiOperation({ summary: 'Obtiene el conteo de propuestas de IA pendientes' })
+  getPendingProposalsCount() {
+    return this.automationsService.getPendingProposalsCount();
+  }
+
 }
 
 

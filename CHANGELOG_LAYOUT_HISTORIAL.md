@@ -479,3 +479,7 @@ Los toggles de historial usan actualización optimista para mejor UX, revirtiend
 **Fin del Documento**
 
 
+
+
+
+

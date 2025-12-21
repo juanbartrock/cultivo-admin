@@ -17,20 +17,35 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   /**
-   * Lista todas las notificaciones
-   * GET /api/notifications?unreadOnly=true&type=AUTOMATION&limit=50
+   * Lista todas las notificaciones con paginación
+   * GET /api/notifications?unreadOnly=true&type=AUTOMATION&limit=50&offset=0
    */
   @Get()
-  findAll(
+  async findAll(
     @Query('unreadOnly') unreadOnly?: string,
     @Query('type') type?: NotificationType,
     @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
   ) {
-    return this.notificationsService.findAll({
-      unreadOnly: unreadOnly === 'true',
-      type,
-      limit: limit ? parseInt(limit, 10) : undefined,
-    });
+    const [notifications, total] = await Promise.all([
+      this.notificationsService.findAll({
+        unreadOnly: unreadOnly === 'true',
+        type,
+        limit: limit ? parseInt(limit, 10) : undefined,
+        offset: offset ? parseInt(offset, 10) : undefined,
+      }),
+      this.notificationsService.count({
+        unreadOnly: unreadOnly === 'true',
+        type,
+      }),
+    ]);
+
+    return {
+      data: notifications,
+      total,
+      limit: limit ? parseInt(limit, 10) : 100,
+      offset: offset ? parseInt(offset, 10) : 0,
+    };
   }
 
   /**
@@ -95,6 +110,24 @@ export class NotificationsController {
   @Post('mark-all-read')
   markAllAsRead() {
     return this.notificationsService.markAllAsRead();
+  }
+
+  /**
+   * Elimina múltiples notificaciones
+   * POST /api/notifications/delete-many
+   */
+  @Post('delete-many')
+  deleteMany(@Body() body: { ids: string[] }) {
+    return this.notificationsService.deleteMany(body.ids);
+  }
+
+  /**
+   * Elimina todas las notificaciones leídas
+   * POST /api/notifications/delete-read
+   */
+  @Post('delete-read')
+  deleteAllRead() {
+    return this.notificationsService.deleteAllRead();
   }
 
   /**

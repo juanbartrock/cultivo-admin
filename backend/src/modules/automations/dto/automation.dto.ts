@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsArray, IsInt, IsBoolean, IsEnum, ValidateNested, IsNumber, Min, Max, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AutomationStatus, ConditionOperator, ActionType, TriggerType, ScheduleType } from '@prisma/client';
+import { AutomationStatus, ConditionOperator, ActionType, TriggerType, ScheduleType, AnalysisType } from '@prisma/client';
 
 // DTO para crear una condición
 export class CreateConditionDto {
@@ -43,8 +43,9 @@ export class CreateConditionDto {
 
 // DTO para crear una acción
 export class CreateActionDto {
+  @IsOptional()
   @IsString()
-  deviceId: string;
+  deviceId?: string; // Opcional para AI_PLANT_ANALYSIS
 
   @IsEnum(ActionType)
   actionType: ActionType;
@@ -164,6 +165,31 @@ export class CreateAutomationDto {
   @IsString()
   dependsOnId?: string;
 
+  // Configuración de análisis IA (solo para AI_PLANT_ANALYSIS)
+  @IsOptional()
+  @IsEnum(AnalysisType)
+  analysisType?: AnalysisType;
+
+  @IsOptional()
+  @IsBoolean()
+  analysisIncludePhotos?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  analysisIncludeFeedingPlans?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  analysisIncludePreventionPlans?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  analysisIncludeEvents?: boolean;
+
+  @IsOptional()
+  @IsString()
+  analysisCustomPrompt?: string;
+
   // Condiciones (opcionales para SCHEDULED)
   @IsOptional()
   @IsArray()
@@ -260,6 +286,31 @@ export class UpdateAutomationDto {
   @IsOptional()
   @IsString()
   dependsOnId?: string;
+
+  // Configuración de análisis IA (solo para AI_PLANT_ANALYSIS)
+  @IsOptional()
+  @IsEnum(AnalysisType)
+  analysisType?: AnalysisType;
+
+  @IsOptional()
+  @IsBoolean()
+  analysisIncludePhotos?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  analysisIncludeFeedingPlans?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  analysisIncludePreventionPlans?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  analysisIncludeEvents?: boolean;
+
+  @IsOptional()
+  @IsString()
+  analysisCustomPrompt?: string;
 
   @IsOptional()
   @IsArray()

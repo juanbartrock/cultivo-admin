@@ -4,6 +4,7 @@ import { AIAssistantService } from './ai-assistant.service';
 import { ContextBuilderService } from './context-builder.service';
 import { MemoryService } from './memory.service';
 import { AgentOrchestratorService } from './agent-orchestrator.service';
+import { TTSService } from './tts.service';
 import { ToolRegistry, ToolExecutor, ToolsProviderService } from './tools';
 import { PrismaModule } from '../../prisma/prisma.module';
 
@@ -15,6 +16,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
     AIAssistantService,
     ContextBuilderService,
     MemoryService,
+    TTSService,
     
     // Agent services
     AgentOrchestratorService,
@@ -24,6 +26,6 @@ import { PrismaModule } from '../../prisma/prisma.module';
     ToolExecutor,
     ToolsProviderService,
   ],
-  exports: [AIAssistantService, MemoryService],
+  exports: [AIAssistantService, MemoryService, TTSService, ContextBuilderService],
 })
 export class AIAssistantModule {}

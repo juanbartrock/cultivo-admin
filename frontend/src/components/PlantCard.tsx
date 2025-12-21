@@ -27,9 +27,10 @@ import {
   ArrowRightLeft,
   MapPin,
   Sun,
-  Edit
+  Edit,
+  Unlink
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { plantService } from '@/services/growService';
 import { sectionService } from '@/services/locationService';
 import { useToast } from '@/contexts/ToastContext';
@@ -84,6 +85,8 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   const stageConfig = stageIcons[currentPlant.stage] || stageIcons.VEGETATIVO;
   const StageIcon = stageConfig.icon;
   const [showMenu, setShowMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [showStageModal, setShowStageModal] = useState(false);
   const [showHealthModal, setShowHealthModal] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
@@ -101,6 +104,8 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   const [loadingPPFD, setLoadingPPFD] = useState(false);
   const [selectedZones, setSelectedZones] = useState<PlantZoneDto[]>([]);
   const [isSavingZones, setIsSavingZones] = useState(false);
+  const [showDissociateModal, setShowDissociateModal] = useState(false);
+  const [isDissociating, setIsDissociating] = useState(false);
 
   // Cargar PPFD cuando la planta tiene zonas asignadas
   useEffect(() => {
@@ -235,8 +240,11 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     setLoadingSections(true);
     try {
       const allSections = await sectionService.getAll();
-      // Filtrar la sección actual
-      setSections(allSections.filter(s => s.id !== currentPlant.sectionId));
+      // Filtrar la sección actual (si la tiene)
+      setSections(currentPlant.sectionId 
+        ? allSections.filter(s => s.id !== currentPlant.sectionId)
+        : allSections
+      );
     } catch (err) {
       console.error('Error cargando secciones:', err);
       toast.error('Error al cargar las secciones disponibles');
@@ -269,6 +277,24 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
+  // Función para desasociar la planta de su sección
+  const handleDissociate = async () => {
+    setIsDissociating(true);
+    try {
+      const updatedPlant = await plantService.dissociate(currentPlant.id);
+      setCurrentPlant(updatedPlant);
+      setShowDissociateModal(false);
+      toast.success('Planta desasociada de la sección correctamente');
+      // Opcional: recargar la lista de plantas si hay un callback
+      onMoved?.(updatedPlant, '');
+    } catch (err) {
+      console.error('Error desasociando planta:', err);
+      toast.error('Error al desasociar la planta');
+    } finally {
+      setIsDissociating(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -278,7 +304,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
       className={`bg-zinc-800/50 backdrop-blur-sm border rounded-xl p-4 transition-all cursor-pointer ${isSelected
         ? 'border-cultivo-green-500 ring-2 ring-cultivo-green-500/30'
         : 'border-zinc-700/50 hover:border-cultivo-green-600/30'
-        } ${showStageModal || showMenu ? 'relative z-[100]' : 'relative'}`}
+        } relative`}
     >
       <div className="flex items-start gap-4">
         {/* Icono de etapa */}
@@ -304,10 +330,18 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             </div>
 
             {/* Menú de acciones */}
-            <div className={`relative ${showMenu ? 'z-[100]' : ''}`}>
+            <div className="relative">
               <button
+                ref={menuButtonRef}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (!showMenu && menuButtonRef.current) {
+                    const rect = menuButtonRef.current.getBoundingClientRect();
+                    setMenuPosition({
+                      top: rect.bottom + 4,
+                      left: rect.right - 200, // 200px es el ancho del menú
+                    });
+                  }
                   setShowMenu(!showMenu);
                 }}
                 className="p-1 rounded-lg hover:bg-zinc-700/50 transition-colors"
@@ -316,7 +350,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
               </button>
 
               {showMenu && (
-                <>
+                <Portal>
                   <div
                     className="fixed inset-0 z-[9998]"
                     onClick={() => {
@@ -324,7 +358,8 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                     }}
                   />
                   <div 
-                    className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-[9999] min-w-[180px] py-1"
+                    className="fixed bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-[9999] min-w-[200px] py-1"
+                    style={{ top: menuPosition.top, left: Math.max(8, menuPosition.left) }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
@@ -348,16 +383,18 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                       <Activity className="w-4 h-4 text-red-400" />
                       Reportar Salud
                     </button>
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowZonesModal(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
-                    >
-                      <MapPin className="w-4 h-4 text-purple-400" />
-                      Asignar Zonas
-                    </button>
+                    {currentPlant.sectionId && (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          setShowZonesModal(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                      >
+                        <MapPin className="w-4 h-4 text-purple-400" />
+                        Asignar Zonas
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setShowMenu(false);
@@ -366,8 +403,20 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
                     >
                       <ArrowRightLeft className="w-4 h-4 text-cyan-400" />
-                      Mudar a otra sección
+                      {currentPlant.sectionId ? 'Mudar a otra sección' : 'Asignar a sección'}
                     </button>
+                    {currentPlant.sectionId && (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          setShowDissociateModal(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
+                      >
+                        <Unlink className="w-4 h-4 text-orange-400" />
+                        Desasociar de sección
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setShowMenu(false);
@@ -389,7 +438,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                       Ver Historial
                     </Link>
                   </div>
-                </>
+                </Portal>
               )}
             </div>
           </div>
@@ -490,9 +539,13 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
           )}
 
           {/* Sección */}
-          {currentPlant.section && (
+          {currentPlant.section ? (
             <p className="text-xs text-zinc-600 mt-2">
               📍 {currentPlant.section.name}
+            </p>
+          ) : (
+            <p className="text-xs text-orange-400 mt-2 italic">
+              Sin sección asignada
             </p>
           )}
         </div>
@@ -758,7 +811,9 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-white">Mudar Planta</h3>
+              <h3 className="text-lg font-semibold text-white">
+                {currentPlant.sectionId ? 'Mudar Planta' : 'Asignar a Sección'}
+              </h3>
               <p className="text-sm text-zinc-400 mt-1">
                 {currentPlant.tagCode} - Selecciona la sección destino
               </p>
@@ -834,6 +889,79 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                   )}
                 </button>
               )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Desasociación */}
+      {showDissociateModal && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDissociateModal(false);
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-md relative z-[10000]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-zinc-800">
+              <h3 className="text-lg font-semibold text-white">Desasociar Planta</h3>
+              <p className="text-sm text-zinc-400 mt-1">
+                {currentPlant.tagCode} - {currentPlant.section?.name}
+              </p>
+            </div>
+
+            <div className="p-4">
+              <div className="flex items-start gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                <Unlink className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-zinc-300 mb-2">
+                    ¿Estás seguro que deseas desasociar esta planta de su sección?
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    La planta se removerá de la sección pero se mantendrá el registro completo en el ciclo. 
+                    Las zonas asignadas también se eliminarán.
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-2">
+                    Esto es útil cuando una planta muere o se retira de la carpa.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowDissociateModal(false);
+                }}
+                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                disabled={isDissociating}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDissociate}
+                disabled={isDissociating}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                {isDissociating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Desasociando...
+                  </>
+                ) : (
+                  <>
+                    <Unlink className="w-4 h-4" />
+                    Desasociar
+                  </>
+                )}
+              </button>
             </div>
           </motion.div>
         </div>

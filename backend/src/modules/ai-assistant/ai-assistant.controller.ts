@@ -6,10 +6,14 @@ import {
   Body,
   Param,
   Query,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { User } from '@prisma/client';
 import { AIAssistantService } from './ai-assistant.service';
 import { MemoryService } from './memory.service';
+import { TTSService } from './tts.service';
 import {
   SendMessageDto,
   CreateConversationDto,
@@ -24,6 +28,7 @@ export class AIAssistantController {
   constructor(
     private readonly aiService: AIAssistantService,
     private readonly memoryService: MemoryService,
+    private readonly ttsService: TTSService,
   ) {}
 
   // ==================== CHAT ====================
@@ -193,5 +198,67 @@ export class AIAssistantController {
     @CurrentUser() user: User,
   ) {
     return this.aiService.getSectionAutomations(sectionId, user.id);
+  }
+
+  // ==================== TTS (Text-to-Speech) ====================
+
+  /**
+   * Convierte texto a audio usando Gemini TTS
+   * Retorna audio WAV
+   */
+  @Post('tts')
+  async textToSpeech(
+    @Body('text') text: string,
+    @Res() res: Response,
+  ) {
+    console.log('========================================');
+    console.log('🎤 ENDPOINT TTS LLAMADO');
+    console.log(`📍 Texto recibido: "${(text || '').substring(0, 100)}..."`);
+    console.log(`📍 TTS disponible: ${this.ttsService.isAvailable()}`);
+
+    if (!text || text.trim().length === 0) {
+      console.log('❌ Error: texto vacío');
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        error: 'El texto es requerido',
+      });
+    }
+
+    if (!this.ttsService.isAvailable()) {
+      console.log('❌ Error: TTS no disponible');
+      return res.status(HttpStatus.SERVICE_UNAVAILABLE).json({
+        error: 'Servicio TTS no disponible - GEMINI_API_KEY no configurada',
+      });
+    }
+
+    console.log('📍 Llamando a ttsService.generateSpeech()...');
+    const audioBuffer = await this.ttsService.generateSpeech(text);
+
+    if (!audioBuffer) {
+      console.log('❌ Error: No se generó audio');
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        error: 'Error generando audio - revisa los logs del backend',
+      });
+    }
+
+    console.log(`✅ Audio generado: ${audioBuffer.length} bytes`);
+    console.log('========================================');
+
+    // Enviar como audio
+    res.setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Content-Length', audioBuffer.length);
+    res.send(audioBuffer);
+  }
+
+  /**
+   * Verifica si TTS está disponible
+   */
+  @Get('tts/status')
+  async ttsStatus() {
+    const available = this.ttsService.isAvailable();
+    console.log(`📍 TTS Status check: available=${available}`);
+    return {
+      available,
+      provider: 'gemini',
+    };
   }
 }

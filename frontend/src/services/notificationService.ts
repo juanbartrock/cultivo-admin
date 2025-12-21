@@ -12,17 +12,42 @@ export interface NotificationSummary {
   byPriority: Record<string, number>;
 }
 
+export interface NotificationListResponse {
+  data: Notification[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export const notificationService = {
   /**
-   * Lista todas las notificaciones
+   * Lista todas las notificaciones con paginación
    */
-  getAll: (options?: { unreadOnly?: boolean; type?: NotificationType; limit?: number }) => {
+  getAll: async (options?: { 
+    unreadOnly?: boolean; 
+    type?: NotificationType; 
+    limit?: number;
+    offset?: number;
+  }): Promise<NotificationListResponse> => {
     const params = new URLSearchParams();
     if (options?.unreadOnly) params.append('unreadOnly', 'true');
     if (options?.type) params.append('type', options.type);
     if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
     const query = params.toString() ? `?${params.toString()}` : '';
-    return api.get<Notification[]>(`/notifications${query}`);
+    return api.get<NotificationListResponse>(`/notifications${query}`);
+  },
+
+  /**
+   * Lista notificaciones simple (para dropdown, compatibilidad)
+   */
+  getSimple: async (options?: { 
+    unreadOnly?: boolean; 
+    type?: NotificationType; 
+    limit?: number;
+  }): Promise<Notification[]> => {
+    const response = await notificationService.getAll(options);
+    return response.data;
   },
 
   /**
@@ -54,6 +79,16 @@ export const notificationService = {
    * Elimina una notificación
    */
   delete: (id: string) => api.delete(`/notifications/${id}`),
+
+  /**
+   * Elimina múltiples notificaciones
+   */
+  deleteMany: (ids: string[]) => api.post<{ deleted: number }>('/notifications/delete-many', { ids }),
+
+  /**
+   * Elimina todas las notificaciones leídas
+   */
+  deleteAllRead: () => api.post<{ deleted: number }>('/notifications/delete-read', {}),
 };
 
 export default notificationService;

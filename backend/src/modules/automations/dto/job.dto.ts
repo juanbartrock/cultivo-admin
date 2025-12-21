@@ -40,3 +40,7 @@ export class JobStatsDto {
   dead: number;
   cancelled: number;
 }
+
+
+
+

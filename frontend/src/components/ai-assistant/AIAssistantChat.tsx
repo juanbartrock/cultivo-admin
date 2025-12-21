@@ -31,11 +31,20 @@ export function AIAssistantChat() {
     loadConversations,
     setContext,
     clearError,
+    ttsEnabled,
+    toggleTts,
   } = useAIAssistant();
 
   const [showHistory, setShowHistory] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Obtener el último mensaje del asistente para lectura de voz
+  const lastAssistantMsg = messages
+    .filter(m => m.role === 'ASSISTANT')
+    .slice(-1)[0];
+  const lastAssistantMessage = lastAssistantMsg?.content;
+  const lastAssistantMessageId = lastAssistantMsg?.id;
 
   // Scroll al final cuando hay nuevos mensajes
   useEffect(() => {
@@ -243,7 +252,14 @@ export function AIAssistantChat() {
       )}
 
       {/* Input */}
-      <AIAssistantInput onSend={sendMessage} disabled={isLoading} />
+      <AIAssistantInput 
+        onSend={sendMessage} 
+        disabled={isLoading} 
+        lastAssistantMessage={lastAssistantMessage}
+        lastAssistantMessageId={lastAssistantMessageId}
+        ttsEnabled={ttsEnabled}
+        onToggleTts={toggleTts}
+      />
     </div>
   );
 }

@@ -100,8 +100,19 @@ export const eventService = {
     if (data.sectionId) formData.append('sectionId', data.sectionId);
     if (data.caption) formData.append('caption', data.caption);
 
+    // Obtener token para autorización (igual que en apiService)
+    const token = typeof window !== 'undefined' 
+      ? (localStorage.getItem('access_token') || localStorage.getItem('token')) 
+      : null;
+    
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE}/events/photo`, {
       method: 'POST',
+      headers,
       body: formData,
       // No incluir Content-Type, el browser lo pone automáticamente con boundary
     });
@@ -215,6 +226,7 @@ export function getEventTypeInfo(type: EventType): {
     NOTA: { label: 'Nota', color: 'text-zinc-400', bgColor: 'bg-zinc-500/20' },
     FOTO: { label: 'Foto', color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
     PARAMETRO_AMBIENTAL: { label: 'Ambiente', color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
+    AI_ANALYSIS: { label: 'Análisis IA', color: 'text-indigo-400', bgColor: 'bg-indigo-500/20' },
   };
 
   return typeMap[type] || { label: type, color: 'text-zinc-400', bgColor: 'bg-zinc-500/20' };

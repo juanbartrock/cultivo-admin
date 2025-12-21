@@ -213,8 +213,10 @@ export class LocationsService {
           include: {
             strain: true,
             cycle: true,
+            zones: true,
           },
           where: {
+            sectionId: id, // Filtrar solo plantas que realmente pertenecen a esta sección
             stage: {
               notIn: ['CURADO'],
             },

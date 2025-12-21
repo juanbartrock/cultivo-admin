@@ -119,3 +119,7 @@ export class IoTCredentialsController {
     return this.credentialsService.testCredentials(user.id, connector as Connector);
   }
 }
+
+
+
+

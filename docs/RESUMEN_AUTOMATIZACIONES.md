@@ -95,3 +95,7 @@ Ver [AUTOMATIZACIONES_AVANZADAS.md](./AUTOMATIZACIONES_AVANZADAS.md) para docume
 **Fecha:** Diciembre 2024
 
 
+
+
+
+

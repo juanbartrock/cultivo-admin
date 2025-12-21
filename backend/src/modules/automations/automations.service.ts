@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nest
 import { PrismaService } from '../../prisma/prisma.service';
 import { DevicesService } from '../devices/devices.service';
 import { JobSchedulerService } from './job-scheduler.service';
+import { PlantAnalysisService } from './plant-analysis.service';
 import { 
   CreateAutomationDto, 
   UpdateAutomationDto,
@@ -16,6 +17,7 @@ import {
   TriggerType,
   ScheduleType,
   EventType,
+  AnalysisType,
   Prisma 
 } from '@prisma/client';
 
@@ -28,6 +30,8 @@ export class AutomationsService {
     private devicesService: DevicesService,
     @Inject(forwardRef(() => JobSchedulerService))
     private jobScheduler: JobSchedulerService,
+    @Inject(forwardRef(() => PlantAnalysisService))
+    private plantAnalysisService: PlantAnalysisService,
   ) {}
 
   /**
@@ -114,9 +118,11 @@ export class AutomationsService {
       }
     }
 
-    // Verificar que los dispositivos de las acciones existen
+    // Verificar que los dispositivos de las acciones existen (excepto AI_PLANT_ANALYSIS)
     for (const action of data.actions) {
-      await this.devicesService.findById(action.deviceId);
+      if (action.actionType !== ActionType.AI_PLANT_ANALYSIS && action.deviceId) {
+        await this.devicesService.findById(action.deviceId);
+      }
     }
 
     // Verificar dependencia si existe
@@ -158,6 +164,13 @@ export class AutomationsService {
         allowOverlap: data.allowOverlap ?? true,
         notifications: data.notifications ?? true,
         plantIds: data.plantIds || [],
+        // Configuración de análisis IA
+        analysisType: data.analysisType,
+        analysisIncludePhotos: data.analysisIncludePhotos ?? true,
+        analysisIncludeFeedingPlans: data.analysisIncludeFeedingPlans ?? true,
+        analysisIncludePreventionPlans: data.analysisIncludePreventionPlans ?? true,
+        analysisIncludeEvents: data.analysisIncludeEvents ?? true,
+        analysisCustomPrompt: data.analysisCustomPrompt,
         ...(data.dependsOnId && {
           dependsOn: { connect: { id: data.dependsOnId } },
         }),
@@ -178,7 +191,7 @@ export class AutomationsService {
         }),
         actions: {
           create: data.actions.map((a, index) => ({
-            device: { connect: { id: a.deviceId } },
+            ...(a.deviceId && { device: { connect: { id: a.deviceId } } }),
             actionType: a.actionType,
             duration: a.duration,
             delayMinutes: a.delayMinutes,
@@ -236,8 +249,15 @@ export class AutomationsService {
         ...(data.allowOverlap !== undefined && { allowOverlap: data.allowOverlap }),
         ...(data.notifications !== undefined && { notifications: data.notifications }),
         ...(data.plantIds !== undefined && { plantIds: data.plantIds }),
+        // Configuración de análisis IA
+        ...(data.analysisType !== undefined && { analysisType: data.analysisType }),
+        ...(data.analysisIncludePhotos !== undefined && { analysisIncludePhotos: data.analysisIncludePhotos }),
+        ...(data.analysisIncludeFeedingPlans !== undefined && { analysisIncludeFeedingPlans: data.analysisIncludeFeedingPlans }),
+        ...(data.analysisIncludePreventionPlans !== undefined && { analysisIncludePreventionPlans: data.analysisIncludePreventionPlans }),
+        ...(data.analysisIncludeEvents !== undefined && { analysisIncludeEvents: data.analysisIncludeEvents }),
+        ...(data.analysisCustomPrompt !== undefined && { analysisCustomPrompt: data.analysisCustomPrompt }),
         ...(data.dependsOnId !== undefined && {
-          dependsOn: data.dependsOnId 
+          dependsOn: data.dependsOnId
             ? { connect: { id: data.dependsOnId } }
             : { disconnect: true },
         }),
@@ -259,7 +279,7 @@ export class AutomationsService {
         ...(data.actions && {
           actions: {
             create: data.actions.map((a, index) => ({
-              device: { connect: { id: a.deviceId } },
+              ...(a.deviceId && { device: { connect: { id: a.deviceId } } }),
               actionType: a.actionType,
               duration: a.duration,
               delayMinutes: a.delayMinutes,
@@ -543,7 +563,7 @@ export class AutomationsService {
     success: boolean;
     results: Array<{
       actionId: string;
-      deviceId: string;
+      deviceId?: string;
       actionType: ActionType;
       success: boolean;
       error?: string;
@@ -561,7 +581,7 @@ export class AutomationsService {
 
     const actionResults: Array<{
       actionId: string;
-      deviceId: string;
+      deviceId?: string;
       actionType: ActionType;
       success: boolean;
       error?: string;
@@ -610,6 +630,7 @@ export class AutomationsService {
 
         switch (effectiveActionType) {
           case ActionType.TURN_ON:
+            if (!action.deviceId) throw new Error('deviceId is required for TURN_ON');
             await this.devicesService.controlDevice(action.deviceId, 'on');
             success = true;
             
@@ -628,16 +649,19 @@ export class AutomationsService {
             }
             break;
           case ActionType.TURN_OFF:
+            if (!action.deviceId) throw new Error('deviceId is required for TURN_OFF');
             await this.devicesService.controlDevice(action.deviceId, 'off');
             success = true;
             break;
           case ActionType.TOGGLE:
+            if (!action.deviceId) throw new Error('deviceId is required for TOGGLE');
             const { status } = await this.devicesService.getDeviceStatus(action.deviceId);
             const newState = status.state === 'on' ? 'off' : 'on';
             await this.devicesService.controlDevice(action.deviceId, newState);
             success = true;
             break;
           case ActionType.CAPTURE_PHOTO:
+            if (!action.deviceId) throw new Error('deviceId is required for CAPTURE_PHOTO');
             const snapshotResult = await this.devicesService.captureSnapshot(action.deviceId);
             success = snapshotResult.success || false;
             
@@ -677,9 +701,10 @@ export class AutomationsService {
             }
             break;
           case ActionType.TRIGGER_IRRIGATION:
+            if (!action.deviceId) throw new Error('deviceId is required for TRIGGER_IRRIGATION');
             await this.devicesService.controlDevice(action.deviceId, 'on');
             success = true;
-            
+
             // Si tiene duración, programar apagado como job persistente
             if (action.duration) {
               await this.jobScheduler.scheduleDeviceOff({
@@ -693,18 +718,47 @@ export class AutomationsService {
               );
             }
             break;
+          case ActionType.AI_PLANT_ANALYSIS:
+            // Ejecutar análisis IA para cada planta asociada
+            if (automation.plantIds && automation.plantIds.length > 0) {
+              for (const plantId of automation.plantIds) {
+                const analysisResult = await this.plantAnalysisService.analyzePlant({
+                  plantId,
+                  automationId: automation.id,
+                  automationName: automation.name,
+                  config: {
+                    analysisType: automation.analysisType || AnalysisType.GENERAL,
+                    includePhotos: automation.analysisIncludePhotos ?? true,
+                    includeFeedingPlans: automation.analysisIncludeFeedingPlans ?? true,
+                    includePreventionPlans: automation.analysisIncludePreventionPlans ?? true,
+                    includeEvents: automation.analysisIncludeEvents ?? true,
+                    customPrompt: automation.analysisCustomPrompt ?? undefined,
+                  },
+                });
+                if (analysisResult.success) {
+                  this.logger.log(`AI analysis completed for plant ${plantId}: ${analysisResult.summary}`);
+                } else {
+                  this.logger.warn(`AI analysis failed for plant ${plantId}: ${analysisResult.error}`);
+                }
+              }
+              success = true;
+            } else {
+              this.logger.warn(`AI_PLANT_ANALYSIS action has no plants assigned`);
+              success = false;
+            }
+            break;
         }
 
         actionResults.push({
           actionId: action.id,
-          deviceId: action.deviceId,
+          deviceId: action.deviceId || undefined,
           actionType: effectiveActionType,
           success,
         });
       } catch (error) {
         actionResults.push({
           actionId: action.id,
-          deviceId: action.deviceId,
+          deviceId: action.deviceId || undefined,
           actionType: action.actionType,
           success: false,
           error: error.message,
@@ -899,5 +953,121 @@ export class AutomationsService {
         actionType: null,
       };
     }).filter(a => a.shouldExecute);
+  }
+
+  // ============================================
+  // MÉTODOS PARA PROPUESTAS DE IA
+  // ============================================
+
+  /**
+   * Lista automatizaciones propuestas por IA pendientes de aprobación
+   */
+  async getPendingProposals(sectionId?: string) {
+    return this.prisma.automation.findMany({
+      where: {
+        status: AutomationStatus.PENDING_APPROVAL,
+        proposedByAI: true,
+        ...(sectionId && { sectionId }),
+      },
+      include: {
+        section: true,
+        conditions: {
+          include: { device: true },
+          orderBy: { order: 'asc' },
+        },
+        actions: {
+          include: { device: true },
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { proposedAt: 'desc' },
+    });
+  }
+
+  /**
+   * Obtiene el conteo de propuestas pendientes
+   */
+  async getPendingProposalsCount() {
+    const count = await this.prisma.automation.count({
+      where: {
+        status: AutomationStatus.PENDING_APPROVAL,
+        proposedByAI: true,
+      },
+    });
+
+    return { count };
+  }
+
+  /**
+   * Aprueba una propuesta de automatización
+   * Cambia el estado a ACTIVE y registra quién la aprobó
+   */
+  async approveProposal(id: string) {
+    const automation = await this.prisma.automation.findUnique({
+      where: { id },
+    });
+
+    if (!automation) {
+      throw new NotFoundException(`Automation with ID ${id} not found`);
+    }
+
+    if (automation.status !== AutomationStatus.PENDING_APPROVAL) {
+      throw new Error(`Esta automatización no está pendiente de aprobación (estado actual: ${automation.status})`);
+    }
+
+    const updated = await this.prisma.automation.update({
+      where: { id },
+      data: {
+        status: AutomationStatus.ACTIVE,
+        reviewedAt: new Date(),
+        // reviewedBy se podría agregar si se pasa el userId
+      },
+      include: {
+        section: true,
+        conditions: { include: { device: true } },
+        actions: { include: { device: true } },
+      },
+    });
+
+    this.logger.log(`Propuesta de automatización "${updated.name}" aprobada y activada`);
+
+    return {
+      success: true,
+      message: `La automatización "${updated.name}" ha sido aprobada y está ahora activa`,
+      automation: updated,
+    };
+  }
+
+  /**
+   * Rechaza una propuesta de automatización
+   * Elimina la automatización de la base de datos
+   */
+  async rejectProposal(id: string) {
+    const automation = await this.prisma.automation.findUnique({
+      where: { id },
+    });
+
+    if (!automation) {
+      throw new NotFoundException(`Automation with ID ${id} not found`);
+    }
+
+    if (automation.status !== AutomationStatus.PENDING_APPROVAL) {
+      throw new Error(`Esta automatización no está pendiente de aprobación (estado actual: ${automation.status})`);
+    }
+
+    // Guardar el nombre antes de eliminar
+    const name = automation.name;
+
+    // Eliminar la automatización rechazada
+    await this.prisma.automation.delete({
+      where: { id },
+    });
+
+    this.logger.log(`Propuesta de automatización "${name}" rechazada y eliminada`);
+
+    return {
+      success: true,
+      message: `La propuesta "${name}" ha sido rechazada y eliminada`,
+    };
   }
 }

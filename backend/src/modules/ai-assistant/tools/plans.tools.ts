@@ -2,7 +2,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { ToolDefinition } from './types';
 
 /**
- * Crea las herramientas relacionadas con planes de prevención y alimentación
+ * Crea las herramientas relacionadas con planes de prevenci?n y alimentaci?n
  * Todas filtran por userId para aislamiento de datos
  */
 export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
@@ -10,13 +10,13 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
     // ==================== GET_PREVENTION_PLAN ====================
     {
       name: 'get_prevention_plan',
-      description: 'Obtiene un plan de prevención completo con todos sus productos, aplicaciones y plantas asignadas',
+      description: 'Obtiene un plan de prevenci?n completo con todos sus productos, aplicaciones y plantas asignadas',
       parameters: {
         type: 'object',
         properties: {
           plan_name: {
             type: 'string',
-            description: 'Nombre del plan de prevención (puede ser parcial)',
+            description: 'Nombre del plan de prevenci?n (puede ser parcial)',
           },
         },
         required: ['plan_name'],
@@ -55,12 +55,12 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
             select: { name: true },
           });
           return {
-            error: `No se encontró el plan "${planName}" en tu sistema`,
+            error: `No se encontr? el plan "${planName}" en tu sistema`,
             availablePlans: allPlans.map((p) => p.name),
           };
         }
 
-        // Procesar plantas asignadas con su día actual
+        // Procesar plantas asignadas con su d?a actual
         const assignedPlants = plan.plants.map((pp) => {
           const daysSinceStart = pp.startDate
             ? Math.floor((Date.now() - pp.startDate.getTime()) / (1000 * 60 * 60 * 24))
@@ -70,7 +70,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
           return {
             tagCode: pp.plant.tagCode,
             strain: pp.plant.strain.name,
-            section: pp.plant.section.name,
+            section: pp.plant.section?.name ?? 'Sin secci?n',
             stage: pp.plant.stage,
             startDate: pp.startDate?.toISOString().split('T')[0],
             currentDay,
@@ -100,13 +100,13 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
     // ==================== GET_FEEDING_PLAN ====================
     {
       name: 'get_feeding_plan',
-      description: 'Obtiene un plan de alimentación completo con todas sus semanas, productos y plantas asignadas',
+      description: 'Obtiene un plan de alimentaci?n completo con todas sus semanas, productos y plantas asignadas',
       parameters: {
         type: 'object',
         properties: {
           plan_name: {
             type: 'string',
-            description: 'Nombre del plan de alimentación (puede ser parcial)',
+            description: 'Nombre del plan de alimentaci?n (puede ser parcial)',
           },
         },
         required: ['plan_name'],
@@ -143,7 +143,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
             select: { name: true },
           });
           return {
-            error: `No se encontró el plan "${planName}" en tu sistema`,
+            error: `No se encontr? el plan "${planName}" en tu sistema`,
             availablePlans: allPlans.map((p) => p.name),
           };
         }
@@ -158,7 +158,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
           return {
             tagCode: pp.plant.tagCode,
             strain: pp.plant.strain.name,
-            section: pp.plant.section.name,
+            section: pp.plant.section?.name ?? 'Sin secci?n',
             stage: pp.plant.stage,
             stageStartDate: pp.stageStartDate?.toISOString().split('T')[0],
             currentWeek,
@@ -188,7 +188,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
     // ==================== LIST_PLANS ====================
     {
       name: 'list_plans',
-      description: 'Lista todos los planes disponibles (prevención o alimentación)',
+      description: 'Lista todos los planes disponibles (prevenci?n o alimentaci?n)',
       parameters: {
         type: 'object',
         properties: {
@@ -258,13 +258,13 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
     // ==================== GET_PLANTS_BY_PLAN ====================
     {
       name: 'get_plants_by_plan',
-      description: 'Obtiene todas las plantas asignadas a un plan específico',
+      description: 'Obtiene todas las plantas asignadas a un plan espec?fico',
       parameters: {
         type: 'object',
         properties: {
           plan_name: {
             type: 'string',
-            description: 'Nombre del plan (prevención o alimentación)',
+            description: 'Nombre del plan (prevenci?n o alimentaci?n)',
           },
         },
         required: ['plan_name'],
@@ -273,7 +273,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
         const userId = params._userId;
         const planName = params.plan_name as string;
 
-        // Buscar en planes de prevención del usuario
+        // Buscar en planes de prevenci?n del usuario
         const preventionPlan = await prisma.preventionPlan.findFirst({
           where: { 
             name: { contains: planName, mode: 'insensitive' },
@@ -302,7 +302,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
                 tagCode: pp.plant.tagCode,
                 strain: pp.plant.strain.name,
                 stage: pp.plant.stage,
-                section: pp.plant.section.name,
+                section: pp.plant.section?.name ?? 'Sin secci?n',
                 healthStatus: pp.plant.healthStatus,
                 currentDay: (daysSinceStart % preventionPlan.totalDays) + 1,
                 startDate: pp.startDate?.toISOString().split('T')[0],
@@ -311,7 +311,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
           };
         }
 
-        // Buscar en planes de alimentación del usuario
+        // Buscar en planes de alimentaci?n del usuario
         const feedingPlan = await prisma.feedingPlan.findFirst({
           where: { 
             name: { contains: planName, mode: 'insensitive' },
@@ -340,7 +340,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
                 tagCode: pp.plant.tagCode,
                 strain: pp.plant.strain.name,
                 stage: pp.plant.stage,
-                section: pp.plant.section.name,
+                section: pp.plant.section?.name ?? 'Sin sección',
                 healthStatus: pp.plant.healthStatus,
                 currentWeek: Math.floor(daysSinceStart / 7) + 1,
                 stageStartDate: pp.stageStartDate?.toISOString().split('T')[0],
@@ -349,7 +349,7 @@ export function createPlanTools(prisma: PrismaService): ToolDefinition[] {
           };
         }
 
-        return { error: `No se encontró ningún plan con nombre "${planName}" en tu sistema` };
+        return { error: `No se encontr? ning?n plan con nombre "${planName}" en tu sistema` };
       },
     },
   ];

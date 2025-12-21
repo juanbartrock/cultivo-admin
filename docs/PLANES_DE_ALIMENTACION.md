@@ -372,3 +372,7 @@ Los eventos de riego se muestran con:
 - **Tipos**: `frontend/src/types/index.ts`
 - **Schema**: `backend/prisma/schema.prisma`
 
+
+
+
+

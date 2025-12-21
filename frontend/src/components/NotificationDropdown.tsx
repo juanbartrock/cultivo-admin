@@ -12,6 +12,7 @@ import {
   X,
   Loader2,
   ExternalLink,
+  Cloud,
 } from 'lucide-react';
 import Link from 'next/link';
 import { notificationService } from '@/services/notificationService';
@@ -24,6 +25,7 @@ const typeConfig: Record<NotificationType, { icon: React.ElementType; color: str
   MILESTONE: { icon: CheckCircle2, color: 'text-amber-400 bg-amber-500/20' },
   ALERT: { icon: AlertTriangle, color: 'text-red-400 bg-red-500/20' },
   SYSTEM: { icon: Info, color: 'text-blue-400 bg-blue-500/20' },
+  WEATHER: { icon: Cloud, color: 'text-sky-400 bg-sky-500/20' },
 };
 
 const priorityColors: Record<NotificationPriority, string> = {
@@ -61,7 +63,7 @@ export default function NotificationDropdown({ onClose, onMarkAsRead }: Notifica
   async function loadNotifications() {
     setIsLoading(true);
     try {
-      const data = await notificationService.getAll({ limit: 10 });
+      const data = await notificationService.getSimple({ limit: 10 });
       setNotifications(data);
     } catch (err) {
       console.error('Error loading notifications:', err);

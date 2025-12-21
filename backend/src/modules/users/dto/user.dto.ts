@@ -117,3 +117,7 @@ export class SubscriptionLimitsDto {
   @ApiProperty({ description: 'Nivel de acceso al asistente IA' })
   aiAssistantLevel: 'none' | 'limited' | 'full';
 }
+
+
+
+
