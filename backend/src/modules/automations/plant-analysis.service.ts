@@ -62,7 +62,7 @@ interface PlantData {
   recentEvents: Array<{
     type: string;
     date: Date;
-    data: any;
+    data: unknown;
   }>;
   daysInStage: number;
   totalDays: number;
@@ -244,7 +244,7 @@ export class PlantAnalysisService {
             ? Math.floor((Date.now() - pfp.stageStartDate.getTime()) / (1000 * 60 * 60 * 24))
             : 0;
           const currentWeek = Math.floor(daysSinceStart / 7) + 1;
-          const weekData = pfp.feedingPlan.weeks.find((w: any) => w.weekNumber === currentWeek);
+          const weekData = pfp.feedingPlan.weeks.find((w) => w.weekNumber === currentWeek);
 
           return {
             planName: pfp.feedingPlan.name,
@@ -267,7 +267,7 @@ export class PlantAnalysisService {
             ? Math.floor((Date.now() - ppp.startDate.getTime()) / (1000 * 60 * 60 * 24))
             : 0;
           const currentDay = (daysSinceStart % ppp.preventionPlan.totalDays) + 1;
-          const appData = ppp.preventionPlan.applications.find((a: any) => a.dayNumber === currentDay);
+          const appData = ppp.preventionPlan.applications.find((a) => a.dayNumber === currentDay);
 
           return {
             planName: ppp.preventionPlan.name,
@@ -432,7 +432,10 @@ Responde en el siguiente formato JSON:
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
       // Construir mensajes con imágenes
-      const content: any[] = [{ type: 'text', text: prompt }];
+      const content: Array<
+        | { type: 'text'; text: string }
+        | { type: 'image_url'; image_url: { url: string; detail: 'high' } }
+      > = [{ type: 'text', text: prompt }];
 
       for (const url of imageUrls) {
         content.push({

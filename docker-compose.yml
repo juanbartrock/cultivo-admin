@@ -14,12 +14,14 @@ services:
       - PORT=4000
       - NODE_ENV=production
       - TZ=America/Santiago
+      - CORS_ALLOWED_ORIGINS=http://localhost:3001
+      - REALTIME_ALLOW_GUEST=false
       - MS_SONOFF_URL=http://sonoff-service:3000
       - MS_TUYA_URL=http://tuya-service:3000
       - MS_TAPO_URL=http://tapo-service:3000
       # - MS_ESP32_URL=http://esp32-service:3000
       # Google Cloud TTS (Chirp3-HD)
-      - GOOGLE_CLOUD_TTS_API_KEY=AIzaSyAbsmI5jHkv_-DK6EviDIjckitL1S8_P2w
+      - GOOGLE_CLOUD_TTS_API_KEY=${GOOGLE_CLOUD_TTS_API_KEY:-}
     networks:
       - cultivo-network
     extra_hosts:
@@ -39,6 +41,27 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+  # ============================================
+  # Backend Test Runner (Jest in container)
+  # ============================================
+  backend-test:
+    profiles: ["test"]
+    build:
+      context: ./backend
+      target: builder
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=test
+      - PORT=4000
+      - CORS_ALLOWED_ORIGINS=http://localhost:3001
+      - REALTIME_ALLOW_GUEST=false
+    networks:
+      - cultivo-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: npm test
 
   # ============================================
   # Frontend (Next.js)

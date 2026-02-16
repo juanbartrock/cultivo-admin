@@ -7,11 +7,28 @@ import {
   UpdateHarvestProductDto,
   ExtractMaterialDto,
 } from './dto/harvest.dto';
-import { HarvestProductType, StorageLocation } from '@prisma/client';
+import { CycleStatus, HarvestProductType, StorageLocation } from '@prisma/client';
 
 @Injectable()
 export class HarvestService {
   constructor(private prisma: PrismaService) {}
+
+  private async assertCycleNotCured(cycleId: string) {
+    const cycle = await this.prisma.cycle.findUnique({
+      where: { id: cycleId },
+      select: { id: true, status: true },
+    });
+
+    if (!cycle) {
+      throw new NotFoundException(`Cycle with ID ${cycleId} not found`);
+    }
+
+    if (cycle.status === CycleStatus.CURED) {
+      throw new BadRequestException(
+        'El ciclo estÃ¡ finalizado en curado y solo permite extracciÃ³n de material',
+      );
+    }
+  }
 
   // ============================================
   // HARVESTS
@@ -73,11 +90,13 @@ export class HarvestService {
     // Verificar que la planta existe
     const plant = await this.prisma.plant.findUnique({
       where: { id: data.plantId },
+      select: { id: true, cycleId: true },
     });
 
     if (!plant) {
       throw new NotFoundException(`Plant with ID ${data.plantId} not found`);
     }
+    await this.assertCycleNotCured(plant.cycleId);
 
     return this.prisma.harvest.create({
       data: {
@@ -103,7 +122,8 @@ export class HarvestService {
    * Actualiza una cosecha
    */
   async updateHarvest(id: string, data: UpdateHarvestDto) {
-    await this.findHarvestById(id);
+    const harvest = await this.findHarvestById(id);
+    await this.assertCycleNotCured(harvest.plant.cycleId);
 
     return this.prisma.harvest.update({
       where: { id },
@@ -129,7 +149,8 @@ export class HarvestService {
    * Elimina una cosecha
    */
   async deleteHarvest(id: string) {
-    await this.findHarvestById(id);
+    const harvest = await this.findHarvestById(id);
+    await this.assertCycleNotCured(harvest.plant.cycleId);
     return this.prisma.harvest.delete({ where: { id } });
   }
 
@@ -150,7 +171,10 @@ export class HarvestService {
         harvest: {
           include: {
             plant: {
-              include: {
+              select: {
+                id: true,
+                tagCode: true,
+                cycleId: true,
                 strain: true,
               },
             },
@@ -192,7 +216,8 @@ export class HarvestService {
    */
   async createProduct(data: CreateHarvestProductDto) {
     // Verificar que la cosecha existe
-    await this.findHarvestById(data.harvestId);
+    const harvest = await this.findHarvestById(data.harvestId);
+    await this.assertCycleNotCured(harvest.plant.cycleId);
 
     return this.prisma.harvestProduct.create({
       data: {
@@ -215,7 +240,8 @@ export class HarvestService {
    * Actualiza un producto
    */
   async updateProduct(id: string, data: UpdateHarvestProductDto) {
-    await this.findProductById(id);
+    const product = await this.findProductById(id);
+    await this.assertCycleNotCured(product.harvest.plant.cycleId);
 
     return this.prisma.harvestProduct.update({
       where: { id },
@@ -265,7 +291,8 @@ export class HarvestService {
    * Elimina un producto
    */
   async deleteProduct(id: string) {
-    await this.findProductById(id);
+    const product = await this.findProductById(id);
+    await this.assertCycleNotCured(product.harvest.plant.cycleId);
     return this.prisma.harvestProduct.delete({ where: { id } });
   }
 
@@ -274,7 +301,7 @@ export class HarvestService {
   // ============================================
 
   /**
-   * Obtiene estadísticas de cosechas
+   * Obtiene estadÃ­sticas de cosechas
    */
   async getStatistics(cycleId?: string) {
     const whereClause = cycleId
@@ -310,7 +337,7 @@ export class HarvestService {
       return acc;
     }, {} as Record<string, { count: number; totalWeight: number; currentWeight: number }>);
 
-    // Productos por ubicación
+    // Productos por ubicaciÃ³n
     const productsByLocation = allProducts.reduce((acc, p) => {
       if (!acc[p.storageLocation]) {
         acc[p.storageLocation] = { count: 0, weight: 0 };

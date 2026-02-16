@@ -1,0 +1,119 @@
+:root {
+  --color-bg-base: #050a08;
+  --color-bg-elevated: #0b120f;
+  --color-surface-1: rgba(18, 25, 21, 0.7);
+  --color-surface-2: rgba(24, 34, 29, 0.85);
+  --color-surface-3: rgba(34, 46, 40, 0.9);
+  --color-border-soft: rgba(122, 150, 133, 0.24);
+  --color-border-strong: rgba(122, 150, 133, 0.42);
+  --color-text-primary: #f2f7f4;
+  --color-text-muted: #9eb0a4;
+  --color-accent-primary: #24b267;
+  --color-accent-primary-hover: #1f9b5a;
+  --color-accent-data: #1fb6c9;
+  --color-accent-data-hover: #1997a8;
+  --color-danger: #ef4444;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --shadow-panel: 0 12px 34px rgba(0, 0, 0, 0.28);
+}
+
+.ui-rebrand-root {
+  background:
+    radial-gradient(circle at 12% 6%, rgba(31, 182, 201, 0.1), transparent 34%),
+    radial-gradient(circle at 88% 10%, rgba(36, 178, 103, 0.12), transparent 30%),
+    linear-gradient(180deg, var(--color-bg-elevated), var(--color-bg-base) 52%);
+  color: var(--color-text-primary);
+}
+
+.ui-rebrand-root .font-display {
+  letter-spacing: -0.018em;
+}
+
+.ui-rebrand-root .surface-panel {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(12px);
+}
+
+.ui-rebrand-root .surface-panel-strong {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+}
+
+.ui-rebrand-root .text-muted {
+  color: var(--color-text-muted);
+}
+
+.ui-rebrand-root .btn-accent {
+  background: var(--color-accent-primary);
+  color: #07140d;
+}
+
+.ui-rebrand-root .btn-accent:hover {
+  background: var(--color-accent-primary-hover);
+}
+
+.ui-rebrand-root .btn-data {
+  background: var(--color-accent-data);
+  color: #051114;
+}
+
+.ui-rebrand-root .btn-data:hover {
+  background: var(--color-accent-data-hover);
+}
+
+/* Route-scoped palette normalization to remove purple dominance */
+.rebrand-automations .text-purple-400,
+.rebrand-automations .text-violet-400,
+.rebrand-automations .text-indigo-400 {
+  color: #67e8f9 !important;
+}
+
+.rebrand-automations .bg-purple-600,
+.rebrand-automations .bg-violet-600,
+.rebrand-automations .bg-indigo-600 {
+  background-color: #0891b2 !important;
+}
+
+.rebrand-automations .hover\:bg-purple-700:hover,
+.rebrand-automations .hover\:bg-violet-700:hover,
+.rebrand-automations .hover\:bg-indigo-700:hover {
+  background-color: #0e7490 !important;
+}
+
+.rebrand-automations .from-purple-600,
+.rebrand-automations .to-indigo-600 {
+  --tw-gradient-from: #0891b2 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(8 145 178 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #14b8a6 var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+.rebrand-carpa .text-purple-400 {
+  color: #67e8f9 !important;
+}
+
+.rebrand-carpa .bg-purple-500\/20,
+.rebrand-carpa .bg-purple-600\/20 {
+  background-color: rgb(8 145 178 / 0.2) !important;
+}
+
+.rebrand-carpa .border-purple-500\/50,
+.rebrand-carpa .border-purple-600\/50 {
+  border-color: rgb(34 211 238 / 0.42) !important;
+}
+
+.rebrand-sala h1,
+.rebrand-sala h2,
+.rebrand-automations h1,
+.rebrand-automations h2,
+.rebrand-carpa h1,
+.rebrand-carpa h2 {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}

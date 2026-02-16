@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto, UpdateProfileDto, SubscriptionLimitsDto } from './dto/user.dto';
 import { SubscriptionTier, User, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 // Límites por nivel de suscripción
 const SUBSCRIPTION_LIMITS: Record<SubscriptionTier, SubscriptionLimitsDto> = {
@@ -213,7 +214,7 @@ export class UsersService {
   /**
    * Desactiva un usuario (soft delete)
    */
-  async deactivate(id: string, currentUser: User) {
+  async deactivate(id: string, currentUser: AuthenticatedUser) {
     const userToDeactivate = await this.findById(id);
 
     // No permitir desactivar al propio usuario

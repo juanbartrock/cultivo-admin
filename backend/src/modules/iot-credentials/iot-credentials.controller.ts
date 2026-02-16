@@ -22,7 +22,8 @@ import {
 } from './dto/iot-credential.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
-import { User, Connector } from '@prisma/client';
+import { Connector } from '@prisma/client';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 @ApiTags('IoT Credentials')
 @ApiBearerAuth()
@@ -33,7 +34,7 @@ export class IoTCredentialsController {
   @Get()
   @ApiOperation({ summary: 'Listar todas las credenciales IoT del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de credenciales', type: [CredentialResponseDto] })
-  async findAll(@CurrentUser() user: User) {
+  async findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.credentialsService.findAllByUser(user.id);
   }
 
@@ -60,7 +61,7 @@ export class IoTCredentialsController {
   @ApiResponse({ status: 200, description: 'Credenciales del conector', type: CredentialResponseDto })
   @ApiResponse({ status: 404, description: 'Credenciales no encontradas' })
   async findByConnector(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('connector') connector: string,
   ) {
     const credential = await this.credentialsService.findByConnector(
@@ -88,7 +89,7 @@ export class IoTCredentialsController {
   @ApiResponse({ status: 200, description: 'Credenciales guardadas', type: CredentialResponseDto })
   @ApiResponse({ status: 400, description: 'Conector inválido' })
   async upsert(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('connector') connector: string,
     @Body() data: UpsertCredentialDto,
   ) {
@@ -101,7 +102,7 @@ export class IoTCredentialsController {
   @ApiResponse({ status: 200, description: 'Credenciales eliminadas' })
   @ApiResponse({ status: 404, description: 'Credenciales no encontradas' })
   async delete(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('connector') connector: string,
   ) {
     return this.credentialsService.delete(user.id, connector as Connector);
@@ -113,7 +114,7 @@ export class IoTCredentialsController {
   @ApiResponse({ status: 200, description: 'Resultado de la prueba', type: TestCredentialResultDto })
   @ApiResponse({ status: 404, description: 'Credenciales no encontradas' })
   async testCredentials(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('connector') connector: string,
   ): Promise<TestCredentialResultDto> {
     return this.credentialsService.testCredentials(user.id, connector as Connector);

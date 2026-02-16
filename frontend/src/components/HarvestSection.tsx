@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Scale,
   Package,
   Scissors,
   Plus,
@@ -10,7 +9,6 @@ import {
   Minus,
   Loader2,
   Calendar,
-  AlertTriangle,
   Snowflake,
   Thermometer
 } from 'lucide-react';
@@ -30,6 +28,7 @@ import {
 interface HarvestSectionProps {
   plants: Plant[];
   cycleId: string;
+  materialOnlyMode?: boolean;
 }
 
 const productTypeConfig: Record<HarvestProductType, { label: string; color: string }> = {
@@ -49,7 +48,7 @@ const storageConfig: Record<StorageLocation, { label: string; icon: any }> = {
   FREEZER: { label: 'Freezer', icon: Snowflake },
 };
 
-export default function HarvestSection({ plants, cycleId }: HarvestSectionProps) {
+export default function HarvestSection({ plants, cycleId, materialOnlyMode = false }: HarvestSectionProps) {
   // Estado
   const [harvests, setHarvests] = useState<Harvest[]>([]);
   const [selectedHarvest, setSelectedHarvest] = useState<Harvest | null>(null);
@@ -59,10 +58,33 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
   const [selectedProduct, setSelectedProduct] = useState<HarvestProduct | null>(null);
   const [statistics, setStatistics] = useState<HarvestStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const confirm = useConfirm();
+
+  const plantIdsKey = useMemo(
+    () => plants.map((plant) => plant.id).sort().join(','),
+    [plants]
+  );
+
+  const plantsById = useMemo(() => {
+    const map = new Map<string, Plant>();
+    plants.forEach((plant) => map.set(plant.id, plant));
+    return map;
+  }, [plants]);
+
+  const harvestedPlantIds = useMemo(
+    () => new Set(harvests.map((harvest) => harvest.plantId)),
+    [harvests]
+  );
+
+  const pendingPlants = useMemo(
+    () => plants.filter((plant) => !harvestedPlantIds.has(plant.id)),
+    [plants, harvestedPlantIds]
+  );
 
   useEffect(() => {
     loadData();
-  }, [cycleId]);
+  }, [cycleId, plantIdsKey]);
 
   async function loadData() {
     setIsLoading(true);
@@ -77,6 +99,12 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
 
       setHarvests(filteredHarvests);
       setStatistics(statsData);
+
+      if (filteredHarvests.length === 0) {
+        setSelectedHarvest(null);
+      } else if (!selectedHarvest || !filteredHarvests.some((harvest) => harvest.id === selectedHarvest.id)) {
+        setSelectedHarvest(filteredHarvests[0]);
+      }
     } catch (error) {
       console.error('Error loading harvest data:', error);
       toast.error('Error al cargar datos de cosecha');
@@ -84,17 +112,21 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
       setIsLoading(false);
     }
   }
-  const { toast } = useToast();
-  const confirm = useConfirm();
 
   // ... 
 
   async function handleCreateHarvest(data: CreateHarvestDto) {
+    if (materialOnlyMode) {
+      toast.error('El ciclo esta finalizado: solo se permite extraer material');
+      return;
+    }
     try {
       const newHarvest = await harvestService.create(data);
-      setHarvests([newHarvest, ...harvests]);
+      setHarvests((prev) => [newHarvest, ...prev]);
+      setSelectedHarvest(newHarvest);
       setShowHarvestModal(false);
       toast.success('Cosecha registrada correctamente');
+      loadData();
     } catch (err) {
       console.error('Error creating harvest:', err);
       toast.error('Error al registrar la cosecha');
@@ -102,16 +134,21 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
   }
 
   async function handleCreateProduct(data: CreateHarvestProductDto) {
+    if (materialOnlyMode) {
+      toast.error('El ciclo esta finalizado: solo se permite extraer material');
+      return;
+    }
     try {
-      const newProduct = await harvestService.createProduct(data);
+      await harvestService.createProduct(data);
       // Actualizar la cosecha seleccionada
       if (selectedHarvest) {
         const updatedHarvest = await harvestService.getById(selectedHarvest.id);
-        setHarvests(harvests.map(h => h.id === updatedHarvest.id ? updatedHarvest : h));
+        setHarvests((prev) => prev.map((h) => h.id === updatedHarvest.id ? updatedHarvest : h));
         setSelectedHarvest(updatedHarvest);
       }
       setShowProductModal(false);
       toast.success('Producto creado correctamente');
+      loadData();
     } catch (err) {
       console.error('Error creating product:', err);
       toast.error('Error al crear el producto');
@@ -124,12 +161,13 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
       // Recargar datos
       if (selectedHarvest) {
         const updatedHarvest = await harvestService.getById(selectedHarvest.id);
-        setHarvests(harvests.map(h => h.id === updatedHarvest.id ? updatedHarvest : h));
+        setHarvests((prev) => prev.map((h) => h.id === updatedHarvest.id ? updatedHarvest : h));
         setSelectedHarvest(updatedHarvest);
       }
       setShowExtractModal(false);
       setSelectedProduct(null);
-      toast.success('Material extraído correctamente');
+      toast.success('Material extraido correctamente');
+      loadData();
     } catch (err) {
       console.error('Error extracting material:', err);
       toast.error('Error al extraer material');
@@ -137,9 +175,13 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
   }
 
   async function handleDeleteHarvest(harvest: Harvest) {
+    if (materialOnlyMode) {
+      toast.error('El ciclo esta finalizado: no se pueden eliminar cosechas');
+      return;
+    }
     const shouldDelete = await confirm({
       title: 'Eliminar Cosecha',
-      message: `¿Estás seguro de eliminar la cosecha de ${harvest.plant?.tagCode}? Esta acción no se puede deshacer.`,
+      message: `Estas seguro de eliminar la cosecha de ${harvest.plant?.tagCode}? Esta accion no se puede deshacer.`,
       variant: 'danger',
       confirmText: 'Eliminar',
     });
@@ -148,11 +190,13 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
 
     try {
       await harvestService.delete(harvest.id);
-      setHarvests(harvests.filter(h => h.id !== harvest.id));
+      const nextSelection = harvests.find((item) => item.id !== harvest.id) || null;
+      setHarvests((prev) => prev.filter((h) => h.id !== harvest.id));
       if (selectedHarvest?.id === harvest.id) {
-        setSelectedHarvest(null);
+        setSelectedHarvest(nextSelection);
       }
       toast.success('Cosecha eliminada correctamente');
+      loadData();
     } catch (err) {
       console.error('Error deleting harvest:', err);
       toast.error('Error al eliminar');
@@ -163,6 +207,8 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
 
 
 
+  const selectedHarvestId = selectedHarvest?.id;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -172,229 +218,244 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header y estadísticas */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Package className="w-5 h-5 text-amber-400" />
-          Cosechas
-        </h3>
-        <button
-          onClick={() => setShowHarvestModal(true)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded-lg"
-        >
-          <Plus className="w-4 h-4" />
-          Registrar Cosecha
-        </button>
-      </div>
-
-      {/* Stats */}
-      {statistics && statistics.totalHarvests > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold text-white">{statistics.totalHarvests}</p>
-            <p className="text-xs text-zinc-500">Cosechas</p>
-          </div>
-          <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold text-green-400">{statistics.totalDryWeight}g</p>
-            <p className="text-xs text-zinc-500">Peso seco</p>
-          </div>
-          <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold text-amber-400">{statistics.dryRatio}%</p>
-            <p className="text-xs text-zinc-500">Ratio seco</p>
-          </div>
-          <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold text-purple-400">{statistics.totalProducts}</p>
-            <p className="text-xs text-zinc-500">Productos</p>
-          </div>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Package className="w-5 h-5 text-amber-400" />
+            Cosechas
+          </h3>
+          <p className="text-xs text-zinc-400">
+            Plantas cosechadas: {harvestedPlantIds.size} / {plants.length}
+          </p>
         </div>
-      )}
-
-      {/* Lista de cosechas */}
-      {harvests.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Lista */}
-          <div className="space-y-2">
-            {harvests.map((harvest) => (
-              <button
-                key={harvest.id}
-                onClick={() => setSelectedHarvest(harvest)}
-                className={`w-full text-left p-4 rounded-lg border transition-colors ${selectedHarvest?.id === harvest.id
-                  ? 'bg-amber-600/20 border-amber-600/50'
-                  : 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
-                  }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-white">
-                    {harvest.plant?.tagCode || 'Planta'}
-                  </span>
-                  <span className="text-xs text-zinc-500">
-                    {new Date(harvest.harvestDate).toLocaleDateString('es-AR')}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-sm">
-                  {harvest.wetWeight && (
-                    <span className="text-zinc-400">
-                      <Scale className="w-3 h-3 inline mr-1" />
-                      {harvest.wetWeight}g húmedo
-                    </span>
-                  )}
-                  {harvest.dryWeight && (
-                    <span className="text-green-400">
-                      {harvest.dryWeight}g seco
-                    </span>
-                  )}
-                  {harvest._count?.products ? (
-                    <span className="text-amber-400">
-                      {harvest._count.products} productos
-                    </span>
-                  ) : null}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Detalle */}
-          {selectedHarvest && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h4 className="font-bold text-white">
-                    {selectedHarvest.plant?.tagCode}
-                  </h4>
-                  <p className="text-xs text-zinc-500">
-                    {selectedHarvest.plant?.strain?.name}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowProductModal(true)}
-                    className="p-2 bg-amber-600/20 text-amber-400 rounded-lg hover:bg-amber-600/30"
-                    title="Agregar producto"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteHarvest(selectedHarvest)}
-                    className="p-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Pesos */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold text-white">
-                    {selectedHarvest.wetWeight || '-'}g
-                  </p>
-                  <p className="text-xs text-zinc-500">Húmedo</p>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold text-green-400">
-                    {selectedHarvest.dryWeight || '-'}g
-                  </p>
-                  <p className="text-xs text-zinc-500">Seco</p>
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold text-amber-400">
-                    {selectedHarvest.trimWeight || '-'}g
-                  </p>
-                  <p className="text-xs text-zinc-500">Trim</p>
-                </div>
-              </div>
-
-              {/* Productos */}
-              <h5 className="text-sm font-medium text-zinc-400 mb-2">Productos</h5>
-              {selectedHarvest.products && selectedHarvest.products.length > 0 ? (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {selectedHarvest.products.map((product) => {
-                    const typeInfo = productTypeConfig[product.type];
-                    const storageInfo = storageConfig[product.storageLocation];
-                    const StorageIcon = storageInfo.icon;
-
-                    return (
-                      <div
-                        key={product.id}
-                        className="p-3 bg-zinc-800/50 rounded-lg border border-zinc-700/50"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs px-2 py-0.5 rounded border ${typeInfo.color}`}>
-                              {typeInfo.label}
-                            </span>
-                            {product.packageNumber && (
-                              <span className="text-xs text-zinc-500">
-                                #{product.packageNumber}
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => {
-                              setSelectedProduct(product);
-                              setShowExtractModal(true);
-                            }}
-                            className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded"
-                            title="Extraer material"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-lg font-bold text-white">
-                              {product.currentWeight}g
-                            </span>
-                            <span className="text-xs text-zinc-500 ml-2">
-                              / {product.initialWeight}g
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-zinc-500">
-                            <StorageIcon className="w-3 h-3" />
-                            {storageInfo.label}
-                          </div>
-                        </div>
-                        {product.packageType && (
-                          <p className="text-xs text-zinc-600 mt-1">
-                            {product.packageType}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-4 bg-zinc-800/30 rounded-lg">
-                  <Package className="w-6 h-6 text-zinc-600 mx-auto mb-1" />
-                  <p className="text-xs text-zinc-500">Sin productos registrados</p>
-                </div>
-              )}
-            </motion.div>
+        <div className="flex items-center gap-2">
+          {materialOnlyMode && (
+            <span className="text-xs px-2 py-1 rounded border border-amber-500/40 bg-amber-500/10 text-amber-300">
+              Modo finalizado: solo extracción
+            </span>
           )}
-        </div>
-      ) : (
-        <div className="text-center py-12 bg-zinc-800/30 rounded-xl">
-          <Scissors className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-          <h4 className="text-lg font-medium text-white mb-2">Sin cosechas registradas</h4>
-          <p className="text-zinc-500 mb-4">Registra la cosecha de tus plantas</p>
           <button
             onClick={() => setShowHarvestModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg"
+            disabled={materialOnlyMode}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-amber-600 hover:bg-amber-700 disabled:bg-zinc-700 disabled:text-zinc-400 text-white rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+            Registrar Cosecha
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-zinc-800/50 rounded-lg p-3 text-center border border-zinc-700/40">
+          <p className="text-2xl font-bold text-white">{statistics?.totalHarvests ?? harvests.length}</p>
+          <p className="text-xs text-zinc-500">Cosechas</p>
+        </div>
+        <div className="bg-zinc-800/50 rounded-lg p-3 text-center border border-zinc-700/40">
+          <p className="text-2xl font-bold text-green-400">{statistics?.totalDryWeight ?? 0}g</p>
+          <p className="text-xs text-zinc-500">Peso seco</p>
+        </div>
+        <div className="bg-zinc-800/50 rounded-lg p-3 text-center border border-zinc-700/40">
+          <p className="text-2xl font-bold text-amber-400">{statistics?.dryRatio ?? 0}%</p>
+          <p className="text-xs text-zinc-500">Ratio seco</p>
+        </div>
+        <div className="bg-zinc-800/50 rounded-lg p-3 text-center border border-zinc-700/40">
+          <p className="text-2xl font-bold text-purple-400">{statistics?.totalProducts ?? 0}</p>
+          <p className="text-xs text-zinc-500">Productos</p>
+        </div>
+      </div>
+
+      {harvests.length > 0 ? (
+        <div className="space-y-3">
+          {harvests.map((harvest) => {
+            const plant = harvest.plant ?? plantsById.get(harvest.plantId);
+            const isSelected = selectedHarvestId === harvest.id;
+            const productCount = harvest._count?.products ?? harvest.products?.length ?? 0;
+            const dryRatio = harvest.wetWeight && harvest.dryWeight
+              ? ((harvest.dryWeight / harvest.wetWeight) * 100).toFixed(1)
+              : null;
+
+            return (
+              <motion.article
+                key={harvest.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`rounded-xl border p-4 transition-colors ${isSelected
+                  ? 'bg-amber-600/10 border-amber-500/50'
+                  : 'bg-zinc-800/40 border-zinc-700/50 hover:border-zinc-600'
+                  }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSelectedHarvest(harvest)}
+                  className="w-full text-left"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-3">
+                    <div>
+                      <p className="text-base font-semibold text-white">
+                        {plant?.tagCode || `Planta ${harvest.plantId.slice(0, 6)}`}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {plant?.strain?.name || 'Genética sin definir'}
+                      </p>
+                    </div>
+                    <div className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {new Date(harvest.harvestDate).toLocaleDateString('es-AR')}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div className="rounded-lg border border-zinc-700/60 bg-zinc-900/30 p-2">
+                      <p className="text-zinc-500 mb-1">Húmedo</p>
+                      <p className="text-sm font-semibold text-white">{harvest.wetWeight ?? '-'}g</p>
+                    </div>
+                    <div className="rounded-lg border border-zinc-700/60 bg-zinc-900/30 p-2">
+                      <p className="text-zinc-500 mb-1">Seco</p>
+                      <p className="text-sm font-semibold text-green-400">{harvest.dryWeight ?? '-'}g</p>
+                    </div>
+                    <div className="rounded-lg border border-zinc-700/60 bg-zinc-900/30 p-2">
+                      <p className="text-zinc-500 mb-1">Trim</p>
+                      <p className="text-sm font-semibold text-amber-400">{harvest.trimWeight ?? '-'}g</p>
+                    </div>
+                    <div className="rounded-lg border border-zinc-700/60 bg-zinc-900/30 p-2">
+                      <p className="text-zinc-500 mb-1">Productos</p>
+                      <p className="text-sm font-semibold text-purple-400">{productCount}</p>
+                    </div>
+                  </div>
+                </button>
+
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-xs text-zinc-500">
+                    Rendimiento seco: {dryRatio ? `${dryRatio}%` : 'Sin datos'}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedHarvest(harvest);
+                        setShowProductModal(true);
+                      }}
+                      disabled={materialOnlyMode}
+                      className="p-2 bg-amber-600/20 text-amber-400 disabled:bg-zinc-700/50 disabled:text-zinc-500 rounded-lg hover:bg-amber-600/30"
+                      title="Agregar producto"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteHarvest(harvest)}
+                      disabled={materialOnlyMode}
+                      className="p-2 bg-red-600/20 text-red-400 disabled:bg-zinc-700/50 disabled:text-zinc-500 rounded-lg hover:bg-red-600/30"
+                      title="Eliminar cosecha"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 pt-3 border-t border-zinc-700/50">
+                        {harvest.notes && (
+                          <p className="text-xs text-zinc-400 mb-3">
+                            {harvest.notes}
+                          </p>
+                        )}
+                        <h5 className="text-sm font-medium text-zinc-300 mb-2">Productos de esta planta</h5>
+                        {harvest.products && harvest.products.length > 0 ? (
+                          <div className="space-y-2">
+                            {harvest.products.map((product) => {
+                              const typeInfo = productTypeConfig[product.type];
+                              const storageInfo = storageConfig[product.storageLocation];
+                              const StorageIcon = storageInfo.icon;
+
+                              return (
+                                <div
+                                  key={product.id}
+                                  className="p-3 bg-zinc-900/40 rounded-lg border border-zinc-700/50"
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-xs px-2 py-0.5 rounded border ${typeInfo.color}`}>
+                                        {typeInfo.label}
+                                      </span>
+                                      {product.packageNumber && (
+                                        <span className="text-xs text-zinc-500">#{product.packageNumber}</span>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedProduct(product);
+                                        setShowExtractModal(true);
+                                      }}
+                                      className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded"
+                                      title="Extraer material"
+                                    >
+                                      <Minus className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                  <div className="flex items-center justify-between text-sm">
+                                    <div>
+                                      <span className="font-semibold text-white">{product.currentWeight}g</span>
+                                      <span className="text-xs text-zinc-500 ml-2">/ {product.initialWeight}g</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-xs text-zinc-500">
+                                      <StorageIcon className="w-3 h-3" />
+                                      {storageInfo.label}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 bg-zinc-900/40 rounded-lg border border-zinc-700/50">
+                            <Package className="w-6 h-6 text-zinc-600 mx-auto mb-1" />
+                            <p className="text-xs text-zinc-500">Sin productos registrados</p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-10 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+          <Scissors className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+          <h4 className="text-lg font-medium text-white mb-2">Sin cosechas registradas</h4>
+          <p className="text-zinc-500 mb-4">Registra la cosecha de tus plantas para ver su rendimiento</p>
+          {pendingPlants.length > 0 && (
+            <div className="mb-4 flex flex-wrap justify-center gap-2 px-4">
+              {pendingPlants.slice(0, 8).map((plant) => (
+                <span
+                  key={plant.id}
+                  className="text-xs px-2 py-1 rounded-lg bg-zinc-900/60 border border-zinc-700/60 text-zinc-300"
+                >
+                  {plant.tagCode}
+                </span>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setShowHarvestModal(true)}
+            disabled={materialOnlyMode}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-zinc-700 disabled:text-zinc-400 text-white rounded-lg"
           >
             <Plus className="w-4 h-4" />
             Registrar Cosecha
           </button>
         </div>
       )}
-
       {/* Modales */}
-      {showHarvestModal && (
+      {showHarvestModal && !materialOnlyMode && (
         <HarvestModal
           plants={plants}
           onClose={() => setShowHarvestModal(false)}
@@ -402,7 +463,7 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
         />
       )}
 
-      {showProductModal && selectedHarvest && (
+      {showProductModal && selectedHarvest && !materialOnlyMode && (
         <ProductModal
           harvestId={selectedHarvest.id}
           onClose={() => setShowProductModal(false)}
@@ -502,7 +563,7 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">Húmedo (g)</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Humedo (g)</label>
                 <input
                   type="number"
                   value={form.wetWeight}
@@ -647,7 +708,7 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">N° envase</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Nro envase</label>
                 <input
                   type="text"
                   value={form.packageNumber}
@@ -658,7 +719,7 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Ubicación</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Ubicacion</label>
               <select
                 value={form.storageLocation}
                 onChange={(e) => setForm({ ...form, storageLocation: e.target.value as StorageLocation })}
@@ -707,7 +768,7 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
     async function handleSubmit() {
       if (!amount || parseFloat(amount) <= 0) return;
       if (parseFloat(amount) > product.currentWeight) {
-        toast.error(`No puedes extraer más de ${product.currentWeight}g`);
+        toast.error(`No puedes extraer mas de ${product.currentWeight}g`);
         return;
       }
 
@@ -794,13 +855,4 @@ export default function HarvestSection({ plants, cycleId }: HarvestSectionProps)
       </div>
     );
   }
-
-
-
-
 }
-
-
-
-
-

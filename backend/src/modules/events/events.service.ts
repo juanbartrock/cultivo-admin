@@ -1,11 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from './storage.service';
 import { CreateWaterEventDto, CreateNoteEventDto, CreatePhotoEventDto, CreateEnvironmentEventDto, CreateGenericEventDto } from './dto/event.dto';
-import { EventType, Prisma } from '@prisma/client';
+import { CycleStatus, EventType, Prisma } from '@prisma/client';
 
 @Injectable()
 export class EventsService {
+  private readonly logger = new Logger(EventsService.name);
+
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
@@ -135,20 +137,22 @@ export class EventsService {
   ) {
     // Validar que el archivo existe y tiene datos
     if (!file || !file.buffer) {
-      throw new BadRequestException('No se recibió el archivo de imagen');
+      throw new BadRequestException('No se recibiÃ³ el archivo de imagen');
     }
 
     await this.validateEventTargets(data);
 
     // Subir foto a Supabase Storage o guardar como base64
     let photoData: { url: string; path: string };
+    let uploadedRemotePath: string | null = null;
 
     try {
       if (this.storageService.isAvailable()) {
         photoData = await this.storageService.uploadFile(file, 'photos');
+        uploadedRemotePath = photoData.path;
       } else {
-        // Fallback: guardar como base64 (no recomendado para producción)
-        // Limitar tamaño para base64 (máximo 5MB para evitar problemas de DB)
+        // Fallback: guardar como base64 (no recomendado para producciÃ³n)
+        // Limitar tamaÃ±o para base64 (mÃ¡ximo 5MB para evitar problemas de DB)
         if (file.size > 5 * 1024 * 1024) {
           throw new BadRequestException(
             'El archivo es demasiado grande para almacenamiento local. Configura Supabase Storage.',
@@ -177,24 +181,38 @@ export class EventsService {
       size: file.size,
     };
 
-    return this.prisma.event.create({
-      data: {
-        type: EventType.FOTO,
-        plantId: data.plantId || null,
-        cycleId: data.cycleId || null,
-        sectionId: data.sectionId || null,
-        data: eventData,
-      },
-      include: {
-        plant: true,
-        cycle: true,
-        section: true,
-      },
-    });
+    try {
+      return await this.prisma.event.create({
+        data: {
+          type: EventType.FOTO,
+          plantId: data.plantId || null,
+          cycleId: data.cycleId || null,
+          sectionId: data.sectionId || null,
+          data: eventData,
+        },
+        include: {
+          plant: true,
+          cycle: true,
+          section: true,
+        },
+      });
+    } catch (error) {
+      if (uploadedRemotePath && this.storageService.isAvailable()) {
+        try {
+          await this.storageService.deleteFile(uploadedRemotePath);
+          this.logger.warn(`Rolled back orphaned uploaded file: ${uploadedRemotePath}`);
+        } catch (cleanupError) {
+          const cleanupMessage =
+            cleanupError instanceof Error ? cleanupError.message : 'Unknown cleanup error';
+          this.logger.error(`Failed to rollback uploaded file ${uploadedRemotePath}: ${cleanupMessage}`);
+        }
+      }
+      throw error;
+    }
   }
 
   /**
-   * Registra parámetros ambientales
+   * Registra parÃ¡metros ambientales
    */
   async createEnvironmentEvent(data: CreateEnvironmentEventDto) {
     await this.validateEventTargets(data);
@@ -231,7 +249,7 @@ export class EventsService {
   }
 
   /**
-   * Crea un evento genérico (para tipos como CAMBIO_MACETA, etc.)
+   * Crea un evento genÃ©rico (para tipos como CAMBIO_MACETA, etc.)
    */
   async createGenericEvent(data: CreateGenericEventDto) {
     await this.validateEventTargets(data);
@@ -253,7 +271,7 @@ export class EventsService {
   }
 
   /**
-   * Crea un evento genérico
+   * Crea un evento genÃ©rico
    */
   async createEvent(type: EventType, data: {
     plantId?: string;
@@ -292,7 +310,7 @@ export class EventsService {
         try {
           await this.storageService.deleteFile(eventData.path);
         } catch {
-          // Ignorar errores de eliminación de archivo
+          // Ignorar errores de eliminaciÃ³n de archivo
         }
       }
     }
@@ -301,7 +319,7 @@ export class EventsService {
   }
 
   /**
-   * Obtiene estadísticas de eventos
+   * Obtiene estadÃ­sticas de eventos
    */
   async getStats(options: {
     cycleId?: string;
@@ -350,21 +368,33 @@ export class EventsService {
       );
     }
 
+    let resolvedCycleId = data.cycleId;
+
     if (data.plantId) {
       const plant = await this.prisma.plant.findUnique({
         where: { id: data.plantId },
+        select: { id: true, cycleId: true },
       });
       if (!plant) {
         throw new NotFoundException(`Plant with ID ${data.plantId} not found`);
       }
+      if (!resolvedCycleId) {
+        resolvedCycleId = plant.cycleId;
+      }
     }
 
-    if (data.cycleId) {
+    if (resolvedCycleId) {
       const cycle = await this.prisma.cycle.findUnique({
-        where: { id: data.cycleId },
+        where: { id: resolvedCycleId },
+        select: { id: true, status: true },
       });
       if (!cycle) {
-        throw new NotFoundException(`Cycle with ID ${data.cycleId} not found`);
+        throw new NotFoundException(`Cycle with ID ${resolvedCycleId} not found`);
+      }
+      if (cycle.status === CycleStatus.CURED) {
+        throw new BadRequestException(
+          'El ciclo estÃ¡ finalizado en curado y no permite nuevos eventos',
+        );
       }
     }
 
@@ -382,9 +412,9 @@ export class EventsService {
    * Calcula el VPD (Vapor Pressure Deficit)
    */
   private calculateVPD(tempC: number, humidityPercent: number): number {
-    // Fórmula de Tetens para presión de vapor de saturación
+    // FÃ³rmula de Tetens para presiÃ³n de vapor de saturaciÃ³n
     const svp = 0.6108 * Math.exp((17.27 * tempC) / (tempC + 237.3));
-    // Presión de vapor actual
+    // PresiÃ³n de vapor actual
     const avp = svp * (humidityPercent / 100);
     // VPD
     return Math.round((svp - avp) * 100) / 100;

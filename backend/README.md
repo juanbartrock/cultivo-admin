@@ -65,6 +65,15 @@ SUPABASE_BUCKET_NAME="grow-photos"
 MS_SONOFF_URL="http://sonoff-service:3000"
 MS_TUYA_URL="http://tuya-service:3000"
 MS_TAPO_URL="http://tapo-service:3000"
+
+# Seguridad/Auth
+JWT_SECRET="your_long_random_jwt_secret_at_least_32_chars"
+ADMIN_USER="admin"
+ADMIN_PASSWORD="change_me"
+
+# CORS y realtime
+CORS_ALLOWED_ORIGINS="http://localhost:3001"
+REALTIME_ALLOW_GUEST="false"
 ```
 
 ### 3. Crear las tablas en Supabase
@@ -135,6 +144,18 @@ Una vez iniciado, accede a:
 
 - **Swagger UI:** http://localhost:4000/docs
 - **Health Check:** http://localhost:4000/health
+- **Liveness:** http://localhost:4000/api/health/live
+- **Readiness:** http://localhost:4000/api/health/ready
+
+## Testing en Docker
+
+```bash
+# Smoke HTTP suite (health/rutas)
+docker compose --profile test run --rm backend-test npm run test:smoke
+
+# Unit tests backend
+docker compose --profile test run --rm backend-test npm test
+```
 
 ### Ubicaciones
 

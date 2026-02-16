@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsInt, Min, Max } from 'class-validator';
+import { IsEnum, IsOptional, IsInt, Min, Max, IsISO8601 } from 'class-validator';
 import { JobStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 
@@ -39,6 +39,32 @@ export class JobStatsDto {
   failed: number;
   dead: number;
   cancelled: number;
+}
+
+export class GetExecutionsQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(500)
+  limit?: number = 50;
+
+  @IsOptional()
+  @IsISO8601()
+  from?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  to?: string;
+}
+
+export class GetEffectivenessQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  days?: number = 30;
 }
 
 

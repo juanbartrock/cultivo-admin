@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, timeout, catchError } from 'rxjs';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Connector } from '@prisma/client';
+import { Connector, Prisma } from '@prisma/client';
 import {
   UpsertCredentialDto,
   CredentialResponseDto,
@@ -134,7 +134,7 @@ export class IoTCredentialsService {
       return null;
     }
 
-    return credential.credentials as Record<string, any>;
+    return credential.credentials as Record<string, unknown>;
   }
 
   /**
@@ -153,11 +153,11 @@ export class IoTCredentialsService {
       create: {
         userId,
         connector,
-        credentials: data.credentials as any,
+        credentials: data.credentials as unknown as Prisma.InputJsonValue,
         isEnabled: data.isEnabled ?? true,
       },
       update: {
-        credentials: data.credentials as any,
+        credentials: data.credentials as unknown as Prisma.InputJsonValue,
         isEnabled: data.isEnabled,
         isValid: null, // Reset validation status
         lastChecked: null,
@@ -208,7 +208,7 @@ export class IoTCredentialsService {
       throw new NotFoundException(`No hay credenciales configuradas para ${connector}`);
     }
 
-    const credentials = credential.credentials as Record<string, any>;
+    const credentials = credential.credentials as Record<string, unknown>;
     const baseUrl = this.connectorUrls[connector];
 
     if (!baseUrl) {
@@ -260,9 +260,10 @@ export class IoTCredentialsService {
         },
       });
 
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
-        message: `Error al conectar con ${connector}: ${error.message}`,
+        message: `Error al conectar con ${connector}: ${errorMessage}`,
       };
     }
   }
@@ -290,33 +291,33 @@ export class IoTCredentialsService {
   /**
    * Construye los headers de credenciales para enviar al microservicio
    */
-  buildCredentialHeaders(connector: Connector, credentials: Record<string, any>): Record<string, string> {
+  buildCredentialHeaders(connector: Connector, credentials: Record<string, unknown>): Record<string, string> {
     switch (connector) {
       case Connector.SONOFF:
         return {
-          'X-Ewelink-Email': credentials.email || '',
-          'X-Ewelink-Password': credentials.password || '',
-          'X-Ewelink-Region': credentials.region || 'us',
+          'X-Ewelink-Email': IoTCredentialsService.asString(credentials.email),
+          'X-Ewelink-Password': IoTCredentialsService.asString(credentials.password),
+          'X-Ewelink-Region': IoTCredentialsService.asString(credentials.region, 'us'),
         };
 
       case Connector.TUYA:
         return {
-          'X-Tuya-Access-Id': credentials.accessId || '',
-          'X-Tuya-Access-Secret': credentials.accessSecret || '',
-          'X-Tuya-Region': credentials.region || 'us',
+          'X-Tuya-Access-Id': IoTCredentialsService.asString(credentials.accessId),
+          'X-Tuya-Access-Secret': IoTCredentialsService.asString(credentials.accessSecret),
+          'X-Tuya-Region': IoTCredentialsService.asString(credentials.region, 'us'),
         };
 
       case Connector.TAPO:
         return {
-          'X-Tapo-Camera-Ip': credentials.cameraIp || '',
-          'X-Tapo-Username': credentials.username || '',
-          'X-Tapo-Password': credentials.password || '',
+          'X-Tapo-Camera-Ip': IoTCredentialsService.asString(credentials.cameraIp),
+          'X-Tapo-Username': IoTCredentialsService.asString(credentials.username),
+          'X-Tapo-Password': IoTCredentialsService.asString(credentials.password),
         };
 
       case Connector.ESP32:
         return {
-          'X-Esp32-Device-Ip': credentials.deviceIp || '',
-          'X-Esp32-Port': credentials.port || '80',
+          'X-Esp32-Device-Ip': IoTCredentialsService.asString(credentials.deviceIp),
+          'X-Esp32-Port': IoTCredentialsService.asString(credentials.port, '80'),
         };
 
       default:
@@ -327,38 +328,48 @@ export class IoTCredentialsService {
   /**
    * Sanitiza las credenciales para no exponer datos sensibles
    */
-  private sanitizeCredential(credential: any): CredentialResponseDto {
-    const creds = credential.credentials as Record<string, any>;
-    let sanitizedCreds: Record<string, any> = {};
+  private sanitizeCredential(credential: {
+    id: string;
+    connector: Connector;
+    isEnabled: boolean;
+    isValid: boolean | null;
+    lastChecked: Date | null;
+    credentials: unknown;
+    createdAt: Date;
+    updatedAt: Date;
+  }): CredentialResponseDto {
+    const creds = credential.credentials as Record<string, unknown>;
+    let sanitizedCreds: Record<string, unknown> = {};
 
     switch (credential.connector) {
       case Connector.SONOFF:
         sanitizedCreds = {
-          email: creds.email,
-          region: creds.region,
+          email: IoTCredentialsService.asString(creds.email),
+          region: IoTCredentialsService.asString(creds.region),
           // password NO se incluye
         };
         break;
 
       case Connector.TUYA:
+        const accessId = IoTCredentialsService.asString(creds.accessId);
         sanitizedCreds = {
-          accessId: creds.accessId ? `${creds.accessId.substring(0, 8)}...` : undefined,
-          region: creds.region,
+          accessId: accessId ? `${accessId.substring(0, 8)}...` : undefined,
+          region: IoTCredentialsService.asString(creds.region),
           // accessSecret NO se incluye
         };
         break;
 
       case Connector.TAPO:
         sanitizedCreds = {
-          cameraIp: creds.cameraIp,
+          cameraIp: IoTCredentialsService.asString(creds.cameraIp),
           // username y password NO se incluyen
         };
         break;
 
       case Connector.ESP32:
         sanitizedCreds = {
-          deviceIp: creds.deviceIp,
-          port: creds.port,
+          deviceIp: IoTCredentialsService.asString(creds.deviceIp),
+          port: IoTCredentialsService.asString(creds.port, '80'),
         };
         break;
     }
@@ -374,8 +385,8 @@ export class IoTCredentialsService {
       updatedAt: credential.updatedAt,
     };
   }
+
+  private static asString(value: unknown, fallback = ''): string {
+    return typeof value === 'string' ? value : fallback;
+  }
 }
-
-
-
-

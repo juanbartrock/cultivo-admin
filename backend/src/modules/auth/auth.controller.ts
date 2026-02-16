@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { ApiTags, ApiBody, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
-import { User } from '@prisma/client';
+import { AuthenticatedUser, LocalAuthUser } from './types/authenticated-user.type';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -24,7 +24,7 @@ export class AuthController {
       },
     },
   })
-  async login(@Request() req: any) {
+  async login(@Request() req: { user: LocalAuthUser }) {
     return this.authService.login(req.user);
   }
 
@@ -32,14 +32,14 @@ export class AuthController {
   @Get('profile')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current profile (JWT protected)' })
-  getProfile(@Request() req: any) {
+  getProfile(@Request() req: { user: LocalAuthUser }) {
     return req.user;
   }
 
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user (Supabase or JWT protected)' })
-  async getMe(@CurrentUser() user: User) {
+  async getMe(@CurrentUser() user: AuthenticatedUser) {
     if (!user) {
       return { authenticated: false };
     }

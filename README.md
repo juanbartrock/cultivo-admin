@@ -68,8 +68,8 @@ cp tapo-service/.env.example tapo-service/.env
 cp backend/env.example backend/.env
 # Editar backend/.env con tu DATABASE_URL de Supabase
 
-# 4. Levantar todos los servicios
-docker compose up -d
+# 4. Levantar todos los servicios (build inicial)
+docker compose up -d --build
 
 # 5. Crear las tablas en la base de datos (primera vez)
 cd backend && npm install && npx prisma db push
@@ -77,6 +77,26 @@ cd backend && npm install && npx prisma db push
 # 6. Ver logs en tiempo real
 docker compose logs -f
 ```
+
+### Validación Obligatoria (Docker Compose)
+
+La validación de cambios en este proyecto se realiza **siempre** con Docker Compose.
+
+```bash
+# Reconstruir y levantar todo el stack
+docker compose up -d --build
+
+# Verificar estado de servicios
+docker compose ps
+
+# Revisar logs del frontend y backend
+docker compose logs frontend --tail 100
+docker compose logs backend --tail 100
+```
+
+Notas:
+- Para validar integración completa, **no usar** `npm run build`, `npm start` o `npm run dev` local como criterio final.
+- Node local puede usarse para edición/lint/typecheck puntuales, pero la validación final es con Docker.
 
 ### Configuración del Backend
 
@@ -222,6 +242,29 @@ NEXT_PUBLIC_API_URL=http://localhost:4000/api
 | `/artefactos` | Autodescubrimiento y asignación de dispositivos |
 | `/seguimientos` | Gestión de ciclos, plantas y eventos |
 | `/automatizaciones` | Sistema de automatizaciones avanzadas (horarios y condiciones) |
+
+### Estado de Interfaz (Rebrand UI)
+
+La UI del frontend está en proceso de rebrand visual progresivo con foco en consistencia, legibilidad y estética premium.
+
+Cambios base ya incluidos:
+- Tokens y estilos globales en `frontend/src/styles/tokens.css`.
+- Shell/layout y tipografías renovadas (`Manrope` + `Space Grotesk`).
+- Actualización de componentes base de UI (`Button`, `Card`, `Badge`, `Modal`).
+- Mejoras visuales en `Sala`, `Automatizaciones` y `Carpa`.
+
+Feature flags del rebrand (todas activadas por defecto):
+
+```env
+NEXT_PUBLIC_UI_REBRAND_SHELL=true
+NEXT_PUBLIC_UI_REBRAND_SALA=true
+NEXT_PUBLIC_UI_REBRAND_CARPA=true
+NEXT_PUBLIC_UI_REBRAND_AUTOMATIONS=true
+```
+
+Si necesitás fallback visual por ruta, podés desactivar la flag correspondiente en entorno.
+
+Para refactors grandes de frontend, usar el flujo de fork documentado en `docs/FRONTEND_FORK_WORKFLOW.md`.
 
 ---
 
@@ -384,6 +427,12 @@ TAPO_PASSWORD=tu_password_camara
 ## Comandos Docker
 
 ```bash
+# Comando recomendado para aplicar cambios y validar el stack completo
+docker compose up -d --build
+
+# Ver estado de servicios
+docker compose ps
+
 # Construir imágenes
 docker compose build
 
@@ -395,6 +444,7 @@ docker compose logs -f
 
 # Logs de un servicio específico
 docker compose logs backend -f
+docker compose logs frontend -f
 docker compose logs sonoff-service -f
 docker compose logs tuya-service -f
 docker compose logs tapo-service -f
@@ -412,7 +462,9 @@ docker compose build --no-cache
 docker compose down -v
 ```
 
-## Desarrollo Local (sin Docker)
+## Desarrollo Local (solo para iterar, no para validar)
+
+Usar esta modalidad únicamente para desarrollo puntual. La validación oficial del proyecto debe hacerse con Docker Compose.
 
 ### Backend
 
@@ -478,7 +530,7 @@ npm run dev
 | **Device** | Dispositivos IoT vinculados a conectores |
 | **Strain** | Genéticas/variedades de plantas |
 | **Cycle** | Ciclos de cultivo/seguimientos |
-| **Plant** | Plantas individuales con tracking de etapa |
+| **Plant** | Plantas individuales con tracking de etapa y estado de salud |
 | **Event** | Bitácora (riegos, fotos, notas, ambiente) |
 
 ### Tipos de Dispositivos
@@ -505,6 +557,14 @@ npm run dev
 | FLORACION | Desarrollo de flores |
 | SECADO | Post-cosecha |
 | CURADO | Maduración final |
+
+### Estados de Salud
+
+| Estado | Descripción |
+|--------|-------------|
+| HEALTHY | Planta saludable |
+| INFECTED | Planta con plaga o enfermedad |
+| DEAD | Planta muerta |
 
 ### Conectores IoT
 
@@ -755,6 +815,9 @@ El asistente de IA tiene aislamiento completo de datos por usuario:
 - [x] **Panel de administración de usuarios (ABM completo)**
 - [x] **Login local con password hash (bcrypt)**
 - [x] **Credenciales IoT por usuario**
+- [x] **Dashboard Ejecutivo (Resumen de estado)**
+- [x] **Edición completa de plantas**
+- [x] **Seguimiento de estado de salud (Sano/Infectado/Muerto)**
 - [ ] Gráficos históricos de sensores
 - [ ] Notificaciones push
 - [ ] Ejecutor automático de automatizaciones (cron job)

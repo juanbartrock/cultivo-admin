@@ -13,8 +13,13 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { LocationsService } from './locations.service';
 import { CreateSectionDto, UpdateSectionDto } from './dto/section.dto';
 import { UpdateSectionLayoutDto } from './dto/layout.dto';
+import {
+  CalculateDLIQueryDto,
+  CreatePPFDReadingDto,
+  GetPPFDHistoryQueryDto,
+} from './dto/ppfd.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '@prisma/client';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 @ApiTags('locations')
 @ApiBearerAuth()
@@ -25,7 +30,7 @@ export class SectionsController {
   @Get()
   @ApiOperation({ summary: 'Listar todas las secciones del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de secciones' })
-  async findAll(@CurrentUser() user: User) {
+  async findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.locationsService.findAllSections(user.id);
   }
 
@@ -35,7 +40,7 @@ export class SectionsController {
   @ApiResponse({ status: 404, description: 'Sección no encontrada' })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.findSectionById(id, user.id);
   }
@@ -49,7 +54,7 @@ export class SectionsController {
   @ApiResponse({ status: 404, description: 'Sección no encontrada' })
   async getDashboard(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.getSectionDashboard(id, user.id);
   }
@@ -59,7 +64,7 @@ export class SectionsController {
   @ApiResponse({ status: 201, description: 'Sección creada exitosamente' })
   async create(
     @Body() createSectionDto: CreateSectionDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.createSection(createSectionDto, user.id);
   }
@@ -71,7 +76,7 @@ export class SectionsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSectionDto: UpdateSectionDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.updateSection(id, updateSectionDto, user.id);
   }
@@ -82,7 +87,7 @@ export class SectionsController {
   @ApiResponse({ status: 404, description: 'Sección no encontrada' })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.deleteSection(id, user.id);
   }
@@ -96,7 +101,7 @@ export class SectionsController {
   @ApiResponse({ status: 201, description: 'Lectura registrada' })
   async createPPFDReading(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() data: { zone: number; ppfdValue: number; lightHeight: number },
+    @Body() data: CreatePPFDReadingDto,
   ) {
     return this.locationsService.createPPFDReading(id, data);
   }
@@ -113,13 +118,12 @@ export class SectionsController {
   @ApiResponse({ status: 200, description: 'Historial de lecturas' })
   async getPPFDHistory(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('zone') zone?: string,
-    @Query('limit') limit?: string,
+    @Query() query: GetPPFDHistoryQueryDto,
   ) {
     return this.locationsService.getPPFDHistory(
       id,
-      zone ? parseInt(zone, 10) : undefined,
-      limit ? parseInt(limit, 10) : 50,
+      query.zone,
+      query.limit ?? 50,
     );
   }
 
@@ -131,11 +135,11 @@ export class SectionsController {
   @ApiResponse({ status: 200, description: 'DLI calculado' })
   async calculateDLI(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('lightHours') lightHours?: string,
+    @Query() query: CalculateDLIQueryDto,
   ) {
     return this.locationsService.calculateDLI(
       id,
-      lightHours ? parseFloat(lightHours) : 18,
+      query.lightHours ?? 18,
     );
   }
 

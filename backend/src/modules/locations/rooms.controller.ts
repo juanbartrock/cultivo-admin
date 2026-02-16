@@ -12,7 +12,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { LocationsService } from './locations.service';
 import { CreateRoomDto, UpdateRoomDto } from './dto/room.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '@prisma/client';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 @ApiTags('locations')
 @ApiBearerAuth()
@@ -23,7 +23,7 @@ export class RoomsController {
   @Get()
   @ApiOperation({ summary: 'Listar todas las salas del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de salas con sus secciones' })
-  async findAll(@CurrentUser() user: User) {
+  async findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.locationsService.findAllRooms(user.id);
   }
 
@@ -33,7 +33,7 @@ export class RoomsController {
   @ApiResponse({ status: 404, description: 'Sala no encontrada' })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.findRoomById(id, user.id);
   }
@@ -43,7 +43,7 @@ export class RoomsController {
   @ApiResponse({ status: 201, description: 'Sala creada exitosamente' })
   async create(
     @Body() createRoomDto: CreateRoomDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.createRoom(createRoomDto, user.id);
   }
@@ -55,7 +55,7 @@ export class RoomsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateRoomDto: UpdateRoomDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.updateRoom(id, updateRoomDto, user.id);
   }
@@ -66,7 +66,7 @@ export class RoomsController {
   @ApiResponse({ status: 404, description: 'Sala no encontrada' })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.deleteRoom(id, user.id);
   }
@@ -77,7 +77,7 @@ export class RoomsController {
   @ApiResponse({ status: 404, description: 'Sala no encontrada' })
   async getSections(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.locationsService.getRoomSections(id, user.id);
   }

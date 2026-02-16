@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
+import { configValidationSchema } from './config/config.schema';
 import { LocationsModule } from './modules/locations/locations.module';
 import { DevicesModule } from './modules/devices/devices.module';
 import { GrowModule } from './modules/grow/grow.module';
@@ -26,6 +27,11 @@ import { SupabaseAuthGuard } from './modules/auth/guards/supabase-auth.guard';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validationSchema: configValidationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: false,
+      },
     }),
     ScheduleModule.forRoot(),
     PrismaModule,

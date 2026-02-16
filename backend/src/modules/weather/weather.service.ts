@@ -9,7 +9,7 @@ import {
   CultivationImpactAlertDto,
   ForecastDayDto 
 } from './dto/weather.dto';
-import { NotificationPriority, NotificationType } from '@prisma/client';
+import { NotificationPriority, NotificationType, Prisma } from '@prisma/client';
 
 /**
  * Respuesta de Open-Meteo API
@@ -355,8 +355,8 @@ export class WeatherService {
           visibility: weather.visibility,
           description: weather.description,
           icon: weather.icon,
-          alerts: weather.alerts as any,
-          forecastDaily: forecast as any,
+          alerts: (weather.alerts ?? null) as unknown as Prisma.InputJsonValue,
+          forecastDaily: (forecast ?? null) as unknown as Prisma.InputJsonValue,
           location: weather.location,
           latitude: weather.latitude,
           longitude: weather.longitude,
@@ -461,7 +461,7 @@ export class WeatherService {
    * Obtiene historial de clima
    */
   async getHistory(from?: Date, to?: Date, limit = 100) {
-    const where: any = {};
+    const where: Prisma.WeatherDataWhereInput = {};
 
     if (from || to) {
       where.recordedAt = {};

@@ -471,3 +471,33 @@ El frontend fue migrado de datos mock (`mockData.ts`) a consumir la API real del
 5. **Componentes actualizados** para nuevos tipos
 
 El archivo `mockData.ts` se mantiene como referencia pero está marcado como `@deprecated`.
+
+---
+
+## Scripts (actualizado)
+
+```bash
+npm run dev         # Desarrollo con hot-reload
+npm run build       # Build de producción
+npm run start       # Servidor de producción
+npm run lint        # Linting con ESLint
+npm run lint:fix    # Linting con autofix
+npm run typecheck   # Chequeo de tipos TS
+npm run test:e2e    # Smoke e2e (Playwright)
+```
+
+---
+
+## Workflow recomendado (fork)
+
+Para cambios grandes de frontend:
+
+1. Crear un fork personal del repositorio.
+2. Configurar remotos:
+   - `origin` -> fork personal
+   - `upstream` -> repo principal
+3. Trabajar con ramas chicas por módulo (`feat/frontend-sala`, `feat/frontend-seguimientos`, etc.).
+4. Antes de abrir PR, pasar puerta de calidad:
+   - `npm run lint`
+   - `npm run typecheck`
+   - `npm run test:e2e`

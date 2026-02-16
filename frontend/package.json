@@ -6,10 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "prepare": "echo Husky hooks are managed from repo root .husky"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.87.1",
+    "@tanstack/react-query": "5.90.21",
     "clsx": "^2.1.1",
     "framer-motion": "^11.2.10",
     "html2canvas": "^1.4.1",
@@ -22,14 +28,22 @@
     "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.58.2",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.3",
+    "husky": "9.1.7",
+    "lint-staged": "16.2.7",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.4.5"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx}": [
+      "eslint --max-warnings=0 --fix"
+    ]
   }
 }

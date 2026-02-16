@@ -125,7 +125,7 @@ export class TestCredentialResultDto {
   message: string;
 
   @ApiPropertyOptional({ description: 'Detalles adicionales de la prueba' })
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 // Instrucciones para obtener credenciales

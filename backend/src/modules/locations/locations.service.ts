@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRoomDto, UpdateRoomDto } from './dto/room.dto';
 import { CreateSectionDto, UpdateSectionDto } from './dto/section.dto';
 import { UpdateSectionLayoutDto, DEFAULT_LAYOUT_CONFIG } from './dto/layout.dto';
+import { CreatePPFDReadingDto } from './dto/ppfd.dto';
 
 @Injectable()
 export class LocationsService {
@@ -264,11 +265,7 @@ export class LocationsService {
   /**
    * Registra una lectura de PPFD para una zona de la sección
    */
-  async createPPFDReading(sectionId: string, data: {
-    zone: number;
-    ppfdValue: number;
-    lightHeight: number;
-  }) {
+  async createPPFDReading(sectionId: string, data: CreatePPFDReadingDto) {
     await this.findSectionById(sectionId);
 
     return this.prisma.pPFDReading.create({

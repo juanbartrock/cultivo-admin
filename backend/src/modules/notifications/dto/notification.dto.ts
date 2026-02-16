@@ -1,5 +1,18 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsObject } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 import { NotificationType, NotificationPriority } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
 
 export class CreateNotificationDto {
   @IsEnum(NotificationType)
@@ -32,6 +45,7 @@ export class UpdateNotificationDto {
 
 export class GetNotificationsDto {
   @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   unreadOnly?: boolean;
 
@@ -40,7 +54,33 @@ export class GetNotificationsDto {
   type?: NotificationType;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(500)
   limit?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
+}
+
+export class DeleteManyNotificationsDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsUUID('4', { each: true })
+  ids: string[];
+}
+
+export class CleanupNotificationsQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(3650)
+  daysOld?: number;
 }
 
 

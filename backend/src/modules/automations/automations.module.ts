@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AutomationsController } from './automations.controller';
 import { AutomationsService } from './automations.service';
 import { AutomationSchedulerService } from './automation-scheduler.service';
@@ -28,6 +28,5 @@ import { AIAssistantModule } from '../ai-assistant/ai-assistant.module';
   exports: [AutomationsService, JobSchedulerService, PlantAnalysisService],
 })
 export class AutomationsModule {}
-
 
 

@@ -48,10 +48,10 @@ const stageIcons: Record<PlantStage, { icon: React.ElementType; color: string; b
 };
 
 const stageLabels: Record<PlantStage, string> = {
-  GERMINACION: 'Germinación',
+  GERMINACION: 'GerminaciÃ³n',
   VEGETATIVO: 'Vegetativo',
   PRE_FLORA: 'Pre-Flora',
-  FLORACION: 'Floración',
+  FLORACION: 'FloraciÃ³n',
   SECADO: 'Secado',
   CURADO: 'Curado',
 };
@@ -77,6 +77,14 @@ interface PlantCardProps {
   onStageChange?: (plant: Plant, newStage: PlantStage) => void;
   onMoved?: (plant: Plant, newSectionId: string) => void;
   onClick?: (plant: Plant) => void;
+}
+
+function isMaturationSectionName(sectionName?: string | null): boolean {
+  if (!sectionName) return false;
+  const normalized = sectionName.toLowerCase();
+  return ['madurado', 'maduracion', 'curado', 'contenedor'].some(keyword =>
+    normalized.includes(keyword),
+  );
 }
 
 export default function PlantCard({ plant, delay = 0, isSelected = false, onRegisterEvent, onStageChange, onMoved, onClick }: PlantCardProps) {
@@ -158,7 +166,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   const healthConfig = healthIcons[currentHealth];
   const HealthIcon = healthConfig.icon;
 
-  // Calcular días en la etapa actual o desde el inicio del ciclo
+  // Calcular dÃ­as en la etapa actual o desde el inicio del ciclo
   // Prioridad: stageStartDate > startDate > cycle.startDate > createdAt
   const hasStageStartDate = !!currentPlant.stageStartDate;
   const dateForCalc = currentPlant.stageStartDate
@@ -174,7 +182,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   // Determinar si tiene fecha de inicio configurada (propia o del ciclo)
   const hasStartDate = !!(currentPlant.startDate || currentPlant.cycle?.startDate);
 
-  // Función para confirmar el cambio de etapa
+  // FunciÃ³n para confirmar el cambio de etapa
   const handleStageChange = async () => {
     if (!selectedStage || selectedStage === currentPlant.stage) {
       setShowStageModal(false);
@@ -201,7 +209,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
-  // Función para cambiar estado de salud
+  // FunciÃ³n para cambiar estado de salud
   const handleHealthChange = async () => {
     if (!selectedHealth || selectedHealth === currentHealth) {
       setShowHealthModal(false);
@@ -226,21 +234,21 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
-  // Función para abrir el modal de cambio de etapa
+  // FunciÃ³n para abrir el modal de cambio de etapa
   const openStageModal = () => {
     setSelectedStage(null);
     setStageDate(new Date().toISOString().split('T')[0]);
     setShowStageModal(true);
   };
 
-  // Función para cargar secciones y abrir el modal de mover
+  // FunciÃ³n para cargar secciones y abrir el modal de mover
   const openMoveModal = async () => {
     setShowMoveModal(true);
     setSelectedSectionId(null);
     setLoadingSections(true);
     try {
       const allSections = await sectionService.getAll();
-      // Filtrar la sección actual (si la tiene)
+      // Filtrar la secciÃ³n actual (si la tiene)
       setSections(currentPlant.sectionId 
         ? allSections.filter(s => s.id !== currentPlant.sectionId)
         : allSections
@@ -253,22 +261,30 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
-  // Función para mover la planta a otra sección
+  // FunciÃ³n para mover la planta a otra secciÃ³n
   const handleMovePlant = async () => {
     if (!selectedSectionId) {
       setShowMoveModal(false);
       return;
     }
 
+    const selectedSection = sections.find(section => section.id === selectedSectionId);
+    const moveToMaturationSection = isMaturationSectionName(selectedSection?.name);
+
     setIsMoving(true);
     try {
       const updatedPlant = await plantService.move(currentPlant.id, {
-        sectionId: selectedSectionId
+        sectionId: selectedSectionId,
+        ...(moveToMaturationSection && { stage: 'CURADO' as PlantStage }),
       });
       setCurrentPlant(updatedPlant);
       onMoved?.(updatedPlant, selectedSectionId);
       setShowMoveModal(false);
-      toast.success('Planta movida correctamente');
+      toast.success(
+        moveToMaturationSection
+          ? 'Planta movida a madurado. El ciclo quedÃ³ finalizado en curado.'
+          : 'Planta movida correctamente',
+      );
     } catch (err) {
       console.error('Error moviendo planta:', err);
       toast.error('Error al mover la planta');
@@ -277,14 +293,14 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
-  // Función para desasociar la planta de su sección
+  // FunciÃ³n para desasociar la planta de su secciÃ³n
   const handleDissociate = async () => {
     setIsDissociating(true);
     try {
       const updatedPlant = await plantService.dissociate(currentPlant.id);
       setCurrentPlant(updatedPlant);
       setShowDissociateModal(false);
-      toast.success('Planta desasociada de la sección correctamente');
+      toast.success('Planta desasociada de la secciÃ³n correctamente');
       // Opcional: recargar la lista de plantas si hay un callback
       onMoved?.(updatedPlant, '');
     } catch (err) {
@@ -329,7 +345,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
               </div>
             </div>
 
-            {/* Menú de acciones */}
+            {/* MenÃº de acciones */}
             <div className="relative">
               <button
                 ref={menuButtonRef}
@@ -339,7 +355,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                     const rect = menuButtonRef.current.getBoundingClientRect();
                     setMenuPosition({
                       top: rect.bottom + 4,
-                      left: rect.right - 200, // 200px es el ancho del menú
+                      left: rect.right - 200, // 200px es el ancho del menÃº
                     });
                   }
                   setShowMenu(!showMenu);
@@ -403,7 +419,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
                     >
                       <ArrowRightLeft className="w-4 h-4 text-cyan-400" />
-                      {currentPlant.sectionId ? 'Mudar a otra sección' : 'Asignar a sección'}
+                      {currentPlant.sectionId ? 'Mudar a otra secciÃ³n' : 'Asignar a secciÃ³n'}
                     </button>
                     {currentPlant.sectionId && (
                       <button
@@ -414,7 +430,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
                       >
                         <Unlink className="w-4 h-4 text-orange-400" />
-                        Desasociar de sección
+                        Desasociar de secciÃ³n
                       </button>
                     )}
                     <button
@@ -443,9 +459,9 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             </div>
           </div>
 
-          {/* Genética */}
+          {/* GenÃ©tica */}
           <p className="text-cultivo-green-400 font-medium mb-2">
-            {currentPlant.strain?.name || 'Sin genética asignada'}
+            {currentPlant.strain?.name || 'Sin genÃ©tica asignada'}
           </p>
 
           {/* Badges */}
@@ -465,7 +481,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
               {sexLabels[currentPlant.sex]}
             </span>
 
-            {/* Días en etapa */}
+            {/* DÃ­as en etapa */}
             <span
               className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${hasStageStartDate
                 ? 'bg-cultivo-green-500/20 text-cultivo-green-400'
@@ -477,7 +493,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                 ? `En ${stageLabels[currentPlant.stage]} desde: ${new Date(currentPlant.stageStartDate!).toLocaleDateString()}`
                 : hasStartDate
                   ? `Desde inicio del ciclo: ${new Date(currentPlant.startDate || currentPlant.cycle?.startDate || currentPlant.createdAt).toLocaleDateString()}`
-                  : 'Días desde creación (sin fecha de etapa)'
+                  : 'DÃ­as desde creaciÃ³n (sin fecha de etapa)'
               }
             >
               {hasStageStartDate ? (
@@ -517,7 +533,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             <div className="mt-2 flex items-center gap-2 text-xs">
               <Sun className="w-3.5 h-3.5 text-yellow-400" />
               <span className="text-yellow-400 font-medium">
-                PPFD: {Math.round(plantPPFD.averagePPFD)} µmol/m²/s
+                PPFD: {Math.round(plantPPFD.averagePPFD)} Âµmol/mÂ²/s
               </span>
               <span className="text-zinc-600">
                 (promedio ponderado)
@@ -538,14 +554,14 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             </p>
           )}
 
-          {/* Sección */}
+          {/* SecciÃ³n */}
           {currentPlant.section ? (
             <p className="text-xs text-zinc-600 mt-2">
-              📍 {currentPlant.section.name}
+              ðŸ“ {currentPlant.section.name}
             </p>
           ) : (
             <p className="text-xs text-orange-400 mt-2 italic">
-              Sin sección asignada
+              Sin secciÃ³n asignada
             </p>
           )}
         </div>
@@ -562,7 +578,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
         )}
       </div>
 
-      {/* Acciones rápidas en la parte inferior */}
+      {/* Acciones rÃ¡pidas en la parte inferior */}
       <div className="flex items-center gap-2 mt-4 pt-3 border-t border-zinc-700/50">
         <button
           onClick={() => openStageModal()}
@@ -607,7 +623,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             <div className="p-4 border-b border-zinc-800">
               <h3 className="text-lg font-semibold text-white">Cambiar Etapa</h3>
               <p className="text-sm text-zinc-400 mt-1">
-                {currentPlant.tagCode} - {currentPlant.strain?.name || 'Sin genética'}
+                {currentPlant.tagCode} - {currentPlant.strain?.name || 'Sin genÃ©tica'}
               </p>
             </div>
 
@@ -664,7 +680,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                   className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
                 />
                 <p className="text-xs text-zinc-500 mt-1">
-                  Si no se cambió hoy, ingresa la fecha real del cambio
+                  Si no se cambiÃ³ hoy, ingresa la fecha real del cambio
                 </p>
               </div>
             )}
@@ -812,10 +828,10 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
           >
             <div className="p-4 border-b border-zinc-800">
               <h3 className="text-lg font-semibold text-white">
-                {currentPlant.sectionId ? 'Mudar Planta' : 'Asignar a Sección'}
+                {currentPlant.sectionId ? 'Mudar Planta' : 'Asignar a SecciÃ³n'}
               </h3>
               <p className="text-sm text-zinc-400 mt-1">
-                {currentPlant.tagCode} - Selecciona la sección destino
+                {currentPlant.tagCode} - Selecciona la secciÃ³n destino
               </p>
             </div>
 
@@ -857,6 +873,12 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                   ))}
                 </div>
               )}
+              {selectedSectionId && isMaturationSectionName(sections.find(s => s.id === selectedSectionId)?.name) && (
+                <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-300">
+                  Esta secciÃ³n se considera de madurado final. Al mover la planta aquÃ­, se marcarÃ¡ en etapa
+                  curado y el ciclo pasarÃ¡ a estado finalizado.
+                </div>
+              )}
             </div>
 
             <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
@@ -894,7 +916,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
         </div>
       )}
 
-      {/* Modal de Confirmación de Desasociación */}
+      {/* Modal de ConfirmaciÃ³n de DesasociaciÃ³n */}
       {showDissociateModal && (
         <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
@@ -922,14 +944,14 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                 <Unlink className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm text-zinc-300 mb-2">
-                    ¿Estás seguro que deseas desasociar esta planta de su sección?
+                    Â¿EstÃ¡s seguro que deseas desasociar esta planta de su secciÃ³n?
                   </p>
                   <p className="text-xs text-zinc-500">
-                    La planta se removerá de la sección pero se mantendrá el registro completo en el ciclo. 
-                    Las zonas asignadas también se eliminarán.
+                    La planta se removerÃ¡ de la secciÃ³n pero se mantendrÃ¡ el registro completo en el ciclo. 
+                    Las zonas asignadas tambiÃ©n se eliminarÃ¡n.
                   </p>
                   <p className="text-xs text-zinc-500 mt-2">
-                    Esto es útil cuando una planta muere o se retira de la carpa.
+                    Esto es Ãºtil cuando una planta muere o se retira de la carpa.
                   </p>
                 </div>
               </div>

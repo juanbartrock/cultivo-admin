@@ -3,14 +3,46 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCycleDto, UpdateCycleDto } from './dto/cycle.dto';
 import { CreatePlantDto, UpdatePlantDto, MovePlantDto } from './dto/plant.dto';
 import { CreateStrainDto, UpdateStrainDto } from './dto/strain.dto';
-import { CycleStatus } from '@prisma/client';
+import { CycleStatus, PlantStage } from '@prisma/client';
 
 @Injectable()
 export class GrowService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly maturationSectionKeywords = [
+    'madurado',
+    'maduracion',
+    'curado',
+    'contenedor',
+  ];
+
+  private isMaturationSectionName(sectionName?: string | null): boolean {
+    if (!sectionName) return false;
+    const normalized = sectionName.toLowerCase();
+    return this.maturationSectionKeywords.some(keyword => normalized.includes(keyword));
+  }
+
+  private async ensureCycleIsNotCured(cycleId: string) {
+    const cycle = await this.prisma.cycle.findUnique({
+      where: { id: cycleId },
+      select: { id: true, status: true },
+    });
+
+    if (!cycle) {
+      throw new NotFoundException(`Cycle with ID ${cycleId} not found`);
+    }
+
+    if (cycle.status === CycleStatus.CURED) {
+      throw new BadRequestException(
+        'El ciclo ya está finalizado en curado y no permite modificar plantas',
+      );
+    }
+
+    return cycle;
+  }
+
   // ============================================
-  // STRAINS (Genéticas)
+  // STRAINS (GenÃ©ticas)
   // ============================================
 
   async findAllStrains() {
@@ -145,7 +177,24 @@ export class GrowService {
   }
 
   async updateCycle(id: string, data: UpdateCycleDto) {
-    await this.findCycleById(id);
+    const cycle = await this.prisma.cycle.findUnique({
+      where: { id },
+      select: { id: true, status: true },
+    });
+    if (!cycle) {
+      throw new NotFoundException(`Cycle with ID ${id} not found`);
+    }
+
+    if (
+      cycle.status === CycleStatus.CURED &&
+      data.status &&
+      data.status !== CycleStatus.CURED
+    ) {
+      throw new BadRequestException(
+        'El ciclo en estado curado no puede volver a otro estado',
+      );
+    }
+
     return this.prisma.cycle.update({
       where: { id },
       data: {
@@ -226,7 +275,7 @@ export class GrowService {
   }
 
   async createPlant(data: CreatePlantDto) {
-    // Verificar que existe la genética
+    // Verificar que existe la genÃ©tica
     const strain = await this.prisma.strain.findUnique({
       where: { id: data.strainId },
     });
@@ -241,8 +290,13 @@ export class GrowService {
     if (!cycle) {
       throw new NotFoundException(`Cycle with ID ${data.cycleId} not found`);
     }
+    if (cycle.status === CycleStatus.CURED) {
+      throw new BadRequestException(
+        'No se pueden agregar plantas a un ciclo finalizado en curado',
+      );
+    }
 
-    // Verificar que existe la sección (si se proporciona)
+    // Verificar que existe la secciÃ³n (si se proporciona)
     if (data.sectionId) {
       const section = await this.prisma.section.findUnique({
         where: { id: data.sectionId },
@@ -264,7 +318,7 @@ export class GrowService {
       }
     }
 
-    // Verificar que el tagCode es único
+    // Verificar que el tagCode es Ãºnico
     const existing = await this.prisma.plant.findUnique({
       where: { tagCode: data.tagCode },
     });
@@ -312,6 +366,7 @@ export class GrowService {
 
   async updatePlant(id: string, data: UpdatePlantDto) {
     const plant = await this.findPlantById(id);
+    await this.ensureCycleIsNotCured(plant.cycleId);
 
     // Si se cambia la sección, validar que existe
     if (data.sectionId && data.sectionId !== plant.sectionId) {
@@ -338,39 +393,11 @@ export class GrowService {
     // Separar datos de la planta de las zonas
     const { zones, ...plantData } = data;
 
-    // Actualizar la planta
-    const updatedPlant = await this.prisma.plant.update({
-      where: { id },
-      data: plantData,
-      include: {
-        strain: true,
-        cycle: true,
-        section: true,
-        zones: true,
-      },
-    });
-
-    // Si se proporcionaron zonas, actualizar las zonas (eliminar las existentes y crear las nuevas)
-    if (zones !== undefined) {
-      // Eliminar todas las zonas existentes
-      await this.prisma.plantZone.deleteMany({
-        where: { plantId: id },
-      });
-
-      // Crear las nuevas zonas si se proporcionaron
-      if (zones.length > 0) {
-        await this.prisma.plantZone.createMany({
-          data: zones.map(z => ({
-            plantId: id,
-            zone: z.zone,
-            coverage: z.coverage ?? 100.0,
-          })),
-        });
-      }
-
-      // Recargar la planta con las zonas actualizadas
-      return this.prisma.plant.findUnique({
+    return this.prisma.$transaction(async (tx) => {
+      // Actualizar la planta
+      const updatedPlant = await tx.plant.update({
         where: { id },
+        data: plantData,
         include: {
           strain: true,
           cycle: true,
@@ -378,69 +405,73 @@ export class GrowService {
           zones: true,
         },
       });
-    }
 
-    return updatedPlant;
+      // Si se proporcionaron zonas, actualizar las zonas (eliminar las existentes y crear las nuevas)
+      if (zones !== undefined) {
+        // Eliminar todas las zonas existentes
+        await tx.plantZone.deleteMany({
+          where: { plantId: id },
+        });
+
+        // Crear las nuevas zonas si se proporcionaron
+        if (zones.length > 0) {
+          await tx.plantZone.createMany({
+            data: zones.map(z => ({
+              plantId: id,
+              zone: z.zone,
+              coverage: z.coverage ?? 100.0,
+            })),
+          });
+        }
+
+        // Recargar la planta con las zonas actualizadas
+        return tx.plant.findUnique({
+          where: { id },
+          include: {
+            strain: true,
+            cycle: true,
+            section: true,
+            zones: true,
+          },
+        });
+      }
+
+      return updatedPlant;
+    });
   }
 
   async deletePlant(id: string) {
-    await this.findPlantById(id);
+    const plant = await this.findPlantById(id);
+    await this.ensureCycleIsNotCured(plant.cycleId);
     return this.prisma.plant.delete({ where: { id } });
   }
 
   /**
-   * Mover planta de sección o cambiar etapa
+   * Mover planta de secciÃ³n o cambiar etapa
    */
   async movePlant(id: string, data: MovePlantDto) {
     const plant = await this.findPlantById(id);
+    await this.ensureCycleIsNotCured(plant.cycleId);
 
     // Si se proporciona sectionId, verificar que existe
+    let targetSectionName: string | null = null;
     if (data.sectionId) {
       const section = await this.prisma.section.findUnique({
         where: { id: data.sectionId },
+        select: { id: true, name: true },
       });
       if (!section) {
         throw new NotFoundException(`Section with ID ${data.sectionId} not found`);
       }
+      targetSectionName = section.name;
     }
 
-    // Crear evento de transplante si cambia de sección
-    if (data.sectionId && data.sectionId !== plant.sectionId) {
-      await this.prisma.event.create({
-        data: {
-          type: 'TRANSPLANTE',
-          plantId: id,
-          cycleId: plant.cycleId,
-          sectionId: data.sectionId,
-          data: {
-            fromSectionId: plant.sectionId,
-            toSectionId: data.sectionId,
-            stage: data.stage || plant.stage,
-          },
-        },
-      });
-    }
+    const moveToMaturationSection = this.isMaturationSectionName(targetSectionName);
+    const targetStage: PlantStage | undefined = moveToMaturationSection ? PlantStage.CURADO : data.stage;
 
     // Crear evento de cambio de etapa si cambia
     // Usar la fecha proporcionada o la fecha actual
     const stageChangeDate = data.stageDate ? new Date(data.stageDate) : new Date();
-    
-    if (data.stage && data.stage !== plant.stage) {
-      await this.prisma.event.create({
-        data: {
-          type: 'CAMBIO_FOTOPERIODO',
-          plantId: id,
-          cycleId: plant.cycleId,
-          sectionId: data.sectionId || plant.sectionId,
-          data: {
-            fromStage: plant.stage,
-            toStage: data.stage,
-            stageDate: stageChangeDate.toISOString(),
-          },
-          createdAt: stageChangeDate, // Usar la fecha del cambio como fecha del evento
-        },
-      });
-    }
 
     // Validar zonas si se proporcionan
     if (data.zones) {
@@ -457,48 +488,49 @@ export class GrowService {
     // Separar datos de la planta de las zonas
     const { zones, ...plantData } = data;
 
-    // Actualizar la planta
-    const updatedPlant = await this.prisma.plant.update({
-      where: { id },
-      data: {
-        ...(plantData.sectionId && { sectionId: plantData.sectionId }),
-        ...(plantData.stage && { stage: plantData.stage }),
-        // Actualizar stageStartDate cuando cambia la etapa (con la fecha proporcionada)
-        ...(plantData.stage && plantData.stage !== plant.stage && { stageStartDate: stageChangeDate }),
-      },
-      include: {
-        strain: true,
-        cycle: true,
-        section: {
-          include: {
-            room: true,
-          },
-        },
-        zones: true,
-      },
-    });
-
-    // Si se proporcionaron zonas, actualizar las zonas (eliminar las existentes y crear las nuevas)
-    if (zones !== undefined) {
-      // Eliminar todas las zonas existentes
-      await this.prisma.plantZone.deleteMany({
-        where: { plantId: id },
-      });
-
-      // Crear las nuevas zonas si se proporcionaron
-      if (zones.length > 0) {
-        await this.prisma.plantZone.createMany({
-          data: zones.map(z => ({
+    return this.prisma.$transaction(async (tx) => {
+      // Crear evento de transplante si cambia de sección
+      if (data.sectionId && data.sectionId !== plant.sectionId) {
+        await tx.event.create({
+          data: {
+            type: 'TRANSPLANTE',
             plantId: id,
-            zone: z.zone,
-            coverage: z.coverage ?? 100.0,
-          })),
+            cycleId: plant.cycleId,
+            sectionId: data.sectionId,
+            data: {
+              fromSectionId: plant.sectionId,
+              toSectionId: data.sectionId,
+              stage: targetStage || plant.stage,
+            },
+          },
         });
       }
 
-      // Recargar la planta con las zonas actualizadas
-      return this.prisma.plant.findUnique({
+      if (targetStage && targetStage !== plant.stage) {
+        await tx.event.create({
+          data: {
+            type: 'CAMBIO_FOTOPERIODO',
+            plantId: id,
+            cycleId: plant.cycleId,
+            sectionId: data.sectionId || plant.sectionId,
+            data: {
+              fromStage: plant.stage,
+              toStage: targetStage,
+              stageDate: stageChangeDate.toISOString(),
+            },
+            createdAt: stageChangeDate,
+          },
+        });
+      }
+
+      // Actualizar la planta
+      const updatedPlant = await tx.plant.update({
         where: { id },
+        data: {
+          ...(plantData.sectionId && { sectionId: plantData.sectionId }),
+          ...(targetStage && { stage: targetStage }),
+          ...(targetStage && targetStage !== plant.stage && { stageStartDate: stageChangeDate }),
+        },
         include: {
           strain: true,
           cycle: true,
@@ -510,9 +542,60 @@ export class GrowService {
           zones: true,
         },
       });
-    }
 
-    return updatedPlant;
+      // Si se proporcionaron zonas, actualizar las zonas (eliminar las existentes y crear las nuevas)
+      if (zones !== undefined) {
+        await tx.plantZone.deleteMany({
+          where: { plantId: id },
+        });
+
+        if (zones.length > 0) {
+          await tx.plantZone.createMany({
+            data: zones.map(z => ({
+              plantId: id,
+              zone: z.zone,
+              coverage: z.coverage ?? 100.0,
+            })),
+          });
+        }
+
+        if (moveToMaturationSection) {
+          await tx.cycle.update({
+            where: { id: plant.cycleId },
+            data: {
+              status: CycleStatus.CURED,
+              endDate: new Date(),
+            },
+          });
+        }
+
+        return tx.plant.findUnique({
+          where: { id },
+          include: {
+            strain: true,
+            cycle: true,
+            section: {
+              include: {
+                room: true,
+              },
+            },
+            zones: true,
+          },
+        });
+      }
+
+      if (moveToMaturationSection) {
+        await tx.cycle.update({
+          where: { id: plant.cycleId },
+          data: {
+            status: CycleStatus.CURED,
+            endDate: new Date(),
+          },
+        });
+      }
+
+      return updatedPlant;
+    });
   }
 
   /**
@@ -521,46 +604,49 @@ export class GrowService {
    */
   async dissociateFromSection(plantId: string) {
     const plant = await this.findPlantById(plantId);
+    await this.ensureCycleIsNotCured(plant.cycleId);
 
     if (!plant.sectionId) {
-      throw new BadRequestException('Plant is not associated with any section');
+      throw new BadRequestException('Plant is not associated with a section');
     }
 
-    // Crear evento de desasociación
-    await this.prisma.event.create({
-      data: {
-        type: 'NOTA',
-        plantId: plantId,
-        cycleId: plant.cycleId,
-        sectionId: plant.sectionId, // Guardar la sección anterior
+    return this.prisma.$transaction(async (tx) => {
+      // Crear evento de desasociación
+      await tx.event.create({
         data: {
-          note: 'Planta desasociada de la sección',
-          previousSectionId: plant.sectionId,
-          reason: 'dissociate',
+          type: 'NOTA',
+          plantId: plantId,
+          cycleId: plant.cycleId,
+          sectionId: plant.sectionId, // Guardar la sección anterior
+          data: {
+            note: 'Planta desasociada de la sección',
+            previousSectionId: plant.sectionId,
+            reason: 'dissociate',
+          },
         },
-      },
-    });
+      });
 
-    // Actualizar la planta para quitar la sección
-    const updatedPlant = await this.prisma.plant.update({
-      where: { id: plantId },
-      data: {
-        sectionId: null,
-      },
-      include: {
-        strain: true,
-        cycle: true,
-        section: true,
-        zones: true,
-      },
-    });
+      // Actualizar la planta para quitar la sección
+      const updatedPlant = await tx.plant.update({
+        where: { id: plantId },
+        data: {
+          sectionId: null,
+        },
+        include: {
+          strain: true,
+          cycle: true,
+          section: true,
+          zones: true,
+        },
+      });
 
-    // Eliminar todas las zonas asignadas ya que no tiene sección
-    await this.prisma.plantZone.deleteMany({
-      where: { plantId },
-    });
+      // Eliminar todas las zonas asignadas ya que no tiene sección
+      await tx.plantZone.deleteMany({
+        where: { plantId },
+      });
 
-    return updatedPlant;
+      return updatedPlant;
+    });
   }
 
   /**
@@ -571,14 +657,14 @@ export class GrowService {
     const plant = await this.findPlantById(plantId);
 
     if (!plant.sectionId) {
-      return null; // La planta no está asociada a una sección
+      return null; // La planta no estÃ¡ asociada a una secciÃ³n
     }
 
     if (!plant.zones || plant.zones.length === 0) {
       return null; // La planta no tiene zonas asignadas
     }
 
-    // Obtener las últimas lecturas de PPFD de todas las zonas asignadas
+    // Obtener las Ãºltimas lecturas de PPFD de todas las zonas asignadas
     const readings = await Promise.all(
       plant.zones.map(async (plantZone) => {
         const reading = await this.prisma.pPFDReading.findFirst({

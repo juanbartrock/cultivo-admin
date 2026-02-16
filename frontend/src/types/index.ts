@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // NUEVOS TIPOS - Alineados con Backend NestJS
 // ============================================
 
@@ -18,7 +18,7 @@ export type DeviceType =
   | 'CALEFACTOR'
   | 'CAMARA';
 
-// Tipos de genéticas
+// Tipos de genÃ©ticas
 export type StrainType = 'SATIVA' | 'INDICA' | 'RUDERALIS' | 'HYBRID';
 
 // Estados del ciclo
@@ -45,8 +45,35 @@ export type EventType =
   | 'CAMBIO_FOTOPERIODO'
   | 'AI_ANALYSIS';
 
-// Tipo de análisis IA
+// Tipo de anÃ¡lisis IA
 export type AnalysisType = 'NUTRICION' | 'PREVENCION' | 'VEGETATIVO' | 'FLORACION' | 'GENERAL';
+
+// ============================================
+// TIPOS TRANSVERSALES DE UI/ESTADO
+// ============================================
+
+export interface DomainError {
+  message: string;
+  statusCode?: number;
+  code?: string;
+  details?: unknown;
+}
+
+export interface UIAsyncState<T> {
+  data: T | null;
+  loading: boolean;
+  error: DomainError | null;
+}
+
+export interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export type FilterState<T extends Record<string, unknown>> = Partial<T>;
+
 
 
 
@@ -64,14 +91,14 @@ export interface Room {
   updatedAt: string;
 }
 
-// Sección/Carpa
+// SecciÃ³n/Carpa
 export interface Section {
   id: string;
   name: string;
   dimensions?: string;
   image?: string;
   description?: string;
-  enabled?: boolean; // Si la sección está activa/en uso (default: true)
+  enabled?: boolean; // Si la secciÃ³n estÃ¡ activa/en uso (default: true)
   roomId: string;
   room?: Room;
   devices: Device[];
@@ -80,7 +107,7 @@ export interface Section {
   updatedAt: string;
 }
 
-// Dashboard de sección (con resumen)
+// Dashboard de secciÃ³n (con resumen)
 export interface SectionDashboard extends Section {
   summary: {
     totalPlants: number;
@@ -127,14 +154,14 @@ export interface ScannedDevice {
   model?: string;
   brand?: string;
   ip?: string;
-  isAssigned: boolean;  // Ya está en la DB
+  isAssigned: boolean;  // Ya estÃ¡ en la DB
   assignedTo?: {
     sectionId: string;
     sectionName: string;
   };
 }
 
-// Genética
+// GenÃ©tica
 export interface Strain {
   id: string;
   name: string;
@@ -192,17 +219,17 @@ export interface Plant {
   stage: PlantStage;
   sex: PlantSex;
   healthStatus?: PlantHealthStatus; // Estado de salud
-  potSizeFinal?: string; // Tamaño de maceta final (ej: "11L", "25L")
+  potSizeFinal?: string; // TamaÃ±o de maceta final (ej: "11L", "25L")
   photo?: string;
   notes?: string;
-  startDate?: string; // Fecha de inicio (germinación/plantado)
-  stageStartDate?: string; // Fecha del último cambio de etapa
+  startDate?: string; // Fecha de inicio (germinaciÃ³n/plantado)
+  stageStartDate?: string; // Fecha del Ãºltimo cambio de etapa
   events?: GrowEvent[];
   createdAt: string;
   updatedAt: string;
 }
 
-// Evento de bitácora
+// Evento de bitÃ¡cora
 export interface GrowEvent {
   id: string;
   type: EventType;
@@ -217,14 +244,14 @@ export interface GrowEvent {
 }
 
 // ============================================
-// TIPOS DE APLICACIÓN Y OBJETIVO (Prevención)
+// TIPOS DE APLICACIÃ“N Y OBJETIVO (PrevenciÃ³n)
 // ============================================
 
 export type ApplicationType = 'FOLIAR' | 'RIEGO' | 'PREVENTIVO';
 export type PreventionTarget = 'HONGOS' | 'PLAGAS' | 'AMBOS' | 'PREVENTIVO';
 
 // ============================================
-// PLANES DE ALIMENTACIÓN
+// PLANES DE ALIMENTACIÃ“N
 // ============================================
 
 // Producto dentro de una semana del plan
@@ -234,7 +261,7 @@ export interface FeedingProduct {
   unit: string;
 }
 
-// Semana del plan de alimentación
+// Semana del plan de alimentaciÃ³n
 export interface FeedingPlanWeek {
   id?: string;
   weekNumber: number;
@@ -244,7 +271,7 @@ export interface FeedingPlanWeek {
   notes?: string;
 }
 
-// Plan de alimentación
+// Plan de alimentaciÃ³n
 export interface FeedingPlan {
   id: string;
   name: string;
@@ -255,14 +282,14 @@ export interface FeedingPlan {
   updatedAt: string;
 }
 
-// Plan de alimentación con conteo de plantas
+// Plan de alimentaciÃ³n con conteo de plantas
 export interface FeedingPlanWithCount extends FeedingPlan {
   _count: {
     plants: number;
   };
 }
 
-// Asignación de plan a planta
+// AsignaciÃ³n de plan a planta
 export interface PlantFeedingPlan {
   id: string;
   feedingPlanId: string;
@@ -276,7 +303,7 @@ export interface PlantFeedingPlan {
   nextWeek: FeedingPlanWeek | null;
 }
 
-// Planta con info de planes de alimentación (para vista de sección)
+// Planta con info de planes de alimentaciÃ³n (para vista de secciÃ³n)
 export interface PlantWithFeedingPlans {
   id: string;
   tagCode: string;
@@ -285,7 +312,7 @@ export interface PlantWithFeedingPlans {
   feedingPlans: PlantFeedingPlan[];
 }
 
-// Respuesta del endpoint de planes por sección
+// Respuesta del endpoint de planes por secciÃ³n
 export interface SectionFeedingPlansResponse {
   sectionId: string;
   sectionName: string;
@@ -379,7 +406,7 @@ export interface PhotoEventDto extends BaseEventDto {
   caption?: string;
 }
 
-// DTOs de planes de alimentación
+// DTOs de planes de alimentaciÃ³n
 export interface ImportFeedingPlanDto {
   name: string;
   description?: string;
@@ -405,17 +432,17 @@ export interface AssignFeedingPlanDto {
 }
 
 // ============================================
-// PLANES DE PREVENCIÓN (Hongos y Plagas)
+// PLANES DE PREVENCIÃ“N (Hongos y Plagas)
 // ============================================
 
-// Producto dentro de una aplicación del plan
+// Producto dentro de una aplicaciÃ³n del plan
 export interface PreventionProduct {
   name: string;
   dose: string;
   unit: string;
 }
 
-// Aplicación del plan de prevención
+// AplicaciÃ³n del plan de prevenciÃ³n
 export interface PreventionPlanApplication {
   id?: string;
   dayNumber: number;
@@ -425,7 +452,7 @@ export interface PreventionPlanApplication {
   notes?: string;
 }
 
-// Plan de prevención
+// Plan de prevenciÃ³n
 export interface PreventionPlan {
   id: string;
   name: string;
@@ -437,14 +464,14 @@ export interface PreventionPlan {
   updatedAt: string;
 }
 
-// Plan de prevención con conteo de plantas
+// Plan de prevenciÃ³n con conteo de plantas
 export interface PreventionPlanWithCount extends PreventionPlan {
   _count: {
     plants: number;
   };
 }
 
-// Asignación de plan de prevención a planta
+// AsignaciÃ³n de plan de prevenciÃ³n a planta
 export interface PlantPreventionPlan {
   id: string;
   preventionPlanId: string;
@@ -458,7 +485,7 @@ export interface PlantPreventionPlan {
   nextApplication: PreventionPlanApplication | null;
 }
 
-// Planta con info de planes de prevención (para vista de sección)
+// Planta con info de planes de prevenciÃ³n (para vista de secciÃ³n)
 export interface PlantWithPreventionPlans {
   id: string;
   tagCode: string;
@@ -467,14 +494,14 @@ export interface PlantWithPreventionPlans {
   preventionPlans: PlantPreventionPlan[];
 }
 
-// Respuesta del endpoint de planes de prevención por sección
+// Respuesta del endpoint de planes de prevenciÃ³n por secciÃ³n
 export interface SectionPreventionPlansResponse {
   sectionId: string;
   sectionName: string;
   plants: PlantWithPreventionPlans[];
 }
 
-// DTOs de planes de prevención
+// DTOs de planes de prevenciÃ³n
 export interface ImportPreventionPlanDto {
   name: string;
   description?: string;
@@ -521,7 +548,7 @@ export type TipoArtefacto =
 // Estado de un artefacto (legacy)
 export type EstadoArtefacto = 'encendido' | 'apagado' | 'error' | 'standby';
 
-// Ubicación donde puede estar un artefacto (legacy)
+// UbicaciÃ³n donde puede estar un artefacto (legacy)
 export type TipoUbicacion = 'sala' | 'carpa' | 'invernadero';
 
 // Conectores de dispositivos IoT disponibles (legacy)
@@ -529,7 +556,7 @@ export type TipoConector = 'sonoff' | 'tuya' | 'tapo';
 
 /**
  * Dispositivo raw detectado desde un conector (legacy)
- * Representa un dispositivo físico antes de ser asignado a una ubicación
+ * Representa un dispositivo fÃ­sico antes de ser asignado a una ubicaciÃ³n
  */
 export interface DispositivoConector {
   id: string;
@@ -546,8 +573,8 @@ export interface DispositivoConector {
 export type EtapaPlanta = 'germinacion' | 'vegetativo' | 'pre_flora' | 'floracion' | 'secado' | 'curado';
 
 /**
- * Artefacto asignado a una ubicación (legacy)
- * Representa un dispositivo físico ya configurado en la sala/carpa
+ * Artefacto asignado a una ubicaciÃ³n (legacy)
+ * Representa un dispositivo fÃ­sico ya configurado en la sala/carpa
  */
 export interface Artefacto {
   id: string;
@@ -559,9 +586,9 @@ export interface Artefacto {
   valor?: number;
   unidad?: string;
   ultimaActualizacion: string;
-  // Vinculación con dispositivo físico real
+  // VinculaciÃ³n con dispositivo fÃ­sico real
   dispositivoId?: string;   // ID del dispositivo en el conector
-  conector?: TipoConector;  // De qué conector viene (sonoff/tuya/tapo)
+  conector?: TipoConector;  // De quÃ© conector viene (sonoff/tuya/tapo)
 }
 
 // Carpa de cultivo (legacy)
@@ -584,7 +611,7 @@ export interface RegistroPlanta {
   foto?: string;
 }
 
-// Plan de alimentación (legacy)
+// Plan de alimentaciÃ³n (legacy)
 export interface PlanAlimentacion {
   semana: number;
   productos: {
@@ -617,20 +644,20 @@ export interface SalaCultivo {
 }
 
 /**
- * Para el formulario de alta/asignación de artefactos (legacy)
+ * Para el formulario de alta/asignaciÃ³n de artefactos (legacy)
  */
 export interface NuevoArtefacto {
   nombre: string;
   tipo: TipoArtefacto;
   ubicacionTipo: TipoUbicacion;
   ubicacionId: string;
-  // Opcional: vinculación con dispositivo físico
+  // Opcional: vinculaciÃ³n con dispositivo fÃ­sico
   dispositivoId?: string;
   conector?: TipoConector;
 }
 
 // ============================================
-// UTILIDADES DE CONVERSIÓN
+// UTILIDADES DE CONVERSIÃ“N
 // ============================================
 
 /**
@@ -770,7 +797,7 @@ export interface Automation {
   // Tipo de trigger
   triggerType: TriggerType;
 
-  // Configuración de programación
+  // ConfiguraciÃ³n de programaciÃ³n
   scheduleType?: ScheduleType;
   activeStartTime?: string;
   activeEndTime?: string;
@@ -779,7 +806,7 @@ export interface Automation {
   specificTimes: string[];
 
   // Campos existentes (mantener compatibilidad)
-  interval: number; // Intervalo de evaluación en minutos
+  interval: number; // Intervalo de evaluaciÃ³n en minutos
   executionTime?: number;
   daysOfWeek: number[];
   startTime?: string;
@@ -790,7 +817,7 @@ export interface Automation {
   notifications: boolean;
   plantIds: string[]; // IDs de plantas asociadas (para automatizaciones de fotos)
   
-  // Configuración de análisis IA (solo para AI_PLANT_ANALYSIS)
+  // ConfiguraciÃ³n de anÃ¡lisis IA (solo para AI_PLANT_ANALYSIS)
   analysisType?: AnalysisType;
   analysisIncludePhotos?: boolean;
   analysisIncludeFeedingPlans?: boolean;
@@ -828,7 +855,7 @@ export interface CreateAutomationDto {
   // Tipo de trigger
   triggerType?: TriggerType;
 
-  // Configuración de programación
+  // ConfiguraciÃ³n de programaciÃ³n
   scheduleType?: ScheduleType;
   activeStartTime?: string;
   activeEndTime?: string;
@@ -836,7 +863,7 @@ export interface CreateAutomationDto {
   actionDuration?: number;
   specificTimes?: string[];
 
-  // Días y ventana de evaluación
+  // DÃ­as y ventana de evaluaciÃ³n
   daysOfWeek?: number[];
   evaluationInterval?: number;
   startTime?: string;
@@ -847,7 +874,7 @@ export interface CreateAutomationDto {
   notifications?: boolean;
   plantIds?: string[]; // IDs de plantas para registrar eventos (ej: para fotos)
   
-  // Configuración de análisis IA (solo para AI_PLANT_ANALYSIS)
+  // ConfiguraciÃ³n de anÃ¡lisis IA (solo para AI_PLANT_ANALYSIS)
   analysisType?: AnalysisType;
   analysisIncludePhotos?: boolean;
   analysisIncludeFeedingPlans?: boolean;
@@ -906,14 +933,14 @@ export interface Notification {
 export interface PlantZone {
   id: string;
   plantId: string;
-  zone: number; // Zona 1-6 dentro de la sección (grilla 2x3)
-  coverage: number; // Porcentaje de ocupación de la zona (0-100)
+  zone: number; // Zona 1-6 dentro de la secciÃ³n (grilla 2x3)
+  coverage: number; // Porcentaje de ocupaciÃ³n de la zona (0-100)
   createdAt: string;
 }
 
 export interface PlantZoneDto {
-  zone: number; // Zona 1-6 dentro de la sección (grilla 2x3)
-  coverage?: number; // Porcentaje de ocupación de la zona (0-100), default 100
+  zone: number; // Zona 1-6 dentro de la secciÃ³n (grilla 2x3)
+  coverage?: number; // Porcentaje de ocupaciÃ³n de la zona (0-100), default 100
 }
 
 export interface PlantPPFDResult {
@@ -1032,7 +1059,7 @@ export interface CreateHarvestProductDto {
 }
 
 // ============================================
-// LAYOUT DE SECCIÓN
+// LAYOUT DE SECCIÃ“N
 // ============================================
 
 export type SectionLayoutKey =
@@ -1065,7 +1092,7 @@ export interface SectionLayout {
   updatedAt?: string;
 }
 
-// Configuración por defecto del layout
+// ConfiguraciÃ³n por defecto del layout
 export const DEFAULT_SECTION_LAYOUT: SectionLayoutConfig = {
   sections: [
     { key: 'environment', enabled: true, order: 0 },
@@ -1080,15 +1107,15 @@ export const DEFAULT_SECTION_LAYOUT: SectionLayoutConfig = {
   ],
 };
 
-// Etiquetas e iconos para cada sección del layout
+// Etiquetas e iconos para cada secciÃ³n del layout
 export const SECTION_LAYOUT_META: Record<SectionLayoutKey, { label: string; description: string }> = {
   environment: { label: 'Panel Ambiental', description: 'Temperatura, humedad y condiciones' },
   sensors: { label: 'Sensores', description: 'Tarjetas de sensores' },
   controllables: { label: 'Dispositivos', description: 'Luces, extractores y controles' },
-  cameras: { label: 'Cámaras', description: 'Visualización de cámaras' },
-  ppfd: { label: 'PPFD/DLI', description: 'Intensidad lumínica' },
-  sensorHistory: { label: 'Historial Sensores', description: 'Gráfico de historial' },
-  feedingPlans: { label: 'Plan Alimentación', description: 'Planes de nutrientes' },
-  preventionPlans: { label: 'Plan Prevención', description: 'Planes de prevención' },
+  cameras: { label: 'CÃ¡maras', description: 'VisualizaciÃ³n de cÃ¡maras' },
+  ppfd: { label: 'PPFD/DLI', description: 'Intensidad lumÃ­nica' },
+  sensorHistory: { label: 'Historial Sensores', description: 'GrÃ¡fico de historial' },
+  feedingPlans: { label: 'Plan AlimentaciÃ³n', description: 'Planes de nutrientes' },
+  preventionPlans: { label: 'Plan PrevenciÃ³n', description: 'Planes de prevenciÃ³n' },
   plants: { label: 'Plantas', description: 'Tarjetas de plantas' },
 };

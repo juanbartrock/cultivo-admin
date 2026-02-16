@@ -1,188 +1,214 @@
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import {
-    WebSocketGateway,
-    WebSocketServer,
-    SubscribeMessage,
-    OnGatewayConnection,
-    OnGatewayDisconnect,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
-import { Logger } from '@nestjs/common';
+import { parseBooleanEnv, parseCorsOrigins } from '../../config/config.schema';
+import { JwtPayload } from '../auth/types/authenticated-user.type';
+
+interface SensorUpdateData {
+  deviceId: string;
+  sectionId: string | null;
+  reading: Record<string, unknown>;
+  timestamp: string;
+}
+
+interface DeviceUpdateData {
+  deviceId: string;
+  sectionId: string | null;
+  status: Record<string, unknown>;
+  timestamp: string;
+}
 
 @WebSocketGateway({
-    cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:3001',
-        credentials: true,
-    },
+  cors: {
+    origin: parseCorsOrigins(process.env.CORS_ALLOWED_ORIGINS),
+    credentials: true,
+  },
 })
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
-    private readonly logger = new Logger(RealtimeGateway.name);
+  private readonly logger = new Logger(RealtimeGateway.name);
 
-    @WebSocketServer()
-    server: Server;
+  @WebSocketServer()
+  server: Server;
 
-    constructor(private jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
-    /**
-     * Maneja conexiones de clientes con autenticación JWT
-     */
-    async handleConnection(client: Socket) {
-        try {
-            // Obtener token del handshake (auth.token o header Authorization)
-            const token = 
-                client.handshake.auth?.token ||
-                client.handshake.headers?.authorization?.replace('Bearer ', '');
+  async handleConnection(client: Socket) {
+    const allowGuest = this.isGuestAllowed();
+    const token =
+      client.handshake.auth?.token ||
+      client.handshake.headers?.authorization?.replace('Bearer ', '');
 
-            if (!token) {
-                this.logger.warn(`Client ${client.id} connected without token`);
-                // Permitir conexión sin auth pero con funcionalidad limitada
-                // En producción estricta, descomentar las siguientes líneas:
-                // client.emit('error', { message: 'No token provided' });
-                // client.disconnect();
-                // return;
-                client.data.authenticated = false;
-                client.join('global'); // Unir a room global para broadcast general
-                return;
-            }
+    if (!token) {
+      if (!allowGuest) {
+        this.rejectClient(client, 'No token provided');
+        return;
+      }
 
-            // Verificar JWT
-            const payload = this.jwtService.verify(token, {
-                secret: process.env.JWT_SECRET || 'SECRET_KEY_CAMBIAR_EN_PROD',
-            });
+      client.data.authenticated = false;
+      client.join('global');
+      this.logger.warn(`Client ${client.id} connected as guest`);
+      return;
+    }
 
-            client.data.userId = payload.sub;
-            client.data.username = payload.username;
-            client.data.authenticated = true;
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(token, {
+        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      });
 
-            // Unir a room global
-            client.join('global');
+      client.data.userId = payload.sub;
+      client.data.username = payload.username;
+      client.data.authenticated = true;
+      client.join('global');
 
-            this.logger.log(`Client ${client.id} authenticated as user ${payload.username || payload.sub}`);
-        } catch (error) {
-            this.logger.warn(`Client ${client.id} failed authentication: ${error.message}`);
-            // Permitir conexión sin auth pero marcar como no autenticado
-            client.data.authenticated = false;
-            client.join('global');
-            // En producción estricta:
-            // client.emit('error', { message: 'Invalid token' });
-            // client.disconnect();
+      this.logger.log(
+        `Client ${client.id} authenticated as user ${payload.username || payload.sub}`,
+      );
+    } catch (error) {
+      if (!allowGuest) {
+        this.rejectClient(client, 'Invalid token');
+        return;
+      }
+
+      client.data.authenticated = false;
+      client.join('global');
+
+      const message = error instanceof Error ? error.message : 'Unknown auth error';
+      this.logger.warn(`Client ${client.id} failed authentication, continuing as guest: ${message}`);
+    }
+  }
+
+  handleDisconnect(client: Socket) {
+    this.logger.debug(`Client disconnected: ${client.id}`);
+  }
+
+  @SubscribeMessage('join_section')
+  handleJoinSection(client: Socket, sectionId: string) {
+    const room = `section_${sectionId}`;
+    client.join(room);
+    this.logger.debug(`Client ${client.id} joined room ${room}`);
+    return { event: 'joined', data: sectionId };
+  }
+
+  @SubscribeMessage('leave_section')
+  handleLeaveSection(client: Socket, sectionId: string) {
+    const room = `section_${sectionId}`;
+    client.leave(room);
+    this.logger.debug(`Client ${client.id} left room ${room}`);
+    return { event: 'left', data: sectionId };
+  }
+
+  @SubscribeMessage('subscribe_device')
+  handleSubscribeDevice(client: Socket, deviceId: string) {
+    const room = `device_${deviceId}`;
+    client.join(room);
+    this.logger.debug(`Client ${client.id} subscribed to device ${deviceId}`);
+    return { event: 'subscribed', data: deviceId };
+  }
+
+  @SubscribeMessage('unsubscribe_device')
+  handleUnsubscribeDevice(client: Socket, deviceId: string) {
+    const room = `device_${deviceId}`;
+    client.leave(room);
+    return { event: 'unsubscribed', data: deviceId };
+  }
+
+  emitSensorUpdate(
+    deviceId: string,
+    sectionId: string | null,
+    reading: Record<string, unknown>,
+  ) {
+    const data: SensorUpdateData = {
+      deviceId,
+      sectionId,
+      reading,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (sectionId) {
+      this.server.to(`section_${sectionId}`).emit('sensor_update', data);
+    }
+
+    this.server.to(`device_${deviceId}`).emit('sensor_update', data);
+    this.server.to('global').emit('sensor_update', data);
+  }
+
+  emitDeviceUpdate(
+    deviceId: string,
+    sectionId: string | null,
+    status: Record<string, unknown>,
+  ) {
+    const data: DeviceUpdateData = {
+      deviceId,
+      sectionId,
+      status,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (sectionId) {
+      this.server.to(`section_${sectionId}`).emit('device_update', data);
+    }
+
+    this.server.to(`device_${deviceId}`).emit('device_update', data);
+    this.server.to('global').emit('device_update', data);
+  }
+
+  emitAlert(alert: {
+    type: string;
+    message: string;
+    severity: 'info' | 'warning' | 'error' | 'critical';
+    sectionId?: string;
+  }) {
+    if (alert.sectionId) {
+      this.server.to(`section_${alert.sectionId}`).emit('alert', alert);
+      return;
+    }
+
+    this.server.emit('alert', alert);
+  }
+
+  getStats() {
+    const rooms = this.server?.sockets?.adapter?.rooms;
+    const roomStats: Record<string, number> = {};
+
+    if (rooms) {
+      rooms.forEach((sockets, roomName) => {
+        if (!roomName.includes('-')) {
+          roomStats[roomName] = sockets.size;
         }
+      });
     }
 
-    handleDisconnect(client: Socket) {
-        this.logger.debug(`Client disconnected: ${client.id}`);
+    return {
+      connectedClients: this.server?.sockets?.sockets?.size || 0,
+      rooms: roomStats,
+      guestAllowed: this.isGuestAllowed(),
+    };
+  }
+
+  private isGuestAllowed(): boolean {
+    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    if (nodeEnv === 'production') {
+      return false;
     }
 
-    /**
-     * Suscribirse a actualizaciones de una sección específica
-     */
-    @SubscribeMessage('join_section')
-    handleJoinSection(client: Socket, sectionId: string) {
-        const room = `section_${sectionId}`;
-        client.join(room);
-        this.logger.debug(`Client ${client.id} joined room ${room}`);
-        return { event: 'joined', data: sectionId };
-    }
+    const configuredValue = this.configService.get<string | boolean>('REALTIME_ALLOW_GUEST');
+    return parseBooleanEnv(configuredValue, true);
+  }
 
-    /**
-     * Desuscribirse de actualizaciones de una sección
-     */
-    @SubscribeMessage('leave_section')
-    handleLeaveSection(client: Socket, sectionId: string) {
-        const room = `section_${sectionId}`;
-        client.leave(room);
-        this.logger.debug(`Client ${client.id} left room ${room}`);
-        return { event: 'left', data: sectionId };
-    }
-
-    /**
-     * Suscribirse a un dispositivo específico
-     */
-    @SubscribeMessage('subscribe_device')
-    handleSubscribeDevice(client: Socket, deviceId: string) {
-        const room = `device_${deviceId}`;
-        client.join(room);
-        this.logger.debug(`Client ${client.id} subscribed to device ${deviceId}`);
-        return { event: 'subscribed', data: deviceId };
-    }
-
-    /**
-     * Desuscribirse de un dispositivo
-     */
-    @SubscribeMessage('unsubscribe_device')
-    handleUnsubscribeDevice(client: Socket, deviceId: string) {
-        const room = `device_${deviceId}`;
-        client.leave(room);
-        return { event: 'unsubscribed', data: deviceId };
-    }
-
-    /**
-     * Emite actualización de sensor a clientes suscritos a la sección
-     * Si no hay sección, emite a todos (global)
-     */
-    emitSensorUpdate(deviceId: string, sectionId: string | null, reading: any) {
-        const data = { deviceId, sectionId, reading, timestamp: new Date().toISOString() };
-
-        // Emitir a la sección específica
-        if (sectionId) {
-            this.server.to(`section_${sectionId}`).emit('sensor_update', data);
-        }
-
-        // También emitir a suscriptores del dispositivo específico
-        this.server.to(`device_${deviceId}`).emit('sensor_update', data);
-
-        // Emitir a global para dashboards generales
-        this.server.to('global').emit('sensor_update', data);
-    }
-
-    /**
-     * Emite cambio de estado de dispositivo
-     */
-    emitDeviceUpdate(deviceId: string, sectionId: string | null, status: any) {
-        const data = { deviceId, sectionId, status, timestamp: new Date().toISOString() };
-
-        // Emitir a la sección específica
-        if (sectionId) {
-            this.server.to(`section_${sectionId}`).emit('device_update', data);
-        }
-
-        // También emitir a suscriptores del dispositivo específico
-        this.server.to(`device_${deviceId}`).emit('device_update', data);
-
-        // Emitir a global
-        this.server.to('global').emit('device_update', data);
-    }
-
-    /**
-     * Emite una alerta a todos los clientes conectados
-     */
-    emitAlert(alert: { type: string; message: string; severity: 'info' | 'warning' | 'error' | 'critical'; sectionId?: string }) {
-        if (alert.sectionId) {
-            this.server.to(`section_${alert.sectionId}`).emit('alert', alert);
-        } else {
-            this.server.emit('alert', alert);
-        }
-    }
-
-    /**
-     * Obtiene estadísticas del gateway
-     */
-    getStats() {
-        const rooms = this.server?.sockets?.adapter?.rooms;
-        const roomStats: Record<string, number> = {};
-
-        if (rooms) {
-            rooms.forEach((sockets, roomName) => {
-                // Filtrar rooms que no son socket IDs individuales
-                if (!roomName.includes('-')) {
-                    roomStats[roomName] = sockets.size;
-                }
-            });
-        }
-
-        return {
-            connectedClients: this.server?.sockets?.sockets?.size || 0,
-            rooms: roomStats,
-        };
-    }
+  private rejectClient(client: Socket, message: string) {
+    this.logger.warn(`Client ${client.id} rejected: ${message}`);
+    client.emit('error', { message });
+    client.disconnect(true);
+  }
 }

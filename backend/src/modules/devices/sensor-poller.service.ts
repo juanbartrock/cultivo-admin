@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { IoTGatewayService } from './iot-gateway.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
-import { DeviceType } from '@prisma/client';
+import { Connector, DeviceType } from '@prisma/client';
 
 interface SensorReading {
   temperature?: number;
@@ -15,7 +15,7 @@ interface SensorReading {
 interface SensorDevice {
   id: string;
   name: string;
-  connector: string;
+  connector: Connector;
   externalId: string;
   sectionId: string | null;
 }
@@ -137,7 +137,7 @@ export class SensorPollerService {
   private async readSensor(sensor: SensorDevice): Promise<SensorReading | null> {
     try {
       const status = await this.iotGateway.getDeviceStatus(
-        sensor.connector as any,
+        sensor.connector,
         sensor.externalId,
       );
 

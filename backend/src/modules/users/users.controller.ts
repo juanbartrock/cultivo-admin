@@ -27,7 +27,8 @@ import {
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { User, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -88,7 +89,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Usuario desactivado' })
   @ApiResponse({ status: 403, description: 'No permitido' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-  async deactivate(@Param('id') id: string, @CurrentUser() currentUser: User) {
+  async deactivate(@Param('id') id: string, @CurrentUser() currentUser: AuthenticatedUser) {
     return this.usersService.deactivate(id, currentUser);
   }
 
@@ -108,7 +109,7 @@ export class UsersController {
   @Get('me/profile')
   @ApiOperation({ summary: 'Obtener perfil del usuario actual' })
   @ApiResponse({ status: 200, description: 'Perfil del usuario', type: UserResponseDto })
-  async getMyProfile(@CurrentUser() user: User) {
+  async getMyProfile(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.findById(user.id, true);
   }
 
@@ -116,7 +117,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Actualizar perfil del usuario actual' })
   @ApiResponse({ status: 200, description: 'Perfil actualizado', type: UserResponseDto })
   async updateMyProfile(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(user.id, updateProfileDto);
@@ -125,7 +126,7 @@ export class UsersController {
   @Get('me/subscription')
   @ApiOperation({ summary: 'Obtener límites de suscripción del usuario actual' })
   @ApiResponse({ status: 200, description: 'Límites de suscripción', type: SubscriptionLimitsDto })
-  async getMySubscription(@CurrentUser() user: User) {
+  async getMySubscription(@CurrentUser() user: AuthenticatedUser) {
     const limits = this.usersService.getSubscriptionLimits(user.subscriptionTier);
     return {
       tier: user.subscriptionTier,
@@ -137,7 +138,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Verificar si puede crear un recurso según suscripción' })
   @ApiQuery({ name: 'parentId', required: false, description: 'ID del recurso padre (ej: roomId para secciones)' })
   async canCreate(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('resource') resource: 'room' | 'section' | 'automation' | 'device',
     @Query('parentId') parentId?: string,
   ) {

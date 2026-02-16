@@ -1,17 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { RequestIdInterceptor } from './common/interceptors/request-id.interceptor';
+import { parseCorsOrigins } from './config/config.schema';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
   // Global prefix
   app.setGlobalPrefix('api');
 
   // Enable CORS
+  const allowedOrigins = parseCorsOrigins(
+    configService.get<string>('CORS_ALLOWED_ORIGINS'),
+  );
+
   app.enableCors({
-    origin: true,
+    origin: allowedOrigins.includes('*') ? true : allowedOrigins,
     credentials: true,
   });
 
@@ -27,6 +35,8 @@ async function bootstrap() {
     }),
   );
 
+  app.useGlobalInterceptors(new RequestIdInterceptor());
+
   // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('Cultivo Manager API')
@@ -41,7 +51,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  const port = process.env.PORT || 4000;
+  const port = configService.get<number>('PORT', 4000);
   await app.listen(port, '0.0.0.0');
 
   console.log(`🌱 Cultivo Manager Backend running on port ${port}`);

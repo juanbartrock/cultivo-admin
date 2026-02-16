@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DevicesService } from '../devices/devices.service';
 import { JobSchedulerService } from './job-scheduler.service';
@@ -60,7 +60,7 @@ export class AutomationsService {
   }
 
   /**
-   * Obtiene una automatización por ID
+   * Obtiene una automatizaciÃ³n por ID
    */
   async findById(id: string) {
     const automation = await this.prisma.automation.findUnique({
@@ -97,10 +97,10 @@ export class AutomationsService {
   }
 
   /**
-   * Crea una nueva automatización
+   * Crea una nueva automatizaciÃ³n
    */
   async create(data: CreateAutomationDto) {
-    // Verificar que la sección existe
+    // Verificar que la secciÃ³n existe
     const section = await this.prisma.section.findUnique({
       where: { id: data.sectionId },
     });
@@ -164,7 +164,7 @@ export class AutomationsService {
         allowOverlap: data.allowOverlap ?? true,
         notifications: data.notifications ?? true,
         plantIds: data.plantIds || [],
-        // Configuración de análisis IA
+        // ConfiguraciÃ³n de anÃ¡lisis IA
         analysisType: data.analysisType,
         analysisIncludePhotos: data.analysisIncludePhotos ?? true,
         analysisIncludeFeedingPlans: data.analysisIncludeFeedingPlans ?? true,
@@ -209,96 +209,97 @@ export class AutomationsService {
   }
 
   /**
-   * Actualiza una automatización
+   * Actualiza una automatizaciÃ³n
    */
   async update(id: string, data: UpdateAutomationDto) {
     await this.findById(id);
 
-    // Si se actualizan condiciones, eliminar las existentes y crear nuevas
-    if (data.conditions) {
-      await this.prisma.automationCondition.deleteMany({
-        where: { automationId: id },
-      });
-    }
+    return this.prisma.$transaction(async (tx) => {
+      // Si se actualizan condiciones, eliminar las existentes y crear nuevas
+      if (data.conditions) {
+        await tx.automationCondition.deleteMany({
+          where: { automationId: id },
+        });
+      }
 
-    // Si se actualizan acciones, eliminar las existentes y crear nuevas
-    if (data.actions) {
-      await this.prisma.automationAction.deleteMany({
-        where: { automationId: id },
-      });
-    }
+      // Si se actualizan acciones, eliminar las existentes y crear nuevas
+      if (data.actions) {
+        await tx.automationAction.deleteMany({
+          where: { automationId: id },
+        });
+      }
 
-    return this.prisma.automation.update({
-      where: { id },
-      data: {
-        ...(data.name && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.status && { status: data.status }),
-        ...(data.triggerType && { triggerType: data.triggerType }),
-        ...(data.scheduleType !== undefined && { scheduleType: data.scheduleType }),
-        ...(data.activeStartTime !== undefined && { activeStartTime: data.activeStartTime }),
-        ...(data.activeEndTime !== undefined && { activeEndTime: data.activeEndTime }),
-        ...(data.intervalMinutes !== undefined && { intervalMinutes: data.intervalMinutes }),
-        ...(data.actionDuration !== undefined && { actionDuration: data.actionDuration }),
-        ...(data.specificTimes && { specificTimes: data.specificTimes }),
-        ...(data.daysOfWeek && { daysOfWeek: data.daysOfWeek }),
-        ...(data.evaluationInterval !== undefined && { interval: data.evaluationInterval }),
-        ...(data.startTime !== undefined && { startTime: data.startTime }),
-        ...(data.endTime !== undefined && { endTime: data.endTime }),
-        ...(data.priority !== undefined && { priority: data.priority }),
-        ...(data.allowOverlap !== undefined && { allowOverlap: data.allowOverlap }),
-        ...(data.notifications !== undefined && { notifications: data.notifications }),
-        ...(data.plantIds !== undefined && { plantIds: data.plantIds }),
-        // Configuración de análisis IA
-        ...(data.analysisType !== undefined && { analysisType: data.analysisType }),
-        ...(data.analysisIncludePhotos !== undefined && { analysisIncludePhotos: data.analysisIncludePhotos }),
-        ...(data.analysisIncludeFeedingPlans !== undefined && { analysisIncludeFeedingPlans: data.analysisIncludeFeedingPlans }),
-        ...(data.analysisIncludePreventionPlans !== undefined && { analysisIncludePreventionPlans: data.analysisIncludePreventionPlans }),
-        ...(data.analysisIncludeEvents !== undefined && { analysisIncludeEvents: data.analysisIncludeEvents }),
-        ...(data.analysisCustomPrompt !== undefined && { analysisCustomPrompt: data.analysisCustomPrompt }),
-        ...(data.dependsOnId !== undefined && {
-          dependsOn: data.dependsOnId
-            ? { connect: { id: data.dependsOnId } }
-            : { disconnect: true },
-        }),
-        ...(data.conditions && {
-          conditions: {
-            create: data.conditions.map((c, index) => ({
-              device: { connect: { id: c.deviceId } },
-              property: c.property,
-              operator: c.operator,
-              value: c.value ?? 0,
-              valueMax: c.valueMax,
-              timeValue: c.timeValue,
-              timeValueMax: c.timeValueMax,
-              logicOperator: c.logicOperator || 'AND',
-              order: c.order ?? index,
-            })),
-          },
-        }),
-        ...(data.actions && {
-          actions: {
-            create: data.actions.map((a, index) => ({
-              ...(a.deviceId && { device: { connect: { id: a.deviceId } } }),
-              actionType: a.actionType,
-              duration: a.duration,
-              delayMinutes: a.delayMinutes,
-              value: a.value,
-              order: a.order ?? index,
-            })),
-          },
-        }),
-      },
-      include: {
-        section: true,
-        conditions: { include: { device: true } },
-        actions: { include: { device: true } },
-      },
+      return tx.automation.update({
+        where: { id },
+        data: {
+          ...(data.name && { name: data.name }),
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.status && { status: data.status }),
+          ...(data.triggerType && { triggerType: data.triggerType }),
+          ...(data.scheduleType !== undefined && { scheduleType: data.scheduleType }),
+          ...(data.activeStartTime !== undefined && { activeStartTime: data.activeStartTime }),
+          ...(data.activeEndTime !== undefined && { activeEndTime: data.activeEndTime }),
+          ...(data.intervalMinutes !== undefined && { intervalMinutes: data.intervalMinutes }),
+          ...(data.actionDuration !== undefined && { actionDuration: data.actionDuration }),
+          ...(data.specificTimes && { specificTimes: data.specificTimes }),
+          ...(data.daysOfWeek && { daysOfWeek: data.daysOfWeek }),
+          ...(data.evaluationInterval !== undefined && { interval: data.evaluationInterval }),
+          ...(data.startTime !== undefined && { startTime: data.startTime }),
+          ...(data.endTime !== undefined && { endTime: data.endTime }),
+          ...(data.priority !== undefined && { priority: data.priority }),
+          ...(data.allowOverlap !== undefined && { allowOverlap: data.allowOverlap }),
+          ...(data.notifications !== undefined && { notifications: data.notifications }),
+          ...(data.plantIds !== undefined && { plantIds: data.plantIds }),
+          ...(data.analysisType !== undefined && { analysisType: data.analysisType }),
+          ...(data.analysisIncludePhotos !== undefined && { analysisIncludePhotos: data.analysisIncludePhotos }),
+          ...(data.analysisIncludeFeedingPlans !== undefined && { analysisIncludeFeedingPlans: data.analysisIncludeFeedingPlans }),
+          ...(data.analysisIncludePreventionPlans !== undefined && { analysisIncludePreventionPlans: data.analysisIncludePreventionPlans }),
+          ...(data.analysisIncludeEvents !== undefined && { analysisIncludeEvents: data.analysisIncludeEvents }),
+          ...(data.analysisCustomPrompt !== undefined && { analysisCustomPrompt: data.analysisCustomPrompt }),
+          ...(data.dependsOnId !== undefined && {
+            dependsOn: data.dependsOnId
+              ? { connect: { id: data.dependsOnId } }
+              : { disconnect: true },
+          }),
+          ...(data.conditions && {
+            conditions: {
+              create: data.conditions.map((c, index) => ({
+                device: { connect: { id: c.deviceId } },
+                property: c.property,
+                operator: c.operator,
+                value: c.value ?? 0,
+                valueMax: c.valueMax,
+                timeValue: c.timeValue,
+                timeValueMax: c.timeValueMax,
+                logicOperator: c.logicOperator || 'AND',
+                order: c.order ?? index,
+              })),
+            },
+          }),
+          ...(data.actions && {
+            actions: {
+              create: data.actions.map((a, index) => ({
+                ...(a.deviceId && { device: { connect: { id: a.deviceId } } }),
+                actionType: a.actionType,
+                duration: a.duration,
+                delayMinutes: a.delayMinutes,
+                value: a.value,
+                order: a.order ?? index,
+              })),
+            },
+          }),
+        },
+        include: {
+          section: true,
+          conditions: { include: { device: true } },
+          actions: { include: { device: true } },
+        },
+      });
     });
   }
 
   /**
-   * Elimina una automatización
+   * Elimina una automatizaciÃ³n
    */
   async delete(id: string) {
     await this.findById(id);
@@ -306,7 +307,7 @@ export class AutomationsService {
   }
 
   /**
-   * Cambia el estado de una automatización (activar/pausar/deshabilitar)
+   * Cambia el estado de una automatizaciÃ³n (activar/pausar/deshabilitar)
    */
   async setStatus(id: string, status: AutomationStatus) {
     await this.findById(id);
@@ -322,7 +323,7 @@ export class AutomationsService {
   }
 
   /**
-   * Verifica si el horario actual está dentro del rango de la automatización
+   * Verifica si el horario actual estÃ¡ dentro del rango de la automatizaciÃ³n
    */
   private isWithinSchedule(automation: {
     daysOfWeek: number[];
@@ -333,7 +334,7 @@ export class AutomationsService {
     const currentDay = now.getDay();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    // Verificar día de la semana
+    // Verificar dÃ­a de la semana
     if (automation.daysOfWeek.length > 0 && !automation.daysOfWeek.includes(currentDay)) {
       return false;
     }
@@ -350,7 +351,7 @@ export class AutomationsService {
   }
 
   /**
-   * Verifica si es momento de ejecutar una automatización programada
+   * Verifica si es momento de ejecutar una automatizaciÃ³n programada
    */
   private shouldExecuteScheduled(automation: {
     scheduleType: ScheduleType | null;
@@ -374,7 +375,7 @@ export class AutomationsService {
       }
 
       case ScheduleType.INTERVAL: {
-        // Verificar si pasó el intervalo desde la última ejecución
+        // Verificar si pasÃ³ el intervalo desde la Ãºltima ejecuciÃ³n
         if (!automation.intervalMinutes) return { shouldExecute: false, actionType: null };
         
         if (automation.lastEvaluatedAt) {
@@ -387,7 +388,7 @@ export class AutomationsService {
       }
 
       case ScheduleType.SPECIFIC_TIMES: {
-        // Verificar si la hora actual coincide con alguna hora específica
+        // Verificar si la hora actual coincide con alguna hora especÃ­fica
         const matchedTime = automation.specificTimes.find(time => {
           // Comparar con un margen de 1 minuto
           const [h, m] = time.split(':').map(Number);
@@ -398,7 +399,7 @@ export class AutomationsService {
         });
         
         if (matchedTime) {
-          // Verificar que no se haya ejecutado recientemente (últimos 2 minutos)
+          // Verificar que no se haya ejecutado recientemente (Ãºltimos 2 minutos)
           if (automation.lastEvaluatedAt) {
             const minutesSinceLastEval = (now.getTime() - automation.lastEvaluatedAt.getTime()) / (1000 * 60);
             if (minutesSinceLastEval < 2) {
@@ -418,7 +419,7 @@ export class AutomationsService {
   }
 
   /**
-   * Evalúa si las condiciones de una automatización se cumplen
+   * EvalÃºa si las condiciones de una automatizaciÃ³n se cumplen
    */
   async evaluateConditions(automationId: string): Promise<{
     allMet: boolean;
@@ -443,7 +444,7 @@ export class AutomationsService {
       met: boolean;
     }> = [];
 
-    // Si no hay condiciones, se considera que todas están cumplidas
+    // Si no hay condiciones, se considera que todas estÃ¡n cumplidas
     if (automation.conditions.length === 0) {
       return { allMet: true, results: [] };
     }
@@ -456,7 +457,7 @@ export class AutomationsService {
       let met = false;
 
       try {
-        // Condición de tiempo
+        // CondiciÃ³n de tiempo
         if (condition.property === 'time') {
           const now = new Date();
           const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -486,7 +487,7 @@ export class AutomationsService {
             }
           }
         }
-        // Condición de dispositivo
+        // CondiciÃ³n de dispositivo
         else if (condition.deviceId) {
           const { status } = await this.devicesService.getDeviceStatus(condition.deviceId);
           
@@ -499,7 +500,7 @@ export class AutomationsService {
             actualValue = status.state === 'on' ? 1 : 0;
           }
 
-          // Evaluar la condición
+          // Evaluar la condiciÃ³n
           if (actualValue !== null) {
             switch (condition.operator) {
               case ConditionOperator.GREATER_THAN:
@@ -529,7 +530,7 @@ export class AutomationsService {
         this.logger.error(`Error evaluating condition ${condition.id}: ${error.message}`);
       }
 
-      // Aplicar operador lógico
+      // Aplicar operador lÃ³gico
       if (previousLogicOperator === 'AND') {
         previousResult = previousResult && met;
       } else {
@@ -556,7 +557,7 @@ export class AutomationsService {
   }
 
   /**
-   * Ejecuta las acciones de una automatización
+   * Ejecuta las acciones de una automatizaciÃ³n
    */
   async executeActions(automationId: string, skipConditions = false, forceActionType?: 'on' | 'off'): Promise<{
     executionId: string;
@@ -571,7 +572,7 @@ export class AutomationsService {
   }> {
     const automation = await this.findById(automationId);
 
-    // Crear registro de ejecución
+    // Crear registro de ejecuciÃ³n
     const execution = await this.prisma.automationExecution.create({
       data: {
         automation: { connect: { id: automationId } },
@@ -593,7 +594,7 @@ export class AutomationsService {
       conditionResults = await this.evaluateConditions(automationId);
       
       if (!conditionResults.allMet) {
-        // Actualizar ejecución como cancelada
+        // Actualizar ejecuciÃ³n como cancelada
         await this.prisma.automationExecution.update({
           where: { id: execution.id },
           data: {
@@ -612,7 +613,7 @@ export class AutomationsService {
       }
     }
 
-    // Ejecutar cada acción
+    // Ejecutar cada acciÃ³n
     for (const action of automation.actions) {
       try {
         // Si hay un delay, esperar
@@ -623,7 +624,7 @@ export class AutomationsService {
         let success = false;
         let effectiveActionType = action.actionType;
 
-        // Si se fuerza un tipo de acción (para TIME_RANGE), sobreescribir
+        // Si se fuerza un tipo de acciÃ³n (para TIME_RANGE), sobreescribir
         if (forceActionType) {
           effectiveActionType = forceActionType === 'on' ? ActionType.TURN_ON : ActionType.TURN_OFF;
         }
@@ -634,7 +635,7 @@ export class AutomationsService {
             await this.devicesService.controlDevice(action.deviceId, 'on');
             success = true;
             
-            // Si tiene duración, programar apagado como job persistente
+            // Si tiene duraciÃ³n, programar apagado como job persistente
             if (action.duration || automation.actionDuration) {
               const durationMinutes = action.duration || automation.actionDuration;
               await this.jobScheduler.scheduleDeviceOff({
@@ -665,10 +666,10 @@ export class AutomationsService {
             const snapshotResult = await this.devicesService.captureSnapshot(action.deviceId);
             success = snapshotResult.success || false;
             
-            // Si hay plantas asociadas y la foto se capturó correctamente, registrar eventos
+            // Si hay plantas asociadas y la foto se capturÃ³ correctamente, registrar eventos
             if (success && automation.plantIds && automation.plantIds.length > 0 && snapshotResult.downloadUrl) {
               try {
-                // Obtener información de las plantas asociadas
+                // Obtener informaciÃ³n de las plantas asociadas
                 const plants = await this.prisma.plant.findMany({
                   where: { id: { in: automation.plantIds } },
                   select: { id: true, cycleId: true, sectionId: true },
@@ -685,7 +686,7 @@ export class AutomationsService {
                       data: {
                         url: snapshotResult.downloadUrl,
                         filename: snapshotResult.filename,
-                        caption: `Foto automática capturada por automatización "${automation.name}"`,
+                        caption: `Foto automÃ¡tica capturada por automatizaciÃ³n "${automation.name}"`,
                         automationId: automation.id,
                         automationName: automation.name,
                         capturedAt: new Date().toISOString(),
@@ -693,10 +694,10 @@ export class AutomationsService {
                     },
                   });
                 }
-                this.logger.log(`Registradas ${plants.length} fotos en historial de plantas para automatización ${automation.id}`);
+                this.logger.log(`Registradas ${plants.length} fotos en historial de plantas para automatizaciÃ³n ${automation.id}`);
               } catch (error) {
                 this.logger.error(`Error registrando eventos de foto en plantas: ${error.message}`);
-                // No fallar la ejecución si hay error al registrar eventos
+                // No fallar la ejecuciÃ³n si hay error al registrar eventos
               }
             }
             break;
@@ -705,7 +706,7 @@ export class AutomationsService {
             await this.devicesService.controlDevice(action.deviceId, 'on');
             success = true;
 
-            // Si tiene duración, programar apagado como job persistente
+            // Si tiene duraciÃ³n, programar apagado como job persistente
             if (action.duration) {
               await this.jobScheduler.scheduleDeviceOff({
                 deviceId: action.deviceId,
@@ -719,7 +720,7 @@ export class AutomationsService {
             }
             break;
           case ActionType.AI_PLANT_ANALYSIS:
-            // Ejecutar análisis IA para cada planta asociada
+            // Ejecutar anÃ¡lisis IA para cada planta asociada
             if (automation.plantIds && automation.plantIds.length > 0) {
               for (const plantId of automation.plantIds) {
                 const analysisResult = await this.plantAnalysisService.analyzePlant({
@@ -768,7 +769,7 @@ export class AutomationsService {
 
     const allSuccessful = actionResults.every(r => r.success);
 
-    // Actualizar registro de ejecución
+    // Actualizar registro de ejecuciÃ³n
     await this.prisma.automationExecution.update({
       where: { id: execution.id },
       data: {
@@ -780,7 +781,7 @@ export class AutomationsService {
       },
     });
 
-    // Actualizar última evaluación
+    // Actualizar Ãºltima evaluaciÃ³n
     await this.prisma.automation.update({
       where: { id: automationId },
       data: { lastEvaluatedAt: new Date() },
@@ -820,7 +821,7 @@ export class AutomationsService {
   }
 
   /**
-   * Calcula estadísticas de efectividad
+   * Calcula estadÃ­sticas de efectividad
    */
   async getEffectivenessStats(automationId: string, days = 30) {
     const fromDate = new Date();
@@ -896,7 +897,7 @@ export class AutomationsService {
     });
 
     return automations.map(automation => {
-      // Primero verificar si está dentro del horario permitido
+      // Primero verificar si estÃ¡ dentro del horario permitido
       if (!this.isWithinSchedule(automation)) {
         return {
           id: automation.id,
@@ -910,7 +911,7 @@ export class AutomationsService {
         };
       }
 
-      // Según el tipo de trigger
+      // SegÃºn el tipo de trigger
       if (automation.triggerType === TriggerType.SCHEDULED) {
         const { shouldExecute, actionType } = this.shouldExecuteScheduled(automation);
         return {
@@ -925,7 +926,7 @@ export class AutomationsService {
         };
       }
 
-      // Para CONDITION y HYBRID, verificar intervalo de evaluación
+      // Para CONDITION y HYBRID, verificar intervalo de evaluaciÃ³n
       if (automation.lastEvaluatedAt) {
         const minutesSinceLastEval = (now.getTime() - automation.lastEvaluatedAt.getTime()) / (1000 * 60);
         if (minutesSinceLastEval < automation.interval) {
@@ -956,11 +957,11 @@ export class AutomationsService {
   }
 
   // ============================================
-  // MÉTODOS PARA PROPUESTAS DE IA
+  // MÃ‰TODOS PARA PROPUESTAS DE IA
   // ============================================
 
   /**
-   * Lista automatizaciones propuestas por IA pendientes de aprobación
+   * Lista automatizaciones propuestas por IA pendientes de aprobaciÃ³n
    */
   async getPendingProposals(sectionId?: string) {
     return this.prisma.automation.findMany({
@@ -999,8 +1000,8 @@ export class AutomationsService {
   }
 
   /**
-   * Aprueba una propuesta de automatización
-   * Cambia el estado a ACTIVE y registra quién la aprobó
+   * Aprueba una propuesta de automatizaciÃ³n
+   * Cambia el estado a ACTIVE y registra quiÃ©n la aprobÃ³
    */
   async approveProposal(id: string) {
     const automation = await this.prisma.automation.findUnique({
@@ -1012,7 +1013,7 @@ export class AutomationsService {
     }
 
     if (automation.status !== AutomationStatus.PENDING_APPROVAL) {
-      throw new Error(`Esta automatización no está pendiente de aprobación (estado actual: ${automation.status})`);
+      throw new Error(`Esta automatizaciÃ³n no estÃ¡ pendiente de aprobaciÃ³n (estado actual: ${automation.status})`);
     }
 
     const updated = await this.prisma.automation.update({
@@ -1020,7 +1021,7 @@ export class AutomationsService {
       data: {
         status: AutomationStatus.ACTIVE,
         reviewedAt: new Date(),
-        // reviewedBy se podría agregar si se pasa el userId
+        // reviewedBy se podrÃ­a agregar si se pasa el userId
       },
       include: {
         section: true,
@@ -1029,18 +1030,18 @@ export class AutomationsService {
       },
     });
 
-    this.logger.log(`Propuesta de automatización "${updated.name}" aprobada y activada`);
+    this.logger.log(`Propuesta de automatizaciÃ³n "${updated.name}" aprobada y activada`);
 
     return {
       success: true,
-      message: `La automatización "${updated.name}" ha sido aprobada y está ahora activa`,
+      message: `La automatizaciÃ³n "${updated.name}" ha sido aprobada y estÃ¡ ahora activa`,
       automation: updated,
     };
   }
 
   /**
-   * Rechaza una propuesta de automatización
-   * Elimina la automatización de la base de datos
+   * Rechaza una propuesta de automatizaciÃ³n
+   * Elimina la automatizaciÃ³n de la base de datos
    */
   async rejectProposal(id: string) {
     const automation = await this.prisma.automation.findUnique({
@@ -1052,18 +1053,18 @@ export class AutomationsService {
     }
 
     if (automation.status !== AutomationStatus.PENDING_APPROVAL) {
-      throw new Error(`Esta automatización no está pendiente de aprobación (estado actual: ${automation.status})`);
+      throw new Error(`Esta automatizaciÃ³n no estÃ¡ pendiente de aprobaciÃ³n (estado actual: ${automation.status})`);
     }
 
     // Guardar el nombre antes de eliminar
     const name = automation.name;
 
-    // Eliminar la automatización rechazada
+    // Eliminar la automatizaciÃ³n rechazada
     await this.prisma.automation.delete({
       where: { id },
     });
 
-    this.logger.log(`Propuesta de automatización "${name}" rechazada y eliminada`);
+    this.logger.log(`Propuesta de automatizaciÃ³n "${name}" rechazada y eliminada`);
 
     return {
       success: true,

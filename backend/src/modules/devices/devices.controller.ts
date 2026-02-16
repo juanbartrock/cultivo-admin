@@ -8,23 +8,25 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DevicesService, ScannedDevice } from './devices.service';
 import { SensorHistoryService } from './sensor-history.service';
 import { DeviceStatus } from './iot-gateway.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
   CreateDeviceDto,
   UpdateDeviceDto,
   AssignDeviceDto,
   ControlDeviceDto,
 } from './dto/device.dto';
+import {
+  GetSensorHistoryQueryDto,
+  GetSensorHistoryStatsQueryDto,
+  GetSensorLatestQueryDto,
+} from './dto/sensor-history-query.dto';
 
 @ApiTags('devices')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('devices')
 export class DevicesController {
   constructor(
@@ -190,22 +192,20 @@ export class DevicesController {
   @ApiResponse({ status: 200, description: 'Historial de lecturas' })
   async getHistory(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('hours') hours?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
+    @Query() query: GetSensorHistoryQueryDto,
   ) {
     // Si se proporcionan from y to, usar rango de fechas
-    if (from && to) {
+    if (query.from && query.to) {
       return this.sensorHistoryService.getHistoryByRange(
         id,
-        new Date(from),
-        new Date(to),
+        new Date(query.from),
+        new Date(query.to),
       );
     }
     // Si no, usar horas (default 6)
     return this.sensorHistoryService.getHistory(
       id,
-      hours ? parseInt(hours, 10) : 6,
+      query.hours ?? 6,
     );
   }
 
@@ -216,11 +216,11 @@ export class DevicesController {
   @ApiResponse({ status: 200, description: 'Últimas lecturas' })
   async getLatestReadings(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('limit') limit?: string,
+    @Query() query: GetSensorLatestQueryDto,
   ) {
     return this.sensorHistoryService.getLatestReadings(
       id,
-      limit ? parseInt(limit, 10) : 10,
+      query.limit ?? 10,
     );
   }
 
@@ -231,11 +231,11 @@ export class DevicesController {
   @ApiResponse({ status: 200, description: 'Estadísticas del sensor' })
   async getHistoryStats(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('hours') hours?: string,
+    @Query() query: GetSensorHistoryStatsQueryDto,
   ) {
     return this.sensorHistoryService.getStats(
       id,
-      hours ? parseInt(hours, 10) : 24,
+      query.hours ?? 24,
     );
   }
 }
