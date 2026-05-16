@@ -38,18 +38,18 @@ import {
 } from '@/types';
 
 const triggerTypeLabels: Record<TriggerType, { label: string; icon: any; desc: string }> = {
-  SCHEDULED: { label: 'Programada', icon: Clock, desc: 'Se ejecuta en horarios especÃ­ficos' },
+  SCHEDULED: { label: 'Programada', icon: Clock, desc: 'Se ejecuta en horarios específicos' },
   CONDITION: { label: 'Condicional', icon: Settings, desc: 'Se ejecuta cuando se cumplen condiciones' },
-  HYBRID: { label: 'HÃ­brida', icon: RefreshCw, desc: 'CombinaciÃ³n de horario y condiciones' },
+  HYBRID: { label: 'Híbrida', icon: RefreshCw, desc: 'Combinación de horario y condiciones' },
 };
 
 const scheduleTypeLabels: Record<ScheduleType, { label: string; icon: any; desc: string }> = {
   TIME_RANGE: { label: 'Rango de Horas', icon: Clock, desc: 'Activo durante un rango horario' },
   INTERVAL: { label: 'Intervalo', icon: Timer, desc: 'Se ejecuta cada X horas/minutos' },
-  SPECIFIC_TIMES: { label: 'Horas EspecÃ­ficas', icon: Calendar, desc: 'Se ejecuta en momentos puntuales' },
+  SPECIFIC_TIMES: { label: 'Horas Específicas', icon: Calendar, desc: 'Se ejecuta en momentos puntuales' },
 };
 
-const daysOfWeekLabels = ['Dom', 'Lun', 'Mar', 'MiÃ©', 'Jue', 'Vie', 'SÃ¡b'];
+const daysOfWeekLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 const operatorLabels: Record<ConditionOperator, string> = {
   GREATER_THAN: 'Mayor que',
@@ -66,15 +66,15 @@ const actionLabels: Record<ActionType, string> = {
   TOGGLE: 'Alternar',
   CAPTURE_PHOTO: 'Capturar Foto',
   TRIGGER_IRRIGATION: 'Regar',
-  AI_PLANT_ANALYSIS: 'AnÃ¡lisis IA',
+  AI_PLANT_ANALYSIS: 'Análisis IA',
 };
 
 const analysisTypeLabels: Record<AnalysisType, { label: string; desc: string }> = {
-  GENERAL: { label: 'General', desc: 'AnÃ¡lisis completo de salud y estado' },
-  NUTRICION: { label: 'NutriciÃ³n', desc: 'EvalÃºa deficiencias y excesos' },
-  PREVENCION: { label: 'PrevenciÃ³n', desc: 'Detecta plagas y enfermedades' },
+  GENERAL: { label: 'General', desc: 'Análisis completo de salud y estado' },
+  NUTRICION: { label: 'Nutrición', desc: 'Evalúa deficiencias y excesos' },
+  PREVENCION: { label: 'Prevención', desc: 'Detecta plagas y enfermedades' },
   VEGETATIVO: { label: 'Vegetativo', desc: 'Analiza desarrollo vegetativo' },
-  FLORACION: { label: 'FloraciÃ³n', desc: 'EvalÃºa progreso de floraciÃ³n' },
+  FLORACION: { label: 'Floración', desc: 'Evalúa progreso de floración' },
 };
 
 const statusConfig: Record<AutomationStatus, { label: string; color: string; icon: any }> = {
@@ -84,12 +84,12 @@ const statusConfig: Record<AutomationStatus, { label: string; color: string; ico
   PENDING_APPROVAL: { label: 'Pendiente', color: 'text-cyan-300', icon: Brain },
 };
 
-// ConfiguraciÃ³n de visualizaciÃ³n de estados
+// Configuración de visualización de estados
 const executionStatusConfig: Record<ExecutionStatus, { label: string; color: string; icon: any }> = {
   PENDING: { label: 'Pendiente', color: 'text-zinc-400', icon: Clock },
   RUNNING: { label: 'Ejecutando', color: 'text-blue-400', icon: Loader2 },
   COMPLETED: { label: 'Completado', color: 'text-green-400', icon: CheckCircle2 },
-  FAILED: { label: 'FallÃ³', color: 'text-red-400', icon: XCircle },
+  FAILED: { label: 'Falló', color: 'text-red-400', icon: XCircle },
   CANCELLED: { label: 'Cancelado', color: 'text-zinc-500', icon: X },
 };
 
@@ -131,14 +131,14 @@ export default function AutomatizacionesPage() {
     loadData();
   }, []);
 
-  // Cargar detalles automÃ¡ticamente cuando se selecciona una automatizaciÃ³n
+  // Cargar detalles automáticamente cuando se selecciona una automatización
   useEffect(() => {
     if (selectedAutomation?.id) {
       // Cargar detalles completos incluyendo historial de ejecuciones
-      // El useEffect solo se ejecuta cuando cambia el ID, asÃ­ que podemos actualizar selectedAutomation sin causar bucles
+      // El useEffect solo se ejecuta cuando cambia el ID, así que podemos actualizar selectedAutomation sin causar bucles
       loadAutomationDetails(selectedAutomation.id, true);
     } else {
-      // Limpiar datos cuando no hay automatizaciÃ³n seleccionada
+      // Limpiar datos cuando no hay automatización seleccionada
       setExecutions([]);
       setEffectiveness(null);
     }
@@ -198,7 +198,7 @@ export default function AutomatizacionesPage() {
       if (selectedAutomation?.id === updated.id) {
         setSelectedAutomation(updated);
       }
-      toast.success(`AutomatizaciÃ³n ${newStatus === 'ACTIVE' ? 'activada' : 'pausada'}`);
+      toast.success(`Automatización ${newStatus === 'ACTIVE' ? 'activada' : 'pausada'}`);
     } catch (err) {
       console.error('Error updating status:', err);
       toast.error('Error al cambiar el estado');
@@ -209,21 +209,21 @@ export default function AutomatizacionesPage() {
     try {
       const result = await automationService.execute(automation.id, true);
       if (result.success) {
-        toast.success('AutomatizaciÃ³n ejecutada correctamente');
+        toast.success('Automatización ejecutada correctamente');
         loadAutomationDetails(automation.id);
       } else {
         toast.warning('Algunas acciones fallaron');
       }
     } catch (err) {
       console.error('Error executing automation:', err);
-      toast.error('Error al ejecutar la automatizaciÃ³n');
+      toast.error('Error al ejecutar la automatización');
     }
   }
 
   async function handleDelete(automation: Automation) {
     const shouldDelete = await confirm({
-      title: 'Eliminar AutomatizaciÃ³n',
-      message: `Â¿EstÃ¡s seguro de eliminar "${automation.name}"? Esta acciÃ³n no se puede deshacer.`,
+      title: 'Eliminar Automatización',
+      message: `¿Estás seguro de eliminar "${automation.name}"? Esta acción no se puede deshacer.`,
       variant: 'danger',
       confirmText: 'Eliminar',
     });
@@ -236,10 +236,10 @@ export default function AutomatizacionesPage() {
       if (selectedAutomation?.id === automation.id) {
         setSelectedAutomation(automations[0] || null);
       }
-      toast.success('AutomatizaciÃ³n eliminada');
+      toast.success('Automatización eliminada');
     } catch (err) {
       console.error('Error deleting automation:', err);
-      toast.error('Error al eliminar la automatizaciÃ³n');
+      toast.error('Error al eliminar la automatización');
     }
   }
 
@@ -249,10 +249,10 @@ export default function AutomatizacionesPage() {
       setAutomations([newAutomation, ...automations]);
       setSelectedAutomation(newAutomation);
       setShowCreateModal(false);
-      toast.success('AutomatizaciÃ³n creada correctamente');
+      toast.success('Automatización creada correctamente');
     } catch (err) {
       console.error('Error creating automation:', err);
-      toast.error('Error al crear la automatizaciÃ³n');
+      toast.error('Error al crear la automatización');
     }
   }
 
@@ -264,10 +264,10 @@ export default function AutomatizacionesPage() {
       setAutomations(automations.map(a => a.id === updated.id ? updated : a));
       setSelectedAutomation(updated);
       setShowEditModal(false);
-      toast.success('AutomatizaciÃ³n actualizada');
+      toast.success('Automatización actualizada');
     } catch (err) {
       console.error('Error updating automation:', err);
-      toast.error('Error al actualizar la automatizaciÃ³n');
+      toast.error('Error al actualizar la automatización');
     }
   }
 
@@ -301,7 +301,7 @@ export default function AutomatizacionesPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
         <AlertTriangle className="w-16 h-16 text-red-400 mb-4" />
-        <h1 className="text-2xl font-bold text-white mb-2">Error de conexiÃ³n</h1>
+        <h1 className="text-2xl font-bold text-white mb-2">Error de conexión</h1>
         <p className="text-zinc-400 mb-4">{error}</p>
         <button onClick={loadData} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg">
           <RefreshCw className="w-4 h-4" />
@@ -317,8 +317,8 @@ export default function AutomatizacionesPage() {
       <EmptyState
         icon={Zap}
         title="Sin automatizaciones"
-        description="Crea reglas automÃ¡ticas para controlar tus dispositivos segÃºn horarios o condiciones ambientales."
-        actionLabel="Crear AutomatizaciÃ³n"
+        description="Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales."
+        actionLabel="Crear Automatización"
         onAction={() => setShowCreateModal(true)}
       >
         {showCreateModal && (
@@ -364,7 +364,7 @@ export default function AutomatizacionesPage() {
             className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Nueva AutomatizaciÃ³n
+            Nueva Automatización
           </button>
         </div>
       </motion.div>
@@ -446,7 +446,7 @@ export default function AutomatizacionesPage() {
         >
           {selectedAutomation ? (
             <>
-              {/* Header de la automatizaciÃ³n */}
+              {/* Header de la automatización */}
               <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -455,14 +455,14 @@ export default function AutomatizacionesPage() {
                       <p className="text-sm text-zinc-400 mt-1">{selectedAutomation.description}</p>
                     )}
                     <div className="flex items-center gap-3 mt-2 text-xs text-zinc-500">
-                      <span>SecciÃ³n: {selectedAutomation.section?.name || 'No asignada'}</span>
+                      <span>Sección: {selectedAutomation.section?.name || 'No asignada'}</span>
                       <span>â€¢</span>
                       <span className="flex items-center gap-1">
                         {(() => {
                           const TriggerIcon = triggerTypeLabels[selectedAutomation.triggerType]?.icon || Clock;
                           return <TriggerIcon className="w-3 h-3" />;
                         })()}
-                        {triggerTypeLabels[selectedAutomation.triggerType]?.label || 'CondiciÃ³n'}
+                        {triggerTypeLabels[selectedAutomation.triggerType]?.label || 'Condición'}
                       </span>
                     </div>
                   </div>
@@ -505,7 +505,7 @@ export default function AutomatizacionesPage() {
                   </div>
                 </div>
 
-                {/* ConfiguraciÃ³n de programaciÃ³n */}
+                {/* Configuración de programación */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                   {selectedAutomation.triggerType === 'SCHEDULED' && selectedAutomation.scheduleType === 'TIME_RANGE' && (
                     <>
@@ -540,7 +540,7 @@ export default function AutomatizacionesPage() {
                       {selectedAutomation.actionDuration && (
                         <div className="bg-zinc-800/50 rounded-lg p-3">
                           <p className="text-xs text-zinc-500 flex items-center gap-1">
-                            <Timer className="w-3 h-3" /> DuraciÃ³n
+                            <Timer className="w-3 h-3" /> Duración
                           </p>
                           <p className="text-lg font-semibold text-white">{selectedAutomation.actionDuration} min</p>
                         </div>
@@ -570,7 +570,7 @@ export default function AutomatizacionesPage() {
                     </div>
                   )}
                   <div className="bg-zinc-800/50 rounded-lg p-3">
-                    <p className="text-xs text-zinc-500">DÃ­as</p>
+                    <p className="text-xs text-zinc-500">Días</p>
                     <p className="text-sm font-semibold text-white">
                       {selectedAutomation.daysOfWeek.length === 0
                         ? 'Todos'
@@ -649,7 +649,7 @@ export default function AutomatizacionesPage() {
                   </div>
                 </div>
 
-                {/* Plantas asociadas (si hay acciÃ³n CAPTURE_PHOTO) */}
+                {/* Plantas asociadas (si hay acción CAPTURE_PHOTO) */}
                 {selectedAutomation.actions.some(a => a.actionType === 'CAPTURE_PHOTO') && selectedAutomation.plantIds && selectedAutomation.plantIds.length > 0 && (
                   <div className="mt-4">
                     <h3 className="text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
@@ -676,7 +676,7 @@ export default function AutomatizacionesPage() {
                 )}
               </div>
 
-              {/* EstadÃ­sticas de efectividad */}
+              {/* Estadísticas de efectividad */}
               {effectiveness && (
                 <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -759,7 +759,7 @@ export default function AutomatizacionesPage() {
                         })}
                     </div>
 
-                    {/* Controles de paginaciÃ³n */}
+                    {/* Controles de paginación */}
                     {executions.length > executionsPerPage && (
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-700/50">
                         <p className="text-sm text-zinc-400">
@@ -770,7 +770,7 @@ export default function AutomatizacionesPage() {
                             onClick={() => setExecutionsPage(prev => Math.max(1, prev - 1))}
                             disabled={executionsPage === 1}
                             className="p-2 bg-zinc-800/50 hover:bg-zinc-700/50 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 rounded-lg transition-colors"
-                            title="PÃ¡gina anterior"
+                            title="Página anterior"
                           >
                             <ChevronLeft className="w-4 h-4" />
                           </button>
@@ -781,7 +781,7 @@ export default function AutomatizacionesPage() {
                             onClick={() => setExecutionsPage(prev => Math.min(Math.ceil(executions.length / executionsPerPage), prev + 1))}
                             disabled={executionsPage >= Math.ceil(executions.length / executionsPerPage)}
                             className="p-2 bg-zinc-800/50 hover:bg-zinc-700/50 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-400 rounded-lg transition-colors"
-                            title="PÃ¡gina siguiente"
+                            title="Página siguiente"
                           >
                             <ChevronRight className="w-4 h-4" />
                           </button>
@@ -800,23 +800,23 @@ export default function AutomatizacionesPage() {
           ) : (
             <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-12 text-center">
               <Zap className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-white mb-2">Selecciona una automatizaciÃ³n</h2>
+              <h2 className="text-xl font-bold text-white mb-2">Selecciona una automatización</h2>
               <p className="text-zinc-400 mb-4">
-                Selecciona una automatizaciÃ³n del panel izquierdo o crea una nueva
+                Selecciona una automatización del panel izquierdo o crea una nueva
               </p>
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg"
               >
                 <Plus className="w-4 h-4" />
-                Crear AutomatizaciÃ³n
+                Crear Automatización
               </button>
             </div>
           )}
         </motion.div>
       </div>
 
-      {/* Modal de creaciÃ³n */}
+      {/* Modal de creación */}
       {showCreateModal && (
         <CreateAutomationModal
           sections={sections}
@@ -826,7 +826,7 @@ export default function AutomatizacionesPage() {
         />
       )}
 
-      {/* Modal de ediciÃ³n */}
+      {/* Modal de edición */}
       {showEditModal && selectedAutomation && (
         <EditAutomationModal
           automation={selectedAutomation}
@@ -835,7 +835,7 @@ export default function AutomatizacionesPage() {
         />
       )}
 
-      {/* Modal de anÃ¡lisis de capacidades */}
+      {/* Modal de análisis de capacidades */}
       <CapabilitiesAnalysisModal
         isOpen={showCapabilitiesModal}
         onClose={() => setShowCapabilitiesModal(false)}
@@ -845,7 +845,7 @@ export default function AutomatizacionesPage() {
 }
 
 // =====================================================
-// MODAL DE CREACIÃ“N DE AUTOMATIZACIÃ“N - WIZARD
+// MODAL DE CREACIÓN DE AUTOMATIZACIÓN - WIZARD
 // =====================================================
 
 type WizardStep = 'type' | 'schedule' | 'conditions' | 'actions' | 'review';
@@ -886,7 +886,7 @@ function CreateAutomationModal({
     notifications: true,
   });
 
-  // Cargar plantas cuando cambia la secciÃ³n
+  // Cargar plantas cuando cambia la sección
   useEffect(() => {
     if (form.sectionId) {
       plantService.getAll({ sectionId: form.sectionId })
@@ -898,7 +898,7 @@ function CreateAutomationModal({
     } else {
       setPlants([]);
     }
-    setSelectedPlantIds([]); // Resetear selecciÃ³n al cambiar secciÃ³n
+    setSelectedPlantIds([]); // Resetear selección al cambiar sección
   }, [form.sectionId]);
 
   const [conditions, setConditions] = useState<Array<{
@@ -917,7 +917,7 @@ function CreateAutomationModal({
     delayMinutes?: number;
   }>>([]);
 
-  // ConfiguraciÃ³n de anÃ¡lisis IA
+  // Configuración de análisis IA
   const [analysisConfig, setAnalysisConfig] = useState({
     analysisType: 'GENERAL' as AnalysisType,
     includePhotos: true,
@@ -934,7 +934,7 @@ function CreateAutomationModal({
 
   const steps: { key: WizardStep; label: string }[] = [
     { key: 'type', label: 'Tipo' },
-    { key: 'schedule', label: 'ProgramaciÃ³n' },
+    { key: 'schedule', label: 'Programación' },
     { key: 'conditions', label: 'Condiciones' },
     { key: 'actions', label: 'Acciones' },
     { key: 'review', label: 'Revisar' },
@@ -1016,7 +1016,7 @@ function CreateAutomationModal({
 
   function addAction(type: 'device' | 'ai_analysis' = 'device') {
     if (type === 'ai_analysis') {
-      // Solo permitir una acciÃ³n de anÃ¡lisis IA
+      // Solo permitir una acción de análisis IA
       if (actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS')) return;
       setActions([...actions, {
         actionType: 'AI_PLANT_ANALYSIS',
@@ -1056,7 +1056,7 @@ function CreateAutomationModal({
         endTime: form.endTime || undefined,
         notifications: form.notifications,
         plantIds: selectedPlantIds.length > 0 ? selectedPlantIds : undefined,
-        // ConfiguraciÃ³n de anÃ¡lisis IA
+        // Configuración de análisis IA
         ...(actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') && {
           analysisType: analysisConfig.analysisType,
           analysisIncludePhotos: analysisConfig.includePhotos,
@@ -1088,7 +1088,7 @@ function CreateAutomationModal({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Zap className="w-5 h-5 text-cyan-300" />
-              Nueva AutomatizaciÃ³n
+              Nueva Automatización
             </h2>
             <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
               <X className="w-5 h-5 text-zinc-400" />
@@ -1148,17 +1148,17 @@ function CreateAutomationModal({
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-zinc-300 mb-1">DescripciÃ³n</label>
+                    <label className="block text-sm font-medium text-zinc-300 mb-1">Descripción</label>
                     <textarea
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
                       rows={2}
-                      placeholder="Describe quÃ© hace esta automatizaciÃ³n..."
+                      placeholder="Describe qué hace esta automatización..."
                       className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white resize-none focus:border-cyan-500"
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-zinc-300 mb-1">SecciÃ³n *</label>
+                    <label className="block text-sm font-medium text-zinc-300 mb-1">Sección *</label>
                     <select
                       value={form.sectionId}
                       onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
@@ -1170,7 +1170,7 @@ function CreateAutomationModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-3">Tipo de automatizaciÃ³n *</label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-3">Tipo de automatización *</label>
                   <div className="grid grid-cols-3 gap-3">
                     {(Object.keys(triggerTypeLabels) as TriggerType[]).map((type) => {
                       const { label, desc, icon: Icon } = triggerTypeLabels[type];
@@ -1200,7 +1200,7 @@ function CreateAutomationModal({
                     <AlertTriangle className="w-5 h-5 text-yellow-400" />
                     <div>
                       <label className="block text-sm font-medium text-zinc-300">Enviar alertas</label>
-                      <p className="text-xs text-zinc-500">Recibir notificaciones cuando se ejecute esta automatizaciÃ³n</p>
+                      <p className="text-xs text-zinc-500">Recibir notificaciones cuando se ejecute esta automatización</p>
                     </div>
                   </div>
                   <button
@@ -1230,7 +1230,7 @@ function CreateAutomationModal({
                 {form.triggerType === 'SCHEDULED' && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-zinc-300 mb-3">Tipo de programaciÃ³n *</label>
+                      <label className="block text-sm font-medium text-zinc-300 mb-3">Tipo de programación *</label>
                       <div className="grid grid-cols-3 gap-3">
                         {(Object.keys(scheduleTypeLabels) as ScheduleType[]).map((type) => {
                           const { label, desc, icon: Icon } = scheduleTypeLabels[type];
@@ -1302,7 +1302,7 @@ function CreateAutomationModal({
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-zinc-300 mb-1 flex items-center gap-2">
-                            <Timer className="w-4 h-4 text-green-400" /> DuraciÃ³n encendido (min)
+                            <Timer className="w-4 h-4 text-green-400" /> Duración encendido (min)
                           </label>
                           <input
                             type="number"
@@ -1320,7 +1320,7 @@ function CreateAutomationModal({
                       <div className="p-4 bg-zinc-800/30 rounded-xl">
                         <div className="flex items-center justify-between mb-3">
                           <label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-cyan-400" /> Horas especÃ­ficas
+                            <Clock className="w-4 h-4 text-cyan-400" /> Horas específicas
                           </label>
                           <button
                             type="button"
@@ -1396,11 +1396,11 @@ function CreateAutomationModal({
                   </div>
                 )}
 
-                {/* DÃ­as de la semana (para todos) */}
+                {/* Días de la semana (para todos) */}
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" /> DÃ­as de la semana
-                    <span className="text-xs text-zinc-500">(vacÃ­o = todos los dÃ­as)</span>
+                    <Calendar className="w-4 h-4" /> Días de la semana
+                    <span className="text-xs text-zinc-500">(vacío = todos los días)</span>
                   </label>
                   <div className="flex gap-2">
                     {daysOfWeekLabels.map((day, idx) => {
@@ -1447,15 +1447,15 @@ function CreateAutomationModal({
                     disabled={sensorDevices.length === 0}
                     className="text-xs px-3 py-1.5 bg-cyan-600/20 text-cyan-400 rounded hover:bg-cyan-600/30 disabled:opacity-50 flex items-center gap-1"
                   >
-                    <Thermometer className="w-3 h-3" /> + Agregar condiciÃ³n
+                    <Thermometer className="w-3 h-3" /> + Agregar condición
                   </button>
                 </div>
 
                 {conditions.length === 0 ? (
                   <div className="text-center py-8 border-2 border-dashed border-zinc-700 rounded-xl">
                     <Target className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
-                    <p className="text-zinc-500 text-sm">Agrega al menos una condiciÃ³n</p>
-                    <p className="text-zinc-600 text-xs mt-1">Las condiciones determinan cuÃ¡ndo se ejecuta la automatizaciÃ³n</p>
+                    <p className="text-zinc-500 text-sm">Agrega al menos una condición</p>
+                    <p className="text-zinc-600 text-xs mt-1">Las condiciones determinan cuándo se ejecuta la automatización</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1583,7 +1583,7 @@ function CreateAutomationModal({
                       disabled={actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS')}
                       className="text-xs px-3 py-1.5 bg-teal-600/20 text-teal-300 rounded hover:bg-teal-600/30 disabled:opacity-50 flex items-center gap-1"
                     >
-                      <Brain className="w-3 h-3" /> AnÃ¡lisis IA
+                      <Brain className="w-3 h-3" /> Análisis IA
                     </button>
                   </div>
                 </div>
@@ -1591,15 +1591,15 @@ function CreateAutomationModal({
                 {actions.length === 0 ? (
                   <div className="text-center py-8 border-2 border-dashed border-zinc-700 rounded-xl">
                     <Power className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
-                    <p className="text-zinc-500 text-sm">Agrega al menos una acciÃ³n</p>
-                    <p className="text-zinc-600 text-xs mt-1">Las acciones definen quÃ© hacer cuando se cumplan las condiciones</p>
+                    <p className="text-zinc-500 text-sm">Agrega al menos una acción</p>
+                    <p className="text-zinc-600 text-xs mt-1">Las acciones definen qué hacer cuando se cumplan las condiciones</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {actions.map((action, index) => (
                       <div key={index} className="p-4 bg-zinc-800/50 rounded-xl">
                         {action.actionType === 'AI_PLANT_ANALYSIS' ? (
-                          // AcciÃ³n de AnÃ¡lisis IA
+                          // Acción de Análisis IA
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
@@ -1607,7 +1607,7 @@ function CreateAutomationModal({
                                   <Brain className="w-4 h-4 text-teal-300" />
                                 </div>
                                 <div>
-                                  <p className="font-medium text-white">AnÃ¡lisis IA de Plantas</p>
+                                  <p className="font-medium text-white">Análisis IA de Plantas</p>
                                   <p className="text-xs text-zinc-500">Analiza las plantas seleccionadas con GPT-4</p>
                                 </div>
                               </div>
@@ -1620,9 +1620,9 @@ function CreateAutomationModal({
                               </button>
                             </div>
 
-                            {/* Tipo de anÃ¡lisis */}
+                            {/* Tipo de análisis */}
                             <div>
-                              <label className="block text-xs font-medium text-zinc-400 mb-2">Tipo de anÃ¡lisis</label>
+                              <label className="block text-xs font-medium text-zinc-400 mb-2">Tipo de análisis</label>
                               <div className="grid grid-cols-5 gap-2">
                                 {(Object.keys(analysisTypeLabels) as AnalysisType[]).map((type) => {
                                   const { label, desc } = analysisTypeLabels[type];
@@ -1645,12 +1645,12 @@ function CreateAutomationModal({
                               </div>
                             </div>
 
-                            {/* Opciones de quÃ© incluir */}
+                            {/* Opciones de qué incluir */}
                             <div className="grid grid-cols-2 gap-2">
                               {[
                                 { key: 'includePhotos', label: 'Incluir fotos', icon: Camera },
-                                { key: 'includeFeedingPlans', label: 'Planes de nutriciÃ³n', icon: Leaf },
-                                { key: 'includePreventionPlans', label: 'Planes de prevenciÃ³n', icon: AlertTriangle },
+                                { key: 'includeFeedingPlans', label: 'Planes de nutrición', icon: Leaf },
+                                { key: 'includePreventionPlans', label: 'Planes de prevención', icon: AlertTriangle },
                                 { key: 'includeEvents', label: 'Eventos recientes', icon: Activity },
                               ].map(({ key, label, icon: Icon }) => (
                                 <label
@@ -1682,13 +1682,13 @@ function CreateAutomationModal({
                                 value={analysisConfig.customPrompt}
                                 onChange={(e) => setAnalysisConfig({ ...analysisConfig, customPrompt: e.target.value })}
                                 rows={2}
-                                placeholder="Ej: EnfÃ³cate especialmente en las hojas inferiores..."
+                                placeholder="Ej: Enfócate especialmente en las hojas inferiores..."
                                 className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white resize-none"
                               />
                             </div>
                           </div>
                         ) : (
-                          // AcciÃ³n de dispositivo normal
+                          // Acción de dispositivo normal
                           <>
                             <div className="flex items-center gap-3">
                               <div className="p-2 bg-cyan-500/20 rounded">
@@ -1732,7 +1732,7 @@ function CreateAutomationModal({
                             <div className="flex items-center gap-4 mt-3 pt-3 border-t border-zinc-700/50">
                               <div className="flex items-center gap-2">
                                 <Timer className="w-4 h-4 text-zinc-500" />
-                                <label className="text-xs text-zinc-500">DuraciÃ³n (min)</label>
+                                <label className="text-xs text-zinc-500">Duración (min)</label>
                                 <input
                                   type="number"
                                   value={action.duration || ''}
@@ -1783,13 +1783,13 @@ function CreateAutomationModal({
                     </div>
                     <p className="text-xs text-zinc-500 mb-3">
                       {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') 
-                        ? 'Selecciona las plantas que serÃ¡n analizadas por la IA.'
+                        ? 'Selecciona las plantas que serán analizadas por la IA.'
                         : 'Selecciona las plantas para registrar las fotos en su historial.'}
                     </p>
 
                     {plants.length === 0 ? (
                       <p className="text-sm text-zinc-500 text-center py-4">
-                        No hay plantas en esta secciÃ³n
+                        No hay plantas en esta sección
                       </p>
                     ) : (
                       <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -1881,7 +1881,7 @@ function CreateAutomationModal({
 
                 {/* Schedule summary */}
                 <div className="p-4 bg-zinc-800/30 rounded-xl">
-                  <h4 className="text-sm font-medium text-zinc-300 mb-2">ProgramaciÃ³n</h4>
+                  <h4 className="text-sm font-medium text-zinc-300 mb-2">Programación</h4>
                   <div className="text-sm text-zinc-400 space-y-1">
                     {form.triggerType === 'SCHEDULED' && form.scheduleType === 'TIME_RANGE' && (
                       <p>ON de {form.activeStartTime} a {form.activeEndTime}</p>
@@ -1893,9 +1893,9 @@ function CreateAutomationModal({
                       <p>A las {form.specificTimes.join(', ')}</p>
                     )}
                     {form.daysOfWeek.length > 0 ? (
-                      <p>DÃ­as: {form.daysOfWeek.map(d => daysOfWeekLabels[d]).join(', ')}</p>
+                      <p>Días: {form.daysOfWeek.map(d => daysOfWeekLabels[d]).join(', ')}</p>
                     ) : (
-                      <p>Todos los dÃ­as</p>
+                      <p>Todos los días</p>
                     )}
                   </div>
                 </div>
@@ -1938,28 +1938,28 @@ function CreateAutomationModal({
                   </h4>
                   <p className="text-sm text-zinc-400">
                     {form.notifications ? (
-                      <span className="text-green-400">âœ“ Las alertas estÃ¡n activadas</span>
+                      <span className="text-green-400">âœ“ Las alertas están activadas</span>
                     ) : (
-                      <span className="text-zinc-500">âœ— Las alertas estÃ¡n desactivadas</span>
+                      <span className="text-zinc-500">âœ— Las alertas están desactivadas</span>
                     )}
                   </p>
                 </div>
 
-                {/* AnÃ¡lisis IA summary */}
+                {/* Análisis IA summary */}
                 {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS') && (
                   <div className="p-4 bg-zinc-800/30 rounded-xl">
                     <h4 className="text-sm font-medium text-zinc-300 mb-2 flex items-center gap-2">
                       <Brain className="w-4 h-4 text-teal-300" />
-                      ConfiguraciÃ³n de AnÃ¡lisis IA
+                      Configuración de Análisis IA
                     </h4>
                     <div className="space-y-2 text-sm text-zinc-400">
                       <p>Tipo: <span className="text-teal-300">{analysisTypeLabels[analysisConfig.analysisType].label}</span></p>
                       <p>Incluye: {[
                         analysisConfig.includePhotos && 'Fotos',
-                        analysisConfig.includeFeedingPlans && 'NutriciÃ³n',
-                        analysisConfig.includePreventionPlans && 'PrevenciÃ³n',
+                        analysisConfig.includeFeedingPlans && 'Nutrición',
+                        analysisConfig.includePreventionPlans && 'Prevención',
                         analysisConfig.includeEvents && 'Eventos',
-                      ].filter(Boolean).join(', ') || 'Solo datos bÃ¡sicos'}</p>
+                      ].filter(Boolean).join(', ') || 'Solo datos básicos'}</p>
                       {analysisConfig.customPrompt && (
                         <p className="text-xs text-zinc-500">Instrucciones: &quot;{analysisConfig.customPrompt.substring(0, 50)}...&quot;</p>
                       )}
@@ -1996,7 +1996,7 @@ function CreateAutomationModal({
                       <p className="text-sm text-zinc-500">
                         {actions.some(a => a.actionType === 'AI_PLANT_ANALYSIS')
                           ? 'Debes seleccionar al menos una planta'
-                          : 'No se registrarÃ¡n fotos en el historial de plantas'}
+                          : 'No se registrarán fotos en el historial de plantas'}
                       </p>
                     )}
                   </div>
@@ -2030,7 +2030,7 @@ function CreateAutomationModal({
               ) : (
                 <>
                   <Zap className="w-4 h-4" />
-                  Crear AutomatizaciÃ³n
+                  Crear Automatización
                 </>
               )}
             </button>
@@ -2051,7 +2051,7 @@ function CreateAutomationModal({
 }
 
 // =====================================================
-// MODAL DE EDICIÃ“N DE AUTOMATIZACIÃ“N
+// MODAL DE EDICIÓN DE AUTOMATIZACIÓN
 // =====================================================
 
 function EditAutomationModal({
@@ -2102,7 +2102,7 @@ function EditAutomationModal({
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Settings className="w-5 h-5 text-cyan-300" />
-              Editar AutomatizaciÃ³n
+              Editar Automatización
             </h2>
             <button onClick={onClose} className="p-1 hover:bg-zinc-700 rounded-lg">
               <X className="w-5 h-5 text-zinc-400" />
@@ -2124,12 +2124,12 @@ function EditAutomationModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">DescripciÃ³n</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Descripción</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              placeholder="Describe quÃ© hace esta automatizaciÃ³n..."
+              placeholder="Describe qué hace esta automatización..."
               className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white resize-none focus:border-cyan-500"
             />
           </div>
@@ -2140,7 +2140,7 @@ function EditAutomationModal({
               <AlertTriangle className="w-5 h-5 text-yellow-400" />
               <div>
                 <label className="block text-sm font-medium text-zinc-300">Enviar alertas</label>
-                <p className="text-xs text-zinc-500">Recibir notificaciones cuando se ejecute esta automatizaciÃ³n</p>
+                <p className="text-xs text-zinc-500">Recibir notificaciones cuando se ejecute esta automatización</p>
               </div>
             </div>
             <button

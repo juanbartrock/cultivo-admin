@@ -7,14 +7,14 @@ services:
     container_name: cultivo-backend
     restart: unless-stopped
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     env_file:
       - ./backend/.env
     environment:
       - PORT=4000
       - NODE_ENV=production
       - TZ=America/Santiago
-      - CORS_ALLOWED_ORIGINS=http://localhost:3001
+      - CORS_ALLOWED_ORIGINS=https://cultivo.ramsesvii.com
       - REALTIME_ALLOW_GUEST=false
       - MS_SONOFF_URL=http://sonoff-service:3000
       - MS_TUYA_URL=http://tuya-service:3000
@@ -70,11 +70,11 @@ services:
     build:
       context: ./frontend
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:4000/api
+        - NEXT_PUBLIC_API_URL=https://cultivo.ramsesvii.com/api
     container_name: cultivo-frontend
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      - "127.0.0.1:3001:3000"
     environment:
       - NODE_ENV=production
       - TZ=America/Santiago
@@ -90,8 +90,7 @@ services:
     build: ./sonoff-service
     container_name: sonoff-ewelink-service
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    # Puerto solo accesible via red Docker interna (backend → sonoff-service:3000)
     env_file:
       - ./sonoff-service/.env
     environment:
@@ -110,8 +109,7 @@ services:
     build: ./tuya-service
     container_name: tuya-service
     restart: unless-stopped
-    ports:
-      - "3002:3000"
+    # Puerto solo accesible via red Docker interna (backend → tuya-service:3000)
     env_file:
       - ./tuya-service/.env
     environment:
@@ -130,8 +128,7 @@ services:
     build: ./tapo-service
     container_name: tapo-service
     restart: unless-stopped
-    ports:
-      - "3003:3000"
+    # Puerto solo accesible via red Docker interna (backend → tapo-service:3000)
     env_file:
       - ./tapo-service/.env
     environment:
@@ -142,7 +139,7 @@ services:
     networks:
       - cultivo-network
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # Acceso a la red del host Windows
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
       interval: 30s

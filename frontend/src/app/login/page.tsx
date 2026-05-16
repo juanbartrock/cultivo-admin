@@ -216,7 +216,7 @@ export default function LoginPage() {
         <div className="text-center">
           <button
             type="button"
-            onClick={() => handleLocalLogin('admin', 'admin')}
+            onClick={() => handleLocalLogin('admin', 'admin1')}
             disabled={isLoading}
             className="flex items-center justify-center gap-2 w-full py-3 bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700 text-zinc-300 rounded-lg transition-colors"
           >

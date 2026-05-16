@@ -48,10 +48,10 @@ const stageIcons: Record<PlantStage, { icon: React.ElementType; color: string; b
 };
 
 const stageLabels: Record<PlantStage, string> = {
-  GERMINACION: 'GerminaciÃ³n',
+  GERMINACION: 'Germinación',
   VEGETATIVO: 'Vegetativo',
   PRE_FLORA: 'Pre-Flora',
-  FLORACION: 'FloraciÃ³n',
+  FLORACION: 'Floración',
   SECADO: 'Secado',
   CURADO: 'Curado',
 };
@@ -166,7 +166,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   const healthConfig = healthIcons[currentHealth];
   const HealthIcon = healthConfig.icon;
 
-  // Calcular dÃ­as en la etapa actual o desde el inicio del ciclo
+  // Calcular días en la etapa actual o desde el inicio del ciclo
   // Prioridad: stageStartDate > startDate > cycle.startDate > createdAt
   const hasStageStartDate = !!currentPlant.stageStartDate;
   const dateForCalc = currentPlant.stageStartDate
@@ -182,7 +182,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
   // Determinar si tiene fecha de inicio configurada (propia o del ciclo)
   const hasStartDate = !!(currentPlant.startDate || currentPlant.cycle?.startDate);
 
-  // FunciÃ³n para confirmar el cambio de etapa
+  // Función para confirmar el cambio de etapa
   const handleStageChange = async () => {
     if (!selectedStage || selectedStage === currentPlant.stage) {
       setShowStageModal(false);
@@ -209,7 +209,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
-  // FunciÃ³n para cambiar estado de salud
+  // Función para cambiar estado de salud
   const handleHealthChange = async () => {
     if (!selectedHealth || selectedHealth === currentHealth) {
       setShowHealthModal(false);
@@ -234,21 +234,21 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
-  // FunciÃ³n para abrir el modal de cambio de etapa
+  // Función para abrir el modal de cambio de etapa
   const openStageModal = () => {
     setSelectedStage(null);
     setStageDate(new Date().toISOString().split('T')[0]);
     setShowStageModal(true);
   };
 
-  // FunciÃ³n para cargar secciones y abrir el modal de mover
+  // Función para cargar secciones y abrir el modal de mover
   const openMoveModal = async () => {
     setShowMoveModal(true);
     setSelectedSectionId(null);
     setLoadingSections(true);
     try {
       const allSections = await sectionService.getAll();
-      // Filtrar la secciÃ³n actual (si la tiene)
+      // Filtrar la sección actual (si la tiene)
       setSections(currentPlant.sectionId 
         ? allSections.filter(s => s.id !== currentPlant.sectionId)
         : allSections
@@ -261,7 +261,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
-  // FunciÃ³n para mover la planta a otra secciÃ³n
+  // Función para mover la planta a otra sección
   const handleMovePlant = async () => {
     if (!selectedSectionId) {
       setShowMoveModal(false);
@@ -282,7 +282,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
       setShowMoveModal(false);
       toast.success(
         moveToMaturationSection
-          ? 'Planta movida a madurado. El ciclo quedÃ³ finalizado en curado.'
+          ? 'Planta movida a madurado. El ciclo quedó finalizado en curado.'
           : 'Planta movida correctamente',
       );
     } catch (err) {
@@ -293,14 +293,14 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
     }
   };
 
-  // FunciÃ³n para desasociar la planta de su secciÃ³n
+  // Función para desasociar la planta de su sección
   const handleDissociate = async () => {
     setIsDissociating(true);
     try {
       const updatedPlant = await plantService.dissociate(currentPlant.id);
       setCurrentPlant(updatedPlant);
       setShowDissociateModal(false);
-      toast.success('Planta desasociada de la secciÃ³n correctamente');
+      toast.success('Planta desasociada de la sección correctamente');
       // Opcional: recargar la lista de plantas si hay un callback
       onMoved?.(updatedPlant, '');
     } catch (err) {
@@ -345,7 +345,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
               </div>
             </div>
 
-            {/* MenÃº de acciones */}
+            {/* Menú de acciones */}
             <div className="relative">
               <button
                 ref={menuButtonRef}
@@ -355,7 +355,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                     const rect = menuButtonRef.current.getBoundingClientRect();
                     setMenuPosition({
                       top: rect.bottom + 4,
-                      left: rect.right - 200, // 200px es el ancho del menÃº
+                      left: rect.right - 200, // 200px es el ancho del menú
                     });
                   }
                   setShowMenu(!showMenu);
@@ -419,7 +419,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
                     >
                       <ArrowRightLeft className="w-4 h-4 text-cyan-400" />
-                      {currentPlant.sectionId ? 'Mudar a otra secciÃ³n' : 'Asignar a secciÃ³n'}
+                      {currentPlant.sectionId ? 'Mudar a otra sección' : 'Asignar a sección'}
                     </button>
                     {currentPlant.sectionId && (
                       <button
@@ -430,7 +430,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors"
                       >
                         <Unlink className="w-4 h-4 text-orange-400" />
-                        Desasociar de secciÃ³n
+                        Desasociar de sección
                       </button>
                     )}
                     <button
@@ -459,9 +459,9 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             </div>
           </div>
 
-          {/* GenÃ©tica */}
+          {/* Genética */}
           <p className="text-cultivo-green-400 font-medium mb-2">
-            {currentPlant.strain?.name || 'Sin genÃ©tica asignada'}
+            {currentPlant.strain?.name || 'Sin genética asignada'}
           </p>
 
           {/* Badges */}
@@ -481,7 +481,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
               {sexLabels[currentPlant.sex]}
             </span>
 
-            {/* DÃ­as en etapa */}
+            {/* Días en etapa */}
             <span
               className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${hasStageStartDate
                 ? 'bg-cultivo-green-500/20 text-cultivo-green-400'
@@ -493,7 +493,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
                 ? `En ${stageLabels[currentPlant.stage]} desde: ${new Date(currentPlant.stageStartDate!).toLocaleDateString()}`
                 : hasStartDate
                   ? `Desde inicio del ciclo: ${new Date(currentPlant.startDate || currentPlant.cycle?.startDate || currentPlant.createdAt).toLocaleDateString()}`
-                  : 'DÃ­as desde creaciÃ³n (sin fecha de etapa)'
+                  : 'Días desde creación (sin fecha de etapa)'
               }
             >
               {hasStageStartDate ? (
@@ -554,14 +554,14 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             </p>
           )}
 
-          {/* SecciÃ³n */}
+          {/* Sección */}
           {currentPlant.section ? (
             <p className="text-xs text-zinc-600 mt-2">
               ðŸ“ {currentPlant.section.name}
             </p>
           ) : (
             <p className="text-xs text-orange-400 mt-2 italic">
-              Sin secciÃ³n asignada
+              Sin sección asignada
             </p>
           )}
         </div>
@@ -578,7 +578,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
         )}
       </div>
 
-      {/* Acciones rÃ¡pidas en la parte inferior */}
+      {/* Acciones rápidas en la parte inferior */}
       <div className="flex items-center gap-2 mt-4 pt-3 border-t border-zinc-700/50">
         <button
           onClick={() => openStageModal()}
@@ -605,388 +605,395 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
 
       {/* Modal de Cambio de Etapa */}
       {showStageModal && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowStageModal(false);
-              setSelectedStage(null);
-            }
-          }}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
-            onClick={(e) => e.stopPropagation()}
+        <Portal>
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowStageModal(false);
+                setSelectedStage(null);
+              }
+            }}
           >
-            <div className="p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-white">Cambiar Etapa</h3>
-              <p className="text-sm text-zinc-400 mt-1">
-                {currentPlant.tagCode} - {currentPlant.strain?.name || 'Sin genÃ©tica'}
-              </p>
-            </div>
-
-            <div className="p-4 space-y-2">
-              {(Object.entries(stageLabels) as [PlantStage, string][]).map(([stage, label]) => {
-                const config = stageIcons[stage];
-                const IconComponent = config.icon;
-                const isCurrentStage = stage === currentPlant.stage;
-                const isSelected = stage === selectedStage;
-
-                return (
-                  <button
-                    key={stage}
-                    onClick={() => setSelectedStage(stage)}
-                    disabled={isChangingStage || isCurrentStage}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${isCurrentStage
-                      ? `${config.bg} border-${config.color.replace('text-', '')}/50 opacity-60`
-                      : isSelected
-                        ? `${config.bg} border-cultivo-green-500 ring-2 ring-cultivo-green-500/30`
-                        : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
-                      } ${isChangingStage ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <div className={`p-2 rounded-lg ${config.bg}`}>
-                      <IconComponent className={`w-5 h-5 ${config.color}`} />
-                    </div>
-                    <span className={`flex-1 text-left font-medium ${isCurrentStage || isSelected ? config.color : 'text-zinc-300'}`}>
-                      {label}
-                    </span>
-                    {isCurrentStage && (
-                      <span className="text-xs px-2 py-0.5 bg-zinc-700 rounded-full text-zinc-400">
-                        Actual
-                      </span>
-                    )}
-                    {isSelected && !isCurrentStage && (
-                      <Check className="w-5 h-5 text-cultivo-green-400" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Fecha del cambio de etapa */}
-            {selectedStage && selectedStage !== currentPlant.stage && (
-              <div className="px-4 pb-4">
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-2" />
-                  Fecha del cambio de etapa
-                </label>
-                <input
-                  type="date"
-                  value={stageDate}
-                  onChange={(e) => setStageDate(e.target.value)}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
-                />
-                <p className="text-xs text-zinc-500 mt-1">
-                  Si no se cambiÃ³ hoy, ingresa la fecha real del cambio
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-zinc-800">
+                <h3 className="text-lg font-semibold text-white">Cambiar Etapa</h3>
+                <p className="text-sm text-zinc-400 mt-1">
+                  {currentPlant.tagCode} - {currentPlant.strain?.name || 'Sin genética'}
                 </p>
               </div>
-            )}
 
-            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowStageModal(false);
-                  setSelectedStage(null);
-                }}
-                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
-              >
-                Cancelar
-              </button>
+              <div className="p-4 space-y-2">
+                {(Object.entries(stageLabels) as [PlantStage, string][]).map(([stage, label]) => {
+                  const config = stageIcons[stage];
+                  const IconComponent = config.icon;
+                  const isCurrentStage = stage === currentPlant.stage;
+                  const isSelected = stage === selectedStage;
+
+                  return (
+                    <button
+                      key={stage}
+                      onClick={() => setSelectedStage(stage)}
+                      disabled={isChangingStage || isCurrentStage}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${isCurrentStage
+                        ? `${config.bg} border-${config.color.replace('text-', '')}/50 opacity-60`
+                        : isSelected
+                          ? `${config.bg} border-cultivo-green-500 ring-2 ring-cultivo-green-500/30`
+                          : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                        } ${isChangingStage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <div className={`p-2 rounded-lg ${config.bg}`}>
+                        <IconComponent className={`w-5 h-5 ${config.color}`} />
+                      </div>
+                      <span className={`flex-1 text-left font-medium ${isCurrentStage || isSelected ? config.color : 'text-zinc-300'}`}>
+                        {label}
+                      </span>
+                      {isCurrentStage && (
+                        <span className="text-xs px-2 py-0.5 bg-zinc-700 rounded-full text-zinc-400">
+                          Actual
+                        </span>
+                      )}
+                      {isSelected && !isCurrentStage && (
+                        <Check className="w-5 h-5 text-cultivo-green-400" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
               {selectedStage && selectedStage !== currentPlant.stage && (
-                <button
-                  onClick={handleStageChange}
-                  disabled={isChangingStage}
-                  className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-                >
-                  {isChangingStage ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Cambiando...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Confirmar
-                    </>
-                  )}
-                </button>
+                <div className="px-4 pb-4">
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    Fecha del cambio de etapa
+                  </label>
+                  <input
+                    type="date"
+                    value={stageDate}
+                    onChange={(e) => setStageDate(e.target.value)}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+                  />
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Si no se cambió hoy, ingresa la fecha real del cambio
+                  </p>
+                </div>
               )}
-            </div>
-          </motion.div>
-        </div>
+
+              <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowStageModal(false);
+                    setSelectedStage(null);
+                  }}
+                  className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+                {selectedStage && selectedStage !== currentPlant.stage && (
+                  <button
+                    onClick={handleStageChange}
+                    disabled={isChangingStage}
+                    className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                  >
+                    {isChangingStage ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Cambiando...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Confirmar
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </Portal>
       )}
       {/* Modal de Estado de Salud */}
       {showHealthModal && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowHealthModal(false);
-              setSelectedHealth(null);
-            }
-          }}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
-            onClick={(e) => e.stopPropagation()}
+        <Portal>
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowHealthModal(false);
+                setSelectedHealth(null);
+              }
+            }}
           >
-            <div className="p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-white">Reportar Estado de Salud</h3>
-              <p className="text-sm text-zinc-400 mt-1">
-                {currentPlant.tagCode} - Selecciona el estado actual
-              </p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-zinc-800">
+                <h3 className="text-lg font-semibold text-white">Reportar Estado de Salud</h3>
+                <p className="text-sm text-zinc-400 mt-1">
+                  {currentPlant.tagCode} - Selecciona el estado actual
+                </p>
+              </div>
 
-            <div className="p-4 space-y-2">
-              {(Object.entries(healthIcons) as [PlantHealthStatus, typeof healthIcons['HEALTHY']][]).map(([status, config]) => {
-                const IconComponent = config.icon;
-                const isCurrentStatus = status === currentHealth;
-                const isSelected = status === selectedHealth;
+              <div className="p-4 space-y-2">
+                {(Object.entries(healthIcons) as [PlantHealthStatus, typeof healthIcons['HEALTHY']][]).map(([status, config]) => {
+                  const IconComponent = config.icon;
+                  const isCurrentStatus = status === currentHealth;
+                  const isSelected = status === selectedHealth;
 
-                return (
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => setSelectedHealth(status)}
+                      disabled={isChangingHealth || isCurrentStatus}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${isCurrentStatus
+                        ? `${config.bg} border-${config.color.replace('text-', '')}/50 opacity-60`
+                        : isSelected
+                          ? `${config.bg} border-${config.color.replace('text-', '')} ring-2 ring-${config.color.replace('text-', '')}/30`
+                          : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                        } ${isChangingHealth ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <div className={`p-2 rounded-lg ${config.bg}`}>
+                        <IconComponent className={`w-5 h-5 ${config.color}`} />
+                      </div>
+                      <span className={`flex-1 text-left font-medium ${isCurrentStatus || isSelected ? config.color : 'text-zinc-300'}`}>
+                        {config.label}
+                      </span>
+                      {isSelected && !isCurrentStatus && (
+                        <Check className={`w-5 h-5 ${config.color}`} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowHealthModal(false);
+                    setSelectedHealth(null);
+                  }}
+                  className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                  disabled={isChangingHealth}
+                >
+                  Cancelar
+                </button>
+                {selectedHealth && selectedHealth !== currentHealth && (
                   <button
-                    key={status}
-                    onClick={() => setSelectedHealth(status)}
-                    disabled={isChangingHealth || isCurrentStatus}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${isCurrentStatus
-                      ? `${config.bg} border-${config.color.replace('text-', '')}/50 opacity-60`
-                      : isSelected
-                        ? `${config.bg} border-${config.color.replace('text-', '')} ring-2 ring-${config.color.replace('text-', '')}/30`
-                        : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
-                      } ${isChangingHealth ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={handleHealthChange}
+                    disabled={isChangingHealth}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                   >
-                    <div className={`p-2 rounded-lg ${config.bg}`}>
-                      <IconComponent className={`w-5 h-5 ${config.color}`} />
-                    </div>
-                    <span className={`flex-1 text-left font-medium ${isCurrentStatus || isSelected ? config.color : 'text-zinc-300'}`}>
-                      {config.label}
-                    </span>
-                    {isSelected && !isCurrentStatus && (
-                      <Check className={`w-5 h-5 ${config.color}`} />
+                    {isChangingHealth ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Confirmar
+                      </>
                     )}
                   </button>
-                );
-              })}
-            </div>
-
-            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowHealthModal(false);
-                  setSelectedHealth(null);
-                }}
-                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
-                disabled={isChangingHealth}
-              >
-                Cancelar
-              </button>
-              {selectedHealth && selectedHealth !== currentHealth && (
-                <button
-                  onClick={handleHealthChange}
-                  disabled={isChangingHealth}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-                >
-                  {isChangingHealth ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Guardando...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Confirmar
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          </motion.div>
-        </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </Portal>
       )}
 
       {/* Modal de Mudar Planta */}
       {showMoveModal && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowMoveModal(false);
-              setSelectedSectionId(null);
-            }
-          }}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
-            onClick={(e) => e.stopPropagation()}
+        <Portal>
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowMoveModal(false);
+                setSelectedSectionId(null);
+              }
+            }}
           >
-            <div className="p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-white">
-                {currentPlant.sectionId ? 'Mudar Planta' : 'Asignar a SecciÃ³n'}
-              </h3>
-              <p className="text-sm text-zinc-400 mt-1">
-                {currentPlant.tagCode} - Selecciona la secciÃ³n destino
-              </p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-sm relative z-[10000]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-zinc-800">
+                <h3 className="text-lg font-semibold text-white">
+                  {currentPlant.sectionId ? 'Mudar Planta' : 'Asignar a Sección'}
+                </h3>
+                <p className="text-sm text-zinc-400 mt-1">
+                  {currentPlant.tagCode} - Selecciona la sección destino
+                </p>
+              </div>
 
-            <div className="p-4">
-              {loadingSections ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 text-cultivo-green-400 animate-spin" />
-                </div>
-              ) : sections.length === 0 ? (
-                <div className="text-center py-8 text-zinc-500">
-                  No hay otras secciones disponibles
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {sections.map((section) => (
-                    <button
-                      key={section.id}
-                      onClick={() => setSelectedSectionId(section.id)}
-                      disabled={isMoving}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                        selectedSectionId === section.id
-                          ? 'bg-cyan-500/20 border-cyan-500 ring-2 ring-cyan-500/30'
-                          : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
-                      }`}
-                    >
-                      <ArrowRightLeft className={`w-5 h-5 ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-500'}`} />
-                      <div className="flex-1 text-left">
-                        <span className={`font-medium ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-300'}`}>
-                          {section.name}
-                        </span>
-                        {section.dimensions && (
-                          <span className="text-xs text-zinc-500 ml-2">({section.dimensions})</span>
+              <div className="p-4">
+                {loadingSections ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 text-cultivo-green-400 animate-spin" />
+                  </div>
+                ) : sections.length === 0 ? (
+                  <div className="text-center py-8 text-zinc-500">
+                    No hay otras secciones disponibles
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {sections.map((section) => (
+                      <button
+                        key={section.id}
+                        onClick={() => setSelectedSectionId(section.id)}
+                        disabled={isMoving}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                          selectedSectionId === section.id
+                            ? 'bg-cyan-500/20 border-cyan-500 ring-2 ring-cyan-500/30'
+                            : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                        }`}
+                      >
+                        <ArrowRightLeft className={`w-5 h-5 ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-500'}`} />
+                        <div className="flex-1 text-left">
+                          <span className={`font-medium ${selectedSectionId === section.id ? 'text-cyan-400' : 'text-zinc-300'}`}>
+                            {section.name}
+                          </span>
+                          {section.dimensions && (
+                            <span className="text-xs text-zinc-500 ml-2">({section.dimensions})</span>
+                          )}
+                        </div>
+                        {selectedSectionId === section.id && (
+                          <Check className="w-5 h-5 text-cyan-400" />
                         )}
-                      </div>
-                      {selectedSectionId === section.id && (
-                        <Check className="w-5 h-5 text-cyan-400" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {selectedSectionId && isMaturationSectionName(sections.find(s => s.id === selectedSectionId)?.name) && (
-                <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-300">
-                  Esta secciÃ³n se considera de madurado final. Al mover la planta aquÃ­, se marcarÃ¡ en etapa
-                  curado y el ciclo pasarÃ¡ a estado finalizado.
-                </div>
-              )}
-            </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {selectedSectionId && isMaturationSectionName(sections.find(s => s.id === selectedSectionId)?.name) && (
+                  <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-300">
+                    Esta sección se considera de madurado final. Al mover la planta aquí, se marcará en etapa
+                    curado y el ciclo pasará a estado finalizado.
+                  </div>
+                )}
+              </div>
 
-            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowMoveModal(false);
-                  setSelectedSectionId(null);
-                }}
-                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
-                disabled={isMoving}
-              >
-                Cancelar
-              </button>
-              {selectedSectionId && (
+              <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
                 <button
-                  onClick={handleMovePlant}
+                  onClick={() => {
+                    setShowMoveModal(false);
+                    setSelectedSectionId(null);
+                  }}
+                  className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
                   disabled={isMoving}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                 >
-                  {isMoving ? (
+                  Cancelar
+                </button>
+                {selectedSectionId && (
+                  <button
+                    onClick={handleMovePlant}
+                    disabled={isMoving}
+                    className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                  >
+                    {isMoving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Moviendo...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRightLeft className="w-4 h-4" />
+                        Mudar
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </Portal>
+      )}
+
+      {/* Modal de Confirmación de Desasociación */}
+      {showDissociateModal && (
+        <Portal>
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowDissociateModal(false);
+              }
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-md relative z-[10000]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-zinc-800">
+                <h3 className="text-lg font-semibold text-white">Desasociar Planta</h3>
+                <p className="text-sm text-zinc-400 mt-1">
+                  {currentPlant.tagCode} - {currentPlant.section?.name}
+                </p>
+              </div>
+
+              <div className="p-4">
+                <div className="flex items-start gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                  <Unlink className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-zinc-300 mb-2">
+                      ¿Estás seguro que deseas desasociar esta planta de su sección?
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      La planta se removerá de la sección pero se mantendrá el registro completo en el ciclo. 
+                      Las zonas asignadas también se eliminarán.
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-2">
+                      Esto es útil cuando una planta muere o se retira de la carpa.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowDissociateModal(false);
+                  }}
+                  className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                  disabled={isDissociating}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDissociate}
+                  disabled={isDissociating}
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  {isDissociating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Moviendo...
+                      Desasociando...
                     </>
                   ) : (
                     <>
-                      <ArrowRightLeft className="w-4 h-4" />
-                      Mudar
+                      <Unlink className="w-4 h-4" />
+                      Desasociar
                     </>
                   )}
                 </button>
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Modal de ConfirmaciÃ³n de DesasociaciÃ³n */}
-      {showDissociateModal && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowDissociateModal(false);
-            }
-          }}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-md relative z-[10000]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-white">Desasociar Planta</h3>
-              <p className="text-sm text-zinc-400 mt-1">
-                {currentPlant.tagCode} - {currentPlant.section?.name}
-              </p>
-            </div>
-
-            <div className="p-4">
-              <div className="flex items-start gap-3 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-                <Unlink className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm text-zinc-300 mb-2">
-                    Â¿EstÃ¡s seguro que deseas desasociar esta planta de su secciÃ³n?
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    La planta se removerÃ¡ de la secciÃ³n pero se mantendrÃ¡ el registro completo en el ciclo. 
-                    Las zonas asignadas tambiÃ©n se eliminarÃ¡n.
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-2">
-                    Esto es Ãºtil cuando una planta muere o se retira de la carpa.
-                  </p>
-                </div>
               </div>
-            </div>
-
-            <div className="p-4 border-t border-zinc-800 flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowDissociateModal(false);
-                }}
-                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
-                disabled={isDissociating}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDissociate}
-                disabled={isDissociating}
-                className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-              >
-                {isDissociating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Desasociando...
-                  </>
-                ) : (
-                  <>
-                    <Unlink className="w-4 h-4" />
-                    Desasociar
-                  </>
-                )}
-              </button>
-            </div>
-          </motion.div>
-        </div>
+            </motion.div>
+          </div>
+        </Portal>
       )}
 
       {/* Modal de Asignar Zonas - usando Portal para renderizar fuera del componente */}

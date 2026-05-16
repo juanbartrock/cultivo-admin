@@ -79,10 +79,10 @@ const stageIcons: Record<PlantStage, { icon: React.ElementType; color: string }>
 };
 
 const stageLabels: Record<PlantStage, string> = {
-  GERMINACION: 'GerminaciÃ³n',
+  GERMINACION: 'Germinación',
   VEGETATIVO: 'Vegetativo',
   PRE_FLORA: 'Pre-Flora',
-  FLORACION: 'FloraciÃ³n',
+  FLORACION: 'Floración',
   SECADO: 'Secado',
   CURADO: 'Curado',
 };
@@ -130,7 +130,7 @@ function SeguimientosContent() {
   const [statusFilter, setStatusFilter] = useState<CycleStatus | 'all'>('all');
   const [plantFilter, setPlantFilter] = useState<string | null>(plantIdFromUrl);
 
-  // PaginaciÃ³n de eventos
+  // Paginación de eventos
   const [eventsPage, setEventsPage] = useState(1);
   const [eventsPerPage] = useState(5);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -162,7 +162,7 @@ function SeguimientosContent() {
 
     setTotalEvents(filtered.length);
 
-    // Mostrar la primera pÃ¡gina de eventos filtrados
+    // Mostrar la primera página de eventos filtrados
     const startIndex = 0;
     const endIndex = eventsPerPage;
     setEvents(filtered.slice(startIndex, endIndex));
@@ -207,7 +207,7 @@ function SeguimientosContent() {
       }
     } catch (err) {
       console.error('Error cargando datos:', err);
-      setError('No se pudieron cargar los datos. Verifica que el backend estÃ© corriendo.');
+      setError('No se pudieron cargar los datos. Verifica que el backend esté corriendo.');
     } finally {
       setIsLoading(false);
     }
@@ -215,7 +215,7 @@ function SeguimientosContent() {
 
   async function loadCycleData(cycleId: string) {
     setIsLoadingPlants(true);
-    setEventsPage(1); // Resetear a la primera pÃ¡gina
+    setEventsPage(1); // Resetear a la primera página
     try {
       const [plantsData, eventsData] = await Promise.all([
         plantService.getAll({ cycleId }),
@@ -223,7 +223,7 @@ function SeguimientosContent() {
       ]);
       setPlants(plantsData);
       setAllEvents(eventsData);
-      // El useEffect se encargarÃ¡ de filtrar y paginar
+      // El useEffect se encargará de filtrar y paginar
     } catch (err) {
       console.error('Error cargando datos del ciclo:', err);
     } finally {
@@ -268,7 +268,7 @@ function SeguimientosContent() {
           : c
       ));
 
-      // Si es el ciclo seleccionado, actualizarlo tambiÃ©n
+      // Si es el ciclo seleccionado, actualizarlo también
       if (selectedCycle?.id === cycleId) {
         setSelectedCycle({ ...selectedCycle, status: updatedCycle.status });
       }
@@ -284,20 +284,20 @@ function SeguimientosContent() {
   );
   const isCycleLocked = selectedCycle?.status === 'CURED';
 
-  // Calcular dÃ­as del ciclo
+  // Calcular días del ciclo
   function getCycleDays(startDate: string): number {
     const start = new Date(startDate);
     const now = new Date();
     return Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  // Formatear dÃ­as del ciclo para mostrar
+  // Formatear días del ciclo para mostrar
   function formatCycleDays(startDate: string): string {
     const days = getCycleDays(startDate);
     if (days < 0) return 'Programado';
     if (days === 0) return 'Hoy';
-    if (days === 1) return '1 dÃ­a';
-    return `${days} dÃ­as`;
+    if (days === 1) return '1 día';
+    return `${days} días`;
   }
 
   // Loading state
@@ -315,7 +315,7 @@ function SeguimientosContent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
         <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
-        <h1 className="text-2xl font-bold text-white mb-2">Error de conexiÃ³n</h1>
+        <h1 className="text-2xl font-bold text-white mb-2">Error de conexión</h1>
         <p className="text-zinc-400 mb-4 max-w-md">{error}</p>
         <button
           onClick={loadInitialData}
@@ -352,7 +352,7 @@ function SeguimientosContent() {
             className="flex items-center gap-2 px-4 py-2 border border-zinc-600 hover:border-zinc-500 hover:bg-zinc-800/50 text-zinc-300 hover:text-white rounded-lg transition-colors"
           >
             <Leaf className="w-4 h-4" />
-            GenÃ©ticas
+            Genéticas
           </button>
           <button
             onClick={() => setShowCycleModal(true)}
@@ -499,7 +499,7 @@ function SeguimientosContent() {
 
               {/* Eventos recientes */}
               <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
-                {/* BotÃ³n volver a la carpa (visible solo cuando hay filtro de planta desde URL) */}
+                {/* Botón volver a la carpa (visible solo cuando hay filtro de planta desde URL) */}
                 {plantFilter && (() => {
                   const filteredPlant = plants.find(p => p.id === plantFilter);
                   const sectionId = filteredPlant?.sectionId;
@@ -656,10 +656,10 @@ function SeguimientosContent() {
                                       )}
                                     </div>
                                   )}
-                                  {/* ParÃ¡metros ambientales */}
+                                  {/* Parámetros ambientales */}
                                   {event.type === 'PARAMETRO_AMBIENTAL' && (
                                     <p className="text-sm text-zinc-400">
-                                      {event.data.temperature ? `${String(event.data.temperature)}Â°C` : null}
+                                      {event.data.temperature ? `${String(event.data.temperature)}°C` : null}
                                       {event.data.humidity ? ` â€¢ ${String(event.data.humidity)}%` : null}
                                     </p>
                                   )}
@@ -671,7 +671,7 @@ function SeguimientosContent() {
                       })}
                     </div>
 
-                    {/* Controles de paginaciÃ³n */}
+                    {/* Controles de paginación */}
                     {totalEvents > eventsPerPage && (
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-700/50">
                         <div className="text-sm text-zinc-400">
@@ -687,7 +687,7 @@ function SeguimientosContent() {
                             Anterior
                           </button>
                           <span className="text-sm text-zinc-400 px-2">
-                            PÃ¡gina {eventsPage} de {Math.ceil(totalEvents / eventsPerPage)}
+                            Página {eventsPage} de {Math.ceil(totalEvents / eventsPerPage)}
                           </span>
                           <button
                             onClick={handleNextPage}
@@ -711,7 +711,7 @@ function SeguimientosContent() {
                 )}
               </div>
 
-              {/* SecciÃ³n de Cosechas */}
+              {/* Sección de Cosechas */}
               <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
                 <HarvestSection
                   plants={plants}
@@ -787,7 +787,7 @@ function SeguimientosContent() {
             setAllEvents(updatedAllEvents);
             setTotalEvents(updatedAllEvents.length);
 
-            // Si estamos en la primera pÃ¡gina, agregar el evento a la vista actual
+            // Si estamos en la primera página, agregar el evento a la vista actual
             if (eventsPage === 1) {
               const filtered = plantFilter
                 ? updatedAllEvents.filter(e => e.plantId === plantFilter)
@@ -800,7 +800,7 @@ function SeguimientosContent() {
         />
       )}
 
-      {/* Modal: GenÃ©ticas */}
+      {/* Modal: Genéticas */}
       {showStrainModal && (
         <StrainModal
           strains={strains}
@@ -1046,11 +1046,11 @@ function PlantListItem({
       <div className="flex-1 min-w-0">
         <p className="font-medium text-white truncate">{plant.tagCode}</p>
         <p className="text-xs text-zinc-400">
-          {plant.strain?.name || 'Sin genÃ©tica'}
+          {plant.strain?.name || 'Sin genética'}
         </p>
       </div>
 
-      {/* BotÃ³n de etapa con menÃº */}
+      {/* Botón de etapa con menú */}
       <div className="relative">
         <button
           onClick={() => {
@@ -1104,7 +1104,7 @@ function PlantListItem({
         )}
       </div>
 
-      {/* BotÃ³n de editar */}
+      {/* Botón de editar */}
       <button
         onClick={() => {
           if (isReadOnly) return;
@@ -1260,7 +1260,7 @@ function PlantModal({
     <Modal title="Nueva Planta" onClose={onClose}>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">CÃ³digo/Tag</label>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Código/Tag</label>
           <input
             type="text"
             value={form.tagCode}
@@ -1271,33 +1271,33 @@ function PlantModal({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">GenÃ©tica</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Genética</label>
             <div className="flex gap-2">
               <select
                 value={form.strainId}
                 onChange={(e) => setForm({ ...form, strainId: e.target.value })}
                 className="flex-1 px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
               >
-                {strains.length === 0 && <option value="">Sin genÃ©ticas</option>}
+                {strains.length === 0 && <option value="">Sin genéticas</option>}
                 {strains.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
               <button
                 type="button"
                 onClick={onOpenStrainModal}
                 className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
-                title="Agregar genÃ©tica"
+                title="Agregar genética"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
             {strains.length === 0 && (
               <p className="text-xs text-amber-400 mt-1">
-                Debes agregar al menos una genÃ©tica primero
+                Debes agregar al menos una genética primero
               </p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">SecciÃ³n</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Sección</label>
             <select
               value={form.sectionId}
               onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
@@ -1380,9 +1380,9 @@ function EventModal({
     // Foto
     caption: '',
   });
-  // SelecciÃ³n mÃºltiple de plantas
+  // Selección múltiple de plantas
   const [selectedPlantIds, setSelectedPlantIds] = useState<string[]>([]);
-  const [applyToCycle, setApplyToCycle] = useState(false); // Si true, no se asocia a plantas especÃ­ficas
+  const [applyToCycle, setApplyToCycle] = useState(false); // Si true, no se asocia a plantas específicas
 
   const [isCreating, setIsCreating] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -1489,7 +1489,7 @@ function EventModal({
       }
 
       if (lastEvent) {
-        // Mostrar notificaciÃ³n si se crearon mÃºltiples eventos
+        // Mostrar notificación si se crearon múltiples eventos
         if (createdCount > 1) {
           toast.success(`Se crearon ${createdCount} eventos (uno por cada planta seleccionada)`);
         } else {
@@ -1552,7 +1552,7 @@ function EventModal({
           </button>
         </div>
 
-        {/* SelecciÃ³n de plantas */}
+        {/* Selección de plantas */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-zinc-300">
@@ -1569,7 +1569,7 @@ function EventModal({
             )}
           </div>
 
-          {/* OpciÃ³n: Aplicar a todo el ciclo */}
+          {/* Opción: Aplicar a todo el ciclo */}
           <label
             className={`flex items-center gap-3 p-2 mb-2 rounded-lg cursor-pointer transition-colors border ${applyToCycle
               ? 'bg-blue-500/20 border-blue-500/30'
@@ -1589,7 +1589,7 @@ function EventModal({
             />
             <div className="flex-1">
               <span className="text-sm text-white">Aplicar a todo el ciclo</span>
-              <p className="text-xs text-zinc-500">Sin asociar a plantas especÃ­ficas</p>
+              <p className="text-xs text-zinc-500">Sin asociar a plantas específicas</p>
             </div>
           </label>
 
@@ -1616,7 +1616,7 @@ function EventModal({
                       {plant.tagCode}
                     </span>
                     <span className="text-xs text-zinc-500 ml-2">
-                      {plant.strain?.name || 'Sin genÃ©tica'}
+                      {plant.strain?.name || 'Sin genética'}
                     </span>
                   </div>
                 </label>
@@ -1628,29 +1628,29 @@ function EventModal({
             </div>
           )}
 
-          {/* Resumen de selecciÃ³n */}
+          {/* Resumen de selección */}
           {selectedPlantIds.length > 0 && (
             <p className="text-xs text-cultivo-green-400 mt-2">
               {selectedPlantIds.length} planta{selectedPlantIds.length > 1 ? 's' : ''} seleccionada{selectedPlantIds.length > 1 ? 's' : ''}
-              {selectedPlantIds.length > 1 && ' - Se crearÃ¡ un evento para cada una'}
+              {selectedPlantIds.length > 1 && ' - Se creará un evento para cada una'}
             </p>
           )}
         </div>
 
-        {/* SecciÃ³n */}
+        {/* Sección */}
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">SecciÃ³n</label>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Sección</label>
           <select
             value={form.sectionId}
             onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
             className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
           >
-            <option value="">Sin secciÃ³n</option>
+            <option value="">Sin sección</option>
             {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
 
-        {/* Campos especÃ­ficos por tipo */}
+        {/* Campos específicos por tipo */}
         {eventType === 'water' && (
           <div className="grid grid-cols-3 gap-4">
             <div>
@@ -1696,7 +1696,7 @@ function EventModal({
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               rows={4}
-              placeholder="Escribe tu nota aquÃ­..."
+              placeholder="Escribe tu nota aquí..."
               className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 resize-none"
             />
           </div>
@@ -1705,7 +1705,7 @@ function EventModal({
         {eventType === 'environment' && (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Temperatura (Â°C)</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Temperatura (°C)</label>
               <input
                 type="number"
                 step="0.1"
@@ -1741,7 +1741,7 @@ function EventModal({
                     <p className="mb-2 text-sm text-zinc-400">
                       <span className="font-semibold text-purple-400">Haz clic para subir</span> o arrastra una imagen
                     </p>
-                    <p className="text-xs text-zinc-500">PNG, JPG, GIF o WEBP (mÃ¡x. 10MB)</p>
+                    <p className="text-xs text-zinc-500">PNG, JPG, GIF o WEBP (máx. 10MB)</p>
                   </div>
                   <input
                     type="file"
@@ -1762,7 +1762,7 @@ function EventModal({
                       />
                     )}
                   </div>
-                  {/* Info del archivo y botÃ³n de eliminar */}
+                  {/* Info del archivo y botón de eliminar */}
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Camera className="w-4 h-4 text-purple-400" />
@@ -1786,14 +1786,14 @@ function EventModal({
               )}
             </div>
 
-            {/* Caption/DescripciÃ³n */}
+            {/* Caption/Descripción */}
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">DescripciÃ³n (opcional)</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Descripción (opcional)</label>
               <input
                 type="text"
                 value={form.caption}
                 onChange={(e) => setForm({ ...form, caption: e.target.value })}
-                placeholder="Ej: Semana 3 de floraciÃ³n"
+                placeholder="Ej: Semana 3 de floración"
                 className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
               />
             </div>
@@ -1851,21 +1851,21 @@ function StrainModal({
       });
       onCreated(newStrain);
       setForm({ name: '', breeder: '', type: 'HYBRID', floweringDays: '' });
-      toast.success('GenÃ©tica creada exitosamente');
+      toast.success('Genética creada exitosamente');
     } catch (err) {
-      console.error('Error creando genÃ©tica:', err);
-      toast.error('Error al crear la genÃ©tica');
+      console.error('Error creando genética:', err);
+      toast.error('Error al crear la genética');
     } finally {
       setIsCreating(false);
     }
   }
 
   return (
-    <Modal title="GenÃ©ticas" onClose={onClose} size="lg">
+    <Modal title="Genéticas" onClose={onClose} size="lg">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Lista de genÃ©ticas existentes */}
+        {/* Lista de genéticas existentes */}
         <div>
-          <h3 className="text-sm font-medium text-zinc-400 mb-3">GenÃ©ticas registradas</h3>
+          <h3 className="text-sm font-medium text-zinc-400 mb-3">Genéticas registradas</h3>
           {strains.length > 0 ? (
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {strains.map(strain => (
@@ -1874,7 +1874,7 @@ function StrainModal({
                   <p className="text-xs text-zinc-400">
                     {strain.breeder && `${strain.breeder} â€¢ `}
                     {strain.type}
-                    {strain.floweringDaysExpected && ` â€¢ ${strain.floweringDaysExpected} dÃ­as`}
+                    {strain.floweringDaysExpected && ` â€¢ ${strain.floweringDaysExpected} días`}
                   </p>
                 </div>
               ))}
@@ -1882,12 +1882,12 @@ function StrainModal({
           ) : (
             <div className="text-center py-6 bg-zinc-800/30 rounded-lg">
               <Leaf className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-              <p className="text-sm text-zinc-500">Sin genÃ©ticas</p>
+              <p className="text-sm text-zinc-500">Sin genéticas</p>
             </div>
           )}
         </div>
 
-        {/* Formulario nueva genÃ©tica */}
+        {/* Formulario nueva genética */}
         <div>
           <h3 className="text-sm font-medium text-zinc-400 mb-3">Agregar nueva</h3>
           <div className="space-y-3">
@@ -1895,7 +1895,7 @@ function StrainModal({
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Nombre de la genÃ©tica"
+              placeholder="Nombre de la genética"
               className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
             />
             <input
@@ -1913,14 +1913,14 @@ function StrainModal({
               >
                 <option value="SATIVA">Sativa</option>
                 <option value="INDICA">Indica</option>
-                <option value="HYBRID">HÃ­brido</option>
+                <option value="HYBRID">Híbrido</option>
                 <option value="RUDERALIS">Ruderalis</option>
               </select>
               <input
                 type="number"
                 value={form.floweringDays}
                 onChange={(e) => setForm({ ...form, floweringDays: e.target.value })}
-                placeholder="DÃ­as flora"
+                placeholder="Días flora"
                 className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
               />
             </div>
@@ -1930,7 +1930,7 @@ function StrainModal({
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white rounded-lg"
             >
               {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              {isCreating ? 'Agregando...' : 'Agregar GenÃ©tica'}
+              {isCreating ? 'Agregando...' : 'Agregar Genética'}
             </button>
           </div>
         </div>
@@ -2006,7 +2006,7 @@ function PlantEditModal({
     <Modal title="Editar Planta" onClose={onClose}>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">CÃ³digo/Tag</label>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Código/Tag</label>
           <input
             type="text"
             value={form.tagCode}
@@ -2017,7 +2017,7 @@ function PlantEditModal({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">GenÃ©tica</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Genética</label>
             <select
               value={form.strainId}
               onChange={(e) => setForm({ ...form, strainId: e.target.value })}
@@ -2027,7 +2027,7 @@ function PlantEditModal({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">SecciÃ³n</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Sección</label>
             <select
               value={form.sectionId}
               onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
@@ -2046,10 +2046,10 @@ function PlantEditModal({
               onChange={(e) => setForm({ ...form, stage: e.target.value as PlantStage })}
               className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
             >
-              <option value="GERMINACION">GerminaciÃ³n</option>
+              <option value="GERMINACION">Germinación</option>
               <option value="VEGETATIVO">Vegetativo</option>
               <option value="PRE_FLORA">Pre-Flora</option>
-              <option value="FLORACION">FloraciÃ³n</option>
+              <option value="FLORACION">Floración</option>
               <option value="SECADO">Secado</option>
               <option value="CURADO">Curado</option>
             </select>
@@ -2094,7 +2094,7 @@ function PlantEditModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">TamaÃ±o de Maceta Final</label>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Tamaño de Maceta Final</label>
           <input
             type="text"
             value={form.potSizeFinal}
@@ -2102,7 +2102,7 @@ function PlantEditModal({
             placeholder="Ej: 11L, 3gal"
             className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
           />
-          <p className="text-xs text-zinc-500 mt-1">TamaÃ±o de la maceta final donde estÃ¡ la planta</p>
+          <p className="text-xs text-zinc-500 mt-1">Tamaño de la maceta final donde está la planta</p>
         </div>
 
         <div>

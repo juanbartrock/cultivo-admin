@@ -61,10 +61,10 @@ import { SectionDashboard, Device, DeviceType, DeviceStatus, Plant, GrowEvent, S
 import { eventService } from '@/services/eventService';
 import { plantService } from '@/services/growService';
 
-// Iconos segÃºn el nombre de la secciÃ³n
+// Iconos según el nombre de la sección
 const sectionIcons: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
   'flora': { icon: Flower2, color: 'text-cyan-300', bg: 'bg-cyan-500/15' },
-  'floraciÃ³n': { icon: Flower2, color: 'text-cyan-300', bg: 'bg-cyan-500/15' },
+  'floración': { icon: Flower2, color: 'text-cyan-300', bg: 'bg-cyan-500/15' },
   'vege': { icon: Sprout, color: 'text-green-400', bg: 'bg-green-500/20' },
   'vegetativo': { icon: Sprout, color: 'text-green-400', bg: 'bg-green-500/20' },
   'secado': { icon: Wind, color: 'text-orange-400', bg: 'bg-orange-500/20' },
@@ -83,7 +83,7 @@ function getSectionIcon(sectionName: string) {
   return { icon: Leaf, color: 'text-cultivo-green-400', bg: 'bg-cultivo-green-500/20' };
 }
 
-// Agrupar dispositivos por categorÃ­a
+// Agrupar dispositivos por categoría
 function groupDevicesByCategory(devices: Device[]) {
   const sensors: Device[] = [];
   const controllables: Device[] = [];
@@ -136,7 +136,7 @@ interface ProductWithCheck {
   checked: boolean;
 }
 
-// Tipo para productos del plan de prevenciÃ³n con estado de checkbox
+// Tipo para productos del plan de prevención con estado de checkbox
 interface PreventionProductWithCheck {
   name: string;
   dose: string;
@@ -202,7 +202,7 @@ function PlantEventModal({
     feedingPlanInfo?.weekData?.products.map(p => ({ ...p, checked: true })) || []
   );
 
-  // Estado para los productos del plan de prevenciÃ³n (con checkbox)
+  // Estado para los productos del plan de prevención (con checkbox)
   const [preventionProducts, setPreventionProducts] = useState<PreventionProductWithCheck[]>(
     preventionPlanInfo?.applicationData?.products.map(p => ({ ...p, checked: true })) || []
   );
@@ -271,14 +271,14 @@ function PlantEventModal({
     ));
   };
 
-  // Togglear producto de prevenciÃ³n
+  // Togglear producto de prevención
   const togglePreventionProduct = (index: number) => {
     setPreventionProducts(prev => prev.map((p, i) =>
       i === index ? { ...p, checked: !p.checked } : p
     ));
   };
 
-  // Actualizar dosis de un producto de prevenciÃ³n
+  // Actualizar dosis de un producto de prevención
   const updatePreventionProductDose = (index: number, dose: string) => {
     setPreventionProducts(prev => prev.map((p, i) =>
       i === index ? { ...p, dose } : p
@@ -330,13 +330,13 @@ function PlantEventModal({
             caption: form.caption || undefined,
           }, selectedFile);
         } else if (eventType === 'prevention') {
-          // Evento de prevenciÃ³n - se registra como nota con datos estructurados
+          // Evento de prevención - se registra como nota con datos estructurados
           const selectedPreventionProducts = preventionProducts
             .filter(p => p.checked)
             .map(p => ({ name: p.name, dose: `${p.dose} ${p.unit}` }));
 
           const preventionContent = `ðŸ›¡ï¸ Mantenimiento Preventivo - ${preventionPlanInfo?.planName || 'Sin plan'}\n` +
-            `DÃ­a ${preventionPlanInfo?.currentDay || 0}\n` +
+            `Día ${preventionPlanInfo?.currentDay || 0}\n` +
             `Tipo: ${preventionPlanInfo?.applicationData?.applicationType || 'Preventivo'}\n` +
             `Objetivo: ${preventionPlanInfo?.applicationData?.target || 'General'}\n` +
             `Productos aplicados:\n${selectedPreventionProducts.map(p => `  - ${p.name}: ${p.dose}`).join('\n')}` +
@@ -349,7 +349,7 @@ function PlantEventModal({
         } else if (eventType === 'pot') {
           // Evento de cambio de maceta
           if (!form.newPotSize.trim()) {
-            toast.error('Debes indicar el nuevo tamaÃ±o de maceta');
+            toast.error('Debes indicar el nuevo tamaño de maceta');
             setIsCreating(false);
             return;
           }
@@ -365,12 +365,12 @@ function PlantEventModal({
               },
             });
 
-            // Actualizar el tamaÃ±o de maceta final de la planta solo si el evento se creÃ³ correctamente
+            // Actualizar el tamaño de maceta final de la planta solo si el evento se creó correctamente
             try {
               await plantService.update(plantId, { potSizeFinal: form.newPotSize });
             } catch (e) {
               console.warn('No se pudo actualizar potSizeFinal de la planta:', e);
-              // No lanzamos error aquÃ­ porque el evento ya se creÃ³
+              // No lanzamos error aquí porque el evento ya se creó
             }
           } catch (potError: any) {
             console.error('Error creando evento de cambio de maceta:', potError);
@@ -395,7 +395,7 @@ function PlantEventModal({
       }
 
       if (lastEvent) {
-        // Mostrar notificaciÃ³n si se crearon mÃºltiples eventos
+        // Mostrar notificación si se crearon múltiples eventos
         if (createdCount > 1) {
           toast.success(`Se crearon ${createdCount} eventos (uno por cada planta)`);
         } else {
@@ -421,7 +421,7 @@ function PlantEventModal({
             <Leaf className="w-5 h-5 text-cultivo-green-400" />
             <div>
               <p className="text-white font-medium">{plant.tagCode}</p>
-              <p className="text-sm text-zinc-400">{plant.strain?.name || 'Sin genÃ©tica'}</p>
+              <p className="text-sm text-zinc-400">{plant.strain?.name || 'Sin genética'}</p>
             </div>
           </div>
           {feedingPlanInfo && (
@@ -445,7 +445,7 @@ function PlantEventModal({
                 <span className="text-sm text-zinc-300">
                   {additionalPlantIds.length > 0
                     ? `${additionalPlantIds.length} planta${additionalPlantIds.length > 1 ? 's' : ''} adicional${additionalPlantIds.length > 1 ? 'es' : ''} seleccionada${additionalPlantIds.length > 1 ? 's' : ''}`
-                    : 'Agregar mÃ¡s plantas al evento'
+                    : 'Agregar más plantas al evento'
                   }
                 </span>
               </div>
@@ -459,7 +459,7 @@ function PlantEventModal({
             {showPlantSelector && (
               <div className="p-3 border-t border-zinc-700/50 bg-zinc-900/30">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-zinc-500">Otras plantas en la secciÃ³n</p>
+                  <p className="text-xs text-zinc-500">Otras plantas en la sección</p>
                   <button
                     type="button"
                     onClick={toggleAllAdditionalPlants}
@@ -484,7 +484,7 @@ function PlantEventModal({
                         className="w-4 h-4 rounded border-zinc-600 text-cultivo-green-600 focus:ring-cultivo-green-500 bg-zinc-700"
                       />
                       <span className="text-sm text-white">{p.tagCode}</span>
-                      <span className="text-xs text-zinc-500">{p.strain?.name || 'Sin genÃ©tica'}</span>
+                      <span className="text-xs text-zinc-500">{p.strain?.name || 'Sin genética'}</span>
                     </label>
                   ))}
                 </div>
@@ -513,7 +513,7 @@ function PlantEventModal({
               }`}
           >
             <Shield className="w-4 h-4" />
-            <span className="text-xs">PrevenciÃ³n</span>
+            <span className="text-xs">Prevención</span>
           </button>
           <button
             onClick={() => setEventType('photo')}
@@ -557,7 +557,7 @@ function PlantEventModal({
           </button>
         </div>
 
-        {/* Campos especÃ­ficos por tipo */}
+        {/* Campos específicos por tipo */}
         {eventType === 'water' && (
           <div className="space-y-4">
             {/* pH, EC, Litros */}
@@ -679,7 +679,7 @@ function PlantEventModal({
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               rows={4}
-              placeholder="Escribe tu nota aquÃ­..."
+              placeholder="Escribe tu nota aquí..."
               className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 resize-none"
             />
           </div>
@@ -688,7 +688,7 @@ function PlantEventModal({
         {eventType === 'environment' && (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Temperatura (Â°C)</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Temperatura (°C)</label>
               <input
                 type="number"
                 step="0.1"
@@ -738,7 +738,7 @@ function PlantEventModal({
               </div>
             </div>
             <p className="text-xs text-zinc-500">
-              Este registro tambiÃ©n actualizarÃ¡ el tamaÃ±o de maceta final de la planta.
+              Este registro también actualizará el tamaño de maceta final de la planta.
             </p>
             {/* Notas opcionales */}
             <div>
@@ -766,7 +766,7 @@ function PlantEventModal({
                     <p className="mb-2 text-sm text-zinc-400">
                       <span className="font-semibold text-cyan-300">Haz clic para subir</span> o arrastra una imagen
                     </p>
-                    <p className="text-xs text-zinc-500">PNG, JPG, GIF o WEBP (mÃ¡x. 10MB)</p>
+                    <p className="text-xs text-zinc-500">PNG, JPG, GIF o WEBP (máx. 10MB)</p>
                   </div>
                   <input
                     type="file"
@@ -790,7 +790,7 @@ function PlantEventModal({
                       />
                     )}
                   </div>
-                  {/* Info del archivo y botÃ³n de eliminar */}
+                  {/* Info del archivo y botón de eliminar */}
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Camera className="w-4 h-4 text-cyan-300" />
@@ -814,14 +814,14 @@ function PlantEventModal({
               )}
             </div>
 
-            {/* Caption/DescripciÃ³n */}
+            {/* Caption/Descripción */}
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">DescripciÃ³n (opcional)</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Descripción (opcional)</label>
               <input
                 type="text"
                 value={form.caption}
                 onChange={(e) => setForm({ ...form, caption: e.target.value })}
-                placeholder="Ej: Semana 3 de floraciÃ³n"
+                placeholder="Ej: Semana 3 de floración"
                 className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
               />
             </div>
@@ -830,7 +830,7 @@ function PlantEventModal({
 
         {eventType === 'prevention' && (
           <div className="space-y-4">
-            {/* Info del plan de prevenciÃ³n */}
+            {/* Info del plan de prevención */}
             {preventionPlanInfo ? (
               <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
                 <div className="flex items-center justify-between">
@@ -838,7 +838,7 @@ function PlantEventModal({
                     <Shield className="w-4 h-4 text-orange-400" />
                     <span className="text-sm font-medium text-orange-400">{preventionPlanInfo.planName}</span>
                   </div>
-                  <span className="text-xs text-zinc-400">DÃ­a {preventionPlanInfo.currentDay}</span>
+                  <span className="text-xs text-zinc-400">Día {preventionPlanInfo.currentDay}</span>
                 </div>
                 {preventionPlanInfo.applicationData && (
                   <div className="mt-2 text-xs text-zinc-400">
@@ -854,12 +854,12 @@ function PlantEventModal({
             ) : (
               <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-3 text-center">
                 <Shield className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-                <p className="text-sm text-zinc-400">No hay plan de prevenciÃ³n asignado</p>
-                <p className="text-xs text-zinc-500 mt-1">Puedes registrar una aplicaciÃ³n manual</p>
+                <p className="text-sm text-zinc-400">No hay plan de prevención asignado</p>
+                <p className="text-xs text-zinc-500 mt-1">Puedes registrar una aplicación manual</p>
               </div>
             )}
 
-            {/* Productos del plan de prevenciÃ³n */}
+            {/* Productos del plan de prevención */}
             {preventionProducts.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">
@@ -902,7 +902,7 @@ function PlantEventModal({
                 type="text"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Observaciones de la aplicaciÃ³n..."
+                placeholder="Observaciones de la aplicación..."
                 className="w-full px-4 py-2 bg-zinc-900/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600"
               />
             </div>
@@ -948,7 +948,7 @@ export default function CarpaDetailPage() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [selectedPlantForEvent, setSelectedPlantForEvent] = useState<Plant | null>(null);
 
-  // Estado para planes de alimentaciÃ³n
+  // Estado para planes de alimentación
   const [feedingPlans, setFeedingPlans] = useState<SectionFeedingPlansResponse | null>(null);
   const [feedingPlansLoading, setFeedingPlansLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -959,7 +959,7 @@ export default function CarpaDetailPage() {
   const [planToDelete, setPlanToDelete] = useState<FeedingPlanWithCount | null>(null);
   const [deletingPlan, setDeletingPlan] = useState(false);
 
-  // Estado para planes de prevenciÃ³n
+  // Estado para planes de prevención
   const [preventionPlans, setPreventionPlans] = useState<SectionPreventionPlansResponse | null>(null);
   const [preventionPlansLoading, setPreventionPlansLoading] = useState(false);
   const [showPreventionUploadModal, setShowPreventionUploadModal] = useState(false);
@@ -974,7 +974,7 @@ export default function CarpaDetailPage() {
   const [feedingPlanExpanded, setFeedingPlanExpanded] = useState(false);
   const [preventionPlanExpanded, setPreventionPlanExpanded] = useState(false);
 
-  // Estado para habilitar/deshabilitar secciÃ³n
+  // Estado para habilitar/deshabilitar sección
   const [isTogglingEnabled, setIsTogglingEnabled] = useState(false);
   const [plantsExpanded, setPlantsExpanded] = useState(false);
   const [ppfdExpanded, setPpfdExpanded] = useState(false);
@@ -1006,13 +1006,13 @@ export default function CarpaDetailPage() {
   const primarySensor = sensors[0];
   const primarySensorStatus = primarySensor ? getStatus(primarySensor.id) : null;
 
-  // Helper para verificar si una secciÃ³n del layout estÃ¡ habilitada
+  // Helper para verificar si una sección del layout está habilitada
   const isSectionEnabled = useCallback((key: string) => {
     const layoutSection = layoutConfig.sections.find(s => s.key === key);
     return layoutSection?.enabled ?? true;
   }, [layoutConfig]);
 
-  // Ordenar secciones segÃºn el layout
+  // Ordenar secciones según el layout
   const sortedLayoutSections = useMemo(() => {
     return [...layoutConfig.sections].sort((a, b) => a.order - b.order);
   }, [layoutConfig]);
@@ -1025,7 +1025,7 @@ export default function CarpaDetailPage() {
       }
     } catch (error) {
       console.error('Error cargando layout:', error);
-      // Usar configuraciÃ³n por defecto
+      // Usar configuración por defecto
     }
   }, [sectionId]);
 
@@ -1037,8 +1037,8 @@ export default function CarpaDetailPage() {
       const data = await sectionService.getDashboard(sectionId);
       setSection(data);
     } catch (err) {
-      console.error('Error cargando secciÃ³n:', err);
-      setError('No se pudo cargar la secciÃ³n');
+      console.error('Error cargando sección:', err);
+      setError('No se pudo cargar la sección');
     } finally {
       setIsLoading(false);
     }
@@ -1050,7 +1050,7 @@ export default function CarpaDetailPage() {
       const data = await feedingPlanService.getSectionFeedingPlans(sectionId);
       setFeedingPlans(data);
     } catch (err) {
-      console.error('Error cargando planes de alimentaciÃ³n:', err);
+      console.error('Error cargando planes de alimentación:', err);
       // No mostramos error ya que puede ser que simplemente no haya planes
     } finally {
       setFeedingPlansLoading(false);
@@ -1072,7 +1072,7 @@ export default function CarpaDetailPage() {
       const data = await preventionPlanService.getSectionPreventionPlans(sectionId);
       setPreventionPlans(data);
     } catch (err) {
-      console.error('Error cargando planes de prevenciÃ³n:', err);
+      console.error('Error cargando planes de prevención:', err);
     } finally {
       setPreventionPlansLoading(false);
     }
@@ -1083,7 +1083,7 @@ export default function CarpaDetailPage() {
       const plans = await preventionPlanService.getAll();
       setAvailablePreventionPlans(plans);
     } catch (err) {
-      console.error('Error cargando planes de prevenciÃ³n disponibles:', err);
+      console.error('Error cargando planes de prevención disponibles:', err);
     }
   }, []);
 
@@ -1112,9 +1112,9 @@ export default function CarpaDetailPage() {
       });
       await loadPreventionPlans();
       setShowPreventionAssignModal(null);
-      toast.success('Plan de prevenciÃ³n asignado');
+      toast.success('Plan de prevención asignado');
     } catch (err) {
-      console.error('Error asignando plan de prevenciÃ³n:', err);
+      console.error('Error asignando plan de prevención:', err);
       toast.error(err instanceof Error ? err.message : 'Error al asignar el plan');
     } finally {
       setAssigningPreventionPlan(false);
@@ -1128,9 +1128,9 @@ export default function CarpaDetailPage() {
       await loadAvailablePreventionPlans();
       await loadPreventionPlans();
       setPreventionPlanToDelete(null);
-      toast.success('Plan de prevenciÃ³n eliminado');
+      toast.success('Plan de prevención eliminado');
     } catch (err) {
-      console.error('Error eliminando plan de prevenciÃ³n:', err);
+      console.error('Error eliminando plan de prevención:', err);
       toast.error(err instanceof Error ? err.message : 'Error al eliminar el plan');
     } finally {
       setDeletingPreventionPlan(false);
@@ -1147,7 +1147,7 @@ export default function CarpaDetailPage() {
       // Recargar datos
       await loadFeedingPlans();
       setShowAssignModal(null);
-      toast.success('Plan de alimentaciÃ³n asignado');
+      toast.success('Plan de alimentación asignado');
     } catch (err) {
       console.error('Error asignando plan:', err);
       toast.error(err instanceof Error ? err.message : 'Error al asignar el plan');
@@ -1164,7 +1164,7 @@ export default function CarpaDetailPage() {
       await loadAvailablePlans();
       await loadFeedingPlans();
       setPlanToDelete(null);
-      toast.success('Plan de alimentaciÃ³n eliminado');
+      toast.success('Plan de alimentación eliminado');
     } catch (err) {
       console.error('Error eliminando plan:', err);
       toast.error(err instanceof Error ? err.message : 'Error al eliminar el plan');
@@ -1187,9 +1187,9 @@ export default function CarpaDetailPage() {
     }
   }
 
-  // Cargar eventos de una planta especÃ­fica
+  // Cargar eventos de una planta específica
   async function handleSelectPlantForEvents(plant: Plant) {
-    // Si ya estÃ¡ seleccionada, deseleccionar
+    // Si ya está seleccionada, deseleccionar
     if (selectedPlantForEvents?.id === plant.id) {
       setSelectedPlantForEvents(null);
       setSelectedPlantEvents([]);
@@ -1215,9 +1215,9 @@ export default function CarpaDetailPage() {
       // Recargar datos
       await loadPreventionPlans();
       await loadAvailablePreventionPlans();
-      toast.success('Plan de prevenciÃ³n desasignado');
+      toast.success('Plan de prevención desasignado');
     } catch (err) {
-      console.error('Error desasignando plan de prevenciÃ³n:', err);
+      console.error('Error desasignando plan de prevención:', err);
       toast.error(err instanceof Error ? err.message : 'Error al desasignar el plan');
       throw err;
     }
@@ -1230,14 +1230,14 @@ export default function CarpaDetailPage() {
   }, [loadSection, refreshStatuses]);
 
   const handleStatusChange = useCallback(() => {
-    // Refrescar estados despuÃ©s de un cambio
+    // Refrescar estados después de un cambio
     setTimeout(() => {
       refreshStatuses();
       setLastUpdate(new Date());
     }, 1000);
   }, [refreshStatuses]);
 
-  // FunciÃ³n para habilitar/deshabilitar la secciÃ³n
+  // Función para habilitar/deshabilitar la sección
   const handleToggleEnabled = useCallback(async () => {
     if (!section) return;
     
@@ -1246,16 +1246,16 @@ export default function CarpaDetailPage() {
       const newEnabled = section.enabled === false ? true : false;
       const updated = await sectionService.update(sectionId, { enabled: newEnabled });
       setSection({ ...section, enabled: updated.enabled });
-      toast.success(newEnabled ? 'SecciÃ³n activada' : 'SecciÃ³n desactivada');
+      toast.success(newEnabled ? 'Sección activada' : 'Sección desactivada');
     } catch (err) {
       console.error('Error toggling section:', err);
-      toast.error('Error al cambiar el estado de la secciÃ³n');
+      toast.error('Error al cambiar el estado de la sección');
     } finally {
       setIsTogglingEnabled(false);
     }
   }, [section, sectionId, toast]);
 
-  // FunciÃ³n para renderizar una secciÃ³n por su key
+  // Función para renderizar una sección por su key
   const renderSection = useCallback((key: string, index: number) => {
     const delay = 0.1 + index * 0.05;
 
@@ -1352,7 +1352,7 @@ export default function CarpaDetailPage() {
           >
             <div className="flex items-center gap-2 mb-4">
               <Video className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-xl font-semibold text-white">CÃ¡maras</h2>
+              <h2 className="text-xl font-semibold text-white">Cámaras</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {cameras.map((device, idx) => (
@@ -1383,7 +1383,7 @@ export default function CarpaDetailPage() {
             >
               <div className="flex items-center gap-2">
                 <Sun className="w-5 h-5 text-yellow-400" />
-                <h2 className="text-xl font-semibold text-white">PPFD por Zona - FloraciÃ³n</h2>
+                <h2 className="text-xl font-semibold text-white">PPFD por Zona - Floración</h2>
               </div>
               {ppfdExpanded ? (
                 <ChevronUp className="w-5 h-5 text-zinc-400" />
@@ -1436,7 +1436,7 @@ export default function CarpaDetailPage() {
           </motion.section>
         );
 
-      // feedingPlans, preventionPlans y plants se mantienen como estaban (son mÃ¡s complejos)
+      // feedingPlans, preventionPlans y plants se mantienen como estaban (son más complejos)
       default:
         return null;
     }
@@ -1447,7 +1447,7 @@ export default function CarpaDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <Loader2 className="w-12 h-12 text-cultivo-green-500 animate-spin mb-4" />
-        <p className="text-zinc-400">Cargando secciÃ³n...</p>
+        <p className="text-zinc-400">Cargando sección...</p>
       </div>
     );
   }
@@ -1458,9 +1458,9 @@ export default function CarpaDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
         <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
         <h1 className="text-2xl font-bold text-white mb-2">
-          {error || 'SecciÃ³n no encontrada'}
+          {error || 'Sección no encontrada'}
         </h1>
-        <p className="text-zinc-400 mb-4">La secciÃ³n que buscas no existe o fue eliminada.</p>
+        <p className="text-zinc-400 mb-4">La sección que buscas no existe o fue eliminada.</p>
         <div className="flex gap-3">
           <Link
             href="/sala"
@@ -1500,7 +1500,7 @@ export default function CarpaDetailPage() {
           <button
             onClick={() => setShowLayoutEditor(true)}
             className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors border border-zinc-700/70"
-            title="Configurar layout de la pÃ¡gina"
+            title="Configurar layout de la página"
           >
             <Settings2 className="w-4 h-4" />
             Layout
@@ -1513,7 +1513,7 @@ export default function CarpaDetailPage() {
                 ? 'bg-cultivo-green-600/20 text-cultivo-green-400 hover:bg-cultivo-green-600/30 border border-cultivo-green-600/30'
                 : 'bg-zinc-700/50 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
             }`}
-            title={section.enabled !== false ? 'SecciÃ³n activa - Click para desactivar' : 'SecciÃ³n inactiva - Click para activar'}
+            title={section.enabled !== false ? 'Sección activa - Click para desactivar' : 'Sección inactiva - Click para activar'}
           >
             {isTogglingEnabled ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -1540,12 +1540,12 @@ export default function CarpaDetailPage() {
         animate={{ opacity: 1, y: 0 }}
         className="surface-panel rounded-3xl p-5 sm:p-6 lg:p-8 grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start"
       >
-        {/* Icono de la secciÃ³n */}
+        {/* Icono de la sección */}
         <div className={`relative w-full h-44 sm:h-52 lg:h-64 ${iconConfig.bg} rounded-2xl overflow-hidden border border-cyan-500/20 flex items-center justify-center`}>
           <IconComponent className={`w-24 lg:w-32 h-24 lg:h-32 ${iconConfig.color}`} />
         </div>
 
-        {/* Info de la secciÃ³n */}
+        {/* Info de la sección */}
         <div className="min-w-0">
           <h1 className="text-3xl sm:text-4xl font-display font-semibold text-white mb-2 break-words">{section.name}</h1>
           {section.dimensions && (
@@ -1556,7 +1556,7 @@ export default function CarpaDetailPage() {
             <p className="text-zinc-400 mb-4">{section.description}</p>
           )}
 
-          {/* Stats rÃ¡pidos */}
+          {/* Stats rápidos */}
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2 bg-zinc-800/40 px-4 py-2 rounded-xl border border-zinc-700/60">
               <Activity className="w-4 h-4 text-cultivo-green-400" />
@@ -1590,7 +1590,7 @@ export default function CarpaDetailPage() {
               <div className="flex items-center gap-2 bg-emerald-500/20 px-4 py-2 rounded-xl border border-emerald-500/30">
                 <Video className="w-4 h-4 text-emerald-400" />
                 <span className="text-sm text-emerald-300">
-                  {cameras.length} cÃ¡mara{cameras.length > 1 ? 's' : ''}
+                  {cameras.length} cámara{cameras.length > 1 ? 's' : ''}
                 </span>
               </div>
             )}
@@ -1615,7 +1615,7 @@ export default function CarpaDetailPage() {
         </div>
       </motion.div>
 
-      {/* Secciones renderizadas dinÃ¡micamente segÃºn layout */}
+      {/* Secciones renderizadas dinámicamente según layout */}
       {sortedLayoutSections.map((layoutItem, index) => {
         // Las secciones complejas (feedingPlans, preventionPlans, plants) se manejan aparte
         if (['feedingPlans', 'preventionPlans', 'plants'].includes(layoutItem.key)) {
@@ -1625,11 +1625,11 @@ export default function CarpaDetailPage() {
         return renderSection(layoutItem.key, index);
       })}
 
-      {/* SecciÃ³n de dispositivos vacÃ­a removida - no mostrar si no hay dispositivos */}
+      {/* Sección de dispositivos vacía removida - no mostrar si no hay dispositivos */}
 
-      {/* Secciones complejas ordenadas segÃºn layout usando CSS order */}
+      {/* Secciones complejas ordenadas según layout usando CSS order */}
       <div className="flex flex-col gap-8">
-        {/* Planes de AlimentaciÃ³n */}
+        {/* Planes de Alimentación */}
         {isSectionEnabled('feedingPlans') && (
           <motion.section
             style={{ order: sortedLayoutSections.find(s => s.key === 'feedingPlans')?.order ?? 6 }}
@@ -1644,7 +1644,7 @@ export default function CarpaDetailPage() {
             >
               <div className="flex items-center gap-2">
                 <Beaker className="w-5 h-5 text-cyan-500" />
-                <h2 className="text-xl font-semibold text-white">Plan de AlimentaciÃ³n</h2>
+                <h2 className="text-xl font-semibold text-white">Plan de Alimentación</h2>
                 {!feedingPlanExpanded && feedingPlans?.plants.some(p => p.feedingPlans.length > 0) && (
                   <span className="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded-full ml-2">
                     {feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length} planta{feedingPlans.plants.filter(p => p.feedingPlans.length > 0).length !== 1 ? 's' : ''}
@@ -1727,7 +1727,7 @@ export default function CarpaDetailPage() {
                           <span className="text-xs text-zinc-500">{availablePlans.length} plan{availablePlans.length !== 1 ? 'es' : ''}</span>
                         </div>
                         <div className="relative group">
-                          {/* BotÃ³n izquierda */}
+                          {/* Botón izquierda */}
                           <button
                             onClick={(e) => {
                               const container = e.currentTarget.nextElementSibling as HTMLElement;
@@ -1787,7 +1787,7 @@ export default function CarpaDetailPage() {
                             })}
                           </div>
 
-                          {/* BotÃ³n derecha */}
+                          {/* Botón derecha */}
                           <button
                             onClick={(e) => {
                               const container = e.currentTarget.previousElementSibling as HTMLElement;
@@ -1806,7 +1806,7 @@ export default function CarpaDetailPage() {
                     {(!feedingPlans || !feedingPlans.plants.some(p => p.feedingPlans.length > 0)) && availablePlans.length === 0 && (
                       <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
                         <Beaker className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                        <p className="text-zinc-400">No hay planes de alimentaciÃ³n</p>
+                        <p className="text-zinc-400">No hay planes de alimentación</p>
                         <p className="text-xs text-zinc-500 mt-1">
                           Importa un plan para comenzar
                         </p>
@@ -1826,7 +1826,7 @@ export default function CarpaDetailPage() {
           </motion.section>
         )}
 
-        {/* Planes de PrevenciÃ³n */}
+        {/* Planes de Prevención */}
         {isSectionEnabled('preventionPlans') && (
           <motion.section
             style={{ order: sortedLayoutSections.find(s => s.key === 'preventionPlans')?.order ?? 7 }}
@@ -1841,7 +1841,7 @@ export default function CarpaDetailPage() {
             >
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-orange-500" />
-                <h2 className="text-xl font-semibold text-white">Plan de PrevenciÃ³n</h2>
+                <h2 className="text-xl font-semibold text-white">Plan de Prevención</h2>
                 {!preventionPlanExpanded && preventionPlans?.plants.some(p => p.preventionPlans.length > 0) && (
                   <span className="text-xs px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full ml-2">
                     {preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length} planta{preventionPlans.plants.filter(p => p.preventionPlans.length > 0).length !== 1 ? 's' : ''}
@@ -1924,7 +1924,7 @@ export default function CarpaDetailPage() {
                           <span className="text-xs text-zinc-500">{availablePreventionPlans.length} plan{availablePreventionPlans.length !== 1 ? 'es' : ''}</span>
                         </div>
                         <div className="relative group">
-                          {/* BotÃ³n izquierda */}
+                          {/* Botón izquierda */}
                           <button
                             onClick={(e) => {
                               const container = e.currentTarget.nextElementSibling as HTMLElement;
@@ -1949,7 +1949,7 @@ export default function CarpaDetailPage() {
                                   <div className="flex items-center justify-between mb-3">
                                     <div className="min-w-0 flex-1">
                                       <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
-                                      <p className="text-xs text-orange-400">{plan.stage} â€¢ {plan.totalDays} dÃ­as</p>
+                                      <p className="text-xs text-orange-400">{plan.stage} â€¢ {plan.totalDays} días</p>
                                     </div>
                                     <button
                                       onClick={() => setPreventionPlanToDelete(plan)}
@@ -1983,7 +1983,7 @@ export default function CarpaDetailPage() {
                             })}
                           </div>
 
-                          {/* BotÃ³n derecha */}
+                          {/* Botón derecha */}
                           <button
                             onClick={(e) => {
                               const container = e.currentTarget.previousElementSibling as HTMLElement;
@@ -2002,7 +2002,7 @@ export default function CarpaDetailPage() {
                     {(!preventionPlans || !preventionPlans.plants.some(p => p.preventionPlans.length > 0)) && availablePreventionPlans.length === 0 && (
                       <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
                         <Shield className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                        <p className="text-zinc-400">No hay planes de prevenciÃ³n</p>
+                        <p className="text-zinc-400">No hay planes de prevención</p>
                         <p className="text-xs text-zinc-500 mt-1">
                           Importa un plan para proteger tus plantas de hongos y plagas
                         </p>
@@ -2075,7 +2075,7 @@ export default function CarpaDetailPage() {
                                 plants: updatedPlants || []
                               });
                             }
-                            // Recargar los planes de alimentaciÃ³n porque pueden cambiar con la etapa
+                            // Recargar los planes de alimentación porque pueden cambiar con la etapa
                             loadFeedingPlans();
                             loadPreventionPlans();
                           }}
@@ -2083,7 +2083,7 @@ export default function CarpaDetailPage() {
                       ))}
                     </div>
 
-                    {/* Grilla de Ãºltimos 3 eventos de la planta seleccionada */}
+                    {/* Grilla de últimos 3 eventos de la planta seleccionada */}
                     {selectedPlantForEvents && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
@@ -2095,7 +2095,7 @@ export default function CarpaDetailPage() {
                           <div className="flex items-center gap-2">
                             <Activity className="w-4 h-4 text-cultivo-green-400" />
                             <h4 className="text-sm font-medium text-white">
-                              Ãšltimos eventos de <span className="text-cultivo-green-400">{selectedPlantForEvents.tagCode}</span>
+                              Últimos eventos de <span className="text-cultivo-green-400">{selectedPlantForEvents.tagCode}</span>
                             </h4>
                           </div>
                           <Link
@@ -2189,7 +2189,7 @@ export default function CarpaDetailPage() {
                                       <div className="flex flex-wrap gap-2">
                                         {'temperature' in event.data && event.data.temperature != null && (
                                           <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-300 rounded">
-                                            {String(event.data.temperature)}Â°C
+                                            {String(event.data.temperature)}°C
                                           </span>
                                         )}
                                         {'humidity' in event.data && event.data.humidity != null && (
@@ -2244,7 +2244,7 @@ export default function CarpaDetailPage() {
                                         </div>
                                       );
                                     })()}
-                                    {/* AnÃ¡lisis IA */}
+                                    {/* Análisis IA */}
                                     {event.type === 'AI_ANALYSIS' && event.data && (() => {
                                       const data = event.data as {
                                         analysisType?: string;
@@ -2295,7 +2295,7 @@ export default function CarpaDetailPage() {
                                                   <li key={idx} className="truncate">{rec}</li>
                                                 ))}
                                                 {data.recommendations.length > 2 && (
-                                                  <li className="text-cyan-300">+{data.recommendations.length - 2} mÃ¡s...</li>
+                                                  <li className="text-cyan-300">+{data.recommendations.length - 2} más...</li>
                                                 )}
                                               </ul>
                                             </div>
@@ -2319,9 +2319,9 @@ export default function CarpaDetailPage() {
                 ) : (
                   <div className="bg-zinc-800/50 rounded-xl p-8 text-center border border-zinc-700/50">
                     <Leaf className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                    <p className="text-zinc-400">No hay plantas registradas en esta secciÃ³n</p>
+                    <p className="text-zinc-400">No hay plantas registradas en esta sección</p>
                     <p className="text-xs text-zinc-500 mt-1">
-                      Agrega plantas desde la pÃ¡gina de Ciclos
+                      Agrega plantas desde la página de Ciclos
                     </p>
                   </div>
                 )}
@@ -2339,7 +2339,7 @@ export default function CarpaDetailPage() {
           sectionId={sectionId}
           availablePlants={section?.plants || []}
           feedingPlanInfo={(() => {
-            // Buscar el plan de alimentaciÃ³n de la planta seleccionada
+            // Buscar el plan de alimentación de la planta seleccionada
             const plantWithPlan = feedingPlans?.plants.find(p => p.id === selectedPlantForEvent.id);
             const activePlan = plantWithPlan?.feedingPlans[0]; // Tomar el primer plan activo
             if (activePlan?.currentWeekData) {
@@ -2356,7 +2356,7 @@ export default function CarpaDetailPage() {
             return undefined;
           })()}
           preventionPlanInfo={(() => {
-            // Buscar el plan de prevenciÃ³n de la planta seleccionada
+            // Buscar el plan de prevención de la planta seleccionada
             const plantWithPlan = preventionPlans?.plants.find(p => p.id === selectedPlantForEvent.id);
             const activePlan = plantWithPlan?.preventionPlans[0]; // Tomar el primer plan activo
             if (activePlan?.currentApplication) {
@@ -2376,12 +2376,12 @@ export default function CarpaDetailPage() {
           })()}
           onClose={() => setSelectedPlantForEvent(null)}
           onCreated={async (newEvent) => {
-            // Agregar el evento al historial de la planta si estÃ¡ seleccionada
+            // Agregar el evento al historial de la planta si está seleccionada
             if (selectedPlantForEvents && newEvent.plantId === selectedPlantForEvents.id) {
               setSelectedPlantEvents(prev => [newEvent, ...prev].slice(0, 3));
             }
             
-            // Si es un evento de cambio de maceta, refrescar la informaciÃ³n de la secciÃ³n para actualizar potSizeFinal
+            // Si es un evento de cambio de maceta, refrescar la información de la sección para actualizar potSizeFinal
             if (newEvent.type === 'CAMBIO_MACETA') {
               await loadSection();
             }
@@ -2391,7 +2391,7 @@ export default function CarpaDetailPage() {
         />
       )}
 
-      {/* Modal de importar plan de alimentaciÃ³n */}
+      {/* Modal de importar plan de alimentación */}
       {showUploadModal && (
         <FeedingPlanUpload
           onClose={() => setShowUploadModal(false)}
@@ -2403,7 +2403,7 @@ export default function CarpaDetailPage() {
         />
       )}
 
-      {/* Modal de importar plan de prevenciÃ³n */}
+      {/* Modal de importar plan de prevención */}
       {showPreventionUploadModal && (
         <PreventionPlanUpload
           onClose={() => setShowPreventionUploadModal(false)}
@@ -2415,7 +2415,7 @@ export default function CarpaDetailPage() {
         />
       )}
 
-      {/* Modal de confirmar eliminaciÃ³n de plan */}
+      {/* Modal de confirmar eliminación de plan */}
       {planToDelete && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
@@ -2435,12 +2435,12 @@ export default function CarpaDetailPage() {
             <div className="p-4 space-y-4">
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
                 <p className="text-red-400 text-sm">
-                  Â¿EstÃ¡s seguro de eliminar el plan <strong>{planToDelete.name}</strong>?
+                  ¿Estás seguro de eliminar el plan <strong>{planToDelete.name}</strong>?
                 </p>
                 {planToDelete._count.plants > 0 && (
                   <p className="text-red-300 text-xs mt-2">
-                    âš ï¸ Este plan estÃ¡ asignado a {planToDelete._count.plants} planta(s).
-                    No podrÃ¡s eliminarlo hasta desasignarlo.
+                    âš ï¸ Este plan está asignado a {planToDelete._count.plants} planta(s).
+                    No podrás eliminarlo hasta desasignarlo.
                   </p>
                 )}
               </div>
@@ -2479,7 +2479,7 @@ export default function CarpaDetailPage() {
             className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
           >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-white">Asignar Plan de AlimentaciÃ³n</h3>
+              <h3 className="text-lg font-semibold text-white">Asignar Plan de Alimentación</h3>
               <button
                 onClick={() => setShowAssignModal(null)}
                 className="p-1 hover:bg-zinc-800 rounded-lg transition-colors"
@@ -2535,7 +2535,7 @@ export default function CarpaDetailPage() {
                       />
                       <div className="flex-1">
                         <p className="text-white font-medium text-sm">{plant.tagCode}</p>
-                        <p className="text-xs text-zinc-400">{plant.strain?.name || 'Sin genÃ©tica'}</p>
+                        <p className="text-xs text-zinc-400">{plant.strain?.name || 'Sin genética'}</p>
                       </div>
                     </label>
                   ))}
@@ -2548,7 +2548,7 @@ export default function CarpaDetailPage() {
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">
                   <Calendar className="w-4 h-4 inline mr-2" />
-                  Â¿CuÃ¡ndo entraron en etapa {showAssignModal.plan.stage}?
+                  ¿Cuándo entraron en etapa {showAssignModal.plan.stage}?
                 </label>
                 <input
                   type="date"
@@ -2557,7 +2557,7 @@ export default function CarpaDetailPage() {
                   className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-cyan-600"
                 />
                 <p className="text-xs text-zinc-500 mt-1">
-                  Esto determina en quÃ© semana del plan estÃ¡n las plantas
+                  Esto determina en qué semana del plan están las plantas
                 </p>
               </div>
 
@@ -2607,7 +2607,7 @@ export default function CarpaDetailPage() {
         </div>
       )}
 
-      {/* Modal de confirmar eliminaciÃ³n de plan de prevenciÃ³n */}
+      {/* Modal de confirmar eliminación de plan de prevención */}
       {preventionPlanToDelete && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
@@ -2616,7 +2616,7 @@ export default function CarpaDetailPage() {
             className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-md"
           >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-white">Eliminar Plan de PrevenciÃ³n</h3>
+              <h3 className="text-lg font-semibold text-white">Eliminar Plan de Prevención</h3>
               <button
                 onClick={() => setPreventionPlanToDelete(null)}
                 className="p-1 hover:bg-zinc-800 rounded-lg transition-colors"
@@ -2627,12 +2627,12 @@ export default function CarpaDetailPage() {
             <div className="p-4 space-y-4">
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
                 <p className="text-red-400 text-sm">
-                  Â¿EstÃ¡s seguro de eliminar el plan <strong>{preventionPlanToDelete.name}</strong>?
+                  ¿Estás seguro de eliminar el plan <strong>{preventionPlanToDelete.name}</strong>?
                 </p>
                 {preventionPlanToDelete._count.plants > 0 && (
                   <p className="text-red-300 text-xs mt-2">
-                    âš ï¸ Este plan estÃ¡ asignado a {preventionPlanToDelete._count.plants} planta(s).
-                    No podrÃ¡s eliminarlo hasta desasignarlo.
+                    âš ï¸ Este plan está asignado a {preventionPlanToDelete._count.plants} planta(s).
+                    No podrás eliminarlo hasta desasignarlo.
                   </p>
                 )}
               </div>
@@ -2662,7 +2662,7 @@ export default function CarpaDetailPage() {
         </div>
       )}
 
-      {/* Modal de asignar plan de prevenciÃ³n a plantas */}
+      {/* Modal de asignar plan de prevención a plantas */}
       {showPreventionAssignModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
@@ -2671,7 +2671,7 @@ export default function CarpaDetailPage() {
             className="bg-zinc-900 rounded-xl border border-zinc-700 w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
           >
             <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-white">Asignar Plan de PrevenciÃ³n</h3>
+              <h3 className="text-lg font-semibold text-white">Asignar Plan de Prevención</h3>
               <button
                 onClick={() => setShowPreventionAssignModal(null)}
                 className="p-1 hover:bg-zinc-800 rounded-lg transition-colors"
@@ -2683,7 +2683,7 @@ export default function CarpaDetailPage() {
               <div className="bg-zinc-800/50 rounded-lg p-3">
                 <p className="text-sm text-zinc-400">Plan</p>
                 <p className="text-white font-medium">{showPreventionAssignModal.plan.name}</p>
-                <p className="text-xs text-orange-400">{showPreventionAssignModal.plan.stage} â€¢ {showPreventionAssignModal.plan.totalDays} dÃ­as</p>
+                <p className="text-xs text-orange-400">{showPreventionAssignModal.plan.stage} â€¢ {showPreventionAssignModal.plan.totalDays} días</p>
               </div>
 
               {/* Selector de plantas */}
@@ -2727,7 +2727,7 @@ export default function CarpaDetailPage() {
                       />
                       <div className="flex-1">
                         <p className="text-white font-medium text-sm">{plant.tagCode}</p>
-                        <p className="text-xs text-zinc-400">{plant.strain?.name || 'Sin genÃ©tica'}</p>
+                        <p className="text-xs text-zinc-400">{plant.strain?.name || 'Sin genética'}</p>
                       </div>
                     </label>
                   ))}
@@ -2740,7 +2740,7 @@ export default function CarpaDetailPage() {
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">
                   <Calendar className="w-4 h-4 inline mr-2" />
-                  Â¿CuÃ¡ndo comenzÃ³ el plan de prevenciÃ³n?
+                  ¿Cuándo comenzó el plan de prevención?
                 </label>
                 <input
                   type="date"
@@ -2749,7 +2749,7 @@ export default function CarpaDetailPage() {
                   className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-orange-600"
                 />
                 <p className="text-xs text-zinc-500 mt-1">
-                  Esto determina en quÃ© dÃ­a del ciclo estÃ¡n las plantas
+                  Esto determina en qué día del ciclo están las plantas
                 </p>
               </div>
 
@@ -2777,7 +2777,7 @@ export default function CarpaDetailPage() {
                       setShowPreventionAssignModal(null);
                       toast.success('Plan asignado correctamente');
                     } catch (err) {
-                      console.error('Error asignando plan de prevenciÃ³n:', err);
+                      console.error('Error asignando plan de prevención:', err);
                       toast.error(err instanceof Error ? err.message : 'Error al asignar el plan');
                     } finally {
                       setAssigningPreventionPlan(false);
@@ -2799,7 +2799,7 @@ export default function CarpaDetailPage() {
         </div>
       )}
 
-      {/* Modal de configuraciÃ³n de layout */}
+      {/* Modal de configuración de layout */}
       {showLayoutEditor && (
         <SectionLayoutEditor
           sectionId={sectionId}

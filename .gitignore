@@ -1,0 +1,35 @@
+# Secretos y configuración local
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Dependencias
+node_modules/
+*/node_modules/
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Runtime
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+
+# Agentes / instrucciones locales
+.agent/
+.agents/
+.cursor/
+.cursorrules
+GEMINI.md
