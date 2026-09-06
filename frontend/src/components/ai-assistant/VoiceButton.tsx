@@ -473,7 +473,7 @@ export function VoiceButton({
         className={`p-2 rounded-lg transition-all duration-200 ${
           isListening 
             ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50' 
-            : 'text-gray-400 hover:text-white hover:bg-cultivo-dark'
+            : 'text-gray-400 hover:text-white hover:bg-surface'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
         title={isListening ? 'Detener grabación' : 'Hablar con el asistente'}
       >
@@ -532,7 +532,7 @@ export function VoiceButton({
 
       {/* Indicador de transcripción en tiempo real */}
       {(interimTranscript || finalTranscript) && isListening && (
-        <div className="absolute bottom-full mb-2 left-0 right-0 bg-cultivo-dark rounded-lg px-3 py-2 text-sm text-gray-300 shadow-lg border border-cultivo-darker min-w-[200px]">
+        <div className="absolute bottom-full mb-2 left-0 right-0 bg-surface rounded-lg px-3 py-2 text-sm text-gray-300 shadow-lg border border-edge min-w-[200px]">
           <div className="flex items-start gap-2">
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mt-1.5 flex-shrink-0" />
             <div className="flex-1">

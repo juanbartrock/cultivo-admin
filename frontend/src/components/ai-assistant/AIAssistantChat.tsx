@@ -64,11 +64,11 @@ export function AIAssistantChat() {
 
   return (
     <div 
-      className="fixed inset-y-0 right-0 w-full sm:w-96 md:w-[420px] bg-cultivo-darker shadow-2xl z-50 flex flex-col"
+      className="fixed inset-y-0 right-0 w-full sm:w-96 md:w-[420px] bg-bg shadow-2xl z-50 flex flex-col"
       id="ai-assistant-container"
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-4 py-3 flex items-center justify-between">
+      <div className="bg-surface-3 border-b border-edge px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ export function AIAssistantChat() {
       </div>
 
       {/* Selector de contexto */}
-      <div className="bg-cultivo-dark px-4 py-2 border-b border-cultivo-darker">
+      <div className="bg-surface px-4 py-2 border-b border-edge">
         <div className="relative">
           <button
             onClick={() => setShowContextMenu(!showContextMenu)}
@@ -134,7 +134,7 @@ export function AIAssistantChat() {
           </button>
 
           {showContextMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-cultivo-darker rounded-lg shadow-lg border border-cultivo-dark py-1 min-w-[150px] z-10">
+            <div className="absolute top-full left-0 mt-1 bg-bg rounded-lg shadow-lg border border-edge py-1 min-w-[150px] z-10">
               {(['GENERAL', 'CYCLE', 'SECTION', 'PLANT'] as AIContextType[]).map((type) => (
                 <button
                   key={type}
@@ -142,7 +142,7 @@ export function AIAssistantChat() {
                     setContext(type);
                     setShowContextMenu(false);
                   }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-cultivo-dark transition-colors ${
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-surface transition-colors ${
                     contextType === type ? 'text-emerald-400' : 'text-gray-300'
                   }`}
                 >
@@ -156,8 +156,8 @@ export function AIAssistantChat() {
 
       {/* Panel de historial */}
       {showHistory && (
-        <div className="bg-cultivo-dark border-b border-cultivo-darker max-h-48 overflow-y-auto">
-          <div className="px-4 py-2 text-xs text-gray-400 border-b border-cultivo-darker">
+        <div className="bg-surface border-b border-edge max-h-48 overflow-y-auto">
+          <div className="px-4 py-2 text-xs text-gray-400 border-b border-edge">
             Conversaciones recientes
           </div>
           {conversations.length === 0 ? (
@@ -165,11 +165,11 @@ export function AIAssistantChat() {
               No hay conversaciones anteriores
             </div>
           ) : (
-            <div className="divide-y divide-cultivo-darker">
+            <div className="divide-y divide-edge">
               {conversations.map((conv) => (
                 <div
                   key={conv.id}
-                  className={`px-4 py-2 flex items-center justify-between hover:bg-cultivo-darker transition-colors cursor-pointer ${
+                  className={`px-4 py-2 flex items-center justify-between hover:bg-bg transition-colors cursor-pointer ${
                     activeConversation?.id === conv.id ? 'bg-emerald-600/10' : ''
                   }`}
                   onClick={() => {
@@ -207,7 +207,7 @@ export function AIAssistantChat() {
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-            <div className="w-16 h-16 bg-cultivo-dark rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
@@ -225,7 +225,7 @@ export function AIAssistantChat() {
             ))}
             {isLoading && (
               <div className="flex justify-start mb-3">
-                <div className="bg-cultivo-dark rounded-2xl rounded-bl-sm px-4 py-3">
+                <div className="bg-surface rounded-2xl rounded-bl-sm px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

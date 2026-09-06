@@ -60,8 +60,8 @@ export default function RegisterPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-cultivo-darker flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cultivo-green-500 animate-spin" />
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
       </div>
     );
   }
@@ -69,7 +69,7 @@ export default function RegisterPage() {
   // Si Supabase no está configurado, mostrar mensaje
   if (!supabaseConfigured) {
     return (
-      <div className="min-h-screen bg-cultivo-darker flex items-center justify-center p-4">
+      <div className="min-h-screen bg-bg flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -78,14 +78,14 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/20 mb-4">
             <Info className="w-8 h-8 text-yellow-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Registro no disponible</h1>
-          <p className="text-zinc-400 mb-6">
+          <h1 className="text-2xl font-bold text-fg mb-2">Registro no disponible</h1>
+          <p className="text-fg-muted mb-6">
             El sistema de registro de usuarios requiere configurar Supabase Auth. 
             Contacta al administrador para obtener una cuenta.
           </p>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white font-semibold rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover text-fg font-semibold rounded-lg transition-colors"
           >
             Ir a iniciar sesión
           </Link>
@@ -96,22 +96,22 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-cultivo-darker flex items-center justify-center p-4">
+      <div className="min-h-screen bg-bg flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-md text-center"
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cultivo-green-600/20 mb-4">
-            <CheckCircle className="w-8 h-8 text-cultivo-green-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-soft mb-4">
+            <CheckCircle className="w-8 h-8 text-accent" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">¡Registro exitoso!</h1>
-          <p className="text-zinc-400 mb-6">
+          <h1 className="text-2xl font-bold text-fg mb-2">¡Registro exitoso!</h1>
+          <p className="text-fg-muted mb-6">
             Te hemos enviado un email de confirmación. Por favor verifica tu correo para activar tu cuenta.
           </p>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white font-semibold rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover text-fg font-semibold rounded-lg transition-colors"
           >
             Ir a iniciar sesión
           </Link>
@@ -121,7 +121,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-cultivo-darker flex items-center justify-center p-4">
+    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -129,11 +129,11 @@ export default function RegisterPage() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-cultivo-green-600 to-cultivo-green-800 mb-4">
-            <Leaf className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent mb-4">
+            <Leaf className="w-8 h-8 text-accent-fg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Crear cuenta</h1>
-          <p className="text-zinc-400 mt-1">Comienza a gestionar tu cultivo</p>
+          <h1 className="font-display text-2xl font-semibold text-fg">Crear cuenta</h1>
+          <p className="text-sm text-fg-muted mt-1">Comienza a gestionar tu cultivo</p>
         </div>
 
         {/* Formulario */}
@@ -142,7 +142,7 @@ export default function RegisterPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400"
+              className="flex items-center gap-2 p-3 bg-danger/10 border border-danger/30 rounded-md text-danger"
             >
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
@@ -150,45 +150,45 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">
+            <label className="block text-sm font-medium text-fg-muted mb-1">
               Nombre
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-fg-faint" />
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Tu nombre"
                 required
-                className="w-full pl-10 pr-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
+                className="w-full pl-10 pr-4 py-3 bg-surface-2 border border-edge rounded-md text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">
+            <label className="block text-sm font-medium text-fg-muted mb-1">
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-fg-faint" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
                 required
-                className="w-full pl-10 pr-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
+                className="w-full pl-10 pr-4 py-3 bg-surface-2 border border-edge rounded-md text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">
+            <label className="block text-sm font-medium text-fg-muted mb-1">
               Contraseña
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-fg-faint" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -196,12 +196,12 @@ export default function RegisterPage() {
                 placeholder="Mínimo 6 caracteres"
                 required
                 minLength={6}
-                className="w-full pl-10 pr-12 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
+                className="w-full pl-10 pr-12 py-3 bg-surface-2 border border-edge rounded-md text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-faint hover:text-fg"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -213,18 +213,18 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">
+            <label className="block text-sm font-medium text-fg-muted mb-1">
               Confirmar contraseña
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-fg-faint" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repite tu contraseña"
                 required
-                className="w-full pl-10 pr-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
+                className="w-full pl-10 pr-4 py-3 bg-surface-2 border border-edge rounded-md text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
@@ -232,7 +232,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-accent hover:bg-accent-hover disabled:bg-surface-2 disabled:text-fg-faint text-accent-fg font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -246,32 +246,32 @@ export default function RegisterPage() {
         </form>
 
         {/* Link a login */}
-        <p className="text-center text-zinc-400 mt-6">
+        <p className="text-center text-sm text-fg-muted mt-6">
           ¿Ya tienes cuenta?{' '}
           <Link
             href="/login"
-            className="text-cultivo-green-400 hover:text-cultivo-green-300 font-medium"
+            className="text-accent hover:text-accent-hover font-medium"
           >
             Inicia sesión
           </Link>
         </p>
 
         {/* Info de plan */}
-        <div className="mt-6 p-4 bg-zinc-800/30 rounded-lg border border-zinc-700/50">
-          <p className="text-sm text-zinc-400 text-center">
-            Al registrarte obtienes el plan <span className="text-cultivo-green-400 font-medium">Básico</span> gratis:
+        <div className="mt-6 p-4 bg-surface rounded-md border border-edge">
+          <p className="text-sm text-fg-muted text-center">
+            Al registrarte obtienes el plan <span className="text-accent font-medium">Básico</span> gratis:
           </p>
-          <ul className="mt-2 text-sm text-zinc-500 space-y-1">
+          <ul className="mt-2 text-sm text-fg-faint space-y-1">
             <li className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-cultivo-green-500" />
+              <CheckCircle className="w-4 h-4 text-accent" />
               1 sala de cultivo
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-cultivo-green-500" />
+              <CheckCircle className="w-4 h-4 text-accent" />
               Seguimiento de ciclos y plantas
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-cultivo-green-500" />
+              <CheckCircle className="w-4 h-4 text-accent" />
               Hasta 3 dispositivos IoT
             </li>
           </ul>

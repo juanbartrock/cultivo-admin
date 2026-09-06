@@ -28,6 +28,13 @@ import { Notification, NotificationType, NotificationPriority } from '@/types';
 import { useToast } from '@/contexts/ToastContext';
 import { PageHeader } from '@/components/shell';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Configuración de iconos y colores por tipo
 const typeConfig: Record<NotificationType, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
@@ -397,30 +404,40 @@ export default function NotificacionesPage() {
                     {/* Filter by Type */}
                     <div>
                       <label className="text-sm text-zinc-400 mb-2 block">Tipo</label>
-                      <select
+                      <Select
                         value={filterType}
-                        onChange={(e) => setFilterType(e.target.value as NotificationType | 'ALL')}
-                        className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                        onValueChange={(value) => setFilterType(value as NotificationType | 'ALL')}
                       >
-                        <option value="ALL">Todos los tipos</option>
-                        {Object.entries(typeConfig).map(([type, config]) => (
-                          <option key={type} value={type}>{config.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Todos los tipos</SelectItem>
+                          {Object.entries(typeConfig).map(([type, config]) => (
+                            <SelectItem key={type} value={type}>
+                              {config.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Filter by Read Status */}
                     <div>
                       <label className="text-sm text-zinc-400 mb-2 block">Estado</label>
-                      <select
+                      <Select
                         value={filterRead}
-                        onChange={(e) => setFilterRead(e.target.value as 'ALL' | 'UNREAD' | 'READ')}
-                        className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                        onValueChange={(value) => setFilterRead(value as 'ALL' | 'UNREAD' | 'READ')}
                       >
-                        <option value="ALL">Todas</option>
-                        <option value="UNREAD">Sin leer</option>
-                        <option value="READ">Leídas</option>
-                      </select>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Todas</SelectItem>
+                          <SelectItem value="UNREAD">Sin leer</SelectItem>
+                          <SelectItem value="READ">Leídas</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 

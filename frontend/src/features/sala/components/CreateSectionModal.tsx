@@ -44,37 +44,37 @@ export function CreateSectionModal({ roomId, isOpen, onClose, onCreated }: Creat
     <Modal isOpen={isOpen} onClose={onClose} title="Nueva Unidad de Cultivo" maxWidthClassName="max-w-md">
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-300">
-            Nombre <span className="text-red-400">*</span>
+          <label className="mb-1 block text-sm font-medium text-fg-muted">
+            Nombre <span className="text-danger">*</span>
           </label>
           <input
             type="text"
             value={form.name}
             onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
             placeholder="Ej: Carpa Floración, Invernadero..."
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-white placeholder:text-zinc-500 focus:border-cultivo-green-600 focus:outline-none"
+            className="w-full rounded-md border border-edge bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:border-accent focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-300">Dimensiones (opcional)</label>
+          <label className="mb-1 block text-sm font-medium text-fg-muted">Dimensiones (opcional)</label>
           <input
             type="text"
             value={form.dimensions}
             onChange={(event) => setForm((current) => ({ ...current, dimensions: event.target.value }))}
             placeholder="Ej: 120x120x200cm"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-white placeholder:text-zinc-500 focus:border-cultivo-green-600 focus:outline-none"
+            className="w-full rounded-md border border-edge bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:border-accent focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-300">Descripción (opcional)</label>
+          <label className="mb-1 block text-sm font-medium text-fg-muted">Descripción (opcional)</label>
           <textarea
             value={form.description}
             onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
             rows={2}
             placeholder="Descripción de la unidad..."
-            className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-white placeholder:text-zinc-500 focus:border-cultivo-green-600 focus:outline-none"
+            className="w-full resize-none rounded-md border border-edge bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:border-accent focus:outline-none"
           />
         </div>
       </div>

@@ -34,6 +34,13 @@ import {
 import { useToast } from '@/contexts/ToastContext';
 import { PageHeader } from '@/components/shell';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cycleService, plantService, strainService } from '@/services/growService';
 import { eventService, formatEventDate, getEventTypeInfo } from '@/services/eventService';
 import { sectionService } from '@/services/locationService';
@@ -359,16 +366,20 @@ function SeguimientosContent() {
           <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-white">Ciclos</h2>
-              <select
+              <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as CycleStatus | 'all')}
-                className="text-xs px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-white"
+                onValueChange={(value) => setStatusFilter(value as CycleStatus | 'all')}
               >
-                <option value="all">Todos</option>
-                <option value="ACTIVE">Activos</option>
-                <option value="COMPLETED">Completados</option>
-                <option value="CURED">Curados</option>
-              </select>
+                <SelectTrigger className="h-8 w-36 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="ACTIVE">Activos</SelectItem>
+                  <SelectItem value="COMPLETED">Completados</SelectItem>
+                  <SelectItem value="CURED">Curados</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {filteredCycles.length > 0 ? (

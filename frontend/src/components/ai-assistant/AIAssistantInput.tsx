@@ -107,7 +107,7 @@ export function AIAssistantInput({
   }, [contextType, contextId, loadPlantPhotos]);
 
   return (
-    <div className="border-t border-cultivo-dark bg-cultivo-darker p-3">
+    <div className="border-t border-edge bg-bg p-3">
       {/* Imágenes adjuntas */}
       {attachedImages.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
@@ -131,12 +131,12 @@ export function AIAssistantInput({
 
       {/* Opciones de imagen */}
       {showImageOptions && (
-        <div className="mb-2 bg-cultivo-dark rounded-lg p-2 space-y-2">
+        <div className="mb-2 bg-surface rounded-lg p-2 space-y-2">
           <div className="text-xs text-gray-400 mb-1">Adjuntar imagen:</div>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1 px-3 py-1.5 bg-cultivo-darker rounded-lg text-sm hover:bg-emerald-600/20 transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 bg-bg rounded-lg text-sm hover:bg-emerald-600/20 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -147,7 +147,7 @@ export function AIAssistantInput({
             <button
               onClick={handleScreenCapture}
               disabled={capturing}
-              className="flex items-center gap-1 px-3 py-1.5 bg-cultivo-darker rounded-lg text-sm hover:bg-emerald-600/20 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1 px-3 py-1.5 bg-bg rounded-lg text-sm hover:bg-emerald-600/20 transition-colors disabled:opacity-50"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -189,7 +189,7 @@ export function AIAssistantInput({
           className={`p-2 rounded-lg transition-colors ${
             showImageOptions 
               ? 'bg-emerald-600 text-white' 
-              : 'text-gray-400 hover:text-white hover:bg-cultivo-dark'
+              : 'text-gray-400 hover:text-white hover:bg-surface'
           }`}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -219,7 +219,7 @@ export function AIAssistantInput({
             placeholder="Escribe tu mensaje..."
             disabled={disabled}
             rows={1}
-            className="w-full bg-cultivo-dark rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50 max-h-32"
+            className="w-full bg-surface rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50 max-h-32"
             style={{
               minHeight: '42px',
               height: 'auto',

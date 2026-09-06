@@ -91,14 +91,14 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-cultivo-darker flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cultivo-green-500 animate-spin" />
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-cultivo-darker flex items-center justify-center p-4">
+    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -106,11 +106,11 @@ export default function LoginPage() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-cultivo-green-600 to-cultivo-green-800 mb-4">
-            <Leaf className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent mb-4">
+            <Leaf className="w-8 h-8 text-accent-fg" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Bienvenido</h1>
-          <p className="text-zinc-400 mt-1">Inicia sesión en tu cuenta</p>
+          <h1 className="font-display text-2xl font-semibold text-fg">Bienvenido</h1>
+          <p className="text-sm text-fg-muted mt-1">Inicia sesión en tu cuenta</p>
         </div>
 
         {/* Formulario */}
@@ -119,7 +119,7 @@ export default function LoginPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400"
+              className="flex items-center gap-2 p-3 bg-danger/10 border border-danger/30 rounded-md text-danger"
             >
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
@@ -127,11 +127,11 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label htmlFor="login-user" className="block text-sm font-medium text-zinc-300 mb-1">
+            <label htmlFor="login-user" className="block text-sm font-medium text-fg-muted mb-1">
               Email o usuario
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-fg-faint" />
               <input
                 id="login-user"
                 name="username"
@@ -141,17 +141,17 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com o usuario"
                 required
-                className="w-full pl-10 pr-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
+                className="w-full pl-10 pr-4 py-3 bg-surface-2 border border-edge rounded-md text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-zinc-300 mb-1">
+            <label htmlFor="login-password" className="block text-sm font-medium text-fg-muted mb-1">
               Contraseña
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-fg-faint" />
               <input
                 id="login-password"
                 name="password"
@@ -161,12 +161,12 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full pl-10 pr-12 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
+                className="w-full pl-10 pr-12 py-3 bg-surface-2 border border-edge rounded-md text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-faint hover:text-fg"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -180,7 +180,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-accent hover:bg-accent-hover disabled:bg-surface-2 disabled:text-fg-faint text-accent-fg font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -195,11 +195,11 @@ export default function LoginPage() {
 
         {/* Link a registro - solo si Supabase está configurado */}
         {supabaseConfigured && (
-          <p className="text-center text-zinc-400 mt-6">
+          <p className="text-center text-sm text-fg-muted mt-6">
             ¿No tienes cuenta?{' '}
             <Link
               href="/register"
-              className="text-cultivo-green-400 hover:text-cultivo-green-300 font-medium"
+              className="text-accent hover:text-accent-hover font-medium"
             >
               Regístrate
             </Link>

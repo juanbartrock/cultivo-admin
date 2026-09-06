@@ -133,7 +133,7 @@ export function AIAssistantMessage({ message }: AIAssistantMessageProps) {
         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isUser
             ? 'bg-emerald-600 text-white rounded-br-sm'
-            : 'bg-cultivo-dark/80 text-gray-100 rounded-bl-sm border border-white/5'
+            : 'bg-surface/80 text-gray-100 rounded-bl-sm border border-white/5'
         }`}
       >
         {/* Imágenes adjuntas */}

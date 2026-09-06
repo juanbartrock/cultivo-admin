@@ -33,6 +33,13 @@ import {
 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PageHeader } from '@/components/shell';
 import { motion, AnimatePresence } from 'framer-motion';
 import { deviceService } from '@/services/deviceService';
@@ -516,16 +523,22 @@ export default function ArtefactosPage() {
             />
           </div>
 
-          <select
+          <Select
             value={filterTipo}
-            onChange={(e) => setFilterTipo(e.target.value as DeviceType | 'ALL')}
-            className="px-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white focus:outline-none focus:border-cultivo-green-600"
+            onValueChange={(value) => setFilterTipo(value as DeviceType | 'ALL')}
           >
-            <option value="ALL">Todos los tipos</option>
-            {Object.entries(deviceTypeLabels).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full sm:w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos los tipos</SelectItem>
+              {Object.entries(deviceTypeLabels).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tabla de Dispositivos */}
