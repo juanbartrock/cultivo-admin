@@ -52,7 +52,7 @@ Funcionalidades principales:
 | Backend | NestJS + Prisma |
 | Base de datos | PostgreSQL — **Supabase/Neon (externo)** |
 | Auth | Login local contra `/api/auth/login` (JWT) + Supabase Auth cuando está configurado |
-| UI Components | Componentes propios en `frontend/src/components/ui/` (Button, Badge, Card, Modal, ConfirmDialog, Skeleton, EmptyState) + Lucide Icons. Selects y checkboxes nativos |
+| UI Components | shadcn/ui sobre Radix en `frontend/src/components/ui/` (CLI `shadcn@2.10.0`) + Lucide Icons. `Modal`, `ConfirmDialog` y `EmptyState` son propios, escritos sobre `Dialog` |
 | State | TanStack React Query v5 |
 | Animación / gráficos | framer-motion + recharts |
 | Tests frontend | Playwright (`tests/smoke.spec.ts` con backend mockeado, `tests/qa-nav.spec.ts` contra producción) |
@@ -79,7 +79,17 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
   `Dockerfile` copia `.next/standalone` y arranca con `node server.js`.
 - **Variables `NEXT_PUBLIC_*`**: se compilan en build time. `NEXT_PUBLIC_API_URL` llega como
   `ARG` del `docker-compose.yml` (`https://cultivo.ramsesvii.com/api`); cambiarla exige rebuild.
-- **shadcn/ui y Radix**: no están instalados. La UI usa componentes propios sobre Tailwind.
+- **shadcn/ui y Radix**: instalados desde la fase 1 del rediseño con la CLI `shadcn@2.10.0`
+  (`latest` arranca en Tailwind 4 y este frontend es Tailwind 3.4 + Next 14). `components.json`
+  usa estilo `default`, base `neutral` y CSS variables.
+- **Sistema de diseño**: los tokens viven en `frontend/src/app/globals.css` (`:root`, canales RGB)
+  y se exponen en `tailwind.config.ts` (`bg`, `surface*`, `edge*`, `fg*`, `accent*`, `ok`, `warn`,
+  `danger`, `info`, `offline`). El brief es `docs/rediseno-2026-09/01-direccion-visual.md` y manda
+  sobre el código existente. La paleta heredada `cultivo.*` sigue mientras queden usos en las
+  pantallas de las fases 2-4.
+- **Shell**: `frontend/src/components/shell/AppShell.tsx` se monta una sola vez en el layout raíz
+  y se aparta en `/login` y `/register`. Cada página trae su título con `PageHeader`; el ancho y
+  el padding los da el shell (nada de `max-w-7xl` por página).
 - **Socket.io**: el gateway escucha en `path: '/api/socket.io'` porque Caddy sólo enruta
   `/api/*` al backend. El cliente (`SocketContext.tsx`) usa el origin de `NEXT_PUBLIC_API_URL`
   sin el sufijo `/api` y ese mismo `path`, y exige token (`REALTIME_ALLOW_GUEST=false`).
