@@ -335,7 +335,7 @@ function PlantEventModal({
             .filter(p => p.checked)
             .map(p => ({ name: p.name, dose: `${p.dose} ${p.unit}` }));
 
-          const preventionContent = `ðŸ›¡ï¸ Mantenimiento Preventivo - ${preventionPlanInfo?.planName || 'Sin plan'}\n` +
+          const preventionContent = `🛡️ Mantenimiento Preventivo - ${preventionPlanInfo?.planName || 'Sin plan'}\n` +
             `Día ${preventionPlanInfo?.currentDay || 0}\n` +
             `Tipo: ${preventionPlanInfo?.applicationData?.applicationType || 'Preventivo'}\n` +
             `Objetivo: ${preventionPlanInfo?.applicationData?.target || 'General'}\n` +
@@ -1753,7 +1753,7 @@ export default function CarpaDetailPage() {
                                   <div className="flex items-center justify-between mb-3">
                                     <div className="min-w-0 flex-1">
                                       <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
-                                      <p className="text-xs text-cyan-400">{plan.stage} â€¢ {plan.weeks.length} semanas</p>
+                                      <p className="text-xs text-cyan-400">{plan.stage} • {plan.weeks.length} semanas</p>
                                     </div>
                                     <button
                                       onClick={() => setPlanToDelete(plan)}
@@ -1949,7 +1949,7 @@ export default function CarpaDetailPage() {
                                   <div className="flex items-center justify-between mb-3">
                                     <div className="min-w-0 flex-1">
                                       <h4 className="font-medium text-white truncate" title={plan.name}>{plan.name}</h4>
-                                      <p className="text-xs text-orange-400">{plan.stage} â€¢ {plan.totalDays} días</p>
+                                      <p className="text-xs text-orange-400">{plan.stage} • {plan.totalDays} días</p>
                                     </div>
                                     <button
                                       onClick={() => setPreventionPlanToDelete(plan)}
@@ -2102,7 +2102,7 @@ export default function CarpaDetailPage() {
                             href={`/seguimientos?plant=${selectedPlantForEvents.id}`}
                             className="text-xs text-zinc-400 hover:text-cultivo-green-400 transition-colors"
                           >
-                            Ver historial completo â†’
+                            Ver historial completo →
                           </Link>
                         </div>
 
@@ -2235,7 +2235,7 @@ export default function CarpaDetailPage() {
                                               {data.previousPotSize}
                                             </span>
                                           )}
-                                          <span className="text-zinc-500">â†’</span>
+                                          <span className="text-zinc-500">→</span>
                                           {data.newPotSize && (
                                             <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-300 rounded">
                                               {data.newPotSize}
@@ -2279,7 +2279,7 @@ export default function CarpaDetailPage() {
                                           )}
                                           {data.urgentIssues && data.urgentIssues.length > 0 && (
                                             <div className="mt-1.5 p-1.5 bg-red-500/10 border border-red-500/30 rounded">
-                                              <p className="text-[10px] text-red-300 font-medium">âš ï¸ Problemas urgentes:</p>
+                                              <p className="text-[10px] text-red-300 font-medium">⚠️ Problemas urgentes:</p>
                                               <ul className="text-[10px] text-red-300/80 list-disc list-inside">
                                                 {data.urgentIssues.slice(0, 2).map((issue, idx) => (
                                                   <li key={idx}>{issue}</li>
@@ -2439,7 +2439,7 @@ export default function CarpaDetailPage() {
                 </p>
                 {planToDelete._count.plants > 0 && (
                   <p className="text-red-300 text-xs mt-2">
-                    âš ï¸ Este plan está asignado a {planToDelete._count.plants} planta(s).
+                    ⚠️ Este plan está asignado a {planToDelete._count.plants} planta(s).
                     No podrás eliminarlo hasta desasignarlo.
                   </p>
                 )}
@@ -2491,7 +2491,7 @@ export default function CarpaDetailPage() {
               <div className="bg-zinc-800/50 rounded-lg p-3">
                 <p className="text-sm text-zinc-400">Plan</p>
                 <p className="text-white font-medium">{showAssignModal.plan.name}</p>
-                <p className="text-xs text-cyan-400">{showAssignModal.plan.stage} â€¢ {showAssignModal.plan.weeks.length} semanas</p>
+                <p className="text-xs text-cyan-400">{showAssignModal.plan.stage} • {showAssignModal.plan.weeks.length} semanas</p>
               </div>
 
               {/* Selector de plantas */}
@@ -2631,7 +2631,7 @@ export default function CarpaDetailPage() {
                 </p>
                 {preventionPlanToDelete._count.plants > 0 && (
                   <p className="text-red-300 text-xs mt-2">
-                    âš ï¸ Este plan está asignado a {preventionPlanToDelete._count.plants} planta(s).
+                    ⚠️ Este plan está asignado a {preventionPlanToDelete._count.plants} planta(s).
                     No podrás eliminarlo hasta desasignarlo.
                   </p>
                 )}
@@ -2683,7 +2683,7 @@ export default function CarpaDetailPage() {
               <div className="bg-zinc-800/50 rounded-lg p-3">
                 <p className="text-sm text-zinc-400">Plan</p>
                 <p className="text-white font-medium">{showPreventionAssignModal.plan.name}</p>
-                <p className="text-xs text-orange-400">{showPreventionAssignModal.plan.stage} â€¢ {showPreventionAssignModal.plan.totalDays} días</p>
+                <p className="text-xs text-orange-400">{showPreventionAssignModal.plan.stage} • {showPreventionAssignModal.plan.totalDays} días</p>
               </div>
 
               {/* Selector de plantas */}

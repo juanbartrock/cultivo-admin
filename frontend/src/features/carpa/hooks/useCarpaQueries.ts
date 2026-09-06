@@ -1,4 +1,4 @@
-﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@/services/eventService';
 import { feedingPlanService } from '@/services/feedingPlanService';
 import { sectionService } from '@/services/locationService';

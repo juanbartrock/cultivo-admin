@@ -1,4 +1,4 @@
-﻿export const salaKeys = {
+export const salaKeys = {
   all: ['sala'] as const,
   rooms: () => [...salaKeys.all, 'rooms'] as const,
   room: (roomId: string) => [...salaKeys.rooms(), roomId] as const,

@@ -1,1 +1,1 @@
-﻿export { default } from '@/features/seguimientos/screens/SeguimientosPage';
+export { default } from '@/features/seguimientos/screens/SeguimientosPage';

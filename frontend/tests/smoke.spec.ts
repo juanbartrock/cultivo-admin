@@ -1,4 +1,4 @@
-﻿import { Page, test, expect } from '@playwright/test';
+import { Page, test, expect } from '@playwright/test';
 
 const roomId = 'room-1';
 const sectionId = 'section-1';

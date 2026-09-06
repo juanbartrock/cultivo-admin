@@ -1,4 +1,4 @@
-﻿export const automatizacionesKeys = {
+export const automatizacionesKeys = {
   all: ['automatizaciones'] as const,
   list: (sectionId?: string) => [...automatizacionesKeys.all, 'list', sectionId ?? 'all'] as const,
   detail: (automationId: string) => [...automatizacionesKeys.all, 'detail', automationId] as const,

@@ -1,4 +1,4 @@
-﻿import CarpaDetailPageScreen from '@/features/carpa/screens/CarpaDetailPage';
+import CarpaDetailPageScreen from '@/features/carpa/screens/CarpaDetailPage';
 import { uiFlags } from '@/lib/featureFlags';
 
 export default function CarpaDetailPage() {

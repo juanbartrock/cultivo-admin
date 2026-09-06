@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
 import { Device, Room } from '@/types';

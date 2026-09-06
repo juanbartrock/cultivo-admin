@@ -137,7 +137,7 @@ export class EventsService {
   ) {
     // Validar que el archivo existe y tiene datos
     if (!file || !file.buffer) {
-      throw new BadRequestException('No se recibiÃ³ el archivo de imagen');
+      throw new BadRequestException('No se recibió el archivo de imagen');
     }
 
     await this.validateEventTargets(data);
@@ -151,8 +151,8 @@ export class EventsService {
         photoData = await this.storageService.uploadFile(file, 'photos');
         uploadedRemotePath = photoData.path;
       } else {
-        // Fallback: guardar como base64 (no recomendado para producciÃ³n)
-        // Limitar tamaÃ±o para base64 (mÃ¡ximo 5MB para evitar problemas de DB)
+        // Fallback: guardar como base64 (no recomendado para producción)
+        // Limitar tamaño para base64 (máximo 5MB para evitar problemas de DB)
         if (file.size > 5 * 1024 * 1024) {
           throw new BadRequestException(
             'El archivo es demasiado grande para almacenamiento local. Configura Supabase Storage.',
@@ -212,7 +212,7 @@ export class EventsService {
   }
 
   /**
-   * Registra parÃ¡metros ambientales
+   * Registra parámetros ambientales
    */
   async createEnvironmentEvent(data: CreateEnvironmentEventDto) {
     await this.validateEventTargets(data);
@@ -249,7 +249,7 @@ export class EventsService {
   }
 
   /**
-   * Crea un evento genÃ©rico (para tipos como CAMBIO_MACETA, etc.)
+   * Crea un evento genérico (para tipos como CAMBIO_MACETA, etc.)
    */
   async createGenericEvent(data: CreateGenericEventDto) {
     await this.validateEventTargets(data);
@@ -271,7 +271,7 @@ export class EventsService {
   }
 
   /**
-   * Crea un evento genÃ©rico
+   * Crea un evento genérico
    */
   async createEvent(type: EventType, data: {
     plantId?: string;
@@ -310,7 +310,7 @@ export class EventsService {
         try {
           await this.storageService.deleteFile(eventData.path);
         } catch {
-          // Ignorar errores de eliminaciÃ³n de archivo
+          // Ignorar errores de eliminación de archivo
         }
       }
     }
@@ -319,7 +319,7 @@ export class EventsService {
   }
 
   /**
-   * Obtiene estadÃ­sticas de eventos
+   * Obtiene estadísticas de eventos
    */
   async getStats(options: {
     cycleId?: string;
@@ -393,7 +393,7 @@ export class EventsService {
       }
       if (cycle.status === CycleStatus.CURED) {
         throw new BadRequestException(
-          'El ciclo estÃ¡ finalizado en curado y no permite nuevos eventos',
+          'El ciclo está finalizado en curado y no permite nuevos eventos',
         );
       }
     }
@@ -412,9 +412,9 @@ export class EventsService {
    * Calcula el VPD (Vapor Pressure Deficit)
    */
   private calculateVPD(tempC: number, humidityPercent: number): number {
-    // FÃ³rmula de Tetens para presiÃ³n de vapor de saturaciÃ³n
+    // Fórmula de Tetens para presión de vapor de saturación
     const svp = 0.6108 * Math.exp((17.27 * tempC) / (tempC + 237.3));
-    // PresiÃ³n de vapor actual
+    // Presión de vapor actual
     const avp = svp * (humidityPercent / 100);
     // VPD
     return Math.round((svp - avp) * 100) / 100;

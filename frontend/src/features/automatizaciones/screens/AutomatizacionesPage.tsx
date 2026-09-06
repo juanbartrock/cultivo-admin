@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -274,7 +274,7 @@ export default function AutomatizacionesPage() {
   function formatTriggerInfo(automation: Automation): string {
     if (automation.triggerType === 'SCHEDULED') {
       if (automation.scheduleType === 'TIME_RANGE') {
-        return `${automation.activeStartTime} â†’ ${automation.activeEndTime}`;
+        return `${automation.activeStartTime} → ${automation.activeEndTime}`;
       }
       if (automation.scheduleType === 'INTERVAL') {
         const hours = Math.floor((automation.intervalMinutes || 0) / 60);
@@ -456,7 +456,7 @@ export default function AutomatizacionesPage() {
                     )}
                     <div className="flex items-center gap-3 mt-2 text-xs text-zinc-500">
                       <span>Sección: {selectedAutomation.section?.name || 'No asignada'}</span>
-                      <span>â€¢</span>
+                      <span>•</span>
                       <span className="flex items-center gap-1">
                         {(() => {
                           const TriggerIcon = triggerTypeLabels[selectedAutomation.triggerType]?.icon || Clock;
@@ -605,7 +605,7 @@ export default function AutomatizacionesPage() {
                               ? 'Hora'
                               : condition.device?.name || 'Dispositivo'}
                           </span>
-                          <span className="text-zinc-500">â†’</span>
+                          <span className="text-zinc-500">→</span>
                           <span className="text-zinc-400">
                             {condition.property === 'time'
                               ? `${operatorLabels[condition.operator]} ${condition.timeValue}${condition.timeValueMax ? ` - ${condition.timeValueMax}` : ''}`
@@ -634,7 +634,7 @@ export default function AutomatizacionesPage() {
                         <span className="text-zinc-300">
                           {action.device?.name || 'Dispositivo'}
                         </span>
-                        <span className="text-zinc-500">â†’</span>
+                        <span className="text-zinc-500">→</span>
                         <span className="text-cyan-300">{actionLabels[action.actionType]}</span>
                         {action.duration && (
                           <span className="text-zinc-500 flex items-center gap-1">
@@ -1741,7 +1741,7 @@ function CreateAutomationModal({
                                     updated[index].duration = parseInt(e.target.value) || undefined;
                                     setActions(updated);
                                   }}
-                                  placeholder="âˆž"
+                                  placeholder="∞"
                                   className="w-16 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs text-white"
                                 />
                               </div>
@@ -1938,9 +1938,9 @@ function CreateAutomationModal({
                   </h4>
                   <p className="text-sm text-zinc-400">
                     {form.notifications ? (
-                      <span className="text-green-400">âœ“ Las alertas están activadas</span>
+                      <span className="text-green-400">✓ Las alertas están activadas</span>
                     ) : (
-                      <span className="text-zinc-500">âœ— Las alertas están desactivadas</span>
+                      <span className="text-zinc-500">✗ Las alertas están desactivadas</span>
                     )}
                   </p>
                 </div>
@@ -1984,7 +1984,7 @@ function CreateAutomationModal({
                           const plant = plants.find(p => p.id === plantId);
                           return plant ? (
                             <p key={plantId} className="text-sm text-zinc-400">
-                              â€¢ {plant.tagCode}
+                              • {plant.tagCode}
                               {plant.strain && (
                                 <span className="text-zinc-500 ml-2">({plant.strain.name})</span>
                               )}

@@ -1,4 +1,4 @@
-﻿export const seguimientosKeys = {
+export const seguimientosKeys = {
   all: ['seguimientos'] as const,
   cycles: (status?: string) => [...seguimientosKeys.all, 'cycles', status ?? 'all'] as const,
   plants: (cycleId: string) => [...seguimientosKeys.all, 'cycles', cycleId, 'plants'] as const,

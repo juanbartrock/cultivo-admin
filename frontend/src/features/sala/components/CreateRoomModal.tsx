@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { Room } from '@/types';
 import { useCreateRoomMutation } from '../queries/useSalaQueries';

@@ -1,4 +1,4 @@
-﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { automationService } from '@/services/automationService';
 import { AutomationStatus, CreateAutomationDto } from '@/types';
 import { automatizacionesKeys } from '../queries/automatizacionesKeys';

@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [localToken, setLocalToken] = useState<string | null>(null);
 
-  // Verificar si Supabase est? configurado
+  // Verificar si Supabase está configurado
   const supabaseConfigured = !!supabase;
 
   // Obtener datos del usuario desde nuestro backend
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Inicializar sesi?n
+  // Inicializar sesión
   useEffect(() => {
     const initSession = async () => {
       try {
@@ -103,17 +103,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLocalToken(storedToken);
             const userProfile = await fetchUserProfile(storedToken);
             
-            // Si no se pudo cargar el perfil, el token puede ser inv?lido
+            // Si no se pudo cargar el perfil, el token puede ser inválido
             if (!userProfile) {
               console.warn('[AuthContext] Could not load user profile, token may be invalid');
-              // No limpiamos el token aqu?, dejamos que el usuario intente de nuevo
+              // No limpiamos el token aquí, dejamos que el usuario intente de nuevo
             }
             setIsLoading(false);
             return;
           }
         }
 
-        // Si Supabase est? configurado, intentar obtener sesi?n
+        // Si Supabase está configurado, intentar obtener sesión
         if (supabase) {
           const { data: { session: currentSession } } = await supabase.auth.getSession();
           
@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initSession();
 
-    // Listener para cambios de sesi?n (solo si Supabase est? configurado)
+    // Listener para cambios de sesión (solo si Supabase está configurado)
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, newSession) => {
@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       
       if (!supabase) {
-        return { error: 'Supabase no est? configurado. Usa el login de admin.' };
+        return { error: 'Supabase no está configurado. Iniciá sesión con tu usuario y contraseña.' };
       }
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -183,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return {};
     } catch (error: any) {
-      return { error: error.message || 'Error al iniciar sesi?n' };
+      return { error: error.message || 'Error al iniciar sesión' };
     } finally {
       setIsLoading(false);
     }
@@ -195,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       
       if (!supabase) {
-        return { error: 'Supabase no est? configurado. Contacta al administrador.' };
+        return { error: 'Supabase no está configurado. Contacta al administrador.' };
       }
       
       const { data, error } = await supabase.auth.signUp({
@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: error.message };
       }
 
-      // Si requiere confirmaci?n de email
+      // Si requiere confirmación de email
       if (!data.session) {
         return { error: 'Por favor verifica tu email para completar el registro' };
       }
@@ -241,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setLocalToken(null);
       
-      // Sign out de Supabase si est? configurado
+      // Sign out de Supabase si está configurado
       if (supabase) {
         await supabase.auth.signOut();
       }
@@ -289,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   };
 
-  // isAuthenticated es true si tenemos un usuario O si tenemos un token local (a?n cargando usuario)
+  // isAuthenticated es true si tenemos un usuario O si tenemos un token local (aún cargando usuario)
   const hasLocalToken = typeof window !== 'undefined' && !!localStorage.getItem('access_token');
   const isAuthenticatedValue = !!user || (hasLocalToken && !!localToken);
   

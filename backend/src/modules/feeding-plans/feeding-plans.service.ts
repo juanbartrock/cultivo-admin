@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   ImportFeedingPlanDto,
@@ -18,7 +18,7 @@ export class FeedingPlansService {
   // ============================================
 
   /**
-   * Obtener todos los planes de alimentaciÃ³n
+   * Obtener todos los planes de alimentación
    */
   async findAll(stage?: PlantStage) {
     return this.prisma.feedingPlan.findMany({
@@ -66,7 +66,7 @@ export class FeedingPlansService {
   }
 
   /**
-   * Crear plan vacÃ­o (sin semanas)
+   * Crear plan vacío (sin semanas)
    */
   async create(data: CreateFeedingPlanDto) {
     return this.prisma.feedingPlan.create({
@@ -198,8 +198,8 @@ export class FeedingPlansService {
 
   /**
    * Asignar plan a una planta
-   * NOTA: Solo puede haber UN plan de alimentaciÃ³n por planta.
-   * Si la planta ya tiene un plan asignado, se desasigna automÃ¡ticamente.
+   * NOTA: Solo puede haber UN plan de alimentación por planta.
+   * Si la planta ya tiene un plan asignado, se desasigna automáticamente.
    */
   async assignToPlant(plantId: string, data: AssignFeedingPlanDto) {
     // Verificar que existe la planta
@@ -275,10 +275,10 @@ export class FeedingPlansService {
   // ============================================
 
   /**
-   * Obtener planes de alimentaciÃ³n de una secciÃ³n con info de semana actual
+   * Obtener planes de alimentación de una sección con info de semana actual
    */
   async getSectionFeedingPlans(sectionId: string) {
-    // Verificar que existe la secciÃ³n
+    // Verificar que existe la sección
     const section = await this.prisma.section.findUnique({
       where: { id: sectionId },
     });
@@ -286,7 +286,7 @@ export class FeedingPlansService {
       throw new NotFoundException(`Section with ID ${sectionId} not found`);
     }
 
-    // Obtener todas las plantas de la secciÃ³n con sus planes asignados
+    // Obtener todas las plantas de la sección con sus planes asignados
     const plants = await this.prisma.plant.findMany({
       where: { sectionId },
       include: {
@@ -379,7 +379,7 @@ export class FeedingPlansService {
   }
 
   /**
-   * Calcular semana actual basÃ¡ndose en fecha de inicio de etapa
+   * Calcular semana actual basándose en fecha de inicio de etapa
    */
   private calculateCurrentWeek(stageStartDate: Date, now: Date): number {
     const diffTime = now.getTime() - stageStartDate.getTime();

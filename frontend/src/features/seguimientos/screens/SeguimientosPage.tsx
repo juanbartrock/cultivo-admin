@@ -439,7 +439,7 @@ function SeguimientosContent() {
                     </div>
                     <p className="text-sm text-zinc-400">
                       Iniciado el {new Date(selectedCycle.startDate).toLocaleDateString('es-AR')}
-                      {' â€¢ '}{formatCycleDays(selectedCycle.startDate)}
+                      {' • '}{formatCycleDays(selectedCycle.startDate)}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -596,8 +596,8 @@ function SeguimientosContent() {
                                     <>
                                       <p className="text-sm text-zinc-400">
                                         {event.data.ph ? `pH: ${String(event.data.ph)}` : null}
-                                        {event.data.ec ? ` â€¢ EC: ${String(event.data.ec)}` : null}
-                                        {event.data.liters ? ` â€¢ ${String(event.data.liters)}L` : null}
+                                        {event.data.ec ? ` • EC: ${String(event.data.ec)}` : null}
+                                        {event.data.liters ? ` • ${String(event.data.liters)}L` : null}
                                       </p>
                                       {/* Nutrientes */}
                                       {event.data.nutrients && Array.isArray(event.data.nutrients) && event.data.nutrients.length > 0 && (
@@ -660,7 +660,7 @@ function SeguimientosContent() {
                                   {event.type === 'PARAMETRO_AMBIENTAL' && (
                                     <p className="text-sm text-zinc-400">
                                       {event.data.temperature ? `${String(event.data.temperature)}°C` : null}
-                                      {event.data.humidity ? ` â€¢ ${String(event.data.humidity)}%` : null}
+                                      {event.data.humidity ? ` • ${String(event.data.humidity)}%` : null}
                                     </p>
                                   )}
                                 </div>
@@ -1872,9 +1872,9 @@ function StrainModal({
                 <div key={strain.id} className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="font-medium text-white">{strain.name}</p>
                   <p className="text-xs text-zinc-400">
-                    {strain.breeder && `${strain.breeder} â€¢ `}
+                    {strain.breeder && `${strain.breeder} • `}
                     {strain.type}
-                    {strain.floweringDaysExpected && ` â€¢ ${strain.floweringDaysExpected} días`}
+                    {strain.floweringDaysExpected && ` • ${strain.floweringDaysExpected} días`}
                   </p>
                 </div>
               ))}

@@ -533,7 +533,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
             <div className="mt-2 flex items-center gap-2 text-xs">
               <Sun className="w-3.5 h-3.5 text-yellow-400" />
               <span className="text-yellow-400 font-medium">
-                PPFD: {Math.round(plantPPFD.averagePPFD)} Âµmol/mÂ²/s
+                PPFD: {Math.round(plantPPFD.averagePPFD)} µmol/m²/s
               </span>
               <span className="text-zinc-600">
                 (promedio ponderado)
@@ -557,7 +557,7 @@ export default function PlantCard({ plant, delay = 0, isSelected = false, onRegi
           {/* Sección */}
           {currentPlant.section ? (
             <p className="text-xs text-zinc-600 mt-2">
-              ðŸ“ {currentPlant.section.name}
+              📍 {currentPlant.section.name}
             </p>
           ) : (
             <p className="text-xs text-orange-400 mt-2 italic">

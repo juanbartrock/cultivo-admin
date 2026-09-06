@@ -1,4 +1,4 @@
-﻿import { ChevronRight, Home, Trash2 } from 'lucide-react';
+import { ChevronRight, Home, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Room } from '@/types';
 import { cn } from '@/lib/utils';

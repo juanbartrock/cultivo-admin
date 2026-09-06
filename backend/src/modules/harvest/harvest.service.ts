@@ -25,7 +25,7 @@ export class HarvestService {
 
     if (cycle.status === CycleStatus.CURED) {
       throw new BadRequestException(
-        'El ciclo estÃ¡ finalizado en curado y solo permite extracciÃ³n de material',
+        'El ciclo está finalizado en curado y solo permite extracción de material',
       );
     }
   }
@@ -301,7 +301,7 @@ export class HarvestService {
   // ============================================
 
   /**
-   * Obtiene estadÃ­sticas de cosechas
+   * Obtiene estadísticas de cosechas
    */
   async getStatistics(cycleId?: string) {
     const whereClause = cycleId
@@ -337,7 +337,7 @@ export class HarvestService {
       return acc;
     }, {} as Record<string, { count: number; totalWeight: number; currentWeight: number }>);
 
-    // Productos por ubicaciÃ³n
+    // Productos por ubicación
     const productsByLocation = allProducts.reduce((acc, p) => {
       if (!acc[p.storageLocation]) {
         acc[p.storageLocation] = { count: 0, weight: 0 };

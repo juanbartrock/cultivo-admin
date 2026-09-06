@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { useCreateSectionMutation } from '../queries/useSalaQueries';
 import { Button, Modal } from '@/components/ui';

@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   ImportPreventionPlanDto,
@@ -18,7 +18,7 @@ export class PreventionPlansService {
   // ============================================
 
   /**
-   * Obtener todos los planes de prevenciÃ³n
+   * Obtener todos los planes de prevención
    */
   async findAll(stage?: PlantStage) {
     return this.prisma.preventionPlan.findMany({
@@ -66,7 +66,7 @@ export class PreventionPlansService {
   }
 
   /**
-   * Crear plan vacÃ­o (sin aplicaciones)
+   * Crear plan vacío (sin aplicaciones)
    */
   async create(data: CreatePreventionPlanDto) {
     return this.prisma.preventionPlan.create({
@@ -137,7 +137,7 @@ export class PreventionPlansService {
   }
 
   /**
-   * Agregar o actualizar aplicaciÃ³n en un plan
+   * Agregar o actualizar aplicación en un plan
    */
   async addOrUpdateApplication(planId: string, data: AddApplicationDto) {
     await this.findById(planId);
@@ -167,7 +167,7 @@ export class PreventionPlansService {
   }
 
   /**
-   * Eliminar aplicaciÃ³n de un plan
+   * Eliminar aplicación de un plan
    */
   async deleteApplication(planId: string, dayNumber: number) {
     await this.findById(planId);
@@ -198,8 +198,8 @@ export class PreventionPlansService {
 
   /**
    * Asignar plan a una planta
-   * NOTA: Solo puede haber UN plan de prevenciÃ³n por planta.
-   * Si la planta ya tiene un plan asignado, se desasigna automÃ¡ticamente.
+   * NOTA: Solo puede haber UN plan de prevención por planta.
+   * Si la planta ya tiene un plan asignado, se desasigna automáticamente.
    */
   async assignToPlant(plantId: string, data: AssignPreventionPlanDto) {
     // Verificar que existe la planta
@@ -275,10 +275,10 @@ export class PreventionPlansService {
   // ============================================
 
   /**
-   * Obtener planes de prevenciÃ³n de una secciÃ³n con info de dÃ­a actual
+   * Obtener planes de prevención de una sección con info de día actual
    */
   async getSectionPreventionPlans(sectionId: string) {
-    // Verificar que existe la secciÃ³n
+    // Verificar que existe la sección
     const section = await this.prisma.section.findUnique({
       where: { id: sectionId },
     });
@@ -286,7 +286,7 @@ export class PreventionPlansService {
       throw new NotFoundException(`Section with ID ${sectionId} not found`);
     }
 
-    // Obtener todas las plantas de la secciÃ³n con sus planes asignados
+    // Obtener todas las plantas de la sección con sus planes asignados
     const plants = await this.prisma.plant.findMany({
       where: { sectionId },
       include: {
@@ -305,7 +305,7 @@ export class PreventionPlansService {
       },
     });
 
-    // Procesar cada planta y calcular dÃ­a actual
+    // Procesar cada planta y calcular día actual
     const now = new Date();
     const plantsWithDayInfo = plants.map((plant) => {
       const preventionPlansWithDays = plant.preventionPlans.map((pp) => {
@@ -372,12 +372,12 @@ export class PreventionPlansService {
   }
 
   /**
-   * Calcular dÃ­a actual basÃ¡ndose en fecha de inicio (con ciclo repetitivo)
+   * Calcular día actual basándose en fecha de inicio (con ciclo repetitivo)
    */
   private calculateCurrentDay(startDate: Date, now: Date, totalDays: number): number {
     const diffTime = now.getTime() - startDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    // DÃ­a actual dentro del ciclo (1 a totalDays)
+    // Día actual dentro del ciclo (1 a totalDays)
     return (diffDays % totalDays) + 1;
   }
 
@@ -393,20 +393,20 @@ export class PreventionPlansService {
       return { previousApplication: null, currentApplication: null, nextApplication: null };
     }
 
-    // Encontrar la aplicaciÃ³n actual o la mÃ¡s cercana anterior
+    // Encontrar la aplicación actual o la más cercana anterior
     let currentApplication = applications.find((a) => a.dayNumber === currentDay);
     
-    // Si no hay aplicaciÃ³n para hoy, buscar la mÃ¡s cercana pasada
+    // Si no hay aplicación para hoy, buscar la más cercana pasada
     let previousApplication = null;
     let nextApplication = null;
 
     if (currentApplication) {
-      // Hay aplicaciÃ³n hoy
+      // Hay aplicación hoy
       const currentIndex = applications.indexOf(currentApplication);
       previousApplication = currentIndex > 0 ? applications[currentIndex - 1] : null;
       nextApplication = currentIndex < applications.length - 1 ? applications[currentIndex + 1] : null;
     } else {
-      // No hay aplicaciÃ³n hoy, buscar anterior y siguiente
+      // No hay aplicación hoy, buscar anterior y siguiente
       const sortedApps = [...applications].sort((a, b) => a.dayNumber - b.dayNumber);
       
       for (let i = 0; i < sortedApps.length; i++) {
@@ -418,7 +418,7 @@ export class PreventionPlansService {
         previousApplication = sortedApps[i];
       }
 
-      // Si no se encontrÃ³ siguiente, es la primera del prÃ³ximo ciclo
+      // Si no se encontró siguiente, es la primera del próximo ciclo
       if (!nextApplication && sortedApps.length > 0) {
         nextApplication = sortedApps[0];
       }

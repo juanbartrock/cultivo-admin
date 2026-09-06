@@ -42,7 +42,7 @@ export class GrowService {
   }
 
   // ============================================
-  // STRAINS (GenÃ©ticas)
+  // STRAINS (Genéticas)
   // ============================================
 
   async findAllStrains() {
@@ -275,7 +275,7 @@ export class GrowService {
   }
 
   async createPlant(data: CreatePlantDto) {
-    // Verificar que existe la genÃ©tica
+    // Verificar que existe la genética
     const strain = await this.prisma.strain.findUnique({
       where: { id: data.strainId },
     });
@@ -296,7 +296,7 @@ export class GrowService {
       );
     }
 
-    // Verificar que existe la secciÃ³n (si se proporciona)
+    // Verificar que existe la sección (si se proporciona)
     if (data.sectionId) {
       const section = await this.prisma.section.findUnique({
         where: { id: data.sectionId },
@@ -318,7 +318,7 @@ export class GrowService {
       }
     }
 
-    // Verificar que el tagCode es Ãºnico
+    // Verificar que el tagCode es único
     const existing = await this.prisma.plant.findUnique({
       where: { tagCode: data.tagCode },
     });
@@ -447,7 +447,7 @@ export class GrowService {
   }
 
   /**
-   * Mover planta de secciÃ³n o cambiar etapa
+   * Mover planta de sección o cambiar etapa
    */
   async movePlant(id: string, data: MovePlantDto) {
     const plant = await this.findPlantById(id);
@@ -657,14 +657,14 @@ export class GrowService {
     const plant = await this.findPlantById(plantId);
 
     if (!plant.sectionId) {
-      return null; // La planta no estÃ¡ asociada a una secciÃ³n
+      return null; // La planta no está asociada a una sección
     }
 
     if (!plant.zones || plant.zones.length === 0) {
       return null; // La planta no tiene zonas asignadas
     }
 
-    // Obtener las Ãºltimas lecturas de PPFD de todas las zonas asignadas
+    // Obtener las últimas lecturas de PPFD de todas las zonas asignadas
     const readings = await Promise.all(
       plant.zones.map(async (plantZone) => {
         const reading = await this.prisma.pPFDReading.findFirst({

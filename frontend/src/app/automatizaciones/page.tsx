@@ -1,4 +1,4 @@
-﻿import AutomatizacionesPageScreen from '@/features/automatizaciones/screens/AutomatizacionesPage';
+import AutomatizacionesPageScreen from '@/features/automatizaciones/screens/AutomatizacionesPage';
 import { uiFlags } from '@/lib/featureFlags';
 
 export default function AutomatizacionesPage() {

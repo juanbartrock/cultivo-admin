@@ -1,4 +1,4 @@
-﻿export const carpaKeys = {
+export const carpaKeys = {
   all: ['carpa'] as const,
   dashboard: (sectionId: string) => [...carpaKeys.all, sectionId, 'dashboard'] as const,
   feedingPlans: (sectionId: string) => [...carpaKeys.all, sectionId, 'feeding-plans'] as const,
