@@ -1375,7 +1375,7 @@ export default function CarpaDetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay }}
-            className="surface-panel rounded-2xl overflow-hidden"
+            className="rounded-md border border-edge bg-surface rounded-2xl overflow-hidden"
           >
             <button
               onClick={() => setPpfdExpanded(!ppfdExpanded)}
@@ -1408,7 +1408,7 @@ export default function CarpaDetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay }}
-            className="surface-panel rounded-2xl overflow-hidden"
+            className="rounded-md border border-edge bg-surface rounded-2xl overflow-hidden"
           >
             <button
               onClick={() => setSensorHistoryExpanded(!sensorHistoryExpanded)}
@@ -1538,7 +1538,7 @@ export default function CarpaDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="surface-panel rounded-3xl p-5 sm:p-6 lg:p-8 grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start"
+        className="rounded-md border border-edge bg-surface rounded-3xl p-5 sm:p-6 lg:p-8 grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start"
       >
         {/* Icono de la sección */}
         <div className={`relative w-full h-44 sm:h-52 lg:h-64 ${iconConfig.bg} rounded-2xl overflow-hidden border border-cyan-500/20 flex items-center justify-center`}>
@@ -1636,7 +1636,7 @@ export default function CarpaDetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.28 }}
-            className="surface-panel rounded-2xl overflow-hidden"
+            className="rounded-md border border-edge bg-surface rounded-2xl overflow-hidden"
           >
             <button
               onClick={() => setFeedingPlanExpanded(!feedingPlanExpanded)}
@@ -1833,7 +1833,7 @@ export default function CarpaDetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.29 }}
-            className="surface-panel rounded-2xl overflow-hidden"
+            className="rounded-md border border-edge bg-surface rounded-2xl overflow-hidden"
           >
             <button
               onClick={() => setPreventionPlanExpanded(!preventionPlanExpanded)}
@@ -2029,7 +2029,7 @@ export default function CarpaDetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="surface-panel rounded-2xl overflow-hidden"
+            className="rounded-md border border-edge bg-surface rounded-2xl overflow-hidden"
           >
             <button
               onClick={() => setPlantsExpanded(!plantsExpanded)}

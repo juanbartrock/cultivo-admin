@@ -12,7 +12,7 @@ import {
   CheckCircle2, XCircle, AlertCircle, BarChart3, CheckSquare, Camera, Brain, Leaf, Sparkles
 } from 'lucide-react';
 
-import EmptyState from '@/components/ui/EmptyState';
+import { EmptyState } from '@/components/ui/empty-state';
 import AIProposalsPanel from '@/components/AIProposalsPanel';
 import CapabilitiesAnalysisModal from '@/components/CapabilitiesAnalysisModal';
 
@@ -334,12 +334,12 @@ export default function AutomatizacionesPage() {
   }
 
   return (
-    <div className="space-y-6 rebrand-automations">
+    <div className="space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="surface-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
+        className="rounded-md border border-edge bg-surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
           <h1 className="font-display flex items-center gap-3 text-3xl font-semibold text-white">
@@ -380,7 +380,7 @@ export default function AutomatizacionesPage() {
           transition={{ delay: 0.1 }}
           className="lg:col-span-1"
         >
-          <div className="surface-panel p-4">
+          <div className="rounded-md border border-edge bg-surface p-4">
             <h2 className="text-lg font-semibold text-white mb-4">
               Automatizaciones ({automations.length})
             </h2>

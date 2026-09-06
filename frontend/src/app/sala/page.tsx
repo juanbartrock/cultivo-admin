@@ -13,11 +13,10 @@ import {
   Thermometer,
 } from 'lucide-react';
 import CarpaCard from '@/components/CarpaCard';
-import { ConfirmDialog, EmptyState } from '@/components/ui';
+import { Button, ConfirmDialog, EmptyState } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { useWeather } from '@/hooks/useWeather';
-import { Button } from '@/components/ui/Button';
-import { uiFlags } from '@/lib/featureFlags';
+
 import {
   CreateRoomModal,
   CreateSectionModal,
@@ -100,11 +99,11 @@ function SalaPageContent() {
   }
 
   return (
-    <div className="space-y-8 rebrand-sala">
+    <div className="space-y-8">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="surface-panel flex flex-col gap-4 p-5"
+        className="rounded-md border border-edge bg-surface flex flex-col gap-4 p-5"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -180,7 +179,7 @@ function SalaPageContent() {
             </div>
           </motion.div>
 
-          <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="surface-panel p-5">
+          <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="rounded-md border border-edge bg-surface p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Tent className="h-5 w-5 text-cultivo-green-500" />
@@ -260,11 +259,5 @@ export default function SalaPage() {
     </Suspense>
   );
 
-  if (!uiFlags.sala) {
-    return content;
-  }
-
-  return (
-    <div className="rebrand-sala">{content}</div>
-  );
+  return content;
 }

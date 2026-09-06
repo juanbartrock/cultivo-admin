@@ -31,7 +31,7 @@ import {
   AlertCircle,
   ArrowRightLeft
 } from 'lucide-react';
-import EmptyState from '@/components/ui/EmptyState';
+import { EmptyState } from '@/components/ui/empty-state';
 import { motion, AnimatePresence } from 'framer-motion';
 import { deviceService } from '@/services/deviceService';
 import { sectionService } from '@/services/locationService';

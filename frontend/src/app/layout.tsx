@@ -7,7 +7,6 @@ import { DialogProvider } from "@/contexts/DialogContext";
 import { AIAssistantProvider } from "@/contexts/AIAssistantContext";
 import { AIAssistantBubble } from "@/components/ai-assistant";
 import { AppQueryProvider } from "@/providers/AppQueryProvider";
-import { uiFlags } from "@/lib/featureFlags";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -35,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${manrope.className} ${manrope.variable} ${spaceGrotesk.variable} bg-cultivo-darker text-white antialiased ${uiFlags.shell ? "ui-rebrand-root" : ""}`}
+        className={`${manrope.className} ${manrope.variable} ${spaceGrotesk.variable} antialiased`}
       >
         <AppQueryProvider>
           <AuthProvider>
