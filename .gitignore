@@ -33,3 +33,8 @@ Thumbs.db
 .cursor/
 .cursorrules
 GEMINI.md
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/

@@ -127,16 +127,19 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">
-              Email
+            <label htmlFor="login-user" className="block text-sm font-medium text-zinc-300 mb-1">
+              Email o usuario
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
               <input
-                type="email"
+                id="login-user"
+                name="username"
+                type="text"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
+                placeholder="tu@email.com o usuario"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-cultivo-green-600 transition-colors"
               />
@@ -144,12 +147,15 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">
+            <label htmlFor="login-password" className="block text-sm font-medium text-zinc-300 mb-1">
               Contraseña
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
               <input
+                id="login-password"
+                name="password"
+                autoComplete="current-password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

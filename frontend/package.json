@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
+    "qa:nav": "playwright test -c playwright.qa.config.ts",
     "prepare": "echo Husky hooks are managed from repo root .husky"
   },
   "dependencies": {
