@@ -1,5 +1,31 @@
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:cultivo-admin][date:2026-09-05][action:modified] -->
+## 2026-09-05 — Fase 0 del rediseño: saneamiento (rama `redisenio-2026-09`)
+
+- **Login**: se eliminó el botón "Entrar como Administrador" con credenciales en el código,
+  el separador de acceso rápido y el texto que publicaba usuario y contraseña
+  (`frontend/src/app/login/page.tsx`). El formulario de email + contraseña queda igual.
+- **Socket.io**: el gateway pasa a escuchar en `path: '/api/socket.io'`
+  (`backend/src/modules/realtime/realtime.gateway.ts`) y el cliente conecta al origin de
+  `NEXT_PUBLIC_API_URL` sin el sufijo `/api` con ese mismo path
+  (`frontend/src/contexts/SocketContext.tsx`). El socket ahora se abre sólo con token de sesión
+  (`access_token`, antes leía `auth_token`, clave que nunca se escribía) y se reconecta cuando
+  cambia la autenticación.
+- **Encoding**: corregidas todas las ocurrencias de mojibake ("â€¢", "Ã³", "âš ï¸") y de acentos
+  perdidos como "?" en `frontend/src`, `frontend/tests` y `backend/src`; quitado el BOM UTF-8 de
+  34 archivos.
+- **CLAUDE.md**: Nivel 2 corregido — no hay shadcn/ui ni Radix (componentes propios en
+  `src/components/ui/`), el build usa `output: 'standalone'`, los tres microservicios IoT
+  escuchan en el puerto 3000 de su contenedor. Nivel 4 documenta los `.env` como
+  `deploy:deploy 600` y la publicación con `app-restart cultivo-frontend|cultivo-backend --build`.
+- **QA**: nuevo `frontend/tests/qa-nav.spec.ts` + `frontend/playwright.qa.config.ts`
+  (proyectos `desktop` 1440×900 y `mobile` 390×844) que recorre la app publicada con login real,
+  falla ante `console.error`, `pageerror` o HTTP >= 500 y guarda capturas en
+  `docs/rediseno-2026-09/capturas/<QA_LABEL>/`. Script: `npm run qa:nav` en `frontend/`.
+  Credenciales desde `CULTIVO_ADMIN_USER` / `CULTIVO_ADMIN_PASSWORD`
+  (`/home/deploy/.config/secrets/cultivo-admin-login.env`, fuera del repo).
+
 <!-- [agent:server-audit][date:2026-09-05][action:created] -->
 ## 2026-09-05 — Diagnóstico para el rediseño de la UI
 

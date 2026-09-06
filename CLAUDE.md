@@ -51,9 +51,11 @@ Funcionalidades principales:
 | Frontend | Next.js 14 (App Router) + React 18 + Tailwind CSS |
 | Backend | NestJS + Prisma |
 | Base de datos | PostgreSQL — **Supabase/Neon (externo)** |
-| Auth | Supabase Auth |
-| UI Components | Shadcn/ui + Radix UI + Lucide Icons |
+| Auth | Login local contra `/api/auth/login` (JWT) + Supabase Auth cuando está configurado |
+| UI Components | Componentes propios en `frontend/src/components/ui/` (Button, Badge, Card, Modal, ConfirmDialog, Skeleton, EmptyState) + Lucide Icons. Selects y checkboxes nativos |
 | State | TanStack React Query v5 |
+| Animación / gráficos | framer-motion + recharts |
+| Tests frontend | Playwright (`tests/smoke.spec.ts` con backend mockeado, `tests/qa-nav.spec.ts` contra producción) |
 | IoT | Microservicios separados (Sonoff, Tuya, Tapo) |
 | Deploy | Docker Compose + Caddy |
 
@@ -62,15 +64,25 @@ Funcionalidades principales:
 | Servicio | Puerto interno | Función |
 |----------|----------------|---------|
 | sonoff-service | 3000 | API para dispositivos Sonoff (eWeLink) |
-| tuya-service | 3002 | API para dispositivos Tuya |
-| tapo-service | 3003 | API para cámaras TP-Link Tapo |
+| tuya-service | 3000 | API para dispositivos Tuya |
+| tapo-service | 3000 | API para cámaras TP-Link Tapo |
+
+Los tres escuchan en 3000 dentro de su contenedor y el backend los alcanza por nombre de
+servicio en la red `cultivo-network` (`http://tuya-service:3000`).
 
 ### Consideraciones críticas
 
 - **Puertos restringidos**: Todos los microservicios IoT NO tienen port mapping al host (solo red Docker interna). Solo backend (4000) y frontend (3001) están expuestos a localhost.
 - **DB externa**: La base de datos es Supabase/Neon. NO toca el host.
 - **Secrets**: Cada microservicio tiene su propio `.env` en su directorio.
-- **Frontend build**: Next.js 14, NO usa `output: 'standalone'` (difiere de FinanzIA).
+- **Frontend build**: Next.js 14 con `output: 'standalone'` (`frontend/next.config.mjs`); el
+  `Dockerfile` copia `.next/standalone` y arranca con `node server.js`.
+- **Variables `NEXT_PUBLIC_*`**: se compilan en build time. `NEXT_PUBLIC_API_URL` llega como
+  `ARG` del `docker-compose.yml` (`https://cultivo.ramsesvii.com/api`); cambiarla exige rebuild.
+- **shadcn/ui y Radix**: no están instalados. La UI usa componentes propios sobre Tailwind.
+- **Socket.io**: el gateway escucha en `path: '/api/socket.io'` porque Caddy sólo enruta
+  `/api/*` al backend. El cliente (`SocketContext.tsx`) usa el origin de `NEXT_PUBLIC_API_URL`
+  sin el sufijo `/api` y ese mismo `path`, y exige token (`REALTIME_ALLOW_GUEST=false`).
 
 ---
 
@@ -126,6 +138,22 @@ cultivo.ramsesvii.com {
 └── .env (root, si existe)
 ```
 
+### Publicación (forma preferida)
+
+```bash
+# Publicar cambios del frontend (rebuild + verificación)
+app-restart cultivo-frontend --build
+
+# Publicar cambios del backend (rebuild + verificación)
+app-restart cultivo-backend --build
+
+# Qué targets se pueden reiniciar desde este directorio
+app-restart --list
+```
+
+`app-restart` sale 0 sólo si el servicio quedó sano y deja traza en
+`/var/log/app-restart.log`. Si sale distinto de 0, el cambio no está publicado.
+
 ### Comandos de operación
 
 ```bash
@@ -144,8 +172,8 @@ cd /opt/apps/cultivo-admin && git pull && docker compose up -d --build
 
 ### Permisos
 
-- Archivos `.env`: `600` (solo root)
-- Código fuente: `755` para directorios, `644` para archivos
+- Archivos `.env`: `deploy:deploy` con modo `600` (backend y los tres microservicios IoT)
+- Código fuente: `deploy:deploy`, `755` para directorios y `644` para archivos
 
 ---
 
