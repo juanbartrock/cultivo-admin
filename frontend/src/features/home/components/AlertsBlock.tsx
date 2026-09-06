@@ -44,11 +44,8 @@ export function AlertsBlock({ alerts }: AlertsBlockProps) {
               <Icon className={cn('h-4 w-4 shrink-0', config.tone)} />
               <span className="min-w-0 flex-1 truncate text-sm text-fg">
                 {alert.sectionName}
-                {alert.roomName ? (
-                  <span className="text-fg-faint"> · {alert.roomName}</span>
-                ) : null}
+                <span className="text-fg-faint"> · {alert.label}</span>
               </span>
-              <span className="shrink-0 text-xs text-fg-muted">{alert.label}</span>
               <span className={cn('shrink-0 text-sm font-medium tabular-nums', config.tone)}>
                 {alert.detail}
               </span>
