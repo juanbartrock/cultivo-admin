@@ -26,7 +26,10 @@ interface DeviceUpdateData {
   timestamp: string;
 }
 
+// El backend vive detrás de Caddy, que sólo enruta `/api/*` hacia acá.
+// El namespace por defecto (`/`) se mantiene; lo que cambia es la ruta HTTP del handshake.
 @WebSocketGateway({
+  path: '/api/socket.io',
   cors: {
     origin: parseCorsOrigins(process.env.CORS_ALLOWED_ORIGINS),
     credentials: true,

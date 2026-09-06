@@ -2,6 +2,31 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useAuth } from '@/contexts/AuthContext';
+
+// Ruta del handshake de socket.io en el backend. Caddy enruta `/api/*` al backend,
+// así que el gateway escucha en `/api/socket.io` (ver realtime.gateway.ts).
+const SOCKET_PATH = '/api/socket.io';
+
+// El origin del socket sale de NEXT_PUBLIC_API_URL sin el sufijo `/api`:
+// socket.io toma el path de la URL como namespace, y `/api` no es un namespace válido.
+const getSocketOrigin = (): string => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (apiUrl) {
+        try {
+            return new URL(apiUrl, typeof window !== 'undefined' ? window.location.origin : undefined).origin;
+        } catch {
+            return apiUrl.replace(/\/api\/?$/, '');
+        }
+    }
+
+    if (typeof window !== 'undefined') {
+        return `${window.location.protocol}//${window.location.hostname}:4000`;
+    }
+
+    return 'http://localhost:4000';
+};
 
 interface SocketContextType {
     socket: Socket | null;
@@ -26,13 +51,24 @@ export const useSocket = () => useContext(SocketContext);
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
+    const { isAuthenticated, session } = useAuth();
 
     useEffect(() => {
-        // Obtener token de autenticación
-        const token = localStorage.getItem('auth_token');
+        // El gateway exige token en producción: sin sesión no se abre el socket.
+        const token =
+            (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null) ||
+            session?.access_token ||
+            null;
 
-        const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000', {
-            transports: ['websocket'],
+        if (!token) {
+            setSocket(null);
+            setIsConnected(false);
+            return;
+        }
+
+        const socketInstance = io(getSocketOrigin(), {
+            path: SOCKET_PATH,
+            transports: ['websocket', 'polling'],
             autoConnect: true,
             auth: { token }, // Enviar token en el handshake
         });
@@ -60,7 +96,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         return () => {
             socketInstance.disconnect();
         };
-    }, []);
+    }, [isAuthenticated, session?.access_token]);
 
     // Suscribirse a actualizaciones de una sección
     const joinSection = useCallback((sectionId: string) => {
