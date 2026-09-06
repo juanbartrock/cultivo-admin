@@ -209,3 +209,90 @@ Solo para tareas de **código o configuración** del otro proyecto. Para obtener
 |---|---|---|
 | FinanzIA | `https://finanzia.ramsesvii.com/api/v1/agent/` | `Authorization: Bearer finIA_*` |
 | SaludIA | `https://salud.ramsesvii.com/api/v1/agent/` | `Authorization: Bearer <SALUD_API_KEY>` |
+
+
+<!-- BEGIN:ecosystem-context -->
+## Contexto del ecosistema (generado — no editar acá)
+
+Trabajás dentro del VPS de Juan (Ubuntu 24.04, usuario `deploy`), donde conviven ~28 apps bajo
+`/opt/apps/`. El agente orquestador del servidor es **`server-audit`** (`/opt/server-audit`): él
+maneja la infraestructura compartida y te delegó esta tarea.
+
+**Nunca toques esto — escalá a `server-audit` y esperá confirmación de Juan:**
+`/etc/caddy/Caddyfile` · UFW · SSH · `systemd` del host · Docker y las DB compartidas
+(`panel-db`, `lambdai-db`, `couchdb`, `mosquitto`) · operaciones destructivas de DB de
+producción (DROP/TRUNCATE) · tokens y credenciales de otras apps · los `HERMES_HOME` de otros
+usuarios (`/home/martin`, `/home/cap`, `/home/zaca`, `/home/agus`).
+
+<!-- [agent:codex][date:2026-09-05][action:created] -->
+**Autonomía y alcance:** ante un pedido de implementar o corregir, completá lo autorizado y
+resolvé decisiones rutinarias con el contexto disponible. Conservá las autorizaciones ya dadas
+en la sesión; pedí aclaración cuando falte una decisión que cambie materialmente el resultado.
+Una revisión o diagnóstico termina en un informe salvo que también se haya autorizado corregir.
+La infraestructura compartida sigue a cargo de `server-audit`; una aprobación vigente sobre
+una operación concreta no necesita repetirse.
+
+**Prioridad de instrucciones:** el pedido explícito actual de Juan y el alcance de la delegación
+prevalecen sobre recomendaciones de skills, memorias o instrucciones locales antiguas, dentro
+de las políticas de seguridad del entorno. Si una skill exige frenar, enlazá su `SKILL.md`, citá
+la instrucción y explicá qué es requisito y qué es interpretación. Avanzá con la preparación y
+el trabajo independiente ya autorizado mientras se resuelve lo pendiente.
+
+<!-- [agent:codex][date:2026-09-05][action:modified] -->
+**Publicá tu propio cambio:** cuando una implementación autorizada requiera poner código o
+configuración en ejecución, usá `app-restart` para reiniciar tu app y verificarla:
+
+```bash
+app-restart --list              # qué podés reiniciar desde este directorio
+app-restart <target>            # reinicio verificado (estado + puerto + logs)
+app-restart <target> --build    # docker: rebuild de tu servicio; revierte solo si no levanta
+```
+
+Sale 0 solo si el servicio quedó sano. Si sale distinto de 0, **el cambio no está publicado**:
+leé el log que imprime y arreglalo o escalá, con la salida real. Cualquier target fuera de tu app
+lo rechaza — eso es infraestructura compartida y la maneja `server-audit`. Usá `app-restart` en
+lugar de `systemctl` o `docker` a mano: deja traza en `/var/log/app-restart.log`.
+
+<!-- [agent:codex][date:2026-09-05][action:created] -->
+**Verificación proporcional:** comprobá el comportamiento afectado y los checks requeridos.
+Ampliá o repetí pruebas ante cambios nuevos, fallas o dudas concretas. Evitá tests que solo
+reproduzcan cambios pequeños y reversibles. Conservá el QA visual y la navegación real de UI;
+verificá aislamiento de datos antes de pruebas con escrituras. Los cambios exclusivamente
+documentales se validan con revisión, links y sincronización, sin build ni reinicio de servicios.
+
+**Dónde vive la verdad del servidor:**
+- `/opt/server-audit/SERVICES.md` — inventario de servicios, dominios, puertos y dependencias.
+  Consultalo antes de asumir que un puerto está libre o que un servicio existe.
+- `/opt/server-audit/CHANGES.md` — historial de cambios sobre archivos de instrucciones.
+- `/opt/server-audit/docs/` — procedimientos operativos (Hermes, SSH, onboarding, delegación).
+
+**Secretos:** jamás en configs globales, logs, reportes ni commits. Los `.env` van en `600`. Las
+API keys de una sola cuenta van a `~/.config/secrets/<servicio>.env` (600) y la config referencia
+`${VAR}`. Si encontrás un secreto en texto plano donde no corresponde, reportalo.
+
+**Registro de cambios:** todo cambio relevante va al `CHANGES.md` de tu propio proyecto, con
+`<!-- [agent:<nombre>][date:YYYY-MM-DD][action:created|modified|deleted] -->` antes de la sección.
+Si el cambio afecta el inventario del servidor (puerto nuevo, dominio, servicio), avisá para
+actualizar `SERVICES.md`.
+
+**Archivos de instrucciones:** cada proyecto tiene **un archivo real** y tres symlinks a él
+(`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`), para que claude, codex, opencode y
+antigravity lean lo mismo. Editá el archivo real; no rompas los symlinks ni crees copias
+divergentes.
+
+**Casting de voz:** ante un pedido de elegir voz, timbre o locutor, leé y aplicá la skill canónica
+`/opt/server-audit/.claude/skills/voice-casting/SKILL.md`. Primero se acuerdan perfil y un único
+microguion; todas las candidatas leen exactamente ese texto en `video.ramsesvii.com/castings`.
+La locución completa empieza después de registrar la ganadora.
+
+**Cómo reportar a Juan:** es argentino, español rioplatense, perfil técnico intermedio/avanzado y
+directo.
+- **No exagerar resultados.** Evaluación crítica honesta contra lo que se pidió. Si algo quedó a
+  medias o falló, decilo con la salida real.
+- **Prohibida la negación contrastiva** en todo texto que él lea ("no es X, es Y", "esto no es
+  solo Z"). Afirmá directo.
+- **UI sin QA visual no se entrega.** Screenshots con Chrome headless y navegación real, no solo
+  la carga inicial.
+- Nada de prosa perecedera en interfaces ni reportes: dato y ficha técnica, sin párrafos que
+  narran lo que los datos ya muestran.
+<!-- END:ecosystem-context -->
