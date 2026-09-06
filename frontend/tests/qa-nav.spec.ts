@@ -1,32 +1,16 @@
 import { test, expect, Page, TestInfo } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
+import { CREDENTIALS_HELP, SHOTS_DIR, credentials } from './qa-nav.shared';
 
 /**
  * QA de navegación real contra la app publicada.
- * Login por formulario con credenciales de entorno, recorrido de todas las rutas,
- * captura fullPage por ruta y falla ante console.error, pageerror o HTTP >= 500.
+ * La sesión la abre `qa-nav.setup.ts` con el formulario de login; acá se recorre cada ruta,
+ * se captura fullPage y se falla ante console.error, pageerror o HTTP >= 500.
  *
  *   set -a; . /home/deploy/.config/secrets/cultivo-admin-login.env; set +a
  *   QA_LABEL=fase0 npm run qa:nav
  */
-
-const LABEL = process.env.QA_LABEL || 'fase0';
-const SHOTS_DIR = path.resolve(__dirname, '..', '..', 'docs', 'rediseno-2026-09', 'capturas', LABEL);
-
-const USER = process.env.CULTIVO_ADMIN_USER;
-const PASSWORD = process.env.CULTIVO_ADMIN_PASSWORD;
-
-const CREDENTIALS_HELP =
-  'Faltan CULTIVO_ADMIN_USER y/o CULTIVO_ADMIN_PASSWORD. Cargalas antes de correr el QA:\n' +
-  '  set -a; . /home/deploy/.config/secrets/cultivo-admin-login.env; set +a';
-
-function requireCredentials(): { user: string; password: string } {
-  if (!USER || !PASSWORD) {
-    throw new Error(CREDENTIALS_HELP);
-  }
-  return { user: USER, password: PASSWORD };
-}
 
 /** Errores de página: consola, excepciones y respuestas 5xx. */
 function watchForErrors(page: Page): string[] {
@@ -76,16 +60,6 @@ async function mockWeather(page: Page) {
   );
 }
 
-async function login(page: Page) {
-  const { user, password } = requireCredentials();
-
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.getByLabel('Email o usuario').fill(user);
-  await page.getByLabel('Contraseña').fill(password);
-  await page.getByRole('button', { name: 'Iniciar sesión' }).click();
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 45_000 });
-}
-
 /** networkidle con tope: si la app sigue con tráfico de fondo, sigue igual sin colgarse. */
 async function settle(page: Page) {
   try {
@@ -101,13 +75,6 @@ async function capture(page: Page, info: TestInfo, slug: string) {
     path: path.join(SHOTS_DIR, `${info.project.name}-${slug}.png`),
     fullPage: true,
   });
-}
-
-async function horizontalOverflow(page: Page): Promise<{ scrollWidth: number; innerWidth: number }> {
-  return page.evaluate(() => ({
-    scrollWidth: document.documentElement.scrollWidth,
-    innerWidth: window.innerWidth,
-  }));
 }
 
 interface Route {
@@ -158,15 +125,21 @@ const ROUTES: Route[] = [
   },
 ];
 
+test.beforeAll(() => {
+  if (!credentials()) {
+    throw new Error(CREDENTIALS_HELP);
+  }
+});
+
 test.describe('QA de navegación', () => {
   for (const route of ROUTES) {
     test(`recorrido: ${route.title}`, async ({ page, isMobile }, info) => {
       await mockWeather(page);
-      const errors = watchForErrors(page);
 
-      await login(page);
-
+      // La resolución de la carpa navega antes de empezar a medir.
       const target = route.path ?? (await route.resolve!(page));
+
+      const errors = watchForErrors(page);
       await page.goto(target, { waitUntil: 'domcontentloaded' });
       await settle(page);
 
@@ -178,11 +151,14 @@ test.describe('QA de navegación', () => {
 
       test.fixme(!!route.mobileOverflowFixme, route.mobileOverflowFixme ?? '');
 
-      const { scrollWidth, innerWidth } = await horizontalOverflow(page);
+      // Con emulación móvil `window.innerWidth` acompaña al contenido (el visual viewport se
+      // aleja para que entre todo), así que el ancho de referencia es el viewport configurado.
+      const viewportWidth = page.viewportSize()?.width ?? 390;
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
       expect(
         scrollWidth,
-        `${target} desborda a lo ancho en móvil: ${scrollWidth}px sobre un viewport de ${innerWidth}px`,
-      ).toBeLessThanOrEqual(innerWidth);
+        `${target} desborda a lo ancho en móvil: ${scrollWidth}px sobre un viewport de ${viewportWidth}px`,
+      ).toBeLessThanOrEqual(viewportWidth);
     });
   }
 });

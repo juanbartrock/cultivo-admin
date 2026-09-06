@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -53,13 +53,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const [isConnected, setIsConnected] = useState(false);
     const { isAuthenticated, session } = useAuth();
 
-    useEffect(() => {
-        // El gateway exige token en producción: sin sesión no se abre el socket.
-        const token =
-            (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null) ||
-            session?.access_token ||
-            null;
+    // El gateway exige token en producción: sin sesión no se abre el socket. Se depende del
+    // token y no del estado de auth para no reabrir la conexión en cada cambio de perfil.
+    const token = useMemo(() => {
+        if (typeof window === 'undefined') return null;
+        return localStorage.getItem('access_token') || session?.access_token || null;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, session?.access_token]);
 
+    useEffect(() => {
         if (!token) {
             setSocket(null);
             setIsConnected(false);
@@ -96,7 +98,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         return () => {
             socketInstance.disconnect();
         };
-    }, [isAuthenticated, session?.access_token]);
+    }, [token]);
 
     // Suscribirse a actualizaciones de una sección
     const joinSection = useCallback((sectionId: string) => {

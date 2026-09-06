@@ -19,12 +19,19 @@
   `src/components/ui/`), el build usa `output: 'standalone'`, los tres microservicios IoT
   escuchan en el puerto 3000 de su contenedor. Nivel 4 documenta los `.env` como
   `deploy:deploy 600` y la publicación con `app-restart cultivo-frontend|cultivo-backend --build`.
-- **QA**: nuevo `frontend/tests/qa-nav.spec.ts` + `frontend/playwright.qa.config.ts`
-  (proyectos `desktop` 1440×900 y `mobile` 390×844) que recorre la app publicada con login real,
-  falla ante `console.error`, `pageerror` o HTTP >= 500 y guarda capturas en
-  `docs/rediseno-2026-09/capturas/<QA_LABEL>/`. Script: `npm run qa:nav` en `frontend/`.
-  Credenciales desde `CULTIVO_ADMIN_USER` / `CULTIVO_ADMIN_PASSWORD`
+- **QA**: nuevo recorrido de navegación en `frontend/tests/` (`qa-nav.spec.ts`,
+  `qa-nav.setup.ts`, `qa-nav.shared.ts`) con `frontend/playwright.qa.config.ts` (proyectos
+  `desktop` 1440×900 y `mobile` 390×844, sin `webServer`). El setup loguea por el formulario y
+  el recorrido visita home, sala, la primera carpa, ciclos, automatizaciones, artefactos,
+  notificaciones y admin de usuarios; falla ante `console.error`, `pageerror` o HTTP >= 500 y
+  guarda capturas en `docs/rediseno-2026-09/capturas/<QA_LABEL>/`. En móvil verifica el ancho
+  contra el viewport configurado; Ciclos (469px) y Admin de usuarios (511px) quedan en
+  `test.fixme` para las fases 3 y 4. Script: `npm run qa:nav` en `frontend/`. Credenciales desde
+  `CULTIVO_ADMIN_USER` / `CULTIVO_ADMIN_PASSWORD`
   (`/home/deploy/.config/secrets/cultivo-admin-login.env`, fuera del repo).
+- **Login**: el campo de usuario pasa de `type="email"` a `type="text"` ("Email o usuario"). El
+  backend autentica por `username` y el usuario `admin` no es un email, así que la validación
+  del navegador bloqueaba el envío del formulario.
 
 <!-- [agent:server-audit][date:2026-09-05][action:created] -->
 ## 2026-09-05 — Diagnóstico para el rediseño de la UI
