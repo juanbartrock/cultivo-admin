@@ -32,6 +32,8 @@ import {
   ArrowRightLeft
 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/shell';
 import { motion, AnimatePresence } from 'framer-motion';
 import { deviceService } from '@/services/deviceService';
 import { sectionService } from '@/services/locationService';
@@ -372,40 +374,21 @@ export default function ArtefactosPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <Settings className="w-8 h-8 text-cultivo-green-500" />
-            Gestión de Dispositivos
-          </h1>
-          <p className="text-zinc-400 mt-1">
-            Detecta dispositivos IoT y asígnalos a tu sistema de cultivo
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowVirtualModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Agregar Virtual
-          </button>
-          <button
-            onClick={handleScanDevices}
-            disabled={isScanning}
-            className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white rounded-lg transition-colors"
-          >
-            <RefreshCw className={`w-5 h-5 ${isScanning ? 'animate-spin' : ''}`} />
-            {isScanning ? 'Escaneando...' : 'Escanear'}
-          </button>
-        </div>
-      </motion.div>
+      <PageHeader
+        title="Dispositivos"
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setShowVirtualModal(true)}>
+              <Plus className="h-4 w-4" />
+              Agregar virtual
+            </Button>
+            <Button size="sm" onClick={handleScanDevices} disabled={isScanning}>
+              <RefreshCw className={`h-4 w-4 ${isScanning ? 'animate-spin' : ''}`} />
+              {isScanning ? 'Escaneando...' : 'Escanear'}
+            </Button>
+          </>
+        }
+      />
 
       {/* Panel de Dispositivos Disponibles */}
       <motion.div

@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 
 import { EmptyState } from '@/components/ui/empty-state';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/shell';
 import AIProposalsPanel from '@/components/AIProposalsPanel';
 import CapabilitiesAnalysisModal from '@/components/CapabilitiesAnalysisModal';
 
@@ -335,39 +337,21 @@ export default function AutomatizacionesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-md border border-edge bg-surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div>
-          <h1 className="font-display flex items-center gap-3 text-3xl font-semibold text-white">
-            <Zap className="w-8 h-8 text-cyan-400" />
-            Automatizaciones
-          </h1>
-          <p className="text-zinc-400 mt-1">
-            Configura reglas para automatizar el control de tus dispositivos
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowCapabilitiesModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded-lg transition-colors"
-          >
-            <Brain className="w-4 h-4" />
-            <span className="hidden sm:inline">Analizar Sistema</span>
-          </button>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Automatización
-          </button>
-        </div>
-      </motion.div>
+      <PageHeader
+        title="Automatizaciones"
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setShowCapabilitiesModal(true)}>
+              <Brain className="h-4 w-4" />
+              <span className="hidden sm:inline">Analizar sistema</span>
+            </Button>
+            <Button size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4" />
+              Nueva automatización
+            </Button>
+          </>
+        }
+      />
 
       {/* Panel de propuestas de IA pendientes */}
       <AIProposalsPanel onApproved={loadData} />

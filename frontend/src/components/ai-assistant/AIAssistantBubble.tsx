@@ -27,15 +27,15 @@ export function AIAssistantBubble() {
       {/* Floating Bubble */}
       <button
         onClick={toggleAssistant}
-        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center group ${
+        className={`fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full shadow-float transition-all duration-300 flex items-center justify-center group lg:bottom-6 lg:right-6 ${
           isOpen 
-            ? 'bg-gray-700 scale-90 opacity-0 sm:opacity-100' 
-            : 'bg-gradient-to-br from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 hover:scale-110'
+            ? 'bg-surface-3 scale-90 opacity-0 sm:opacity-100' 
+            : 'bg-accent hover:bg-accent-hover hover:scale-110'
         }`}
         style={{
           boxShadow: isOpen 
-            ? '0 4px 15px rgba(0, 0, 0, 0.2)' 
-            : '0 4px 20px rgba(16, 185, 129, 0.4)',
+            ? '0 4px 15px rgba(0, 0, 0, 0.2)'
+            : '0 8px 24px rgba(0, 0, 0, 0.35)',
         }}
       >
         {/* Icono principal */}
@@ -82,7 +82,7 @@ export function AIAssistantBubble() {
 
       {/* Tooltip */}
       {!isOpen && (
-        <div className="fixed bottom-24 right-6 z-40 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="fixed bottom-36 right-4 z-30 pointer-events-none lg:bottom-24 lg:right-6 opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
             Asistente de Cultivo
             <div className="absolute -bottom-1 right-6 w-2 h-2 bg-gray-800 rotate-45" />

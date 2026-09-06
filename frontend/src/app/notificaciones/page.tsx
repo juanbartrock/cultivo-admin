@@ -23,10 +23,11 @@ import {
   Search,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { notificationService, NotificationSummary } from '@/services/notificationService';
 import { Notification, NotificationType, NotificationPriority } from '@/types';
 import { useToast } from '@/contexts/ToastContext';
+import { PageHeader } from '@/components/shell';
+import { Button } from '@/components/ui/button';
 
 // Configuración de iconos y colores por tipo
 const typeConfig: Record<NotificationType, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
@@ -49,7 +50,6 @@ const priorityConfig: Record<NotificationPriority, { color: string; borderColor:
 const ITEMS_PER_PAGE = 20;
 
 export default function NotificacionesPage() {
-  const router = useRouter();
   const { toast } = useToast();
   
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -264,56 +264,27 @@ export default function NotificacionesPage() {
   }, {} as Record<string, Notification[]>);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
-      {/* Decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative max-w-6xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-zinc-400 hover:text-white mb-4 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span>Volver</span>
-          </button>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-amber-500/20 to-orange-600/20 rounded-xl border border-amber-500/30">
-                <Bell className="w-8 h-8 text-amber-400" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Notificaciones</h1>
-                <p className="text-zinc-400 mt-1">
-                  {summary ? (
-                    <>
-                      {summary.unread > 0 ? (
-                        <span className="text-amber-400">{summary.unread} sin leer</span>
-                      ) : (
-                        <span>Todo al día</span>
-                      )}
-                      {' · '}{summary.total} total
-                    </>
-                  ) : 'Cargando...'}
-                </p>
-              </div>
-            </div>
-            
-            <button
+    <>
+      <div className="space-y-6">
+        <PageHeader
+          title="Notificaciones"
+          subtitle={
+            summary
+              ? `${summary.unread} sin leer · ${summary.total} en total`
+              : undefined
+          }
+          actions={
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={loadNotifications}
               disabled={isLoading}
-              className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
-              title="Actualizar"
+              aria-label="Actualizar"
             >
-              <RefreshCw className={`w-5 h-5 text-zinc-400 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-        </div>
+              <RefreshCw className={isLoading ? 'animate-spin' : ''} />
+            </Button>
+          }
+        />
 
         {/* Stats Cards */}
         {summary && (
@@ -701,12 +672,12 @@ export default function NotificacionesPage() {
 
         {/* Footer info */}
         {notifications.length > 0 && (
-          <p className="text-center text-sm text-zinc-600 mt-6">
+          <p className="text-center text-xs text-fg-faint mt-6">
             Mostrando {currentPage * ITEMS_PER_PAGE + 1}-{Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalCount)} de {totalCount} notificaciones
           </p>
         )}
       </div>
-    </div>
+    </>
   );
 }
 

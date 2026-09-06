@@ -7,6 +7,7 @@ import { DialogProvider } from "@/contexts/DialogContext";
 import { AIAssistantProvider } from "@/contexts/AIAssistantContext";
 import { AIAssistantBubble } from "@/components/ai-assistant";
 import { AppQueryProvider } from "@/providers/AppQueryProvider";
+import { AppShell } from "@/components/shell";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -42,7 +43,7 @@ export default function RootLayout({
               <DialogProvider>
                 <SocketProvider>
                   <AIAssistantProvider>
-                    {children}
+                    <AppShell>{children}</AppShell>
                     <AIAssistantBubble />
                   </AIAssistantProvider>
                 </SocketProvider>

@@ -32,6 +32,8 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { PageHeader } from '@/components/shell';
+import { Button } from '@/components/ui/button';
 import { cycleService, plantService, strainService } from '@/services/growService';
 import { eventService, formatEventDate, getEventTypeInfo } from '@/services/eventService';
 import { sectionService } from '@/services/locationService';
@@ -330,39 +332,21 @@ function SeguimientosContent() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <ClipboardList className="w-8 h-8 text-cultivo-green-500" />
-            Ciclos
-          </h1>
-          <p className="text-zinc-400 mt-1">
-            Gestiona tus ciclos de cultivo, plantas y registra eventos
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowStrainModal(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-zinc-600 hover:border-zinc-500 hover:bg-zinc-800/50 text-zinc-300 hover:text-white rounded-lg transition-colors"
-          >
-            <Leaf className="w-4 h-4" />
-            Genéticas
-          </button>
-          <button
-            onClick={() => setShowCycleModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Ciclo
-          </button>
-        </div>
-      </motion.div>
+      <PageHeader
+        title="Ciclos"
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setShowStrainModal(true)}>
+              <Leaf className="h-4 w-4" />
+              Genéticas
+            </Button>
+            <Button size="sm" onClick={() => setShowCycleModal(true)}>
+              <Plus className="h-4 w-4" />
+              Nuevo ciclo
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Panel de Ciclos */}

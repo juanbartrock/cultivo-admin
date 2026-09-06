@@ -4,13 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
-  Users, UserPlus, Edit, Trash2, Shield, Crown, Star, 
-  Loader2, ArrowLeft, Check, X, AlertCircle, RefreshCw,
+  UserPlus, Edit, Trash2, Shield, Crown, Star, 
+  Loader2, Check, X, AlertCircle, RefreshCw,
   Home, Tent, Cpu
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/shell';
 
 interface User {
   id: string;
@@ -244,8 +247,11 @@ export default function AdminUsersPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-cultivo-darker flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cultivo-green-500 animate-spin" />
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-56" />
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="h-20 w-full" />
+        ))}
       </div>
     );
   }
@@ -255,46 +261,24 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-cultivo-darker">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-cultivo-dark/80 backdrop-blur-md border-b border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/')}
-              className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-zinc-400" />
-            </button>
-            <div>
-              <h1 className="text-xl font-bold text-white flex items-center gap-2">
-                <Users className="w-6 h-6 text-cultivo-green-500" />
-                Administración de Usuarios
-              </h1>
-              <p className="text-sm text-zinc-400">{users.length} usuarios registrados</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={loadUsers}
-              className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
-            >
-              <RefreshCw className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setShowNewUserModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white rounded-lg transition-colors"
-            >
-              <UserPlus className="w-5 h-5" />
-              Nuevo Usuario
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="Usuarios"
+        subtitle={`${users.length} registrados`}
+        actions={
+          <>
+            <Button variant="ghost" size="icon" onClick={loadUsers} aria-label="Actualizar">
+              <RefreshCw />
+            </Button>
+            <Button size="sm" onClick={() => setShowNewUserModal(true)}>
+              <UserPlus className="h-4 w-4" />
+              Nuevo usuario
+            </Button>
+          </>
+        }
+      />
 
-      {/* Contenido */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <div>
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-3 text-red-400">
             <AlertCircle className="w-5 h-5" />
@@ -423,7 +407,7 @@ export default function AdminUsersPage() {
             })}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Modal Editar Usuario */}
       {editingUser && (

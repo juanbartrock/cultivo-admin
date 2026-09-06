@@ -58,6 +58,7 @@ import { feedingPlanService } from '@/services/feedingPlanService';
 import { preventionPlanService } from '@/services/preventionPlanService';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
 import { SectionDashboard, Device, DeviceType, DeviceStatus, Plant, GrowEvent, SectionFeedingPlansResponse, FeedingPlan, FeedingPlanWithCount, PlantStage, SectionPreventionPlansResponse, PreventionPlanWithCount, SectionLayoutConfig, SectionLayoutItem, DEFAULT_SECTION_LAYOUT } from '@/types';
+import { PageHeader } from '@/components/shell';
 import { eventService } from '@/services/eventService';
 import { plantService } from '@/services/growService';
 
@@ -1486,17 +1487,18 @@ export default function CarpaDetailPage() {
 
   return (
     <div className="space-y-8">
-      {/* Navigation & Actions */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link
-          href="/sala"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors self-start"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver a la sala
-        </Link>
-
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+      <PageHeader
+        title={section.name}
+        subtitle={section.dimensions}
+        breadcrumb={[
+          { label: 'Salas', href: '/sala' },
+          ...(section.room
+            ? [{ label: section.room.name, href: `/sala?sala=${section.room.id}` }]
+            : []),
+          { label: section.name },
+        ]}
+        actions={
+          <>
           <button
             onClick={() => setShowLayoutEditor(true)}
             className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors border border-zinc-700/70"
@@ -1531,8 +1533,9 @@ export default function CarpaDetailPage() {
             <RefreshCw className={`w-4 h-4 ${statusLoading ? 'animate-spin' : ''}`} />
             Actualizar
           </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Header con icono */}
       <motion.div
@@ -1547,9 +1550,11 @@ export default function CarpaDetailPage() {
 
         {/* Info de la sección */}
         <div className="min-w-0">
-          <h1 className="text-3xl sm:text-4xl font-display font-semibold text-white mb-2 break-words">{section.name}</h1>
+          <h2 className="font-display text-xl font-semibold text-fg mb-2 break-words lg:hidden">
+            {section.name}
+          </h2>
           {section.dimensions && (
-            <p className="text-lg text-cultivo-green-400 mb-4">{section.dimensions}</p>
+            <p className="text-sm text-fg-muted mb-4">{section.dimensions}</p>
           )}
 
           {section.description && (
