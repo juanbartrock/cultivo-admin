@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
 import { Device, Room } from '@/types';
 import { useRoomQuery, useRoomsQuery, useRoomSectionsQuery } from '../queries/useSalaQueries';
+
+/** Parámetro de la URL que fija la sala seleccionada; `roomId` se acepta por compatibilidad. */
+const ROOM_PARAM = 'sala';
 
 function getPreferredRoomId(rooms: Room[], roomIdFromUrl: string | null) {
   if (!rooms.length) return null;
@@ -16,21 +19,27 @@ function getPreferredRoomId(rooms: Room[], roomIdFromUrl: string | null) {
 }
 
 export function useSalaDashboard() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const roomIdFromUrl = searchParams.get('roomId');
+  const roomIdFromUrl = searchParams.get(ROOM_PARAM) ?? searchParams.get('roomId');
 
   const roomsQuery = useRoomsQuery();
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedRoomId, setSelectedRoomIdState] = useState<string | null>(null);
 
   const rooms = useMemo(() => roomsQuery.data ?? [], [roomsQuery.data]);
 
   useEffect(() => {
     if (!rooms.length) {
-      setSelectedRoomId(null);
+      setSelectedRoomIdState(null);
       return;
     }
 
-    setSelectedRoomId((current) => {
+    setSelectedRoomIdState((current) => {
+      if (roomIdFromUrl && rooms.some((room) => room.id === roomIdFromUrl)) {
+        return roomIdFromUrl;
+      }
+
       if (current && rooms.some((room) => room.id === current)) {
         return current;
       }
@@ -38,6 +47,18 @@ export function useSalaDashboard() {
       return getPreferredRoomId(rooms, roomIdFromUrl);
     });
   }, [roomIdFromUrl, rooms]);
+
+  /** La sala elegida queda en la URL (`?sala=<id>`) para poder compartirla y no perderla. */
+  const setSelectedRoomId = useCallback(
+    (roomId: string) => {
+      setSelectedRoomIdState(roomId);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('roomId');
+      params.set(ROOM_PARAM, roomId);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
 
   const selectedRoomQuery = useRoomQuery(selectedRoomId);
   const roomSectionsQuery = useRoomSectionsQuery(selectedRoomId);

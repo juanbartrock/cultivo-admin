@@ -1,4 +1,4 @@
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui';
 
 interface SalaErrorStateProps {
@@ -8,11 +8,10 @@ interface SalaErrorStateProps {
 
 export function SalaErrorState({ message, onRetry }: SalaErrorStateProps) {
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
-      <AlertCircle className="mb-4 h-16 w-16 text-red-400" />
-      <h1 className="mb-2 text-2xl font-bold text-white">Error de conexión</h1>
-      <p className="mb-5 max-w-md text-zinc-400">{message}</p>
-      <Button onClick={onRetry} className="gap-2">
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-warn/30 bg-warn/10 px-4 py-3">
+      <AlertTriangle className="h-4 w-4 shrink-0 text-warn" />
+      <p className="min-w-0 flex-1 text-sm text-warn">{message}</p>
+      <Button variant="secondary" size="sm" onClick={onRetry}>
         <RefreshCw className="h-4 w-4" />
         Reintentar
       </Button>

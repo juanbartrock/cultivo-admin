@@ -103,6 +103,11 @@ export interface Section {
   room?: Room;
   devices: Device[];
   plants: Plant[];
+  /** Conteos que devuelve el listado de secciones. */
+  _count?: {
+    devices: number;
+    plants: number;
+  };
   createdAt: string;
   updatedAt: string;
 }

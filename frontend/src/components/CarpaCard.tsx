@@ -21,13 +21,14 @@ import {
 } from 'lucide-react';
 
 // Iconos según el nombre de la sección
+// La carpa se distingue por su nombre y sus datos: el ícono no aporta color de marca.
 const sectionIcons: Record<string, { icon: React.ElementType; color: string }> = {
-  'flora': { icon: Flower2, color: 'text-purple-400' },
-  'floración': { icon: Flower2, color: 'text-purple-400' },
-  'vege': { icon: Sprout, color: 'text-green-400' },
-  'vegetativo': { icon: Sprout, color: 'text-green-400' },
-  'secado': { icon: Wind, color: 'text-orange-400' },
-  'invernadero': { icon: TreeDeciduous, color: 'text-emerald-400' },
+  'flora': { icon: Flower2, color: 'text-fg-muted' },
+  'floración': { icon: Flower2, color: 'text-fg-muted' },
+  'vege': { icon: Sprout, color: 'text-fg-muted' },
+  'vegetativo': { icon: Sprout, color: 'text-fg-muted' },
+  'secado': { icon: Wind, color: 'text-fg-muted' },
+  'invernadero': { icon: TreeDeciduous, color: 'text-fg-muted' },
 };
 
 function getSectionIcon(sectionName: string) {
@@ -37,7 +38,7 @@ function getSectionIcon(sectionName: string) {
       return config;
     }
   }
-  return { icon: Leaf, color: 'text-cultivo-green-400' };
+  return { icon: Leaf, color: 'text-fg-muted' };
 }
 
 // Calcula el VPD (Vapor Pressure Deficit) en kPa
@@ -60,11 +61,11 @@ function calculateVPD(temperature: number, humidity: number): number | null {
 
 // Obtener el color del VPD según el rango
 function getVPDColor(vpd: number): string {
-  if (vpd < 0.4) return 'text-blue-400'; // Muy bajo - riesgo de moho
-  if (vpd < 0.8) return 'text-green-400'; // Ideal para vegetativo
-  if (vpd < 1.2) return 'text-cultivo-green-400'; // Ideal para floración
-  if (vpd < 1.6) return 'text-yellow-400'; // Alto - estrés leve
-  return 'text-red-400'; // Muy alto - estrés severo
+  if (vpd < 0.4) return 'text-danger'; // Muy bajo: riesgo de moho
+  if (vpd < 0.8) return 'text-warn'; // Bajo
+  if (vpd <= 1.4) return 'text-fg'; // En rango
+  if (vpd <= 1.6) return 'text-warn'; // Alto: estrés leve
+  return 'text-danger'; // Muy alto: estrés severo
 }
 
 interface CarpaCardProps {
@@ -149,64 +150,61 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: delay * 0.1 }}
           whileHover={{ scale: isEnabled ? 1.02 : 1, y: isEnabled ? -4 : 0 }}
-          className={`group bg-zinc-800/50 backdrop-blur-sm border overflow-hidden transition-all cursor-pointer ${
-            hasExtraInfo ? 'rounded-t-2xl' : 'rounded-2xl'
+          className={`group bg-surface border overflow-hidden transition-colors cursor-pointer ${
+            hasExtraInfo ? 'rounded-t-md' : 'rounded-md'
           } ${
             !isEnabled
-              ? 'border-zinc-600/50 grayscale'
+              ? 'border-edge grayscale'
               : isLuzEncendida 
-                ? 'border-yellow-400/60 shadow-[0_0_20px_rgba(250,204,21,0.3)] ring-1 ring-yellow-400/30 hover:border-cultivo-green-600/50' 
-                : 'border-zinc-700/50 hover:border-cultivo-green-600/50'
+                ? 'border-warn/50 hover:border-warn' 
+                : 'border-edge hover:border-edge-strong'
           }`}
         >
           {/* Icono de la sección */}
-          <div className="relative h-48 bg-zinc-900/50 overflow-hidden flex items-center justify-center">
-            <div className={`relative z-10 p-6 rounded-full bg-zinc-800/80 transition-transform duration-300 ${isEnabled ? 'group-hover:scale-110' : ''}`}>
-              <IconComponent className={`w-20 h-20 ${isEnabled ? iconConfig.color : 'text-zinc-500'}`} />
+          <div className="relative h-28 bg-surface-2 overflow-hidden flex items-center justify-center">
+            <div className="relative z-10">
+              <IconComponent className={`w-10 h-10 ${isEnabled ? iconConfig.color : 'text-offline'}`} />
             </div>
-            {/* Overlay con gradiente */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent" />
-            
             {/* Badge de Inactiva */}
             {!isEnabled && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 bg-zinc-700/90 px-2 py-1 rounded-full">
-                <PauseCircle className="w-3 h-3 text-zinc-400" />
-                <span className="text-xs font-medium text-zinc-400">Inactiva</span>
+              <div className="absolute top-3 right-3 flex items-center gap-1 bg-surface-3 px-2 py-1 rounded-sm">
+                <PauseCircle className="w-3 h-3 text-offline" />
+                <span className="text-xs font-medium text-offline">Inactiva</span>
               </div>
             )}
             
             {/* Badge de plantas */}
             {plantsCount > 0 && (
-              <div className={`absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full ${isEnabled ? 'bg-cultivo-green-600/90' : 'bg-zinc-600/90'}`}>
-                <Leaf className="w-3 h-3 text-white" />
-                <span className="text-xs font-medium text-white">{plantsCount} planta{plantsCount !== 1 ? 's' : ''}</span>
+              <div className={`absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full ${isEnabled ? 'bg-accent-soft text-accent' : 'bg-surface-3 text-fg-muted'}`}>
+                <Leaf className="w-3 h-3" />
+                <span className="text-xs font-medium tabular-nums">{plantsCount} planta{plantsCount !== 1 ? 's' : ''}</span>
               </div>
             )}
           </div>
 
           {/* Info de la sección */}
           <div className="p-4">
-            <h3 className="font-semibold text-white text-lg mb-1 group-hover:text-cultivo-green-400 transition-colors">
+            <h3 className="font-medium text-fg text-sm mb-1">
               {section.name}
             </h3>
             {section.dimensions && (
-              <p className="text-sm text-zinc-400 mb-3">{section.dimensions}</p>
+              <p className="text-xs text-fg-faint mb-3">{section.dimensions}</p>
             )}
             
             {section.description && (
-              <p className="text-xs text-zinc-400 mb-3 line-clamp-2">{section.description}</p>
+              <p className="text-xs text-fg-muted mb-3 line-clamp-2">{section.description}</p>
             )}
 
             {/* Stats */}
-            <div className="flex items-center justify-between pt-3 border-t border-zinc-700/50">
+            <div className="flex items-center justify-between pt-3 border-t border-edge">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-cultivo-green-500" />
-                <span className="text-xs text-zinc-400">
+                <Activity className="w-4 h-4 text-fg-faint" />
+                <span className="text-xs text-fg-muted">
                   {devicesCount} dispositivo{devicesCount !== 1 ? 's' : ''}
                 </span>
               </div>
-              <span className="text-xs text-cultivo-green-500 font-medium group-hover:underline">
-                Ver detalle →
+              <span className="text-xs text-accent font-medium group-hover:underline">
+                Ver detalle
               </span>
             </div>
           </div>
@@ -219,7 +217,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: delay * 0.1 + 0.1 }}
-          className="bg-zinc-900/80 border border-t-0 border-zinc-700/50 rounded-b-2xl p-3 space-y-2"
+          className="bg-surface-2 border border-t-0 border-edge rounded-b-md p-3 space-y-2"
         >
           {/* Datos ambientales */}
           {hasEnvironmentData && (
@@ -227,16 +225,16 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
               {/* Temperatura */}
               {temperature !== undefined && (
                 <div className="flex items-center gap-1.5 flex-1 justify-center">
-                  <Thermometer className="w-3.5 h-3.5 text-orange-400" />
-                  <span className="text-sm font-medium text-white">{temperature}°C</span>
+                  <Thermometer className="w-3.5 h-3.5 text-fg-faint" />
+                  <span className="text-sm font-medium tabular-nums text-fg">{temperature} °C</span>
                 </div>
               )}
               
               {/* Humedad */}
               {humidity !== undefined && (
                 <div className="flex items-center gap-1.5 flex-1 justify-center">
-                  <Droplets className="w-3.5 h-3.5 text-blue-400" />
-                  <span className="text-sm font-medium text-white">{humidity}%</span>
+                  <Droplets className="w-3.5 h-3.5 text-fg-faint" />
+                  <span className="text-sm font-medium tabular-nums text-fg">{humidity} %</span>
                 </div>
               )}
               
@@ -244,7 +242,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
               {vpd !== undefined && vpd !== null && (
                 <div className="flex items-center gap-1.5 flex-1 justify-center">
                   <Activity className={`w-3.5 h-3.5 ${getVPDColor(vpd)}`} />
-                  <span className={`text-sm font-medium ${getVPDColor(vpd)}`}>
+                  <span className={`text-sm font-medium tabular-nums ${getVPDColor(vpd)}`}>
                     {vpd} kPa
                   </span>
                 </div>
@@ -254,9 +252,9 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
 
           {/* Estado de dispositivos */}
           {hasDeviceStatus && (
-            <div className="flex items-center justify-center gap-3 pt-2 border-t border-zinc-700/30">
+            <div className="flex items-center justify-center gap-3 pt-2 border-t border-edge">
               {statusLoading && (
-                <Loader2 className="w-3 h-3 text-zinc-500 animate-spin" />
+                <Loader2 className="w-3 h-3 text-fg-faint animate-spin" />
               )}
               {/* Luz */}
               {luz && (
@@ -264,7 +262,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
                   icon={Sun}
                   label="Luz"
                   isOn={getDeviceState(luz)}
-                  activeColor="text-yellow-400"
+                  activeColor="text-warn"
                 />
               )}
               
@@ -274,7 +272,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
                   icon={Droplets}
                   label="Humidif."
                   isOn={getDeviceState(humidificador)}
-                  activeColor="text-cyan-400"
+                  activeColor="text-info"
                 />
               )}
               
@@ -284,7 +282,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
                   icon={Fan}
                   label="Extractor"
                   isOn={getDeviceState(extractor)}
-                  activeColor="text-green-400"
+                  activeColor="text-accent"
                 />
               )}
               
@@ -294,7 +292,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
                   icon={Wind}
                   label="Ventilador"
                   isOn={getDeviceState(ventilador)}
-                  activeColor="text-teal-400"
+                  activeColor="text-accent"
                 />
               )}
             </div>
@@ -321,8 +319,8 @@ function DeviceStatusBadge({
     <div 
       className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${
         isOn 
-          ? `bg-zinc-800 ${activeColor}` 
-          : 'bg-zinc-800/50 text-zinc-500'
+          ? `bg-surface-3 ${activeColor}`
+          : 'bg-surface text-fg-faint'
       }`}
       title={`${label}: ${isOn ? 'Encendido' : 'Apagado'}`}
     >

@@ -1,6 +1,5 @@
-import DoorAnimation from '@/components/DoorAnimation';
+import { HomePage } from '@/features/home';
 
 export default function Home() {
-  return <DoorAnimation />;
+  return <HomePage />;
 }
-

@@ -53,8 +53,8 @@ export function useWeather(city: string = 'Buenos Aires') {
           loading: false,
           error: null,
         });
-      } catch (error) {
-        console.error('Error al obtener el clima:', error);
+      } catch {
+        // El estado de error lo muestra la UI: "Clima no disponible", sin números.
         setWeather(prev => ({
           ...prev,
           loading: false,

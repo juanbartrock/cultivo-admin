@@ -1,26 +1,27 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Building2,
-  ChevronRight,
-  Droplets,
-  Loader2,
-  MapPin,
-  RefreshCw,
-  Tent,
-  Thermometer,
-} from 'lucide-react';
+import { Building2, MoreVertical, Plus, RefreshCw, Tent, Trash2 } from 'lucide-react';
 import CarpaCard from '@/components/CarpaCard';
+import { PageHeader } from '@/components/shell';
 import { Button, ConfirmDialog, EmptyState } from '@/components/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/contexts/ToastContext';
-import { useWeather } from '@/hooks/useWeather';
-
 import {
   CreateRoomModal,
   CreateSectionModal,
-  RoomSelector,
   SalaErrorState,
   SalaLoadingState,
   useDeleteRoomMutation,
@@ -29,7 +30,6 @@ import {
 
 function SalaPageContent() {
   const { toast } = useToast();
-  const weather = useWeather('Buenos Aires');
   const deleteRoomMutation = useDeleteRoomMutation();
 
   const {
@@ -83,12 +83,10 @@ function SalaPageContent() {
       <>
         <EmptyState
           icon={Building2}
-          title="Configura tu primer espacio"
-          description="Crea tu primer espacio de cultivo (sala, invernadero, etc.) para comenzar."
-          className="mt-8"
-        >
-          <Button onClick={() => setIsCreateRoomOpen(true)}>Crear espacio</Button>
-        </EmptyState>
+          title="Sin espacios de cultivo"
+          actionLabel="Crear espacio"
+          onAction={() => setIsCreateRoomOpen(true)}
+        />
         <CreateRoomModal
           isOpen={isCreateRoomOpen}
           onClose={() => setIsCreateRoomOpen(false)}
@@ -99,128 +97,83 @@ function SalaPageContent() {
   }
 
   return (
-    <div className="space-y-8">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-md border border-edge bg-surface flex flex-col gap-4 p-5"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-cultivo-green-500" />
-            <h2 className="font-display text-lg font-semibold text-white">Espacios de cultivo</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setIsCreateRoomOpen(true)}>
-              Nuevo espacio
-            </Button>
-            <Button variant="ghost" size="sm" onClick={refreshAll}>
-              <RefreshCw className="h-4 w-4" />
-              Actualizar
-            </Button>
-          </div>
-        </div>
-
-        <RoomSelector
-          rooms={rooms}
-          selectedRoomId={selectedRoomId}
-          onSelect={setSelectedRoomId}
-          onDelete={setRoomToDelete}
-        />
-      </motion.div>
-
-      {selectedRoom ? (
-        <>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col gap-4 border-t border-zinc-700/50 pt-4 lg:flex-row lg:items-center lg:justify-between"
-          >
-            <div>
-              <h1 className="font-display text-3xl font-semibold text-white">{selectedRoom.name}</h1>
-              <p className="mt-1 text-zinc-400">
-                {selectedRoom.description || 'Monitoreo y control de tu espacio de cultivo'}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 rounded-xl border border-zinc-700/50 bg-zinc-800/50 px-4 py-2">
-                <MapPin className="h-5 w-5 text-cultivo-green-400" />
-                <div className="flex flex-col">
-                  {weather.loading ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
-                      <span className="text-sm text-zinc-400">Cargando...</span>
-                    </div>
-                  ) : weather.error ? (
-                    <span className="text-sm text-red-400">{weather.error}</span>
-                  ) : (
-                    <>
-                      <span className="text-sm font-semibold text-white">{weather.city}</span>
-                      <span className="text-xs text-zinc-400">{weather.country}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 rounded-xl border border-zinc-700/50 bg-zinc-800/50 px-4 py-2">
-                <Thermometer className="h-5 w-5 text-orange-400" />
-                <span className="text-xl font-bold text-white">
-                  {weather.loading ? '...' : `${weather.temperature}°C`}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 rounded-xl border border-zinc-700/50 bg-zinc-800/50 px-4 py-2">
-                <Droplets className="h-5 w-5 text-blue-400" />
-                <span className="text-xl font-bold text-white">
-                  {weather.loading ? '...' : `${weather.humidity}%`}
-                </span>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="rounded-md border border-edge bg-surface p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Tent className="h-5 w-5 text-cultivo-green-500" />
-                <h2 className="text-xl font-semibold text-white">Unidades de cultivo</h2>
-              </div>
-              <Button size="sm" variant="secondary" onClick={() => setIsCreateSectionOpen(true)}>
-                Nueva
-              </Button>
-            </div>
-            <p className="mb-6 text-sm text-zinc-400">
-              Selecciona una unidad para ver sus detalles, dispositivos y plantas
-            </p>
-
-            {sections.length ? (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {sections.map((section, index) => (
-                  <CarpaCard
-                    key={section.id}
-                    section={section}
-                    delay={index}
-                    getDeviceStatus={getStatus}
-                    statusLoading={statusLoading}
-                  />
+    <div className="space-y-6">
+      <PageHeader
+        title={selectedRoom?.name ?? 'Salas'}
+        subtitle={selectedRoom?.description}
+        breadcrumb={selectedRoom ? [{ label: 'Salas' }, { label: selectedRoom.name }] : undefined}
+        actions={
+          <>
+            <Select value={selectedRoomId ?? undefined} onValueChange={setSelectedRoomId}>
+              <SelectTrigger className="h-9 w-full min-w-[10rem] sm:w-auto">
+                <SelectValue placeholder="Elegir sala" />
+              </SelectTrigger>
+              <SelectContent>
+                {rooms.map((room) => (
+                  <SelectItem key={room.id} value={room.id}>
+                    {room.name}
+                  </SelectItem>
                 ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-zinc-700/50 bg-zinc-800/30 p-12 text-center">
-                <Tent className="mx-auto mb-4 h-16 w-16 text-zinc-600" />
-                <h3 className="mb-2 text-lg font-semibold text-white">Sin unidades de cultivo</h3>
-                <p className="mb-4 text-zinc-400">
-                  Agrega carpas o invernaderos para organizar tu cultivo
-                </p>
-                <Button onClick={() => setIsCreateSectionOpen(true)}>
-                  <ChevronRight className="h-4 w-4" />
-                  Agregar unidad
+              </SelectContent>
+            </Select>
+
+            <Button size="sm" onClick={() => setIsCreateSectionOpen(true)} disabled={!selectedRoom}>
+              <Plus className="h-4 w-4" />
+              Nueva carpa
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Acciones de la sala">
+                  <MoreVertical />
                 </Button>
-              </div>
-            )}
-          </motion.section>
-        </>
-      ) : null}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onSelect={() => setIsCreateRoomOpen(true)}
+                >
+                  <Building2 className="h-4 w-4" />
+                  Nueva sala
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onSelect={() => void refreshAll()}>
+                  <RefreshCw className={`h-4 w-4 ${statusLoading ? 'animate-spin' : ''}`} />
+                  Actualizar
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer text-danger focus:text-danger"
+                  disabled={!selectedRoomId}
+                  onSelect={() => setRoomToDelete(selectedRoomId)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar sala
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+      />
+
+      {sections.length ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {sections.map((section, index) => (
+            <CarpaCard
+              key={section.id}
+              section={section}
+              delay={index}
+              getDeviceStatus={getStatus}
+              statusLoading={statusLoading}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={Tent}
+          title="Sin carpas en esta sala"
+          actionLabel="Agregar carpa"
+          onAction={() => setIsCreateSectionOpen(true)}
+        />
+      )}
 
       <CreateRoomModal
         isOpen={isCreateRoomOpen}
@@ -242,7 +195,7 @@ function SalaPageContent() {
       <ConfirmDialog
         isOpen={Boolean(roomToDelete)}
         title="Eliminar espacio de cultivo"
-        message="¿Estás seguro de que deseas eliminar este espacio? Esta acción no se puede deshacer y eliminará todas las unidades (carpas) y dispositivos asociados."
+        message="Se eliminan también todas sus carpas y los dispositivos asociados. La acción no se puede deshacer."
         confirmText="Sí, eliminar"
         onConfirm={handleDeleteRoom}
         onCancel={() => setRoomToDelete(null)}
@@ -253,11 +206,9 @@ function SalaPageContent() {
 }
 
 export default function SalaPage() {
-  const content = (
+  return (
     <Suspense fallback={<SalaLoadingState />}>
       <SalaPageContent />
     </Suspense>
   );
-
-  return content;
 }
