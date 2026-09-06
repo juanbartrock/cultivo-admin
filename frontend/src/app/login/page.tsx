@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Leaf, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff, User } from 'lucide-react';
+import { Leaf, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
@@ -200,35 +200,6 @@ export default function LoginPage() {
           </p>
         )}
 
-        {/* Separador y acceso rápido admin */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-700"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-cultivo-darker text-zinc-500">
-              {supabaseConfigured ? 'o' : 'acceso rápido'}
-            </span>
-          </div>
-        </div>
-
-        {/* Login de admin */}
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => handleLocalLogin('admin', 'admin1')}
-            disabled={isLoading}
-            className="flex items-center justify-center gap-2 w-full py-3 bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700 text-zinc-300 rounded-lg transition-colors"
-          >
-            <User className="w-5 h-5" />
-            Entrar como Administrador
-          </button>
-          {!supabaseConfigured && (
-            <p className="text-xs text-zinc-500 mt-2">
-              Usuario: admin / Contraseña: admin
-            </p>
-          )}
-        </div>
       </motion.div>
     </div>
   );
