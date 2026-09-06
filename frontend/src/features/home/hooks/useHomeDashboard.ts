@@ -107,61 +107,54 @@ export function useHomeDashboard() {
     [getStatus, sections]
   );
 
+  /**
+   * Alertas por carpa: lectura fuera de rango o sensor sin respuesta.
+   * Los dispositivos caídos uno por uno viven en `deviceIssues`, para no repetir la misma
+   * lista dos veces en la misma pantalla.
+   */
   const alerts = useMemo<SectionAlert[]>(() => {
     const result: SectionAlert[] = [];
 
     for (const { section, readings } of summaries) {
+      const base = {
+        sectionId: section.id,
+        sectionName: section.name,
+        roomName: section.room?.name,
+      };
+
+      if (readings.sensor && getStatus(readings.sensor.id)?.online === false) {
+        result.push({ ...base, label: readings.sensor.name, detail: 'Sensor sin respuesta', severity: 'offline' });
+        continue;
+      }
+
       const checks: Array<{ label: string; detail: string; status: ReadingStatus }> = [
         {
           label: 'Temperatura',
-          detail: readings.temperature !== null ? `${readings.temperature} °C` : '—',
+          detail: `${readings.temperature} °C`,
           status: readingStatus('temperature', readings.temperature),
         },
         {
           label: 'Humedad',
-          detail: readings.humidity !== null ? `${readings.humidity} %` : '—',
+          detail: `${readings.humidity} %`,
           status: readingStatus('humidity', readings.humidity),
         },
         {
           label: 'VPD',
-          detail: readings.vpd !== null ? `${readings.vpd} kPa` : '—',
+          detail: `${readings.vpd} kPa`,
           status: readingStatus('vpd', readings.vpd),
         },
       ];
 
       for (const check of checks) {
         if (check.status === 'warn' || check.status === 'danger') {
-          result.push({
-            sectionId: section.id,
-            sectionName: section.name,
-            roomName: section.room?.name,
-            label: check.label,
-            detail: check.detail,
-            severity: check.status,
-          });
-        }
-      }
-    }
-
-    for (const section of sections) {
-      for (const device of section.devices ?? []) {
-        const status = getStatus(device.id);
-        if (status && status.online === false) {
-          result.push({
-            sectionId: section.id,
-            sectionName: section.name,
-            roomName: section.room?.name,
-            label: device.name,
-            detail: 'Sin respuesta',
-            severity: 'offline',
-          });
+          result.push({ ...base, label: check.label, detail: check.detail, severity: check.status });
         }
       }
     }
 
     const order = { danger: 0, warn: 1, offline: 2 } as const;
     return result.sort((a, b) => order[a.severity] - order[b.severity]);
-  }, [getStatus, sections, summaries]);
+  }, [getStatus, summaries]);
 
   const deviceIssues = useMemo<DeviceIssue[]>(() => {
     const issues: DeviceIssue[] = [];

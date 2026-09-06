@@ -74,10 +74,6 @@ export function AIAssistantBubble() {
           </span>
         )}
 
-        {/* Pulse effect */}
-        {!isOpen && (
-          <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-25" />
-        )}
       </button>
 
       {/* Tooltip */}

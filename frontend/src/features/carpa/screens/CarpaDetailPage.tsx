@@ -1554,7 +1554,7 @@ export default function CarpaDetailPage() {
             {section.name}
           </h2>
           {section.dimensions && (
-            <p className="text-sm text-fg-muted mb-4">{section.dimensions}</p>
+            <p className="text-sm text-fg-muted mb-4 lg:hidden">{section.dimensions}</p>
           )}
 
           {section.description && (

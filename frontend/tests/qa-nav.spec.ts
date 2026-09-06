@@ -111,7 +111,7 @@ const ROUTES: Route[] = [
     title: 'ciclos',
     path: '/seguimientos',
     mobileOverflowFixme:
-      'Ciclos desborda a lo ancho en 390px (botones "Agregar Planta" y "Registrar Evento"). Se corrige en la fase 3 del rediseño.',
+      'Ciclos mide 469px en un viewport de 390 por los botones "Agregar Planta" y "Registrar Evento" del detalle del ciclo, no por el shell (medido en la fase 1). Se corrige en la fase 3 del rediseño.',
   },
   { slug: '04_automatizaciones', title: 'automatizaciones', path: '/automatizaciones' },
   { slug: '05_artefactos', title: 'artefactos', path: '/artefactos' },
@@ -121,7 +121,7 @@ const ROUTES: Route[] = [
     title: 'admin de usuarios',
     path: '/admin/usuarios',
     mobileOverflowFixme:
-      'La tabla de usuarios desborda a lo ancho en 390px. Se corrige en la fase 4 del rediseño.',
+      'Admin de usuarios mide 511px en un viewport de 390 por la fila de cada usuario, no por el shell (medido en la fase 1). Se corrige en la fase 4 del rediseño.',
   },
 ];
 
