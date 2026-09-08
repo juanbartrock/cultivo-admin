@@ -1,0 +1,437 @@
+{
+ "movil": {
+  "routes": {
+   "home": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 390,
+     "bodyScroll": 390,
+     "innerWidth": 390,
+     "h1": [
+      "Inicio"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Inicio",
+     "headerH1": null,
+     "overflowers": []
+    },
+    "alerts": {
+     "found": true,
+     "text": "ALERTAS actualizado hace 0 s Vegetativo · vege-temp-hum Sensor sin respuesta Secado · Termohigometro Indoor Sensor sin respuesta",
+     "truncated": []
+    },
+    "cards": [
+     {
+      "text": "Vegetativo · vege-temp-hum Sensor sin respuesta",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Secado · Termohigometro Indoor Sensor sin respuesta",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Vegetativo Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 0",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Secado Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 2 Curado",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Floración Sala de Cultivo Temp. — Humedad — VPD — 4 Pre-flora",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Exterior Directo Terraza Temp. — Humedad — VPD — 11 Floración",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Invernadero Terraza Inactiva Temp. — Humedad — VPD — 0",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Germinadora Sala de Cultivo Temp. — Humedad — VPD — 0",
+      "danger": 0,
+      "warn": 0
+     }
+    ]
+   },
+   "sala": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 390,
+     "bodyScroll": 390,
+     "innerWidth": 390,
+     "h1": [
+      "Sala de Cultivo"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Sala de Cultivo",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "seguimientos": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 390,
+     "bodyScroll": 390,
+     "innerWidth": 390,
+     "h1": [
+      "Ciclos"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Ciclos",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "automatizaciones": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 390,
+     "bodyScroll": 390,
+     "innerWidth": 390,
+     "h1": [
+      "Automatizaciones"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Automatizaciones",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "artefactos": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 390,
+     "bodyScroll": 390,
+     "innerWidth": 390,
+     "h1": [
+      "Dispositivos"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Dispositivos",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "notificaciones": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 390,
+     "bodyScroll": 390,
+     "innerWidth": 390,
+     "h1": [
+      "Notificaciones"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Notificaciones",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "admin-usuarios": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 390,
+     "bodyScroll": 390,
+     "innerWidth": 390,
+     "h1": [
+      "Usuarios"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Usuarios",
+     "headerH1": null,
+     "overflowers": []
+    }
+   }
+  },
+  "carpa": {
+   "samples": [
+    {
+     "t": 300,
+     "header": {
+      "heading": "Carpa",
+      "h1": [
+       "Carpa"
+      ],
+      "back": true,
+      "main": "Cargando sección..."
+     }
+    },
+    {
+     "t": 1000,
+     "header": {
+      "heading": "Carpa",
+      "h1": [
+       "Carpa"
+      ],
+      "back": true,
+      "main": "Cargando sección..."
+     }
+    },
+    {
+     "t": 2500,
+     "header": {
+      "heading": "Vegetativo",
+      "h1": [
+       "Vegetativo"
+      ],
+      "back": true,
+      "main": "Layout Activa Actualizar Vegetativo 100x100x200 2 dispositiv"
+     }
+    }
+   ],
+   "errors": [],
+   "scan": {
+    "scrollWidth": 390,
+    "bodyScroll": 390,
+    "innerWidth": 390,
+    "h1": [
+     "Vegetativo"
+    ],
+    "h1Count": 1,
+    "headerHeading": "Vegetativo",
+    "headerH1": null,
+    "overflowers": []
+   }
+  }
+ },
+ "desktop": {
+  "routes": {
+   "home": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 1440,
+     "bodyScroll": 1440,
+     "innerWidth": 1440,
+     "h1": [
+      "Inicio"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Inicio",
+     "headerH1": null,
+     "overflowers": []
+    },
+    "alerts": {
+     "found": true,
+     "text": "ALERTAS actualizado hace 10 s Vegetativo · vege-temp-hum Sensor sin respuesta Secado · Termohigometro Indoor Sensor sin respuesta",
+     "truncated": []
+    },
+    "cards": [
+     {
+      "text": "Vegetativo · vege-temp-hum Sensor sin respuesta",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Secado · Termohigometro Indoor Sensor sin respuesta",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Vegetativo Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 0",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Secado Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 2 Curado",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Floración Sala de Cultivo Temp. — Humedad — VPD — 4 Pre-flora",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Exterior Directo Terraza Temp. — Humedad — VPD — 11 Floración",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Invernadero Terraza Inactiva Temp. — Humedad — VPD — 0",
+      "danger": 0,
+      "warn": 0
+     },
+     {
+      "text": "Germinadora Sala de Cultivo Temp. — Humedad — VPD — 0",
+      "danger": 0,
+      "warn": 0
+     }
+    ]
+   },
+   "sala": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 1440,
+     "bodyScroll": 1440,
+     "innerWidth": 1440,
+     "h1": [
+      "Sala de Cultivo"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Sala de Cultivo",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "seguimientos": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 1440,
+     "bodyScroll": 1440,
+     "innerWidth": 1440,
+     "h1": [
+      "Ciclos"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Ciclos",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "automatizaciones": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 1440,
+     "bodyScroll": 1440,
+     "innerWidth": 1440,
+     "h1": [
+      "Automatizaciones"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Automatizaciones",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "artefactos": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 1440,
+     "bodyScroll": 1440,
+     "innerWidth": 1440,
+     "h1": [
+      "Dispositivos"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Dispositivos",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "notificaciones": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 1440,
+     "bodyScroll": 1440,
+     "innerWidth": 1440,
+     "h1": [
+      "Notificaciones"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Notificaciones",
+     "headerH1": null,
+     "overflowers": []
+    }
+   },
+   "admin-usuarios": {
+    "errors": [],
+    "scan": {
+     "scrollWidth": 1440,
+     "bodyScroll": 1440,
+     "innerWidth": 1440,
+     "h1": [
+      "Usuarios"
+     ],
+     "h1Count": 1,
+     "headerHeading": "Usuarios",
+     "headerH1": null,
+     "overflowers": []
+    }
+   }
+  },
+  "carpa": {
+   "samples": [
+    {
+     "t": 300,
+     "header": {
+      "heading": "Carpa",
+      "h1": [
+       "Carpa"
+      ],
+      "back": true,
+      "main": "Salas Carpa Carpa Cargando sección..."
+     }
+    },
+    {
+     "t": 1000,
+     "header": {
+      "heading": "Carpa",
+      "h1": [
+       "Carpa"
+      ],
+      "back": true,
+      "main": "Salas Carpa Carpa Cargando sección..."
+     }
+    },
+    {
+     "t": 2500,
+     "header": {
+      "heading": "Vegetativo",
+      "h1": [
+       "Vegetativo"
+      ],
+      "back": true,
+      "main": "Salas Sala de Cultivo Vegetativo Vegetativo 100x100x200 Layo"
+     }
+    }
+   ],
+   "errors": [],
+   "scan": {
+    "scrollWidth": 1440,
+    "bodyScroll": 1440,
+    "innerWidth": 1440,
+    "h1": [
+     "Vegetativo"
+    ],
+    "h1Count": 1,
+    "headerHeading": "Vegetativo",
+    "headerH1": null,
+    "overflowers": []
+   }
+  }
+ },
+ "tapMas": {
+  "/seguimientos": {
+   "from": "/seguimientos",
+   "errors": [],
+   "scrollWidth": 390,
+   "sheetOpen": true,
+   "tap": "ok (sin force)"
+  },
+  "/admin/usuarios": {
+   "from": "/admin/usuarios",
+   "errors": [],
+   "scrollWidth": 390,
+   "sheetOpen": true,
+   "tap": "ok (sin force)"
+  }
+ },
+ "todoEnRango": {
+  "errors": [
+   "HTTP 503: https://api.open-meteo.com/v1/forecast?latitude=-34.61315&longitude=-58.37723&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto",
+   "console.error: Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "text": "ALERTAS Todo en rango · actualizado hace 0 s"
+ }
+}
