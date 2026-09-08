@@ -78,7 +78,8 @@ export const api = {
   /**
    * GET request
    */
-  get: <T>(endpoint: string) => request<T>(endpoint),
+  get: <T>(endpoint: string, options?: { signal?: AbortSignal }) =>
+    request<T>(endpoint, options),
 
   /**
    * POST request

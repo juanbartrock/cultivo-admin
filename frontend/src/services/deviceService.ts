@@ -108,7 +108,8 @@ export const deviceService = {
    * Obtiene el estado en tiempo real de un dispositivo
    * Consulta al microservicio correspondiente
    */
-  getStatus: (id: string) => api.get<DeviceStatusResponse>(`/devices/${id}/status`),
+  getStatus: (id: string, options?: { signal?: AbortSignal }) =>
+    api.get<DeviceStatusResponse>(`/devices/${id}/status`, options),
 
   /**
    * Asigna un dispositivo escaneado a una sección

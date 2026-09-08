@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { deviceService } from '@/services/deviceService';
 import { Device, DeviceStatus } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 
 interface DeviceWithStatus {
@@ -30,11 +31,17 @@ export function useDeviceStatus(
 ) {
   const { pollingInterval = 30000, autoRefresh = true } = options;
 
+  const { isAuthenticated } = useAuth();
   const [status, setStatus] = useState<DeviceStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
+    // Sin sesión no se pide nada: el backend responde 401 y queda un error en la consola.
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     try {
       const response = await deviceService.getStatus(deviceId);
       setStatus(response.status);
@@ -44,7 +51,7 @@ export function useDeviceStatus(
     } finally {
       setLoading(false);
     }
-  }, [deviceId]);
+  }, [deviceId, isAuthenticated]);
 
   useEffect(() => {
     fetchStatus();
@@ -73,6 +80,7 @@ export function useDevicesStatus(
 ) {
   const { pollingInterval = 30000, autoRefresh = true, sectionId } = options;
   const { socket, isConnected, joinSection, leaveSection } = useSocket();
+  const { isAuthenticated } = useAuth();
 
   const [statuses, setStatuses] = useState<Map<string, DeviceStatus>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -80,6 +88,15 @@ export function useDevicesStatus(
   /** Momento de la última consulta o push que actualizó el mapa de estados. */
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const isMounted = useRef(true);
+  /** Aborta los pedidos en vuelo al desmontar o al cerrar sesión. */
+  const abortRef = useRef<AbortController | null>(null);
+  /**
+   * El socket sólo cambia cada cuánto se refresca, no si hay que refrescar. Va en una ref
+   * para que conectarse o desconectarse no relance `fetchAllStatuses`: al cerrar sesión el
+   * socket se cae y ese relanzamiento disparaba una tanda de pedidos ya sin token.
+   */
+  const isConnectedRef = useRef(isConnected);
+  useEffect(() => { isConnectedRef.current = isConnected; }, [isConnected]);
 
   const fetchAllStatuses = useCallback(async () => {
     if (devices.length === 0) {
@@ -87,16 +104,26 @@ export function useDevicesStatus(
       return;
     }
 
+    // Sin sesión no se pide nada: el backend responde 401 y el navegador lo registra como error.
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       // Hacer todas las peticiones en paralelo para estado inicial
       const results = await Promise.allSettled(
         devices.map(async (device) => {
-          const response = await deviceService.getStatus(device.id);
+          const response = await deviceService.getStatus(device.id, { signal: controller.signal });
           return { id: device.id, status: response.status };
         })
       );
 
-      if (!isMounted.current) return;
+      if (!isMounted.current || controller.signal.aborted) return;
 
       const newStatuses = new Map<string, DeviceStatus>();
 
@@ -126,7 +153,7 @@ export function useDevicesStatus(
         setLoading(false);
       }
     }
-  }, [devices]);
+  }, [devices, isAuthenticated]);
 
   // Efecto para suscribirse a la sección via WebSocket
   useEffect(() => {
@@ -199,15 +226,16 @@ export function useDevicesStatus(
 
     if (autoRefresh && pollingInterval > 0) {
       // Si hay socket conectado, reducir frecuencia de polling (solo como backup)
-      const effectiveInterval = isConnected ? pollingInterval * 2 : pollingInterval;
+      const effectiveInterval = isConnectedRef.current ? pollingInterval * 2 : pollingInterval;
       interval = setInterval(fetchAllStatuses, effectiveInterval);
     }
 
     return () => {
       isMounted.current = false;
+      abortRef.current?.abort();
       if (interval) clearInterval(interval);
     };
-  }, [fetchAllStatuses, autoRefresh, pollingInterval, isConnected]);
+  }, [fetchAllStatuses, autoRefresh, pollingInterval]);
 
   const getStatus = useCallback(
     (deviceId: string): DeviceStatus | null => {

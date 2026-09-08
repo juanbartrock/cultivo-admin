@@ -104,11 +104,13 @@ interface MetricCardProps {
   type?: keyof typeof OPTIMAL_RANGES;
   decimals?: number;
   iconColor: string;
+  /** Sensor sin respuesta: no hay lectura viva, así que no hay valor ni color de estado. */
+  offline?: boolean;
 }
 
-function MetricCard({ icon: Icon, label, value, unit, type, decimals = 1, iconColor }: MetricCardProps) {
-  const status = type ? getValueStatus(value, type) : 'unknown';
-  const hasValue = value !== undefined && !isNaN(value);
+function MetricCard({ icon: Icon, label, value, unit, type, decimals = 1, iconColor, offline = false }: MetricCardProps) {
+  const status = offline || !type ? 'unknown' : getValueStatus(value, type);
+  const hasValue = !offline && value !== undefined && !isNaN(value);
   
   return (
     <div className={`
@@ -123,7 +125,7 @@ function MetricCard({ icon: Icon, label, value, unit, type, decimals = 1, iconCo
       <div className="relative">
         <div className="flex items-center justify-between mb-3">
           <div className={`p-2 rounded-lg bg-zinc-900/50`}>
-            <Icon className={`w-5 h-5 ${iconColor}`} />
+            <Icon className={`w-5 h-5 ${offline ? 'text-zinc-500' : iconColor}`} />
           </div>
           {hasValue && type && (
             <div className={`flex items-center gap-1 text-xs ${getStatusColor(status)}`}>
@@ -141,7 +143,7 @@ function MetricCard({ icon: Icon, label, value, unit, type, decimals = 1, iconCo
             <span className="text-lg font-normal text-zinc-500 ml-1">{unit}</span>
           </p>
         ) : (
-          <p className="text-2xl font-bold text-zinc-600">--</p>
+          <p className="text-2xl font-bold text-zinc-600">—</p>
         )}
         
         {/* Range indicator */}
@@ -179,15 +181,20 @@ export default function EnvironmentPanel({
   const [isReassigning, setIsReassigning] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
+  // Un sensor sin respuesta no tiene lectura: el conector devuelve el último valor que vio y
+  // mostrarlo con color de estado miente sobre el presente. Misma regla que `sectionReadings`
+  // en la home, para que la carpa y la home cuenten la misma historia.
+  const isOnline = status?.online !== false;
+
   // Extraer y parsear valores del status (pueden venir como string o number)
-  const temperature = status?.temperature !== undefined 
-    ? parseFloat(String(status.temperature)) 
+  const temperature = isOnline && status?.temperature !== undefined
+    ? parseFloat(String(status.temperature))
     : undefined;
-  const humidity = status?.humidity !== undefined 
-    ? parseFloat(String(status.humidity)) 
+  const humidity = isOnline && status?.humidity !== undefined
+    ? parseFloat(String(status.humidity))
     : undefined;
-  const co2 = status?.co2 !== undefined 
-    ? parseFloat(String(status.co2)) 
+  const co2 = isOnline && status?.co2 !== undefined
+    ? parseFloat(String(status.co2))
     : undefined;
   
   // Calcular VPD si tenemos temp y humedad válidos
@@ -203,7 +210,6 @@ export default function EnvironmentPanel({
   const currentState = switchState || stateValue;
   const hasControlCapability = currentState !== undefined;
   const isOn = optimisticState ?? (currentState === 'on');
-  const isOnline = status?.online !== false;
 
   // Reset optimistic state cuando cambia el status
   useEffect(() => {
@@ -297,7 +303,7 @@ export default function EnvironmentPanel({
     );
   }
 
-  if (!hasAnyData) {
+  if (!hasAnyData && isOnline) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -337,9 +343,15 @@ export default function EnvironmentPanel({
           <div className="flex items-center gap-3">
             {sensorName && (
               <div className="flex items-center gap-2">
-                <Gauge className="w-5 h-5 text-cultivo-green-500" />
+                <Gauge className={`w-5 h-5 ${isOnline ? 'text-cultivo-green-500' : 'text-zinc-500'}`} />
                 <span className="text-sm font-medium text-zinc-300">{sensorName}</span>
               </div>
+            )}
+            {!isOnline && (
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs bg-zinc-800/50 text-zinc-400 border border-zinc-700/50">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Sensor sin respuesta
+              </span>
             )}
             {/* Toggle registrar historial */}
             {device && (
@@ -350,14 +362,20 @@ export default function EnvironmentPanel({
                 className={`
                   flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs transition-all
                   ${togglingHistory ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
-                  ${recordHistory 
+                  ${recordHistory && isOnline
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30' 
                     : 'bg-zinc-800/50 text-zinc-500 border border-zinc-700/50 hover:bg-zinc-700/50 hover:text-zinc-300'
                   }
                 `}
               >
                 <History className="w-3.5 h-3.5" />
-                <span>{recordHistory ? 'Historial ON' : 'Historial OFF'}</span>
+                <span>
+                  {!recordHistory
+                    ? 'Historial OFF'
+                    : isOnline
+                    ? 'Historial ON'
+                    : 'Historial pausado'}
+                </span>
               </button>
             )}
           </div>
@@ -409,6 +427,7 @@ export default function EnvironmentPanel({
           unit="°C"
           type="temperature"
           iconColor="text-orange-400"
+          offline={!isOnline}
         />
         
         <MetricCard
@@ -419,6 +438,7 @@ export default function EnvironmentPanel({
           type="humidity"
           decimals={0}
           iconColor="text-blue-400"
+          offline={!isOnline}
         />
         
         <MetricCard
@@ -429,6 +449,7 @@ export default function EnvironmentPanel({
           type="co2"
           decimals={0}
           iconColor="text-emerald-400"
+          offline={!isOnline}
         />
         
         <MetricCard
@@ -439,6 +460,7 @@ export default function EnvironmentPanel({
           type="vpd"
           decimals={2}
           iconColor="text-purple-400"
+          offline={!isOnline}
         />
       </div>
 

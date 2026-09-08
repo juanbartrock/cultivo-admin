@@ -510,16 +510,17 @@ export default function ArtefactosPage() {
           Dispositivos Asignados ({devices.length})
         </h2>
 
-        {/* Filtros */}
-        <div className="flex gap-4 mb-6">
-          <div className="flex-1 bg-zinc-800/50 rounded-lg flex items-center px-4 border border-zinc-700/50">
-            <Search className="w-4 h-4 text-zinc-400 mr-2" />
+        {/* Filtros: en móvil el buscador y el tipo van uno abajo del otro; en una sola fila el
+            input quedaba en 10 px y no se podía ni escribir. */}
+        <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:gap-4">
+          <div className="flex w-full min-w-0 flex-1 items-center rounded-lg border border-zinc-700/50 bg-zinc-800/50 px-4 sm:min-w-[200px]">
+            <Search className="w-4 h-4 shrink-0 text-zinc-400 mr-2" />
             <input
               type="text"
               placeholder="Buscar dispositivo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-transparent border-none text-white text-sm w-full focus:ring-0 py-2 placeholder-zinc-500"
+              className="min-w-0 w-full bg-transparent border-none text-white text-sm focus:ring-0 py-2 placeholder-zinc-500"
             />
           </div>
 

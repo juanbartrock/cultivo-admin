@@ -100,9 +100,10 @@ export interface SectionReadings {
 }
 
 /**
- * Lecturas vivas de la carpa. Un sensor sin respuesta no tiene lectura: el conector
- * devuelve el último valor que vio y mostrarlo con color de estado miente sobre el
- * presente, así que las tres métricas quedan en `null`.
+ * Lecturas vivas de la carpa. Sólo salen del `status` que devuelve el conector ahora: un
+ * sensor sin respuesta, o sin `status`, no tiene lectura y las tres métricas quedan en
+ * `null`. `sensor.metadata` es el último valor guardado en la base, sin antigüedad ni forma
+ * de saber de cuándo es; pintarlo con color de estado miente sobre el presente.
  */
 export function sectionReadings(
   section: Section,
@@ -118,14 +119,8 @@ export function sectionReadings(
     return { temperature: null, humidity: null, vpd: null, sensor, sensorOffline: true };
   }
 
-  const temperature =
-    (status?.temperature as number | undefined) ??
-    (sensor.metadata?.temperature as number | undefined) ??
-    null;
-  const humidity =
-    (status?.humidity as number | undefined) ??
-    (sensor.metadata?.humidity as number | undefined) ??
-    null;
+  const temperature = (status?.temperature as number | undefined) ?? null;
+  const humidity = (status?.humidity as number | undefined) ?? null;
 
   return {
     temperature,
