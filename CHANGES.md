@@ -1,6 +1,51 @@
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
+## 2026-09-08 — Hallazgos 1, 3, 4, 7 y 8 de la segunda pasada del crítico (rama `redisenio-2026-09`)
+
+Correcciones sobre `docs/critica/2026-09-08-0847/informe.md`. El hallazgo 2 (rangos
+hardcodeados en `readings.ts` y `EnvironmentPanel.tsx`) sigue pendiente de la decisión de
+esquema de Juan; los hallazgos 5, 6, 9 y 10 quedaron fuera del alcance de esta ronda.
+
+- **#1 · cerrar sesión disparaba 7 GET `/api/devices/:id/status` sin token.** `useDevicesStatus`
+  corta antes de pedir si no hay sesión (`isAuthenticated` de `AuthContext`), aborta lo que está
+  en vuelo con `AbortController` al desmontar o al reiniciar el ciclo, y `isConnected` sale de
+  las dependencias del efecto de polling: pasa a una ref y sólo decide cada cuánto refrescar. El
+  socket se caía al borrar el token y ese cambio de dependencia relanzaba la tanda de pedidos ya
+  sin `Authorization`. `api.get` y `deviceService.getStatus` aceptan `signal`.
+- **#3 · la carpa Secado mostraba 18,1 °C / 80 % en color con el sensor offline.**
+  `EnvironmentPanel` aplica la misma regla que `sectionReadings`: con `status.online === false`
+  las cuatro métricas van en `—` sin color de estado ni línea de rango, el ícono queda en tono
+  neutro, aparece el badge "Sensor sin respuesta" y el chip de historial dice "Historial
+  pausado" en vez de "Historial ON" — la grabación sigue habilitada, pero no está entrando nada.
+  El estado vacío "Sin datos ambientales" ya no se traga el panel cuando el sensor está caído.
+- **#4 · el buscador de `/artefactos` medía 10 px en móvil.** Buscador y filtro de tipo se
+  apilan abajo de 640 px (`flex-col sm:flex-row`), el contenedor lleva `min-w-0` y en desktop
+  `min-w-[200px]`.
+- **#7 · `console.warn` de Supabase en cada carga.** El aviso queda sólo en desarrollo: en
+  producción el login local contra `/api/auth/login` es el camino esperado.
+- **#8 · `sectionReadings` caía a `sensor.metadata`.** Sin `status` no hay lectura. El metadata
+  es el último valor guardado en la base, sin antigüedad ni forma de fecharlo, y se pintaba con
+  color de estado.
+
+Verificación: `npm run typecheck`, `npm run lint` (24 warnings, los mismos de la línea base) y
+`npm run build` en exit 0; `npm run qa:nav` 17/17. Navegación real contra producción con sesión
+de admin, evidencia en `docs/rediseno-2026-09/capturas/fix-critico-r2-20260908/`:
+
+- `critic-logout.cjs` del propio crítico, 3 corridas: cero requests a `/api`, cero 401 y cero
+  `console.error` después del click en "Cerrar sesión" (`logout-desktop-x3.txt`). Repetido desde
+  el sheet "Más" en 390×844 con el mismo resultado.
+- Consola completa (errores **y** warnings) en 0 para las 7 rutas más la carpa, en 390×844 y
+  1440×900.
+- `/sala/carpa/ba2f7493-…` con el sensor offline: Temperatura, Humedad, CO₂ y VPD en `—`, cero
+  elementos de lectura con `text-blue-400`/`text-orange-400`/`text-danger`/`text-warn`.
+- `/artefactos` a 390 px: el input mide 300 px, acepta texto y filtra.
+- Home con `metadata` inyectada (41,5 °C) y `/status` cortado: las tarjetas muestran `—`, cero
+  `text-danger`/`text-warn` y el 41,5 no aparece en ningún lado.
+
+Publicado con `app-restart cultivo-frontend --build` (exit 0).
+
+<!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
 ## 2026-09-08 — Hallazgos 1, 3, 5, 7, 8 y 10 del crítico (rama `redisenio-2026-09`)
 
 Correcciones sobre el informe `docs/critica/2026-09-08-0745/informe.md`. El hallazgo 2 (rangos

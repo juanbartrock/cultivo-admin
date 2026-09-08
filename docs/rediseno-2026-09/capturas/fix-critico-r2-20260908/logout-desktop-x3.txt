@@ -1,0 +1,45 @@
+===== corrida 1 =====
+[
+ {
+  "t": 0,
+  "mark": "estado estable en /, click en menú de usuario"
+ },
+ {
+  "t": 491,
+  "mark": "click Cerrar sesión"
+ },
+ {
+  "t": 609,
+  "mark": "en https://cultivo.ramsesvii.com/login"
+ }
+]
+===== corrida 2 =====
+[
+ {
+  "t": 0,
+  "mark": "estado estable en /, click en menú de usuario"
+ },
+ {
+  "t": 491,
+  "mark": "click Cerrar sesión"
+ },
+ {
+  "t": 560,
+  "mark": "en https://cultivo.ramsesvii.com/login"
+ }
+]
+===== corrida 3 =====
+[
+ {
+  "t": 0,
+  "mark": "estado estable en /, click en menú de usuario"
+ },
+ {
+  "t": 523,
+  "mark": "click Cerrar sesión"
+ },
+ {
+  "t": 605,
+  "mark": "en https://cultivo.ramsesvii.com/login"
+ }
+]
