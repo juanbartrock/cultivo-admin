@@ -648,6 +648,35 @@ model WeatherData {
   @@map("weather_data")
 }
 
+/// Rangos de estado de las lecturas ambientales, una fila por etapa de planta más una fila
+/// DEFAULT para las carpas sin plantas o sin etapa determinable. Dentro del rango ideal la
+/// lectura es `ok`, entre el ideal y el amplio `warn`, fuera del amplio `danger`. Los edita
+/// un ADMIN desde /admin/rangos; el frontend no tiene valores por defecto en código.
+model StageRange {
+  id               String     @id @default(uuid())
+  stage            RangeStage @unique
+  tempIdealMin     Float      @map("temp_ideal_min")
+  tempIdealMax     Float      @map("temp_ideal_max")
+  tempWideMin      Float      @map("temp_wide_min")
+  tempWideMax      Float      @map("temp_wide_max")
+  humidityIdealMin Float      @map("humidity_ideal_min")
+  humidityIdealMax Float      @map("humidity_ideal_max")
+  humidityWideMin  Float      @map("humidity_wide_min")
+  humidityWideMax  Float      @map("humidity_wide_max")
+  vpdIdealMin      Float      @map("vpd_ideal_min")
+  vpdIdealMax      Float      @map("vpd_ideal_max")
+  vpdWideMin       Float      @map("vpd_wide_min")
+  vpdWideMax       Float      @map("vpd_wide_max")
+  co2IdealMin      Float      @map("co2_ideal_min")
+  co2IdealMax      Float      @map("co2_ideal_max")
+  co2WideMin       Float      @map("co2_wide_min")
+  co2WideMax       Float      @map("co2_wide_max")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  @@map("stage_ranges")
+}
+
 enum SubscriptionTier {
   BASIC
   PRO
@@ -861,4 +890,15 @@ enum AnalysisType {
   VEGETATIVO
   FLORACION
   GENERAL
+}
+
+/// Etapa a la que aplica una fila de `StageRange`: los valores de `PlantStage` más `DEFAULT`.
+enum RangeStage {
+  DEFAULT
+  GERMINACION
+  VEGETATIVO
+  PRE_FLORA
+  FLORACION
+  SECADO
+  CURADO
 }

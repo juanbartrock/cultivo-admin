@@ -6,7 +6,8 @@ import { useDevicesStatus } from '@/hooks/useDeviceStatus';
 import { cycleService } from '@/services/growService';
 import { eventService } from '@/services/eventService';
 import { sectionService } from '@/services/locationService';
-import { CycleWithCount, Device, GrowEvent, Section } from '@/types';
+import { useStageRanges } from '@/features/rangos';
+import { CycleWithCount, Device, GrowEvent, RangeStage, Section, StageRange } from '@/types';
 import {
   ReadingStatus,
   SectionReadings,
@@ -36,6 +37,10 @@ export interface SectionSummary {
   devicesOn: Device[];
   plantsCount: number;
   status: ReadingStatus;
+  /** Etapa cuyos rangos aplican a esta carpa. */
+  stage: RangeStage;
+  /** Fila de rangos aplicada; `null` mientras no cargaron. */
+  range: StageRange | null;
 }
 
 export interface DeviceIssue {
@@ -53,6 +58,8 @@ export function useHomeDashboard() {
     queryKey: homeKeys.cycles,
     queryFn: () => cycleService.getActive(),
   });
+
+  const { rangeFor } = useStageRanges();
 
   const eventsQuery = useQuery({
     queryKey: homeKeys.events,
@@ -77,6 +84,8 @@ export function useHomeDashboard() {
     () =>
       sections.map((section) => {
         const readings = sectionReadings(section, getStatus);
+        const stage = section.effectiveStage ?? 'DEFAULT';
+        const range = rangeFor(stage);
         const devicesOn = (section.devices ?? []).filter((device) => {
           if (device.type === 'SENSOR' || device.type === 'CAMARA') return false;
           const status = getStatus(device.id);
@@ -84,9 +93,9 @@ export function useHomeDashboard() {
         });
 
         const statuses = [
-          readingStatus('temperature', readings.temperature),
-          readingStatus('humidity', readings.humidity),
-          readingStatus('vpd', readings.vpd),
+          readingStatus('temperature', readings.temperature, range),
+          readingStatus('humidity', readings.humidity, range),
+          readingStatus('vpd', readings.vpd, range),
         ];
 
         const status: ReadingStatus = statuses.includes('danger')
@@ -103,9 +112,11 @@ export function useHomeDashboard() {
           devicesOn,
           plantsCount: section._count?.plants ?? section.plants?.length ?? 0,
           status,
+          stage,
+          range,
         };
       }),
-    [getStatus, sections]
+    [getStatus, rangeFor, sections]
   );
 
   /**
@@ -116,7 +127,7 @@ export function useHomeDashboard() {
   const alerts = useMemo<SectionAlert[]>(() => {
     const result: SectionAlert[] = [];
 
-    for (const { section, readings } of summaries) {
+    for (const { section, readings, range } of summaries) {
       const base = {
         sectionId: section.id,
         sectionName: section.name,
@@ -132,17 +143,17 @@ export function useHomeDashboard() {
         {
           label: 'Temperatura',
           detail: `${readings.temperature} °C`,
-          status: readingStatus('temperature', readings.temperature),
+          status: readingStatus('temperature', readings.temperature, range),
         },
         {
           label: 'Humedad',
           detail: `${readings.humidity} %`,
-          status: readingStatus('humidity', readings.humidity),
+          status: readingStatus('humidity', readings.humidity, range),
         },
         {
           label: 'VPD',
           detail: `${readings.vpd} kPa`,
-          status: readingStatus('vpd', readings.vpd),
+          status: readingStatus('vpd', readings.vpd, range),
         },
       ];
 

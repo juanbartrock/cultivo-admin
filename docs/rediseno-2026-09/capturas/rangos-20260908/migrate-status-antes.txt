@@ -1,0 +1,12 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-us-east-2.pooler.supabase.com:5432"
+
+3 migrations found in prisma/migrations
+Following migrations have not yet been applied:
+20251213020000_add_plant_zones
+20251219000000_make_plant_section_optional
+20260908130000_add_stage_ranges
+
+To apply migrations in development run prisma migrate dev.
+To apply migrations in production run prisma migrate deploy.

@@ -93,6 +93,24 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
 - **Socket.io**: el gateway escucha en `path: '/api/socket.io'` porque Caddy sólo enruta
   `/api/*` al backend. El cliente (`SocketContext.tsx`) usa el origin de `NEXT_PUBLIC_API_URL`
   sin el sufijo `/api` y ese mismo `path`, y exige token (`REALTIME_ALLOW_GUEST=false`).
+- **Rangos de sensores (ok/warn/danger)**: viven en la tabla `stage_ranges` de la base, una fila
+  por valor de `PlantStage` más una fila `DEFAULT`, con rango ideal y rango amplio de
+  temperatura, humedad, VPD y CO₂. Dentro del ideal la lectura es `ok`, entre el ideal y el
+  amplio `warn`, fuera `danger`. **No hay rangos escritos en el frontend**: mientras
+  `GET /api/stage-ranges` no responde, el estado es `unknown` y la lectura va sin color.
+  - Se editan en **`/admin/rangos`** (ítem "Rangos" del menú de admin; en móvil, dentro del
+    sheet "Más"). `PUT`/`PATCH /api/stage-ranges/:stage` exigen rol `ADMIN`; el `GET` lo puede
+    leer cualquier usuario autenticado. El backend valida min < max y que el rango amplio
+    contenga al ideal.
+  - Código: `backend/src/modules/stage-ranges/` (servicio, controller, constantes y seed) y
+    `frontend/src/features/rangos/` (hook `useStageRanges`, pantalla y diálogo). El estado de
+    una lectura lo calcula `readingStatus(metric, value, range)` en
+    `frontend/src/features/home/lib/readings.ts`.
+  - **Qué etapa aplica a una carpa**: la calcula el backend y viaja como `effectiveStage` en
+    `GET /sections`, `GET /sections/:id` y el dashboard de la carpa. Es la etapa más frecuente
+    entre las plantas asignadas a la carpa; ante empate gana la más avanzada
+    (`GERMINACION → VEGETATIVO → PRE_FLORA → FLORACION → SECADO → CURADO`) y sin plantas es
+    `DEFAULT`. El frontend no la recalcula.
 
 ---
 
@@ -163,6 +181,23 @@ app-restart --list
 
 `app-restart` sale 0 sólo si el servicio quedó sano y deja traza en
 `/var/log/app-restart.log`. Si sale distinto de 0, el cambio no está publicado.
+
+### Migraciones de base (Prisma)
+
+La base venía de `prisma db push` y desde el 2026-09-08 lleva historial: las dos migraciones
+previas se marcaron con `prisma migrate resolve --applied` (baseline) y `20260908130000_add_stage_ranges`
+se aplicó con `migrate deploy`. De acá en adelante:
+
+```bash
+cd /opt/apps/cultivo-admin/backend
+set -a; . ./.env; set +a            # DATABASE_URL, nunca la imprimas
+npx prisma migrate status           # verificar SIEMPRE antes
+npx prisma migrate deploy           # aplicar
+```
+
+La migración se escribe a mano en `prisma/migrations/<timestamp>_<nombre>/migration.sql` y debe
+ser **aditiva e idempotente** (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`): la base es de
+producción y no hay entorno de staging. `migrate dev` no se corre contra esta base.
 
 ### Comandos de operación
 

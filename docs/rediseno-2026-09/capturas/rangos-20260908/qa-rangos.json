@@ -1,0 +1,143 @@
+{
+  "viewports": {
+    "desktop": {
+      "errors": [
+        "error: [AuthContext] Error fetching user profile: TypeError: Failed to fetch\n    at https://cultivo.ramsesvii.com/_next/static/chunks/48-7da2c4e1bab8a294.js:1:23265\n    at k (https://cultivo.ramsesvii.com/_next/static/chunks/48-7da2c4e1bab8a294.js:1:25639)\n    at I (https://cultivo.ramsesvii.com/_next/static/chunks/app/login/page-e47fe93dfa559654.js:26:1128)\n    at async L (https://cultivo.ramsesvii.com/_next/static/chunks/app/login/page-e47fe93dfa559654.js:26:1549)"
+      ],
+      "steps": {
+        "homeBadges": [
+          "Rangos: Por defecto",
+          "Rangos: Curado",
+          "Rangos: Pre-flora",
+          "Rangos: Floración",
+          "Rangos: Por defecto",
+          "Rangos: Por defecto"
+        ],
+        "homeScrollWidth": 1440,
+        "carpaHref": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+        "carpaRangos": [
+          "Rangos: Por defecto",
+          "Rangos: Por defecto"
+        ],
+        "carpaIdeal": [
+          "Ideal 18-28 · amplio 15-30 °C",
+          "Ideal 40-65 · amplio 30-75 %",
+          "Ideal 400-1500 · amplio 300-2000 ppm",
+          "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+        ],
+        "carpaScrollWidth": 1440,
+        "rangosUrl": "https://cultivo.ramsesvii.com/admin/rangos",
+        "rangosFilas": [
+          "Por defecto",
+          "Germinación",
+          "Vegetativo",
+          "Pre-flora",
+          "Floración",
+          "Secado",
+          "Curado",
+          "Por defecto",
+          "Germinación",
+          "Vegetativo",
+          "Pre-flora",
+          "Floración",
+          "Secado",
+          "Curado"
+        ],
+        "rangosScrollWidth": 1440,
+        "botonesEditar": 14,
+        "dialogoAbierto": true,
+        "valorOriginalTempIdealMin": "18",
+        "errorValidacion": [
+          "El mínimo ideal tiene que ser menor que el máximo",
+          ""
+        ],
+        "guardarDeshabilitado": true,
+        "errorContiene": [
+          "El rango amplio tiene que contener al ideal",
+          ""
+        ],
+        "dialogoCerrado": true,
+        "tablaTrasCancelar": [
+          "18–2815–30",
+          "40–6530–75",
+          "0.8–1.40.4–1.6",
+          "400–1500300–2000",
+          "18–2815–30",
+          "40–6530–75",
+          "0.8–1.40.4–1.6",
+          "400–1500300–2000"
+        ]
+      }
+    },
+    "movil": {
+      "errors": [
+        "error: [AuthContext] Error fetching user profile: TypeError: Failed to fetch\n    at https://cultivo.ramsesvii.com/_next/static/chunks/48-7da2c4e1bab8a294.js:1:23265\n    at k (https://cultivo.ramsesvii.com/_next/static/chunks/48-7da2c4e1bab8a294.js:1:25639)\n    at I (https://cultivo.ramsesvii.com/_next/static/chunks/app/login/page-e47fe93dfa559654.js:26:1128)\n    at async L (https://cultivo.ramsesvii.com/_next/static/chunks/app/login/page-e47fe93dfa559654.js:26:1549)"
+      ],
+      "steps": {
+        "homeBadges": [
+          "Rangos: Por defecto",
+          "Rangos: Curado",
+          "Rangos: Pre-flora",
+          "Rangos: Floración",
+          "Rangos: Por defecto",
+          "Rangos: Por defecto"
+        ],
+        "homeScrollWidth": 390,
+        "carpaHref": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+        "carpaRangos": [
+          "Rangos: Por defecto",
+          "Rangos: Por defecto"
+        ],
+        "carpaIdeal": [
+          "Ideal 18-28 · amplio 15-30 °C",
+          "Ideal 40-65 · amplio 30-75 %",
+          "Ideal 400-1500 · amplio 300-2000 ppm",
+          "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+        ],
+        "carpaScrollWidth": 390,
+        "rangosUrl": "https://cultivo.ramsesvii.com/admin/rangos",
+        "rangosFilas": [
+          "Por defecto",
+          "Germinación",
+          "Vegetativo",
+          "Pre-flora",
+          "Floración",
+          "Secado",
+          "Curado",
+          "Por defecto",
+          "Germinación",
+          "Vegetativo",
+          "Pre-flora",
+          "Floración",
+          "Secado",
+          "Curado"
+        ],
+        "rangosScrollWidth": 390,
+        "botonesEditar": 14,
+        "dialogoAbierto": true,
+        "valorOriginalTempIdealMin": "18",
+        "errorValidacion": [
+          "El mínimo ideal tiene que ser menor que el máximo",
+          ""
+        ],
+        "guardarDeshabilitado": true,
+        "errorContiene": [
+          "El rango amplio tiene que contener al ideal",
+          ""
+        ],
+        "dialogoCerrado": true,
+        "tablaTrasCancelar": [
+          "18–2815–30",
+          "40–6530–75",
+          "0.8–1.40.4–1.6",
+          "400–1500300–2000",
+          "18–2815–30",
+          "40–6530–75",
+          "0.8–1.40.4–1.6",
+          "400–1500300–2000"
+        ]
+      }
+    }
+  },
+  "errors": []
+}

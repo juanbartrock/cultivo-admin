@@ -1,0 +1,25 @@
+{
+  "desktop": {
+    "steps": {
+      "carpaSecadoRangos": [
+        "Rangos: Curado"
+      ]
+    },
+    "errors": []
+  },
+  "movil": {
+    "steps": {
+      "carpaSecadoRangos": [
+        "Rangos: Curado"
+      ],
+      "sheetItems": [
+        "Dispositivos",
+        "Notificaciones",
+        "Usuarios",
+        "Rangos"
+      ],
+      "urlDesdeSheet": "https://cultivo.ramsesvii.com/admin/rangos"
+    },
+    "errors": []
+  }
+}

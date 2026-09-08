@@ -1,0 +1,9 @@
+### GET /api/stage-ranges con token NO ADMIN (esperado 200)
+HTTP 200
+7 filas
+### PUT /api/stage-ranges/GERMINACION con token NO ADMIN (esperado 403, sin escritura)
+{"message":"Access denied. Required roles: ADMIN","error":"Forbidden","statusCode":403}
+HTTP 403
+### PATCH con token NO ADMIN (esperado 403)
+{"message":"Access denied. Required roles: ADMIN","error":"Forbidden","statusCode":403}
+HTTP 403

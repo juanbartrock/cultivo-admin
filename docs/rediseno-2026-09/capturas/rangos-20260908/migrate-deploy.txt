@@ -1,0 +1,24 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-us-east-2.pooler.supabase.com:5432"
+
+3 migrations found in prisma/migrations
+
+Applying migration `20260908130000_add_stage_ranges`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260908130000_add_stage_ranges/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+EXIT=0
+--- status final ---
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-us-east-2.pooler.supabase.com:5432"
+
+3 migrations found in prisma/migrations
+
+Database schema is up to date!

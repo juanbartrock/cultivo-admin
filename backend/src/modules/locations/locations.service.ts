@@ -4,6 +4,7 @@ import { CreateRoomDto, UpdateRoomDto } from './dto/room.dto';
 import { CreateSectionDto, UpdateSectionDto } from './dto/section.dto';
 import { UpdateSectionLayoutDto, DEFAULT_LAYOUT_CONFIG } from './dto/layout.dto';
 import { CreatePPFDReadingDto } from './dto/ppfd.dto';
+import { effectiveStage } from '../stage-ranges/effective-stage';
 
 @Injectable()
 export class LocationsService {
@@ -114,8 +115,12 @@ export class LocationsService {
   // SECTIONS
   // ============================================
 
+  /**
+   * Listado de carpas. Cada una viaja con `effectiveStage`: la etapa cuyos rangos de sensores
+   * aplican, derivada de sus plantas, para que el frontend no la recalcule.
+   */
   async findAllSections(userId?: string) {
-    return this.prisma.section.findMany({
+    const sections = await this.prisma.section.findMany({
       where: userId ? { room: { userId } } : undefined,
       include: {
         room: true,
@@ -130,6 +135,11 @@ export class LocationsService {
       },
       orderBy: { createdAt: 'asc' },
     });
+
+    return sections.map((section) => ({
+      ...section,
+      effectiveStage: effectiveStage(section.plants),
+    }));
   }
 
   async findSectionById(id: string, userId?: string) {
@@ -155,7 +165,7 @@ export class LocationsService {
       throw new ForbiddenException('No tienes acceso a esta sección');
     }
 
-    return section;
+    return { ...section, effectiveStage: effectiveStage(section.plants) };
   }
 
   async createSection(data: CreateSectionDto, userId?: string) {
@@ -248,8 +258,16 @@ export class LocationsService {
       {} as Record<string, number>,
     );
 
+    // La etapa efectiva sale de todas las plantas asignadas a la carpa, incluidas las que el
+    // dashboard no lista (CURADO): son las que están adentro y fijan el clima que se busca.
+    const assignedPlants = await this.prisma.plant.findMany({
+      where: { sectionId: id },
+      select: { stage: true },
+    });
+
     return {
       ...section,
+      effectiveStage: effectiveStage(assignedPlants),
       summary: {
         totalPlants: section.plants.length,
         totalDevices: section.devices.length,

@@ -59,6 +59,8 @@ import { preventionPlanService } from '@/services/preventionPlanService';
 import { useDevicesStatus } from '@/hooks/useDeviceStatus';
 import { SectionDashboard, Device, DeviceType, DeviceStatus, Plant, GrowEvent, SectionFeedingPlansResponse, FeedingPlan, FeedingPlanWithCount, PlantStage, SectionPreventionPlansResponse, PreventionPlanWithCount, SectionLayoutConfig, SectionLayoutItem, DEFAULT_SECTION_LAYOUT } from '@/types';
 import { PageHeader } from '@/components/shell';
+import { useStageRanges } from '@/features/rangos';
+import { RANGE_STAGE_LABELS } from '@/features/home/lib/readings';
 import { eventService } from '@/services/eventService';
 import { plantService } from '@/services/growService';
 
@@ -944,6 +946,8 @@ export default function CarpaDetailPage() {
   const { toast } = useToast();
 
   const [section, setSection] = useState<SectionDashboard | null>(null);
+  // Rangos de sensores de la etapa que aplica a la carpa: los define el ADMIN en /admin/rangos.
+  const { rangeFor } = useStageRanges();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -1282,6 +1286,8 @@ export default function CarpaDetailPage() {
               lastUpdate={lastUpdate || undefined}
               onRefresh={handleRefresh}
               onReassign={loadSection}
+              stage={section?.effectiveStage ?? 'DEFAULT'}
+              range={rangeFor(section?.effectiveStage)}
             />
           </motion.section>
         );
@@ -1441,7 +1447,7 @@ export default function CarpaDetailPage() {
       default:
         return null;
     }
-  }, [sensors, controllables, cameras, primarySensor, primarySensorStatus, statusLoading, lastUpdate, handleRefresh, getStatus, handleStatusChange, sectionId, section?.name, ppfdExpanded, sensorHistoryExpanded, loadSection]);
+  }, [sensors, controllables, cameras, primarySensor, primarySensorStatus, statusLoading, lastUpdate, handleRefresh, getStatus, handleStatusChange, sectionId, section?.name, ppfdExpanded, sensorHistoryExpanded, loadSection, rangeFor, section?.effectiveStage]);
 
   // Loading state. El encabezado va antes que los datos: si no, la barra superior de móvil cae
   // al título de la ruta padre ("Salas") y se queda sin flecha atrás durante toda la carga.
@@ -1586,6 +1592,16 @@ export default function CarpaDetailPage() {
               <Leaf className="w-4 h-4 text-cultivo-green-400" />
               <span className="text-sm text-zinc-300">
                 {section.plants?.length || 0} planta{(section.plants?.length || 0) !== 1 ? 's' : ''}
+              </span>
+            </div>
+            {/* Etapa cuyos rangos de sensores aplican en esta carpa. */}
+            <div
+              className="flex items-center gap-2 rounded-xl border border-edge bg-surface-2 px-4 py-2"
+              title="Etapa cuyos rangos se aplican"
+            >
+              <Gauge className="w-4 h-4 text-fg-muted" />
+              <span className="text-sm text-fg-muted">
+                Rangos: {RANGE_STAGE_LABELS[section.effectiveStage ?? 'DEFAULT']}
               </span>
             </div>
             {sensors.length > 0 && (

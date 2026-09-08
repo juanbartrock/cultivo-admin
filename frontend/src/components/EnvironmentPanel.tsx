@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DeviceStatus, Device } from '@/types';
+import { DeviceStatus, Device, RangeStage, StageRange } from '@/types';
 import { useDeviceControl } from '@/hooks/useDeviceStatus';
 import { 
   Thermometer, 
@@ -25,6 +25,13 @@ import { deviceService } from '@/services/deviceService';
 import { sectionService } from '@/services/locationService';
 import { Section } from '@/types';
 import { useToast } from '@/contexts/ToastContext';
+import {
+  RANGE_STAGE_LABELS,
+  RangeMetric,
+  ReadingStatus,
+  metricRange,
+  readingStatus,
+} from '@/features/home/lib/readings';
 
 interface EnvironmentData {
   temperature?: number;
@@ -49,107 +56,115 @@ interface EnvironmentPanelProps {
   onRefresh?: () => void;
   /** Callback cuando se reasigna el dispositivo */
   onReassign?: () => void;
+  /** Rangos de la etapa que aplica a la carpa; `null` mientras no cargaron. */
+  range?: StageRange | null;
+  /** Etapa cuyos rangos se están aplicando, para decirlo en pantalla. */
+  stage?: RangeStage | null;
 }
 
-// Rangos óptimos para cultivo
-const OPTIMAL_RANGES = {
-  temperature: { min: 20, max: 28, unit: '°C' },
-  humidity: { min: 40, max: 70, unit: '%' },
-  co2: { min: 400, max: 1500, unit: 'ppm' },
-  vpd: { min: 0.8, max: 1.2, unit: 'kPa' },
+/** Unidad de cada métrica configurable. */
+const METRIC_UNITS: Record<RangeMetric, string> = {
+  temperature: '°C',
+  humidity: '%',
+  co2: 'ppm',
+  vpd: 'kPa',
 };
 
-function getValueStatus(value: number | undefined, type: keyof typeof OPTIMAL_RANGES): 'low' | 'optimal' | 'high' | 'unknown' {
-  if (value === undefined) return 'unknown';
-  const range = OPTIMAL_RANGES[type];
-  if (!range) return 'unknown';
-  
-  if (value < range.min) return 'low';
-  if (value > range.max) return 'high';
-  return 'optimal';
+/** Dirección de una lectura respecto del rango ideal, sólo para el ícono. */
+type Drift = 'low' | 'high' | 'inside';
+
+function driftOf(value: number | undefined, metric: RangeMetric, range: StageRange | null | undefined): Drift {
+  const limits = metricRange(range, metric);
+  if (!limits || value === undefined) return 'inside';
+  if (value < limits.idealMin) return 'low';
+  if (value > limits.idealMax) return 'high';
+  return 'inside';
 }
 
-function getStatusColor(status: 'low' | 'optimal' | 'high' | 'unknown') {
+function getStatusColor(status: ReadingStatus) {
   switch (status) {
-    case 'optimal': return 'text-cultivo-green-400';
-    case 'low': return 'text-blue-400';
-    case 'high': return 'text-orange-400';
-    default: return 'text-zinc-500';
+    case 'ok': return 'text-ok';
+    case 'warn': return 'text-warn';
+    case 'danger': return 'text-danger';
+    default: return 'text-fg-faint';
   }
 }
 
-function getStatusBg(status: 'low' | 'optimal' | 'high' | 'unknown') {
+function getStatusBg(status: ReadingStatus) {
   switch (status) {
-    case 'optimal': return 'bg-cultivo-green-500/10 border-cultivo-green-500/30';
-    case 'low': return 'bg-blue-500/10 border-blue-500/30';
-    case 'high': return 'bg-orange-500/10 border-orange-500/30';
-    default: return 'bg-zinc-800/50 border-zinc-700/50';
+    case 'ok': return 'bg-ok/10 border-ok/30';
+    case 'warn': return 'bg-warn/10 border-warn/30';
+    case 'danger': return 'bg-danger/10 border-danger/30';
+    default: return 'bg-surface-2 border-edge';
   }
 }
 
-function StatusIcon({ status }: { status: 'low' | 'optimal' | 'high' | 'unknown' }) {
-  switch (status) {
-    case 'optimal': return <Minus className="w-3 h-3" />;
-    case 'low': return <TrendingDown className="w-3 h-3" />;
-    case 'high': return <TrendingUp className="w-3 h-3" />;
-    default: return null;
-  }
+const STATUS_LABELS: Record<ReadingStatus, string> = {
+  ok: 'En rango',
+  warn: 'Al límite',
+  danger: 'Fuera de rango',
+  unknown: '',
+};
+
+function StatusIcon({ status, drift }: { status: ReadingStatus; drift: Drift }) {
+  if (status === 'unknown') return null;
+  if (drift === 'low') return <TrendingDown className="w-3 h-3" />;
+  if (drift === 'high') return <TrendingUp className="w-3 h-3" />;
+  return <Minus className="w-3 h-3" />;
 }
 
 interface MetricCardProps {
   icon: React.ElementType;
   label: string;
   value?: number;
-  unit: string;
-  type?: keyof typeof OPTIMAL_RANGES;
+  metric: RangeMetric;
   decimals?: number;
   iconColor: string;
   /** Sensor sin respuesta: no hay lectura viva, así que no hay valor ni color de estado. */
   offline?: boolean;
+  /** Rangos de la etapa aplicada; sin ellos la lectura va sin color. */
+  range?: StageRange | null;
 }
 
-function MetricCard({ icon: Icon, label, value, unit, type, decimals = 1, iconColor, offline = false }: MetricCardProps) {
-  const status = offline || !type ? 'unknown' : getValueStatus(value, type);
+function MetricCard({ icon: Icon, label, value, metric, decimals = 1, iconColor, offline = false, range }: MetricCardProps) {
   const hasValue = !offline && value !== undefined && !isNaN(value);
-  
+  const status: ReadingStatus = offline ? 'unknown' : readingStatus(metric, value, range);
+  const drift = driftOf(value, metric, range);
+  const limits = metricRange(range, metric);
+  const unit = METRIC_UNITS[metric];
+
   return (
     <div className={`
-      relative overflow-hidden
       rounded-xl p-4 border
-      ${hasValue ? getStatusBg(status) : 'bg-zinc-800/30 border-zinc-700/50'}
-      transition-all duration-300
+      ${hasValue ? getStatusBg(status) : 'bg-surface-2 border-edge'}
     `}>
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-      
-      <div className="relative">
+      <div>
         <div className="flex items-center justify-between mb-3">
-          <div className={`p-2 rounded-lg bg-zinc-900/50`}>
-            <Icon className={`w-5 h-5 ${offline ? 'text-zinc-500' : iconColor}`} />
+          <div className="p-2 rounded-lg bg-surface">
+            <Icon className={`w-5 h-5 ${offline ? 'text-offline' : iconColor}`} />
           </div>
-          {hasValue && type && (
+          {hasValue && status !== 'unknown' && (
             <div className={`flex items-center gap-1 text-xs ${getStatusColor(status)}`}>
-              <StatusIcon status={status} />
-              <span className="capitalize">{status === 'optimal' ? 'Óptimo' : status === 'low' ? 'Bajo' : status === 'high' ? 'Alto' : ''}</span>
+              <StatusIcon status={status} drift={drift} />
+              <span>{STATUS_LABELS[status]}</span>
             </div>
           )}
         </div>
-        
-        <p className="text-xs text-zinc-500 mb-1">{label}</p>
-        
+
+        <p className="text-xs text-fg-muted mb-1">{label}</p>
+
         {hasValue ? (
-          <p className={`text-3xl font-bold ${getStatusColor(status)}`}>
+          <p className={`font-display text-3xl font-semibold tabular-nums ${getStatusColor(status)}`}>
             {typeof value === 'number' ? value.toFixed(decimals) : value}
-            <span className="text-lg font-normal text-zinc-500 ml-1">{unit}</span>
+            <span className="text-lg font-normal text-fg-faint ml-1">{unit}</span>
           </p>
         ) : (
-          <p className="text-2xl font-bold text-zinc-600">—</p>
+          <p className="font-display text-2xl font-semibold text-fg-faint">—</p>
         )}
-        
-        {/* Range indicator */}
-        {hasValue && type && OPTIMAL_RANGES[type] && (
-          <p className="text-[10px] text-zinc-600 mt-2">
-            Óptimo: {OPTIMAL_RANGES[type].min}-{OPTIMAL_RANGES[type].max} {OPTIMAL_RANGES[type].unit}
+
+        {limits && (
+          <p className="text-[11px] text-fg-faint mt-2 tabular-nums">
+            Ideal {limits.idealMin}-{limits.idealMax} · amplio {limits.wideMin}-{limits.wideMax} {unit}
           </p>
         )}
       </div>
@@ -164,7 +179,9 @@ export default function EnvironmentPanel({
   loading = false,
   lastUpdate,
   onRefresh,
-  onReassign
+  onReassign,
+  range = null,
+  stage = null
 }: EnvironmentPanelProps) {
   const { toast } = useToast();
   // Hook de control (solo se usa si hay device)
@@ -353,6 +370,15 @@ export default function EnvironmentPanel({
                 Sensor sin respuesta
               </span>
             )}
+            {/* Qué fila de rangos está pintando estos colores. */}
+            {stage && (
+              <span
+                className="rounded-sm border border-edge bg-surface-2 px-2 py-0.5 text-xs text-fg-muted"
+                title="Etapa cuyos rangos se aplican"
+              >
+                Rangos: {RANGE_STAGE_LABELS[stage]}
+              </span>
+            )}
             {/* Toggle registrar historial */}
             {device && (
               <button
@@ -424,43 +450,43 @@ export default function EnvironmentPanel({
           icon={Thermometer}
           label="Temperatura"
           value={temperature}
-          unit="°C"
-          type="temperature"
-          iconColor="text-orange-400"
+          metric="temperature"
+          iconColor="text-warn"
           offline={!isOnline}
+          range={range}
         />
         
         <MetricCard
           icon={Droplets}
           label="Humedad"
           value={humidity}
-          unit="%"
-          type="humidity"
+          metric="humidity"
           decimals={0}
-          iconColor="text-blue-400"
+          iconColor="text-info"
           offline={!isOnline}
+          range={range}
         />
         
         <MetricCard
           icon={Wind}
           label="CO₂"
           value={co2}
-          unit="ppm"
-          type="co2"
+          metric="co2"
           decimals={0}
-          iconColor="text-emerald-400"
+          iconColor="text-accent"
           offline={!isOnline}
+          range={range}
         />
         
         <MetricCard
           icon={CloudRain}
           label="VPD"
           value={vpd}
-          unit="kPa"
-          type="vpd"
+          metric="vpd"
           decimals={2}
-          iconColor="text-purple-400"
+          iconColor="text-fg-muted"
           offline={!isOnline}
+          range={range}
         />
       </div>
 

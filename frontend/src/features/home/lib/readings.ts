@@ -1,4 +1,4 @@
-import { Device, DeviceStatus, Plant, PlantStage, Section } from '@/types';
+import { Device, DeviceStatus, PlantStage, RangeStage, Section, StageRange } from '@/types';
 
 /** Estado de una lectura contra su rango operativo. `unknown` = sin dato. */
 export type ReadingStatus = 'ok' | 'warn' | 'danger' | 'unknown';
@@ -10,24 +10,54 @@ export const READING_TONE: Record<ReadingStatus, string> = {
   unknown: 'text-fg-faint',
 };
 
-/**
- * Rangos operativos de cultivo indoor. Fuera del rango amplio es `danger`;
- * entre el rango amplio y el ideal, `warn`.
- */
-const RANGES = {
-  temperature: { ideal: [18, 28], wide: [15, 30] },
-  humidity: { ideal: [40, 65], wide: [30, 75] },
-  vpd: { ideal: [0.8, 1.4], wide: [0.4, 1.6] },
-} as const;
+/** Métricas con rango configurable por etapa. */
+export type RangeMetric = 'temperature' | 'humidity' | 'vpd' | 'co2';
 
+/** Prefijo de las columnas de cada métrica en una fila de rangos. */
+const METRIC_PREFIX: Record<RangeMetric, 'temp' | 'humidity' | 'vpd' | 'co2'> = {
+  temperature: 'temp',
+  humidity: 'humidity',
+  vpd: 'vpd',
+  co2: 'co2',
+};
+
+export interface MetricRange {
+  idealMin: number;
+  idealMax: number;
+  wideMin: number;
+  wideMax: number;
+}
+
+/** Los cuatro umbrales de una métrica dentro de una fila de rangos. */
+export function metricRange(
+  range: StageRange | null | undefined,
+  metric: RangeMetric
+): MetricRange | null {
+  if (!range) return null;
+  const prefix = METRIC_PREFIX[metric];
+  return {
+    idealMin: range[`${prefix}IdealMin`],
+    idealMax: range[`${prefix}IdealMax`],
+    wideMin: range[`${prefix}WideMin`],
+    wideMax: range[`${prefix}WideMax`],
+  };
+}
+
+/**
+ * Estado de una lectura contra los rangos de la etapa que aplica. Los rangos vienen de la base
+ * (`GET /stage-ranges`): sin rangos cargados el estado es `unknown` y la lectura va sin color,
+ * nunca contra un valor por defecto escrito en el frontend.
+ */
 export function readingStatus(
-  metric: keyof typeof RANGES,
-  value: number | null | undefined
+  metric: RangeMetric,
+  value: number | null | undefined,
+  range: StageRange | null | undefined
 ): ReadingStatus {
   if (value === null || value === undefined || !Number.isFinite(value)) return 'unknown';
-  const { ideal, wide } = RANGES[metric];
-  if (value >= ideal[0] && value <= ideal[1]) return 'ok';
-  if (value >= wide[0] && value <= wide[1]) return 'warn';
+  const limits = metricRange(range, metric);
+  if (!limits) return 'unknown';
+  if (value >= limits.idealMin && value <= limits.idealMax) return 'ok';
+  if (value >= limits.wideMin && value <= limits.wideMax) return 'warn';
   return 'danger';
 }
 
@@ -76,18 +106,11 @@ export const STAGE_LABELS: Record<PlantStage, string> = {
   CURADO: 'Curado',
 };
 
-/** Etapa con más plantas en la carpa. */
-export function dominantStage(plants: Plant[] | undefined): PlantStage | null {
-  if (!plants?.length) return null;
-  const counts = plants.reduce<Partial<Record<PlantStage, number>>>((acc, plant) => {
-    acc[plant.stage] = (acc[plant.stage] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const entries = Object.entries(counts) as [PlantStage, number][];
-  entries.sort((a, b) => b[1] - a[1]);
-  return entries[0]?.[0] ?? null;
-}
+/** Etiqueta de la fila de rangos que está aplicando. */
+export const RANGE_STAGE_LABELS: Record<RangeStage, string> = {
+  DEFAULT: 'Por defecto',
+  ...STAGE_LABELS,
+};
 
 export interface SectionReadings {
   temperature: number | null;

@@ -1,6 +1,59 @@
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
+## 2026-09-08 — Hallazgo 2 del crítico: rangos de sensores por etapa en la base (rama `redisenio-2026-09`)
+
+Decisión de Juan del 2026-09-08 sobre `docs/critica/2026-09-08-0929/informe.md`: los rangos
+ok/warn/danger se configuran **por etapa**, viven en la base y se editan desde la app. Se
+eliminaron las dos tablas hardcodeadas que se contradecían (`RANGES` en
+`frontend/src/features/home/lib/readings.ts` y `OPTIMAL_RANGES` en
+`frontend/src/components/EnvironmentPanel.tsx`).
+
+**Base de datos.** Migración aditiva `backend/prisma/migrations/20260908130000_add_stage_ranges`:
+enum `RangeStage` (`DEFAULT` + los seis valores de `PlantStage`) y tabla `stage_ranges` con una
+fila por etapa y 16 columnas (rango ideal y rango amplio de temperatura, humedad, VPD y CO₂).
+El seed va en la misma migración con `ON CONFLICT DO NOTHING` y `StageRangesService.findAll()`
+vuelve a sembrar sólo las filas que falten (`createMany` con `skipDuplicates`): nunca pisa una
+fila existente. Valores sembrados, los que tenía el frontend: temperatura 18-28 / 15-30, humedad
+40-65 / 30-75, VPD 0.8-1.4 / 0.4-1.6, CO₂ 400-1500 / 300-2000, iguales para las siete filas.
+
+La base venía de `prisma db push` y no tenía tabla `_prisma_migrations`: las dos migraciones
+previas se marcaron con `prisma migrate resolve --applied` (baseline, sin ejecutar su SQL —
+`add_plant_zones` incluye un `DROP COLUMN IF EXISTS "zone"` que no debía correr) y recién después
+`prisma migrate deploy` aplicó la nueva. Salidas en el reporte; ningún dato existente cambió
+(19 plantas, 6 carpas, 7 dispositivos y 3 ciclos antes y después).
+
+**Backend.** Módulo `stage-ranges`: `GET /api/stage-ranges` para cualquier usuario autenticado;
+`PUT` y `PATCH /api/stage-ranges/:stage` sólo `ADMIN` vía `RolesGuard`. Validación en el DTO
+(números finitos) y en el servicio (min < max en ideal y amplio, y el amplio conteniendo al
+ideal), con el mensaje en castellano. La API de secciones (`GET /sections`, `GET /sections/:id`
+y `GET /sections/:id/dashboard`) devuelve `effectiveStage`: la etapa más frecuente entre las
+plantas asignadas a la carpa, desempatando por la más avanzada, y `DEFAULT` sin plantas. La
+derivación es `effective-stage.ts` y tiene test propio (`effective-stage.spec.ts`, 4 casos).
+
+**Frontend.** `useStageRanges()` (React Query, `staleTime` 5 min) es la única fuente: la consumen
+la home, la página de carpa y `/admin/rangos`. `readingStatus(metric, value, range)` devuelve
+`unknown` mientras los rangos no cargaron, así que la lectura va sin color y nunca contra un
+valor por defecto escrito en código. La tarjeta de carpa y el panel de ambiente muestran qué
+etapa está aplicando ("Rangos: Curado"). Pantalla nueva `/admin/rangos` (ítem "Rangos" en el
+menú de admin del shell y en el sheet "Más" de móvil): tabla por etapa en desktop, tarjetas en
+móvil, edición en diálogo con los ocho valores por métrica y validación espejo de la del backend.
+
+**Verificado.** `npm run typecheck` y `npm run lint` del frontend en exit 0 (24 warnings de línea
+base, los mismos de antes); `npm run build` de frontend y backend en exit 0; `npx jest` del
+backend con los mismos 2 fallos preexistentes de `grow.service.spec` (idénticos con el árbol
+limpio) y el spec nuevo en verde; `qa:nav` 17/17. Navegación real con la credencial de admin en
+1440×900 y 390×844: home con el badge de etapa por carpa (Curado, Pre-flora, Floración, Por
+defecto), carpa Secado aplicando `CURADO` por desempate, `/admin/rangos` con las 7 filas, el
+diálogo rechazando `min > max` y un amplio que no contiene al ideal (Guardar deshabilitado) y
+**Cancelar** sin guardar; `scrollWidth` 390 y 1440 sin overflow; consola sin errores. Por API:
+`GET` sin token 401, `PUT` sin token 401, `GET` con token no admin 200, `PUT`/`PATCH` con token
+no admin 403, `GET` con admin 200 con las 7 filas, `PUT` con admin y `min > max` 400.
+
+Publicado con `app-restart cultivo-backend --build` y `app-restart cultivo-frontend --build`,
+ambos exit 0. Capturas en `docs/rediseno-2026-09/capturas/rangos-20260908/`.
+
+<!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
 ## 2026-09-08 — Hallazgos 1, 3, 4, 7 y 8 de la segunda pasada del crítico (rama `redisenio-2026-09`)
 
 Correcciones sobre `docs/critica/2026-09-08-0847/informe.md`. El hallazgo 2 (rangos

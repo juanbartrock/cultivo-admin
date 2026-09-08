@@ -6,9 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { SectionSummary } from '../hooks/useHomeDashboard';
 import {
+  RANGE_STAGE_LABELS,
   READING_TONE,
-  STAGE_LABELS,
-  dominantStage,
   formatReading,
   readingStatus,
 } from '../lib/readings';
@@ -40,8 +39,7 @@ function Reading({
 }
 
 export function CarpaStatusCard({ summary }: CarpaStatusCardProps) {
-  const { section, readings, devicesOn, plantsCount } = summary;
-  const stage = dominantStage(section.plants);
+  const { section, readings, devicesOn, plantsCount, stage, range } = summary;
 
   return (
     <Link
@@ -67,19 +65,19 @@ export function CarpaStatusCard({ summary }: CarpaStatusCardProps) {
           icon={Thermometer}
           label="Temp."
           value={formatReading(readings.temperature, ' °C')}
-          tone={READING_TONE[readingStatus('temperature', readings.temperature)]}
+          tone={READING_TONE[readingStatus('temperature', readings.temperature, range)]}
         />
         <Reading
           icon={Droplets}
           label="Humedad"
           value={formatReading(readings.humidity, ' %', 0)}
-          tone={READING_TONE[readingStatus('humidity', readings.humidity)]}
+          tone={READING_TONE[readingStatus('humidity', readings.humidity, range)]}
         />
         <Reading
           icon={Gauge}
           label="VPD"
           value={formatReading(readings.vpd, ' kPa', 2)}
-          tone={READING_TONE[readingStatus('vpd', readings.vpd)]}
+          tone={READING_TONE[readingStatus('vpd', readings.vpd, range)]}
         />
       </div>
 
@@ -88,7 +86,9 @@ export function CarpaStatusCard({ summary }: CarpaStatusCardProps) {
           <Leaf className="h-3.5 w-3.5" />
           <span className="tabular-nums">{plantsCount}</span>
         </span>
-        {stage ? <Badge variant="neutral">{STAGE_LABELS[stage]}</Badge> : null}
+        <Badge variant="neutral" title="Etapa cuyos rangos se aplican">
+          Rangos: {RANGE_STAGE_LABELS[stage]}
+        </Badge>
         {devicesOn.map((device) => (
           <Badge key={device.id} variant="accent">
             {device.name}

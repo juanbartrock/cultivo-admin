@@ -4,6 +4,7 @@ import {
   ClipboardList,
   Cpu,
   LayoutDashboard,
+  SlidersHorizontal,
   Zap,
   Users,
   type LucideIcon,
@@ -27,13 +28,14 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/artefactos', label: 'Dispositivos', icon: Cpu },
   { href: '/notificaciones', label: 'Notificaciones', icon: Bell, showsUnread: true },
   { href: '/admin/usuarios', label: 'Usuarios', icon: Users, adminOnly: true },
+  { href: '/admin/rangos', label: 'Rangos', icon: SlidersHorizontal, adminOnly: true },
 ];
 
 /** Pestañas de la barra inferior en móvil; la quinta la agrega "Más". */
 export const MOBILE_TABS = ['/', '/sala', '/seguimientos', '/automatizaciones'];
 
 /** Rutas que quedan dentro del `Sheet` de "Más". */
-export const MORE_ROUTES = ['/artefactos', '/notificaciones', '/admin/usuarios'];
+export const MORE_ROUTES = ['/artefactos', '/notificaciones', '/admin/usuarios', '/admin/rangos'];
 
 export function isActiveRoute(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';

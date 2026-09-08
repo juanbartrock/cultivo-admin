@@ -108,9 +108,49 @@ export interface Section {
     devices: number;
     plants: number;
   };
+  /** Etapa cuyos rangos de sensores aplican a la carpa; la calcula el backend. */
+  effectiveStage?: RangeStage;
   createdAt: string;
   updatedAt: string;
 }
+
+// ============================================
+// RANGOS DE LECTURAS POR ETAPA
+// ============================================
+
+/** Etapa a la que aplica una fila de rangos: las de `PlantStage` más `DEFAULT`. */
+export type RangeStage = 'DEFAULT' | PlantStage;
+
+/**
+ * Rangos de una etapa, tal como los devuelve `GET /stage-ranges`. Dentro del ideal la lectura
+ * es `ok`, entre el ideal y el amplio `warn`, fuera del amplio `danger`. Los edita un ADMIN en
+ * /admin/rangos: el frontend no tiene copia de estos valores en código.
+ */
+export interface StageRange {
+  id: string;
+  stage: RangeStage;
+  tempIdealMin: number;
+  tempIdealMax: number;
+  tempWideMin: number;
+  tempWideMax: number;
+  humidityIdealMin: number;
+  humidityIdealMax: number;
+  humidityWideMin: number;
+  humidityWideMax: number;
+  vpdIdealMin: number;
+  vpdIdealMax: number;
+  vpdWideMin: number;
+  vpdWideMax: number;
+  co2IdealMin: number;
+  co2IdealMax: number;
+  co2WideMin: number;
+  co2WideMax: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Los 16 valores editables de una fila. */
+export type StageRangeValues = Omit<StageRange, 'id' | 'stage' | 'createdAt' | 'updatedAt'>;
 
 // Dashboard de sección (con resumen)
 export interface SectionDashboard extends Section {

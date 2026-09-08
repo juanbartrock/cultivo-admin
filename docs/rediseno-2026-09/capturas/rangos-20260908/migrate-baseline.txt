@@ -1,0 +1,33 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-us-east-2.pooler.supabase.com:5432"
+
+Migration 20251213020000_add_plant_zones marked as applied.
+
+┌─────────────────────────────────────────────────────────┐
+│  Update available 5.22.0 -> 8.0.0-rc.13                 │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-us-east-2.pooler.supabase.com:5432"
+
+Migration 20251219000000_make_plant_section_optional marked as applied.
+
+--- status tras baseline ---
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-us-east-2.pooler.supabase.com:5432"
+
+3 migrations found in prisma/migrations
+Following migration have not yet been applied:
+20260908130000_add_stage_ranges
+
+To apply migrations in development run prisma migrate dev.
+To apply migrations in production run prisma migrate deploy.
