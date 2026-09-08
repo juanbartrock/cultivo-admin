@@ -68,6 +68,7 @@ export function useHomeDashboard() {
 
   const {
     getStatus,
+    lastUpdate: statusUpdatedAt,
     loading: statusLoading,
     refresh: refreshStatuses,
   } = useDevicesStatus(devices, { pollingInterval: 30_000, autoRefresh: true });
@@ -122,7 +123,7 @@ export function useHomeDashboard() {
         roomName: section.room?.name,
       };
 
-      if (readings.sensor && getStatus(readings.sensor.id)?.online === false) {
+      if (readings.sensorOffline && readings.sensor) {
         result.push({ ...base, label: readings.sensor.name, detail: 'Sensor sin respuesta', severity: 'offline' });
         continue;
       }
@@ -154,7 +155,7 @@ export function useHomeDashboard() {
 
     const order = { danger: 0, warn: 1, offline: 2 } as const;
     return result.sort((a, b) => order[a.severity] - order[b.severity]);
-  }, [getStatus, summaries]);
+  }, [summaries]);
 
   const deviceIssues = useMemo<DeviceIssue[]>(() => {
     const issues: DeviceIssue[] = [];
@@ -186,6 +187,7 @@ export function useHomeDashboard() {
     deviceIssues,
     cycles,
     lastEventByCycle,
+    statusUpdatedAt,
     statusLoading,
     refreshStatuses,
     sectionsQuery,

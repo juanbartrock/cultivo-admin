@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
 interface WeatherData {
-  temperature: number;
-  humidity: number;
+  temperature: number | null;
+  humidity: number | null;
   city: string;
   country: string;
   description: string;
@@ -12,8 +12,8 @@ interface WeatherData {
 
 export function useWeather(city: string = 'Buenos Aires') {
   const [weather, setWeather] = useState<WeatherData>({
-    temperature: 0,
-    humidity: 0,
+    temperature: null,
+    humidity: null,
     city: '',
     country: '',
     description: '',

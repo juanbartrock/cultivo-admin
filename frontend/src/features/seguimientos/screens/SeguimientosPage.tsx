@@ -417,10 +417,10 @@ function SeguimientosContent() {
             <>
               {/* Header del ciclo */}
               <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h2 className="text-xl font-bold text-white">{selectedCycle.name}</h2>
+                <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
+                      <h2 className="text-xl font-bold text-white break-words">{selectedCycle.name}</h2>
                       <select
                         value={selectedCycle.status}
                         onChange={(e) => handleStatusChange(selectedCycle.id, e.target.value as CycleStatus)}
@@ -437,11 +437,11 @@ function SeguimientosContent() {
                       {' • '}{formatCycleDays(selectedCycle.startDate)}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 flex-wrap gap-2">
                     <button
                       onClick={() => setShowPlantModal(true)}
                       disabled={isCycleLocked}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white rounded-lg"
+                      className="flex flex-1 items-center justify-center gap-2 px-3 py-1.5 text-sm bg-cultivo-green-600 hover:bg-cultivo-green-700 disabled:bg-zinc-700 text-white rounded-lg sm:flex-none"
                     >
                       <Plus className="w-4 h-4" />
                       Agregar Planta
@@ -449,7 +449,7 @@ function SeguimientosContent() {
                     <button
                       onClick={() => setShowEventModal(true)}
                       disabled={isCycleLocked}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-700 hover:bg-zinc-600 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg"
+                      className="flex flex-1 items-center justify-center gap-2 px-3 py-1.5 text-sm bg-zinc-700 hover:bg-zinc-600 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-lg sm:flex-none"
                     >
                       <Plus className="w-4 h-4" />
                       Registrar Evento

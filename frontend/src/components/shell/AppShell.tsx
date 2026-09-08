@@ -66,7 +66,9 @@ function ShellChrome({ children }: { children: React.ReactNode }) {
         <div className={cn('flex min-h-screen flex-col', collapsed ? 'lg:pl-16' : 'lg:pl-60')}>
           <MobileTopBar unreadCount={unreadCount} />
 
-          <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-20 pt-4 sm:px-6 lg:px-6 lg:py-6">
+          {/* `overflow-x-hidden` es la red de seguridad del shell: una página que se pase de
+              ancho se recorta acá y nunca deja la tab bar fuera del alcance del dedo. */}
+          <main className="mx-auto w-full max-w-[1400px] flex-1 overflow-x-hidden px-4 pb-20 pt-4 sm:px-6 lg:px-6 lg:py-6">
             {children}
           </main>
         </div>

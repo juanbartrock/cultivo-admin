@@ -306,10 +306,10 @@ export default function AdminUsersPage() {
                     user.isActive ? 'border-zinc-700/50' : 'border-red-500/30 bg-red-500/5'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-4">
                       {/* Avatar */}
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      <div className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center ${
                         user.role === 'ADMIN' ? 'bg-cultivo-green-600/20' : 'bg-zinc-700/50'
                       }`}>
                         {user.role === 'ADMIN' ? (
@@ -322,9 +322,9 @@ export default function AdminUsersPage() {
                       </div>
                       
                       {/* Info */}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-white">{user.name}</h3>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-white break-words">{user.name}</h3>
                           {isCurrentUser && (
                             <span className="text-xs px-2 py-0.5 bg-cultivo-green-600/20 text-cultivo-green-400 rounded">
                               Tú
@@ -336,11 +336,11 @@ export default function AdminUsersPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-zinc-400">{user.email}</p>
+                        <p className="text-sm text-zinc-400 break-all">{user.email}</p>
                         
                         {/* Stats */}
                         {user._count && (
-                          <div className="flex items-center gap-4 mt-2 text-xs text-zinc-500">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-zinc-500">
                             <span className="flex items-center gap-1">
                               <Home className="w-3 h-3" />
                               {user._count.rooms} salas
@@ -359,7 +359,7 @@ export default function AdminUsersPage() {
                     </div>
                     
                     {/* Tier y acciones */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
                       <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${TIER_COLORS[user.subscriptionTier]}`}>
                         <TierIcon className="w-4 h-4" />
                         <span className="text-sm font-medium">{user.subscriptionTier}</span>

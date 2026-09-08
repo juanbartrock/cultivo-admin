@@ -13,6 +13,7 @@ import { DeviceIssuesBlock } from '../components/DeviceIssuesBlock';
 import { HomeSection } from '../components/HomeSection';
 import { OutdoorWeatherBlock } from '../components/OutdoorWeatherBlock';
 import { useHomeDashboard } from '../hooks/useHomeDashboard';
+import { useTimeAgo } from '../lib/timeAgo';
 
 export default function HomePage() {
   const {
@@ -21,11 +22,13 @@ export default function HomePage() {
     deviceIssues,
     cycles,
     lastEventByCycle,
+    statusUpdatedAt,
     statusLoading,
     refreshStatuses,
     sectionsQuery,
     cyclesQuery,
   } = useHomeDashboard();
+  const updatedAgo = useTimeAgo(statusUpdatedAt);
 
   return (
     <div className="space-y-8">
@@ -47,7 +50,10 @@ export default function HomePage() {
         }
       />
 
-      <HomeSection title="Alertas">
+      <HomeSection
+        title="Alertas"
+        meta={alerts.length > 0 && updatedAgo ? <span>actualizado {updatedAgo}</span> : null}
+      >
         {sectionsQuery.isError ? (
           <BlockError
             message="Sin respuesta del servicio de carpas."
@@ -56,7 +62,7 @@ export default function HomePage() {
         ) : sectionsQuery.isLoading ? (
           <Skeleton className="h-12 w-full" />
         ) : (
-          <AlertsBlock alerts={alerts} />
+          <AlertsBlock alerts={alerts} updatedAt={statusUpdatedAt} />
         )}
       </HomeSection>
 

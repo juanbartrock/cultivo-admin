@@ -77,6 +77,8 @@ export function useDevicesStatus(
   const [statuses, setStatuses] = useState<Map<string, DeviceStatus>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** Momento de la última consulta o push que actualizó el mapa de estados. */
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const isMounted = useRef(true);
 
   const fetchAllStatuses = useCallback(async () => {
@@ -112,9 +114,8 @@ export function useDevicesStatus(
         }
       });
 
-      setStatuses((prev) => {
-        return newStatuses;
-      });
+      setStatuses(newStatuses);
+      setLastUpdate(new Date());
       setError(null);
     } catch (err) {
       if (isMounted.current) {
@@ -153,6 +154,7 @@ export function useDevicesStatus(
           newMap.set(data.deviceId, data.status);
           return newMap;
         });
+        setLastUpdate(new Date());
       }
     };
 
@@ -173,6 +175,7 @@ export function useDevicesStatus(
           });
           return newMap;
         });
+        setLastUpdate(new Date());
       }
     };
 
@@ -213,7 +216,7 @@ export function useDevicesStatus(
     [statuses]
   );
 
-  return { statuses, getStatus, loading, error, refresh: fetchAllStatuses };
+  return { statuses, getStatus, lastUpdate, loading, error, refresh: fetchAllStatuses };
 }
 
 /**

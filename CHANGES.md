@@ -1,5 +1,59 @@
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
+## 2026-09-08 — Hallazgos 1, 3, 5, 7, 8 y 10 del crítico (rama `redisenio-2026-09`)
+
+Correcciones sobre el informe `docs/critica/2026-09-08-0745/informe.md`. El hallazgo 2 (rangos
+ok/warn/danger en `readings.ts`) queda pendiente de una decisión de esquema de Juan; los
+hallazgos 4, 6, 9 y 11 son de fases posteriores o de fuera del alcance del rediseño.
+
+- **#1 · overflow horizontal en móvil.** `/seguimientos`: el encabezado del ciclo pasa a
+  `flex-col sm:flex-row`, el nombre y el select del estado envuelven, y los botones "Agregar
+  Planta" y "Registrar Evento" ocupan la fila completa abajo de 640 px. `/admin/usuarios`: la
+  fila de usuario apila datos y acciones en móvil, el avatar es `shrink-0`, el mail corta con
+  `break-all` y los contadores envuelven. Red de seguridad del shell: `main` con
+  `overflow-x-hidden`. Salen los dos `test.fixme` de `frontend/tests/qa-nav.spec.ts`.
+- **#3 · lectura stale con sensor offline.** `sectionReadings()` devuelve las tres métricas en
+  `null` y `sensorOffline: true` cuando el backend informa `online: false`, en vez de arrastrar
+  el último valor que vio el conector. La tarjeta de carpa muestra `—` en gris y un badge
+  "Sensor sin respuesta"; ya no aparece un 18,1 °C en rojo mientras las alertas dicen que el
+  sensor está caído.
+- **#5 · encabezado de carpa durante la carga.** `CarpaDetailPage` monta `PageHeader` también en
+  los estados de carga y error, con título provisorio "Carpa" y breadcrumb a `/sala`, así la
+  barra superior de móvil trae la flecha atrás desde el primer render.
+- **#7 · código muerto de la home vieja.** Borrados `components/dashboard/` (DashboardSummary,
+  AlertsList, QuickActions, StatsGrid), `components/WeatherWidget.tsx` y
+  `services/weatherService.ts` — con ellos se va el único `max-w-7xl` del árbol. `useWeather`
+  arranca con `temperature`/`humidity` en `null` y `OutdoorWeatherBlock` los formatea con
+  `formatReading` (guion, no cero).
+- **#8 · bloque Alertas.** `useDevicesStatus` expone `lastUpdate`; "Todo en rango" pasa a "Todo
+  en rango · actualizado hace N s" y con alertas la antigüedad va en el encabezado de la
+  sección (`frontend/src/features/home/lib/timeAgo.ts`). Las alertas apilan carpa y etiqueta en
+  dos líneas en móvil en vez de truncar. El "Actualizar" queda en `PageHeader`, ahora alineado
+  a la derecha en todos los anchos.
+- **#10 · doble `<h1>`.** La barra superior de móvil usa `<p role="heading" aria-level={1}>`; el
+  único `<h1>` del documento lo pone `PageHeader`. En móvil ese `h1` está oculto por CSS y sale
+  del árbol de accesibilidad, así que cada viewport anuncia un encabezado y uno solo. Un
+  chequeo que busque `header h1` en móvil ahora tiene que mirar `header [role=heading]`.
+
+Verificación: `npm run typecheck`, `npm run lint` y `npm run build` en exit 0 sin warnings
+nuevos (25 → 24, se va el de `DashboardSummary`); `npm run qa:nav` 17/17 sin skipped; recorrido
+navegado en 390×844 y 1440×900 contra producción. Publicado con
+`app-restart cultivo-frontend --build`.
+
+<!-- [agent:server-audit][date:2026-09-08][action:created] -->
+## 2026-09-08 — Rúbrica del crítico de calidad (piloto de `critic-agent`)
+
+Cultivo Admin es el piloto del evaluador independiente del ecosistema. Nuevo
+`docs/rubrica-critico.md`: umbral 8.0 y piso 6.0, mínimos de la app, pesos por dimensión
+(UI y correctitud 3, seguridad y código 2, entrega 1), anclas propias de UI según el brief
+`docs/rediseno-2026-09/01-direccion-visual.md`, checks que corre el crítico (typecheck, lint,
+build, QA navegado en móvil y desktop contra producción con la credencial de admin) y fallas
+duras propias (scroll horizontal móvil, degradés o blur, ceros como lectura, credencial
+hardcodeada, IoT con puertos al host). Los informes y capturas del crítico quedan en
+`docs/critica/<fecha-hora>/` con symlink `docs/critica/ultimo`. Sin cambios de código.
+Detalle en `/opt/server-audit/docs/critic-agent.md`.
+
 <!-- [agent:cultivo-admin][date:2026-09-05][action:modified] -->
 ## 2026-09-05 — Fase 1 del rediseño: shell, sistema de diseño y home única (rama `redisenio-2026-09`)
 

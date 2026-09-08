@@ -56,7 +56,10 @@ export function CarpaStatusCard({ summary }: CarpaStatusCardProps) {
           <p className="truncate text-sm font-medium text-fg">{section.name}</p>
           <p className="truncate text-xs text-fg-faint">{section.room?.name ?? '—'}</p>
         </div>
-        {section.enabled === false ? <Badge variant="offline">Inactiva</Badge> : null}
+        <div className="flex shrink-0 flex-wrap justify-end gap-1">
+          {section.enabled === false ? <Badge variant="offline">Inactiva</Badge> : null}
+          {readings.sensorOffline ? <Badge variant="offline">Sensor sin respuesta</Badge> : null}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">

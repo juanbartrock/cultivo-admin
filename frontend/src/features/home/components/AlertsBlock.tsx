@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { AlertTriangle, PlugZap, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SectionAlert } from '../hooks/useHomeDashboard';
+import { useTimeAgo } from '../lib/timeAgo';
 
 const SEVERITY = {
   danger: { tone: 'text-danger', border: 'border-danger/30', bg: 'bg-danger/10', icon: AlertTriangle },
@@ -13,14 +14,21 @@ const SEVERITY = {
 
 interface AlertsBlockProps {
   alerts: SectionAlert[];
+  /** Momento de la última consulta de estados; da la antigüedad del "todo en rango". */
+  updatedAt: Date | null;
 }
 
-export function AlertsBlock({ alerts }: AlertsBlockProps) {
+export function AlertsBlock({ alerts, updatedAt }: AlertsBlockProps) {
+  const updatedAgo = useTimeAgo(updatedAt);
+
   if (!alerts.length) {
     return (
       <div className="flex items-center gap-2 rounded-md border border-edge bg-surface px-4 py-3 text-sm text-fg-muted">
-        <ShieldCheck className="h-4 w-4 text-ok" />
-        Todo en rango
+        <ShieldCheck className="h-4 w-4 shrink-0 text-ok" />
+        <span className="min-w-0">
+          Todo en rango
+          {updatedAgo ? <span className="text-fg-faint"> · actualizado {updatedAgo}</span> : null}
+        </span>
       </div>
     );
   }
@@ -36,19 +44,21 @@ export function AlertsBlock({ alerts }: AlertsBlockProps) {
             <Link
               href={`/sala/carpa/${alert.sectionId}`}
               className={cn(
-                'flex items-center gap-3 rounded-md border px-4 py-3 transition-colors hover:border-edge-strong',
+                'flex items-start gap-3 rounded-md border px-4 py-3 transition-colors hover:border-edge-strong sm:items-center',
                 config.border,
                 config.bg
               )}
             >
-              <Icon className={cn('h-4 w-4 shrink-0', config.tone)} />
-              <span className="min-w-0 flex-1 truncate text-sm text-fg">
-                {alert.sectionName}
-                <span className="text-fg-faint"> · {alert.label}</span>
-              </span>
-              <span className={cn('shrink-0 text-sm font-medium tabular-nums', config.tone)}>
-                {alert.detail}
-              </span>
+              <Icon className={cn('mt-0.5 h-4 w-4 shrink-0 sm:mt-0', config.tone)} />
+              <div className="flex min-w-0 flex-1 flex-col gap-x-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="min-w-0 text-sm text-fg">
+                  {alert.sectionName}
+                  <span className="text-fg-faint"> · {alert.label}</span>
+                </span>
+                <span className={cn('text-sm font-medium tabular-nums sm:shrink-0', config.tone)}>
+                  {alert.detail}
+                </span>
+              </div>
             </Link>
           </li>
         );

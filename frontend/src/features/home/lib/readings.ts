@@ -95,16 +95,29 @@ export interface SectionReadings {
   vpd: number | null;
   /** Sensor de la carpa, si tiene uno asignado. */
   sensor: Device | null;
+  /** El sensor existe y el backend lo informa sin respuesta: no hay lectura viva. */
+  sensorOffline: boolean;
 }
 
+/**
+ * Lecturas vivas de la carpa. Un sensor sin respuesta no tiene lectura: el conector
+ * devuelve el último valor que vio y mostrarlo con color de estado miente sobre el
+ * presente, así que las tres métricas quedan en `null`.
+ */
 export function sectionReadings(
   section: Section,
   getStatus: (deviceId: string) => DeviceStatus | null
 ): SectionReadings {
   const sensor = section.devices?.find((device) => device.type === 'SENSOR') ?? null;
-  if (!sensor) return { temperature: null, humidity: null, vpd: null, sensor: null };
+  if (!sensor) {
+    return { temperature: null, humidity: null, vpd: null, sensor: null, sensorOffline: false };
+  }
 
   const status = getStatus(sensor.id);
+  if (status?.online === false) {
+    return { temperature: null, humidity: null, vpd: null, sensor, sensorOffline: true };
+  }
+
   const temperature =
     (status?.temperature as number | undefined) ??
     (sensor.metadata?.temperature as number | undefined) ??
@@ -114,7 +127,13 @@ export function sectionReadings(
     (sensor.metadata?.humidity as number | undefined) ??
     null;
 
-  return { temperature, humidity, vpd: calculateVPD(temperature, humidity), sensor };
+  return {
+    temperature,
+    humidity,
+    vpd: calculateVPD(temperature, humidity),
+    sensor,
+    sensorOffline: false,
+  };
 }
 
 /** Días transcurridos desde una fecha ISO. */

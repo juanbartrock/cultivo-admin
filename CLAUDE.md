@@ -286,6 +286,11 @@ app-restart <target>            # reinicio verificado (estado + puerto + logs)
 app-restart <target> --build    # docker: rebuild de tu servicio; revierte solo si no levanta
 ```
 
+<!-- [agent:server-audit][date:2026-09-07][action:modified] -->
+Un target puede declarar un **health propio** además del estado y el puerto: ahí `app-restart`
+sale 0 sólo si el servicio además responde de verdad. Si tu `--list` no muestra nada y tu app
+tiene un servicio, no lo reinicies a mano: pedile a `server-audit` que lo agregue al mapa.
+
 Sale 0 solo si el servicio quedó sano. Si sale distinto de 0, **el cambio no está publicado**:
 leé el log que imprime y arreglalo o escalá, con la salida real. Cualquier target fuera de tu app
 lo rechaza — eso es infraestructura compartida y la maneja `server-audit`. Usá `app-restart` en

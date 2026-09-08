@@ -31,9 +31,17 @@ export function MobileTopBar({ unreadCount }: MobileTopBarProps) {
         </Link>
       ) : null}
 
-      <h1 className="min-w-0 flex-1 truncate font-display text-base font-semibold text-fg">
+      {/*
+        El h1 del documento lo pone `PageHeader`, que en móvil queda oculto por CSS y sale del
+        árbol de accesibilidad. Acá el título se anuncia como encabezado sin sumar otro <h1>.
+      */}
+      <p
+        role="heading"
+        aria-level={1}
+        className="min-w-0 flex-1 truncate font-display text-base font-semibold text-fg"
+      >
         {title}
-      </h1>
+      </p>
 
       <Link
         href="/notificaciones"

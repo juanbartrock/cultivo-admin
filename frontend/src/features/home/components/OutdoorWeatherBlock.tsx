@@ -3,6 +3,7 @@
 import { Droplets, Thermometer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWeather } from '@/hooks/useWeather';
+import { formatReading } from '../lib/readings';
 
 export function OutdoorWeatherBlock() {
   const weather = useWeather('Buenos Aires');
@@ -28,13 +29,13 @@ export function OutdoorWeatherBlock() {
       <div className="flex items-center gap-2">
         <Thermometer className="h-4 w-4 text-fg-faint" />
         <span className="font-display text-xl font-semibold tabular-nums text-fg">
-          {weather.temperature} °C
+          {formatReading(weather.temperature, ' °C')}
         </span>
       </div>
       <div className="flex items-center gap-2">
         <Droplets className="h-4 w-4 text-fg-faint" />
         <span className="font-display text-xl font-semibold tabular-nums text-fg">
-          {weather.humidity} %
+          {formatReading(weather.humidity, ' %', 0)}
         </span>
       </div>
     </div>

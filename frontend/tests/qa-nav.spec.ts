@@ -83,11 +83,6 @@ interface Route {
   /** Ruta fija; las que se resuelven navegando usan `resolve`. */
   path?: string;
   resolve?: (page: Page) => Promise<string>;
-  /**
-   * Overflow horizontal conocido en móvil, pendiente de las fases siguientes del rediseño.
-   * El recorrido y la captura se hacen igual; sólo la aserción de ancho queda en fixme.
-   */
-  mobileOverflowFixme?: string;
 }
 
 const ROUTES: Route[] = [
@@ -106,23 +101,11 @@ const ROUTES: Route[] = [
       return href as string;
     },
   },
-  {
-    slug: '03_ciclos',
-    title: 'ciclos',
-    path: '/seguimientos',
-    mobileOverflowFixme:
-      'Ciclos mide 469px en un viewport de 390 por los botones "Agregar Planta" y "Registrar Evento" del detalle del ciclo, no por el shell (medido en la fase 1). Se corrige en la fase 3 del rediseño.',
-  },
+  { slug: '03_ciclos', title: 'ciclos', path: '/seguimientos' },
   { slug: '04_automatizaciones', title: 'automatizaciones', path: '/automatizaciones' },
   { slug: '05_artefactos', title: 'artefactos', path: '/artefactos' },
   { slug: '06_notificaciones', title: 'notificaciones', path: '/notificaciones' },
-  {
-    slug: '07_admin_usuarios',
-    title: 'admin de usuarios',
-    path: '/admin/usuarios',
-    mobileOverflowFixme:
-      'Admin de usuarios mide 511px en un viewport de 390 por la fila de cada usuario, no por el shell (medido en la fase 1). Se corrige en la fase 4 del rediseño.',
-  },
+  { slug: '07_admin_usuarios', title: 'admin de usuarios', path: '/admin/usuarios' },
 ];
 
 test.beforeAll(() => {
@@ -148,8 +131,6 @@ test.describe('QA de navegación', () => {
       expect(errors, `errores de página en ${target}:\n${errors.join('\n')}`).toEqual([]);
 
       if (!isMobile) return;
-
-      test.fixme(!!route.mobileOverflowFixme, route.mobileOverflowFixme ?? '');
 
       // Con emulación móvil `window.innerWidth` acompaña al contenido (el visual viewport se
       // aleja para que entre todo), así que el ancho de referencia es el viewport configurado.

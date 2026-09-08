@@ -1443,12 +1443,19 @@ export default function CarpaDetailPage() {
     }
   }, [sensors, controllables, cameras, primarySensor, primarySensorStatus, statusLoading, lastUpdate, handleRefresh, getStatus, handleStatusChange, sectionId, section?.name, ppfdExpanded, sensorHistoryExpanded, loadSection]);
 
-  // Loading state
+  // Loading state. El encabezado va antes que los datos: si no, la barra superior de móvil cae
+  // al título de la ruta padre ("Salas") y se queda sin flecha atrás durante toda la carga.
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-12 h-12 text-cultivo-green-500 animate-spin mb-4" />
-        <p className="text-zinc-400">Cargando sección...</p>
+      <div className="space-y-8">
+        <PageHeader
+          title="Carpa"
+          breadcrumb={[{ label: 'Salas', href: '/sala' }, { label: 'Carpa' }]}
+        />
+        <div className="flex flex-col items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-12 h-12 text-cultivo-green-500 animate-spin mb-4" />
+          <p className="text-zinc-400">Cargando sección...</p>
+        </div>
       </div>
     );
   }
@@ -1456,27 +1463,33 @@ export default function CarpaDetailPage() {
   // Error state
   if (error || !section) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-        <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
-        <h1 className="text-2xl font-bold text-white mb-2">
-          {error || 'Sección no encontrada'}
-        </h1>
-        <p className="text-zinc-400 mb-4">La sección que buscas no existe o fue eliminada.</p>
-        <div className="flex gap-3">
-          <Link
-            href="/sala"
-            className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver
-          </Link>
-          <button
-            onClick={loadSection}
-            className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white rounded-lg transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Reintentar
-          </button>
+      <div className="space-y-8">
+        <PageHeader
+          title="Carpa"
+          breadcrumb={[{ label: 'Salas', href: '/sala' }, { label: 'Carpa' }]}
+        />
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+          <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
+          <p className="text-2xl font-bold text-white mb-2">
+            {error || 'Sección no encontrada'}
+          </p>
+          <p className="text-zinc-400 mb-4">La sección que buscas no existe o fue eliminada.</p>
+          <div className="flex gap-3">
+            <Link
+              href="/sala"
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Volver
+            </Link>
+            <button
+              onClick={loadSection}
+              className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white rounded-lg transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Reintentar
+            </button>
+          </div>
         </div>
       </div>
     );
