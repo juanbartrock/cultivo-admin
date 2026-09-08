@@ -290,25 +290,33 @@ export default function AutomatizacionesPage() {
     return `Cada ${automation.interval} min`;
   }
 
+  // Los estados de carga, error y vacío también montan `PageHeader`: es el que registra el
+  // título en el shell y el que pone el único <h1> del documento.
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
-        <p className="text-zinc-400">Cargando automatizaciones...</p>
+      <div className="space-y-6">
+        <PageHeader title="Automatizaciones" />
+        <div className="flex flex-col items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
+          <p className="text-zinc-400">Cargando automatizaciones...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-        <AlertTriangle className="w-16 h-16 text-red-400 mb-4" />
-        <h1 className="text-2xl font-bold text-white mb-2">Error de conexión</h1>
-        <p className="text-zinc-400 mb-4">{error}</p>
-        <button onClick={loadData} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg">
-          <RefreshCw className="w-4 h-4" />
-          Reintentar
-        </button>
+      <div className="space-y-6">
+        <PageHeader title="Automatizaciones" />
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+          <AlertTriangle className="w-16 h-16 text-red-400 mb-4" />
+          <p className="text-2xl font-bold text-white mb-2">Error de conexión</p>
+          <p className="text-zinc-400 mb-4">{error}</p>
+          <button onClick={loadData} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg">
+            <RefreshCw className="w-4 h-4" />
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }
@@ -316,22 +324,25 @@ export default function AutomatizacionesPage() {
   // Empty State - No automations
   if (automations.length === 0) {
     return (
-      <EmptyState
-        icon={Zap}
-        title="Sin automatizaciones"
-        description="Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales."
-        actionLabel="Crear Automatización"
-        onAction={() => setShowCreateModal(true)}
-      >
-        {showCreateModal && (
-          <CreateAutomationModal
-            onClose={() => setShowCreateModal(false)}
-            onCreated={handleCreateAutomation}
-            sections={sections}
-            devices={devices}
-          />
-        )}
-      </EmptyState>
+      <div className="space-y-6">
+        <PageHeader title="Automatizaciones" />
+        <EmptyState
+          icon={Zap}
+          title="Sin automatizaciones"
+          description="Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales."
+          actionLabel="Crear Automatización"
+          onAction={() => setShowCreateModal(true)}
+        >
+          {showCreateModal && (
+            <CreateAutomationModal
+              onClose={() => setShowCreateModal(false)}
+              onCreated={handleCreateAutomation}
+              sections={sections}
+              devices={devices}
+            />
+          )}
+        </EmptyState>
+      </div>
     );
   }
 

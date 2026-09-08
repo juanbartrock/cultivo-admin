@@ -309,12 +309,16 @@ function SeguimientosContent() {
     return `${days} días`;
   }
 
-  // Loading state
+  // Loading state. El encabezado va con la página, no después de los datos: es el que registra
+  // el título en el shell y el que pone el único <h1> del documento.
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-12 h-12 text-cultivo-green-500 animate-spin mb-4" />
-        <p className="text-zinc-400">Cargando ciclos...</p>
+      <div className="space-y-6">
+        <PageHeader title="Ciclos" />
+        <div className="flex flex-col items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-12 h-12 text-cultivo-green-500 animate-spin mb-4" />
+          <p className="text-zinc-400">Cargando ciclos...</p>
+        </div>
       </div>
     );
   }
@@ -322,17 +326,20 @@ function SeguimientosContent() {
   // Error state
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-        <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
-        <h1 className="text-2xl font-bold text-white mb-2">Error de conexión</h1>
-        <p className="text-zinc-400 mb-4 max-w-md">{error}</p>
-        <button
-          onClick={loadInitialData}
-          className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white rounded-lg"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Reintentar
-        </button>
+      <div className="space-y-6">
+        <PageHeader title="Ciclos" />
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+          <AlertCircle className="w-16 h-16 text-red-400 mb-4" />
+          <p className="text-2xl font-bold text-white mb-2">Error de conexión</p>
+          <p className="text-zinc-400 mb-4 max-w-md">{error}</p>
+          <button
+            onClick={loadInitialData}
+            className="flex items-center gap-2 px-4 py-2 bg-cultivo-green-600 hover:bg-cultivo-green-700 text-white rounded-lg"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }

@@ -248,7 +248,7 @@ export default function AdminUsersPage() {
   if (authLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-56" />
+        <PageHeader title="Usuarios" />
         {Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className="h-20 w-full" />
         ))}

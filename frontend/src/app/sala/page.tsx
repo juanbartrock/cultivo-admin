@@ -65,22 +65,33 @@ function SalaPageContent() {
     }
   }
 
+  // Los estados previos a los datos también montan `PageHeader`: es el que registra el título
+  // en el shell y el que pone el único <h1> del documento.
   if (isLoading) {
-    return <SalaLoadingState />;
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Salas" />
+        <SalaLoadingState />
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <SalaErrorState
-        message="No se pudieron cargar los datos. Verifica que el backend esté corriendo."
-        onRetry={refreshAll}
-      />
+      <div className="space-y-6">
+        <PageHeader title="Salas" />
+        <SalaErrorState
+          message="No se pudieron cargar los datos. Verifica que el backend esté corriendo."
+          onRetry={refreshAll}
+        />
+      </div>
     );
   }
 
   if (!rooms.length) {
     return (
-      <>
+      <div className="space-y-6">
+        <PageHeader title="Salas" />
         <EmptyState
           icon={Building2}
           title="Sin espacios de cultivo"
@@ -92,7 +103,7 @@ function SalaPageContent() {
           onClose={() => setIsCreateRoomOpen(false)}
           onCreated={(room) => setSelectedRoomId(room.id)}
         />
-      </>
+      </div>
     );
   }
 
