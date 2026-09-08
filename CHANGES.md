@@ -35,11 +35,19 @@ hallazgos 4, 6, 9 y 11 son de fases posteriores o de fuera del alcance del redis
   único `<h1>` del documento lo pone `PageHeader`. En móvil ese `h1` está oculto por CSS y sale
   del árbol de accesibilidad, así que cada viewport anuncia un encabezado y uno solo. Un
   chequeo que busque `header h1` en móvil ahora tiene que mirar `header [role=heading]`.
+  Con el título fuera de `<h1>`, las páginas que salteaban `PageHeader` quedaban en cero
+  encabezados: `/automatizaciones` vacía era el caso vivo en producción. Los estados de carga,
+  error y vacío de `/automatizaciones`, `/seguimientos`, `/sala` y `/admin/usuarios` montan
+  `PageHeader`, y los `<h1>` sueltos de esos estados de error pasan a `<p>`.
 
 Verificación: `npm run typecheck`, `npm run lint` y `npm run build` en exit 0 sin warnings
-nuevos (25 → 24, se va el de `DashboardSummary`); `npm run qa:nav` 17/17 sin skipped; recorrido
-navegado en 390×844 y 1440×900 contra producción. Publicado con
-`app-restart cultivo-frontend --build`.
+nuevos (25 → 24, se va el de `DashboardSummary`); `npm run qa:nav` 17/17 sin skipped;
+navegación real en 390×844 y 1440×900 contra producción con sesión de admin — `scrollWidth`
+390 y un solo `<h1>` en las siete rutas más la carpa, `tap()` en "Más" desde `/seguimientos` y
+`/admin/usuarios` sin `force`, carpa con flecha atrás y título "Carpa" a los 300 ms, tarjetas
+de Vegetativo y Secado en `—` sin `text-danger`/`text-warn`, y "Todo en rango · actualizado
+hace 0 s" forzando una respuesta de `/api/sections` sin sensores. Publicado con
+`app-restart cultivo-frontend --build` (exit 0).
 
 <!-- [agent:server-audit][date:2026-09-08][action:created] -->
 ## 2026-09-08 — Rúbrica del crítico de calidad (piloto de `critic-agent`)
