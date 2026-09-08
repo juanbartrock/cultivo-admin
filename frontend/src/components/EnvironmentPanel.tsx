@@ -28,6 +28,7 @@ import { useToast } from '@/contexts/ToastContext';
 import {
   RANGE_STAGE_LABELS,
   RangeMetric,
+  READING_TONE,
   ReadingStatus,
   metricRange,
   readingStatus,
@@ -153,8 +154,10 @@ function MetricCard({ icon: Icon, label, value, metric, decimals = 1, iconColor,
 
         <p className="text-xs text-fg-muted mb-1">{label}</p>
 
+        {/* El número usa el mismo tono que la home y /sala (READING_TONE): la misma lectura no
+            puede verse de dos colores distintos según la pantalla. */}
         {hasValue ? (
-          <p className={`font-display text-3xl font-semibold tabular-nums ${getStatusColor(status)}`}>
+          <p className={`font-display text-3xl font-semibold tabular-nums ${READING_TONE[status]}`}>
             {typeof value === 'number' ? value.toFixed(decimals) : value}
             <span className="text-lg font-normal text-fg-faint ml-1">{unit}</span>
           </p>

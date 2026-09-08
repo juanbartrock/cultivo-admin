@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { RangeStage, StageRange } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PatchStageRangeDto, UpdateStageRangeDto } from './dto/stage-range.dto';
@@ -12,42 +18,52 @@ import {
 } from './stage-range.constants';
 
 @Injectable()
-export class StageRangesService {
+export class StageRangesService implements OnModuleInit {
   private readonly logger = new Logger(StageRangesService.name);
 
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Las 7 filas en orden de etapa. Si falta alguna (base sembrada a mano, etapa nueva) la crea
-   * con los valores de siembra: `skipDuplicates` la hace idempotente y nunca pisa una existente.
+   * Siembra al arrancar las filas que falten (base sembrada a mano, etapa nueva). Va acá y no
+   * en el GET para que leer los rangos no escriba en la base; la migración ya las crea y
+   * `skipDuplicates` nunca pisa una fila existente.
    */
-  async findAll(): Promise<StageRange[]> {
-    const existing = await this.prisma.stageRange.findMany();
-
-    if (existing.length < RANGE_STAGES.length) {
+  async onModuleInit(): Promise<void> {
+    try {
+      const existing = await this.prisma.stageRange.findMany({ select: { stage: true } });
       const missing = RANGE_STAGES.filter(
         (stage) => !existing.some((row) => row.stage === stage),
       );
+      if (!missing.length) return;
+
       this.logger.warn(`Sembrando rangos faltantes: ${missing.join(', ')}`);
       await this.prisma.stageRange.createMany({
         data: missing.map((stage) => ({ stage, ...SEED_RANGE_VALUES })),
         skipDuplicates: true,
       });
-      return this.sorted(await this.prisma.stageRange.findMany());
+    } catch (error) {
+      // Que la base no responda al arrancar no puede tumbar el proceso: el GET falla solo.
+      this.logger.error(`No se pudieron sembrar los rangos: ${(error as Error).message}`);
     }
+  }
 
-    return this.sorted(existing);
+  /** Las 7 filas en orden de etapa. Sólo lee. */
+  async findAll(): Promise<StageRange[]> {
+    return this.sorted(await this.prisma.stageRange.findMany());
   }
 
   async findOne(stage: RangeStage): Promise<StageRange> {
-    const rows = await this.findAll();
-    return rows.find((row) => row.stage === stage) as StageRange;
+    const row = await this.prisma.stageRange.findUnique({ where: { stage } });
+    if (!row) {
+      throw new NotFoundException(`No hay rangos cargados para la etapa ${stage}`);
+    }
+    return row;
   }
 
   /** PUT: reemplaza los 16 valores de una etapa. */
   async update(stage: RangeStage, data: UpdateStageRangeDto): Promise<StageRange> {
     this.validate(data);
-    await this.findOne(stage); // asegura que la fila exista antes del upsert
+    await this.findOne(stage); // 404 claro si la fila no existe, en vez del P2025 de Prisma
     return this.prisma.stageRange.update({ where: { stage }, data });
   }
 

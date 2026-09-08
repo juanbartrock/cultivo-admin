@@ -1,0 +1,178 @@
+{
+  "todo_ok": {
+    "home": [
+      {
+        "texto": "24 °C",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "55 %",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "1.34 kPa",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "24 °C",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "55 %",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "1.34 kPa",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "12.4 °C",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "61 %",
+        "color": "rgb(232, 239, 234)"
+      }
+    ],
+    "sala": [
+      {
+        "texto": "24 °C",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "55 %",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "1.34 kPa",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "24 °C",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "55 %",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "1.34 kPa",
+        "color": "rgb(232, 239, 234)"
+      }
+    ],
+    "carpa": [
+      {
+        "texto": "24.0°C",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "55%",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "1.34kPa",
+        "color": "rgb(232, 239, 234)"
+      }
+    ]
+  },
+  "mixto": {
+    "home": [
+      {
+        "texto": "20 %",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "3.2 kPa",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "20 %",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "3.2 kPa",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "29 °C",
+        "color": "rgb(224, 168, 46)"
+      },
+      {
+        "texto": "29 °C",
+        "color": "rgb(224, 168, 46)"
+      },
+      {
+        "texto": "29 °C",
+        "color": "rgb(224, 168, 46)"
+      },
+      {
+        "texto": "20 %",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "3.2 kPa",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "29 °C",
+        "color": "rgb(224, 168, 46)"
+      },
+      {
+        "texto": "20 %",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "3.2 kPa",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "12.4 °C",
+        "color": "rgb(232, 239, 234)"
+      },
+      {
+        "texto": "61 %",
+        "color": "rgb(232, 239, 234)"
+      }
+    ],
+    "sala": [
+      {
+        "texto": "29 °C",
+        "color": "rgb(224, 168, 46)"
+      },
+      {
+        "texto": "20 %",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "3.2 kPa",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "29 °C",
+        "color": "rgb(224, 168, 46)"
+      },
+      {
+        "texto": "20 %",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "3.2 kPa",
+        "color": "rgb(229, 72, 77)"
+      }
+    ],
+    "carpa": [
+      {
+        "texto": "29.0°C",
+        "color": "rgb(224, 168, 46)"
+      },
+      {
+        "texto": "20%",
+        "color": "rgb(229, 72, 77)"
+      },
+      {
+        "texto": "3.20kPa",
+        "color": "rgb(229, 72, 77)"
+      }
+    ]
+  }
+}

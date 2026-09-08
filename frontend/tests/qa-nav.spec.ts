@@ -106,6 +106,7 @@ const ROUTES: Route[] = [
   { slug: '05_artefactos', title: 'artefactos', path: '/artefactos' },
   { slug: '06_notificaciones', title: 'notificaciones', path: '/notificaciones' },
   { slug: '07_admin_usuarios', title: 'admin de usuarios', path: '/admin/usuarios' },
+  { slug: '08_admin_rangos', title: 'admin de rangos', path: '/admin/rangos' },
 ];
 
 test.beforeAll(() => {

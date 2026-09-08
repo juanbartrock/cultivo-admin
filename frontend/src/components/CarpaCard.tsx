@@ -3,6 +3,16 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Section, Device, DeviceType, DeviceStatus } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { useStageRanges } from '@/features/rangos';
+import {
+  RANGE_STAGE_LABELS,
+  READING_TONE,
+  formatReading,
+  isDeviceOn,
+  readingStatus,
+  sectionReadings,
+} from '@/features/home/lib/readings';
 import { 
   Leaf, 
   Thermometer, 
@@ -41,33 +51,6 @@ function getSectionIcon(sectionName: string) {
   return { icon: Leaf, color: 'text-fg-muted' };
 }
 
-// Calcula el VPD (Vapor Pressure Deficit) en kPa
-function calculateVPD(temperature: number, humidity: number): number | null {
-  // Validar que los valores sean números válidos
-  if (typeof temperature !== 'number' || typeof humidity !== 'number' ||
-      isNaN(temperature) || isNaN(humidity) ||
-      !isFinite(temperature) || !isFinite(humidity)) {
-    return null;
-  }
-  // Presión de vapor de saturación (SVP) usando la fórmula de Tetens
-  const svp = 0.6108 * Math.exp((17.27 * temperature) / (temperature + 237.3));
-  // Presión de vapor actual (AVP)
-  const avp = (humidity / 100) * svp;
-  // VPD = SVP - AVP
-  const vpd = Math.round((svp - avp) * 100) / 100;
-  // Validar resultado
-  return isNaN(vpd) || !isFinite(vpd) ? null : vpd;
-}
-
-// Obtener el color del VPD según el rango
-function getVPDColor(vpd: number): string {
-  if (vpd < 0.4) return 'text-danger'; // Muy bajo: riesgo de moho
-  if (vpd < 0.8) return 'text-warn'; // Bajo
-  if (vpd <= 1.4) return 'text-fg'; // En rango
-  if (vpd <= 1.6) return 'text-warn'; // Alto: estrés leve
-  return 'text-danger'; // Muy alto: estrés severo
-}
-
 interface CarpaCardProps {
   section: Section & { _count?: { devices: number; plants: number } };
   delay?: number;
@@ -78,6 +61,8 @@ interface CarpaCardProps {
 }
 
 export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusLoading = false }: CarpaCardProps) {
+  // Rangos de la etapa que aplica a la carpa; sin ellos las lecturas van sin color.
+  const { rangeFor } = useStageRanges();
   // Obtener el sensor si existe
   const sensor = section.devices?.find(d => d.type === 'SENSOR');
   // Usar _count si existe, si no usar el array de devices
@@ -91,24 +76,14 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
   const luzDevice = section.devices?.find(d => d.type === 'LUZ');
   
   // Verificar si la luz está encendida (para el efecto de borde iluminado)
-  const isLuzEncendida = (() => {
-    if (!luzDevice) return false;
-    if (getDeviceStatus) {
-      const status = getDeviceStatus(luzDevice.id);
-      if (status) {
-        return status.state === 'on' || status.switch === 'on' || status.power === true;
-      }
-    }
-    return luzDevice.metadata?.state === 'on' || luzDevice.metadata?.switch === 'on' || luzDevice.metadata?.power === true;
-  })();
+  const isLuzEncendida = luzDevice
+    ? isDeviceOn(getDeviceStatus?.(luzDevice.id) ?? null, luzDevice)
+    : false;
 
-  // Obtener datos ambientales del sensor - PREFERIR estado en tiempo real
-  const sensorStatus = sensor && getDeviceStatus ? getDeviceStatus(sensor.id) : null;
-  const temperature = sensorStatus?.temperature as number | undefined ?? sensor?.metadata?.temperature as number | undefined;
-  const humidity = sensorStatus?.humidity as number | undefined ?? sensor?.metadata?.humidity as number | undefined;
-  const vpd = temperature !== undefined && humidity !== undefined 
-    ? calculateVPD(temperature, humidity) 
-    : undefined;
+  // Lecturas y estado: la misma fuente que la home y la carpa. Un sensor sin respuesta no
+  // tiene lectura viva, así que las tres métricas van en '—' sin color.
+  const readings = sectionReadings(section, (deviceId) => getDeviceStatus?.(deviceId) ?? null);
+  const range = rangeFor(section.effectiveStage);
 
   // Obtener dispositivos por tipo
   const getDeviceByType = (type: DeviceType): Device | undefined => {
@@ -120,22 +95,12 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
   const extractor = getDeviceByType('EXTRACTOR');
   const ventilador = getDeviceByType('VENTILADOR');
 
-  // Obtener el estado de un dispositivo controlable
-  const getDeviceState = (device: Device | undefined): boolean => {
-    if (!device) return false;
-    // Primero intentar estado en tiempo real
-    if (getDeviceStatus) {
-      const status = getDeviceStatus(device.id);
-      if (status) {
-        return status.state === 'on' || status.switch === 'on' || status.power === true;
-      }
-    }
-    // Fallback a metadata guardada
-    return device.metadata?.state === 'on' || device.metadata?.switch === 'on' || device.metadata?.power === true;
-  };
+  // Estado de un dispositivo controlable, con la misma regla que el resto de la app.
+  const getDeviceState = (device: Device | undefined): boolean =>
+    device ? isDeviceOn(getDeviceStatus?.(device.id) ?? null, device) : false;
 
-  // Verificar si hay datos ambientales o dispositivos para mostrar
-  const hasEnvironmentData = temperature !== undefined || humidity !== undefined;
+  // La carpa con sensor siempre muestra la fila de lecturas: sin dato va '—', nunca se esconde.
+  const hasEnvironmentData = Boolean(readings.sensor);
   const hasDeviceStatus = luz || humidificador || extractor || ventilador;
   const hasExtraInfo = hasEnvironmentData || hasDeviceStatus;
 
@@ -221,32 +186,47 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
         >
           {/* Datos ambientales */}
           {hasEnvironmentData && (
-            <div className="flex items-center justify-between gap-2">
-              {/* Temperatura */}
-              {temperature !== undefined && (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {readings.sensorOffline ? <Badge variant="offline">Sensor sin respuesta</Badge> : null}
+                <span className="text-xs text-fg-faint" title="Etapa cuyos rangos se aplican">
+                  Rangos: {RANGE_STAGE_LABELS[section.effectiveStage ?? 'DEFAULT']}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 flex-1 justify-center">
                   <Thermometer className="w-3.5 h-3.5 text-fg-faint" />
-                  <span className="text-sm font-medium tabular-nums text-fg">{temperature} °C</span>
-                </div>
-              )}
-              
-              {/* Humedad */}
-              {humidity !== undefined && (
-                <div className="flex items-center gap-1.5 flex-1 justify-center">
-                  <Droplets className="w-3.5 h-3.5 text-fg-faint" />
-                  <span className="text-sm font-medium tabular-nums text-fg">{humidity} %</span>
-                </div>
-              )}
-              
-              {/* VPD */}
-              {vpd !== undefined && vpd !== null && (
-                <div className="flex items-center gap-1.5 flex-1 justify-center">
-                  <Activity className={`w-3.5 h-3.5 ${getVPDColor(vpd)}`} />
-                  <span className={`text-sm font-medium tabular-nums ${getVPDColor(vpd)}`}>
-                    {vpd} kPa
+                  <span
+                    className={`text-sm font-medium tabular-nums ${
+                      READING_TONE[readingStatus('temperature', readings.temperature, range)]
+                    }`}
+                  >
+                    {formatReading(readings.temperature, ' °C')}
                   </span>
                 </div>
-              )}
+
+                <div className="flex items-center gap-1.5 flex-1 justify-center">
+                  <Droplets className="w-3.5 h-3.5 text-fg-faint" />
+                  <span
+                    className={`text-sm font-medium tabular-nums ${
+                      READING_TONE[readingStatus('humidity', readings.humidity, range)]
+                    }`}
+                  >
+                    {formatReading(readings.humidity, ' %', 0)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-1 justify-center">
+                  <Activity className="w-3.5 h-3.5 text-fg-faint" />
+                  <span
+                    className={`text-sm font-medium tabular-nums ${
+                      READING_TONE[readingStatus('vpd', readings.vpd, range)]
+                    }`}
+                  >
+                    {formatReading(readings.vpd, ' kPa', 2)}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 

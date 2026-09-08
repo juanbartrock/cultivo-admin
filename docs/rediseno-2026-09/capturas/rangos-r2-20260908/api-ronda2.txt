@@ -1,0 +1,30 @@
+### H5 · PATCH con string numérico (esperado 400)
+{"message":["tempIdealMin tiene que ser un número, llegó string"],"error":"Bad Request","statusCode":400}
+HTTP 400
+### PUT con todos los valores como string (esperado 400)
+HTTP 400
+### PATCH con texto (esperado 400)
+HTTP 400
+### PATCH con campo extra (esperado 400)
+{"message":["property stage should not exist"],"error":"Bad Request","statusCode":400}
+HTTP 400
+### PUT min>max (esperado 400) y GET admin (200)
+min>max: HTTP 400
+GET admin: HTTP 200
+### sin token
+GET: HTTP 404
+PUT: HTTP 401
+PATCH: HTTP 401
+### updated_at de las 7 filas (una sola marca = ninguna escritura nueva)
+  DEFAULT 2026-09-08T13:47:36.006Z
+  GERMINACION 2026-09-08T13:05:20.493Z
+  VEGETATIVO 2026-09-08T13:05:20.493Z
+  PRE_FLORA 2026-09-08T13:05:20.493Z
+  FLORACION 2026-09-08T13:05:20.493Z
+  SECADO 2026-09-08T13:05:20.493Z
+  CURADO 2026-09-08T13:05:20.493Z
+### GET /api/stage-ranges (colección) sin token
+HTTP 401
+### estado de los sensores
+  Vegetativo vege-temp-hum ac4df493-f610-4106-81f2-020bd3cac85a
+  Secado Termohigometro Indoor c04963d5-c091-426f-9618-4e61ac8c015a

@@ -1,6 +1,59 @@
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
+## 2026-09-08 — Ronda 2 del crítico sobre los rangos por etapa (rama `redisenio-2026-09`)
+
+Correcciones sobre `docs/critica/2026-09-08-1027/informe.md` (REPROBADO 7.41, una falla dura).
+
+- **#1 · falla dura: `/sala` coloreaba el VPD con umbrales propios y pintaba `metadata` con el
+  sensor caído.** `CarpaCard` perdió su `calculateVPD` y su `getVPDColor` (0.4/0.8/1.4/1.6) y
+  ahora usa `sectionReadings` + `readingStatus(metric, value, range)` con
+  `rangeFor(section.effectiveStage)`, igual que la home y la carpa; el estado de los
+  controlables sale de `isDeviceOn`. Con `online === false` las tres métricas van en `—` con el
+  badge "Sensor sin respuesta". Para que eso fuera posible, `GET /rooms/:id/sections` —de donde
+  sale `/sala`— devuelve ahora `devices`, `plants` y `effectiveStage`, lo mismo que
+  `GET /sections`: antes no traía dispositivos, así que la fila de lecturas no se dibujaba nunca.
+  La tarjeta también dice qué etapa aplica ("Rangos: Curado").
+  `grep -rnE '(temp|hum|vpd)[A-Za-z]*\s*(<|>|<=|>=)\s*[0-9]' frontend/src` sale vacío.
+- **#2 · en móvil Guardar y Cancelar quedaban fuera del viewport.** El diálogo pasa a
+  `flex max-h-[85dvh] flex-col`: encabezado fijo, cuerpo con scroll propio y `DialogFooter`
+  pegado abajo. A 390×844 Cancelar queda en `top 732 / bottom 768` y Guardar en `688 / 724`.
+- **#3 · el error "Número inválido" se calculaba y no se mostraba.** Va debajo del input, con
+  `role="alert"` y `aria-describedby`. Con texto o campo vacío el mensaje aparece y Guardar
+  sigue deshabilitado.
+- **#4 · documentación y cobertura.** `CLAUDE.md` nombra las tres pantallas que consumen
+  `readingStatus` y el grep que verifica que no vuelvan los umbrales al frontend;
+  `qa-nav.spec.ts` suma `08_admin_rangos`, así que la suite pasa de 17 a 19 casos.
+- **#5 · la API aceptaba `{"tempIdealMin":"18"}`.** El `ValidationPipe` global corre con
+  `enableImplicitConversion`, y un pipe de parámetro no alcanza porque corre después de la
+  conversión. `NumericBodyInterceptor` (los interceptores corren antes que los pipes) mira el
+  body crudo y rechaza con 400 cualquier clave del DTO que no venga como número.
+- **#6 · el GET sembraba filas y cada PUT leía las 7.** La siembra de filas faltantes pasó a
+  `onModuleInit` (con su error atrapado para no tumbar el arranque), `findAll` sólo lee y
+  `findOne` usa `findUnique`, con 404 si la etapa no está cargada.
+- **#7 · las 7 etapas con los mismos valores: sin tocar.** Es una decisión de datos de Juan
+  sobre producción, no de código; la pantalla `/admin/rangos` está para eso.
+- **#8 · restos de fases 2-4 y botón flotante del asistente: sin tocar.** Blur en la carpa,
+  emojis en `/notificaciones` y la posición del botón del asistente pertenecen a las fases 2-4
+  del rediseño, fuera del alcance de esta tarea.
+
+**Verificado.** typecheck y lint del frontend en exit 0 (24 warnings de línea base); `npm run
+build` de frontend y backend en exit 0; `qa:nav` 19/19. Navegación real 1440×900 y 390×844 con
+cero errores de consola y cero escrituras: `/sala` muestra "Sensor sin respuesta · Rangos:
+Curado · — — —" igual que la home, el pie del diálogo dentro del viewport, "Número inválido"
+visible y Cancelar sin guardar. Con lecturas inyectadas en el navegador (sin tocar la base),
+home, `/sala` y la carpa pintan los mismos colores: 24 °C / 55 % / 1.34 kPa neutro, y
+29 °C `warn` con 20 % y 3.2 kPa `danger`. Por API: `GET` sin token 401, `PUT`/`PATCH` sin token
+401, `PATCH {"tempIdealMin":"18"}` 400, `PUT` con strings 400, campo extra 400, min>max 400,
+`GET` con admin 200. Publicado con `app-restart` (backend y frontend, exit 0). Capturas y
+salidas en `docs/rediseno-2026-09/capturas/rangos-r2-20260908/`.
+
+**Escritura declarada en producción:** una prueba mía de `PATCH /stage-ranges/DEFAULT` con
+`{"tempIdealMin":"18"}` —que esperaba 400— devolvió 200 antes de agregar el interceptor y dejó
+`updated_at` de la fila `DEFAULT` en 13:47:36Z. Los 16 valores quedaron idénticos (18 ya era el
+valor guardado). El crítico declaró una escritura equivalente en su ronda.
+
+<!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
 ## 2026-09-08 — Hallazgo 2 del crítico: rangos de sensores por etapa en la base (rama `redisenio-2026-09`)
 
 Decisión de Juan del 2026-09-08 sobre `docs/critica/2026-09-08-0929/informe.md`: los rangos

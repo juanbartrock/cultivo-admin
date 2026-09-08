@@ -94,12 +94,18 @@ export class LocationsService {
     });
   }
 
+  /**
+   * Carpas de una sala. Devuelve lo mismo que `findAllSections` (dispositivos, plantas y
+   * `effectiveStage`) para que /sala pinte las lecturas con la misma fuente que la home.
+   */
   async getRoomSections(roomId: string, userId?: string) {
     await this.findRoomById(roomId, userId);
 
-    return this.prisma.section.findMany({
+    const sections = await this.prisma.section.findMany({
       where: { roomId },
       include: {
+        devices: true,
+        plants: true,
         _count: {
           select: {
             devices: true,
@@ -109,6 +115,11 @@ export class LocationsService {
       },
       orderBy: { createdAt: 'asc' },
     });
+
+    return sections.map((section) => ({
+      ...section,
+      effectiveStage: effectiveStage(section.plants),
+    }));
   }
 
   // ============================================

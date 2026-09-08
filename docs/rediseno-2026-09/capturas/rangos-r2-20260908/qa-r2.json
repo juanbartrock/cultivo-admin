@@ -1,0 +1,136 @@
+{
+  "desktop": {
+    "steps": {
+      "salaTarjetas": [
+        {
+          "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+          "texto": "Vegetativo100x100x2002 dispositivosVer detalleSensor sin respuestaRangos: Por defecto———"
+        },
+        {
+          "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+          "texto": "2 plantasSecado80x80x160Para secado y clones.1 dispositivoVer detalleSensor sin respuestaRangos: Curado———"
+        },
+        {
+          "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+          "texto": "4 plantasFloración120x120x2002 dispositivosVer detalle"
+        },
+        {
+          "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+          "texto": "Germinadora0 dispositivosVer detalle"
+        }
+      ],
+      "salaOffline": 2,
+      "salaScrollWidth": 1440,
+      "homeSecado": [
+        "Secado · Termohigometro IndoorSensor sin respuesta",
+        "SecadoSala de CultivoSensor sin respuestaTemp.—Humedad—VPD—2Rangos: Curado"
+      ],
+      "footerCancelar": {
+        "top": 713,
+        "bottom": 749,
+        "innerHeight": 900,
+        "inside": true
+      },
+      "footerGuardar": {
+        "top": 713,
+        "bottom": 749,
+        "innerHeight": 900,
+        "inside": true
+      },
+      "caseTexto": {
+        "alerts": [
+          "Número inválido"
+        ],
+        "saveEnabled": false
+      },
+      "caseVacio": {
+        "alerts": [
+          "Número inválido"
+        ],
+        "saveEnabled": false
+      },
+      "caseMinMayorMax": {
+        "alerts": [
+          "El mínimo ideal tiene que ser menor que el máximo"
+        ],
+        "saveEnabled": false
+      },
+      "footerTrasErrores": {
+        "top": 725,
+        "bottom": 761,
+        "innerHeight": 900,
+        "inside": true
+      },
+      "dialogoCerrado": true,
+      "escrituras": []
+    },
+    "errors": []
+  },
+  "movil": {
+    "steps": {
+      "salaTarjetas": [
+        {
+          "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+          "texto": "Vegetativo100x100x2002 dispositivosVer detalleSensor sin respuestaRangos: Por defecto———"
+        },
+        {
+          "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+          "texto": "2 plantasSecado80x80x160Para secado y clones.1 dispositivoVer detalleSensor sin respuestaRangos: Curado———"
+        },
+        {
+          "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+          "texto": "4 plantasFloración120x120x2002 dispositivosVer detalle"
+        },
+        {
+          "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+          "texto": "Germinadora0 dispositivosVer detalle"
+        }
+      ],
+      "salaOffline": 2,
+      "salaScrollWidth": 390,
+      "homeSecado": [
+        "Secado · Termohigometro IndoorSensor sin respuesta",
+        "SecadoSala de CultivoSensor sin respuestaTemp.—Humedad—VPD—2Rangos: Curado"
+      ],
+      "footerCancelar": {
+        "top": 732,
+        "bottom": 768,
+        "innerHeight": 844,
+        "inside": true
+      },
+      "footerGuardar": {
+        "top": 688,
+        "bottom": 724,
+        "innerHeight": 844,
+        "inside": true
+      },
+      "caseTexto": {
+        "alerts": [
+          "Número inválido"
+        ],
+        "saveEnabled": false
+      },
+      "caseVacio": {
+        "alerts": [
+          "Número inválido"
+        ],
+        "saveEnabled": false
+      },
+      "caseMinMayorMax": {
+        "alerts": [
+          "El mínimo ideal tiene que ser menor que el máximo"
+        ],
+        "saveEnabled": false
+      },
+      "footerTrasErrores": {
+        "top": 688,
+        "bottom": 724,
+        "innerHeight": 844,
+        "inside": true
+      },
+      "dialogoCerrado": true,
+      "escrituras": []
+    },
+    "errors": []
+  }
+}

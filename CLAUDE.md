@@ -98,6 +98,9 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
   temperatura, humedad, VPD y CO₂. Dentro del ideal la lectura es `ok`, entre el ideal y el
   amplio `warn`, fuera `danger`. **No hay rangos escritos en el frontend**: mientras
   `GET /api/stage-ranges` no responde, el estado es `unknown` y la lectura va sin color.
+  El chequeo de que sigue siendo cierto es
+  `grep -rnE '(temp|hum|vpd)[A-Za-z]*\s*(<|>|<=|>=)\s*[0-9]' frontend/src`, que tiene que
+  salir vacío.
   - Se editan en **`/admin/rangos`** (ítem "Rangos" del menú de admin; en móvil, dentro del
     sheet "Más"). `PUT`/`PATCH /api/stage-ranges/:stage` exigen rol `ADMIN`; el `GET` lo puede
     leer cualquier usuario autenticado. El backend valida min < max y que el rango amplio
@@ -105,9 +108,13 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
   - Código: `backend/src/modules/stage-ranges/` (servicio, controller, constantes y seed) y
     `frontend/src/features/rangos/` (hook `useStageRanges`, pantalla y diálogo). El estado de
     una lectura lo calcula `readingStatus(metric, value, range)` en
-    `frontend/src/features/home/lib/readings.ts`.
+    `frontend/src/features/home/lib/readings.ts`, y lo consumen las tres pantallas que pintan
+    lecturas: home (`CarpaStatusCard`), `/sala` (`CarpaCard`) y la carpa (`EnvironmentPanel`).
+  - Los rangos se escriben con números: el `ValidationPipe` global tiene
+    `enableImplicitConversion`, así que `PUT`/`PATCH` pasan por `NumericBodyInterceptor`, que
+    mira el body crudo y rechaza `{"tempIdealMin":"18"}` con 400.
   - **Qué etapa aplica a una carpa**: la calcula el backend y viaja como `effectiveStage` en
-    `GET /sections`, `GET /sections/:id` y el dashboard de la carpa. Es la etapa más frecuente
+    `GET /sections`, `GET /sections/:id`, `GET /rooms/:id/sections` y el dashboard de la carpa. Es la etapa más frecuente
     entre las plantas asignadas a la carpa; ante empate gana la más avanzada
     (`GERMINACION → VEGETATIVO → PRE_FLORA → FLORACION → SECADO → CURADO`) y sin plantas es
     `DEFAULT`. El frontend no la recalcula.

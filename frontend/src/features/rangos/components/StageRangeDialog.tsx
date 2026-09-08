@@ -96,8 +96,14 @@ function MetricFields({
               value={draft[key]}
               onChange={(event) => onChange(key, event.target.value)}
               aria-invalid={Boolean(errors[key]) || undefined}
+              aria-describedby={errors[key] ? `${key}-error` : undefined}
               className={errors[key] ? 'border-danger' : undefined}
             />
+            {errors[key] ? (
+              <p id={`${key}-error`} role="alert" className="text-xs text-danger">
+                {errors[key]}
+              </p>
+            ) : null}
           </div>
         ))}
       </div>
@@ -126,12 +132,14 @@ export function StageRangeDialog({ range, open, onOpenChange, onSave, saving }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
+      {/* Alto acotado y cuerpo con scroll propio: en móvil Guardar y Cancelar quedan siempre
+          a la vista, sin tener que recorrer los 16 campos. */}
+      <DialogContent className="flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b border-edge px-4 py-3 text-left sm:px-6">
           <DialogTitle>Rangos · {RANGE_STAGE_LABELS[range.stage]}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
           {METRIC_FIELDS.map((metric) => (
             <MetricFields
               key={metric.key}
@@ -143,7 +151,7 @@ export function StageRangeDialog({ range, open, onOpenChange, onSave, saving }: 
           ))}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0 gap-2 border-t border-edge bg-surface-3 px-4 py-3 sm:px-6">
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
           </Button>

@@ -7,12 +7,14 @@ import {
   Patch,
   Put,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RangeStage, UserRole } from '@prisma/client';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { PatchStageRangeDto, UpdateStageRangeDto } from './dto/stage-range.dto';
+import { NumericBodyInterceptor } from './numeric-body.interceptor';
 import { StageRangesService } from './stage-ranges.service';
 
 @ApiTags('stage-ranges')
@@ -30,6 +32,7 @@ export class StageRangesController {
 
   @Put(':stage')
   @UseGuards(RolesGuard)
+  @UseInterceptors(NumericBodyInterceptor)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Reemplazar los rangos de una etapa (solo admin)' })
   @ApiParam({ name: 'stage', enum: RangeStage })
@@ -45,6 +48,7 @@ export class StageRangesController {
 
   @Patch(':stage')
   @UseGuards(RolesGuard)
+  @UseInterceptors(NumericBodyInterceptor)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Actualizar algunos rangos de una etapa (solo admin)' })
   @ApiParam({ name: 'stage', enum: RangeStage })
