@@ -1,0 +1,62 @@
+### sin token
+GET /stage-ranges: 401
+GET /sections: 401
+GET /rooms: 401
+GET /users: 401
+GET /auth/me: 401
+PUT /stage-ranges/DEFAULT: 401
+PATCH /stage-ranges/DEFAULT: 401
+### con token admin
+GET /stage-ranges: 200
+   DEFAULT temp 18-28 / 15-30 hum undefined-undefined / undefined-undefined vpd 0.8-1.4 / 0.4-1.6 co2 400-1500 / 300-2000 updated 2026-09-08T13:47:36.006Z
+   GERMINACION temp 18-28 / 15-30 hum undefined-undefined / undefined-undefined vpd 0.8-1.4 / 0.4-1.6 co2 400-1500 / 300-2000 updated 2026-09-08T13:05:20.493Z
+   VEGETATIVO temp 18-28 / 15-30 hum undefined-undefined / undefined-undefined vpd 0.8-1.4 / 0.4-1.6 co2 400-1500 / 300-2000 updated 2026-09-08T13:05:20.493Z
+   PRE_FLORA temp 18-28 / 15-30 hum undefined-undefined / undefined-undefined vpd 0.8-1.4 / 0.4-1.6 co2 400-1500 / 300-2000 updated 2026-09-08T13:05:20.493Z
+   FLORACION temp 18-28 / 15-30 hum undefined-undefined / undefined-undefined vpd 0.8-1.4 / 0.4-1.6 co2 400-1500 / 300-2000 updated 2026-09-08T13:05:20.493Z
+   SECADO temp 18-28 / 15-30 hum undefined-undefined / undefined-undefined vpd 0.8-1.4 / 0.4-1.6 co2 400-1500 / 300-2000 updated 2026-09-08T13:05:20.493Z
+   CURADO temp 18-28 / 15-30 hum undefined-undefined / undefined-undefined vpd 0.8-1.4 / 0.4-1.6 co2 400-1500 / 300-2000 updated 2026-09-08T13:05:20.493Z
+### PATCH DEFAULT {"tempIdealMin":"99"} (string; esperado 400 del interceptor, sin escritura posible: 99>max)
+{"message":["tempIdealMin tiene que ser un número, llegó string"],"error":"Bad Request","statusCode":400}
+HTTP 400
+### PATCH DEFAULT {"tempIdealMin":99} (número, min>max; esperado 400 del servicio)
+{"message":"El mínimo ideal de temperatura (99) tiene que ser menor que el máximo (28)","error":"Bad Request","statusCode":400}
+HTTP 400
+### PATCH DEFAULT {"tempWideMin":20} (amplio no contiene ideal 18; esperado 400)
+{"message":"El rango amplio de temperatura (20-30) tiene que contener al ideal (18-28)","error":"Bad Request","statusCode":400}
+HTTP 400
+### PATCH DEFAULT campo extra (esperado 400)
+{"message":["property stage should not exist"],"error":"Bad Request","statusCode":400}
+HTTP 400
+### PATCH DEFAULT {"tempIdealMin":null} (esperado 400)
+{"message":["tempIdealMin tiene que ser un número, llegó object"],"error":"Bad Request","statusCode":400}
+HTTP 400
+### PATCH DEFAULT {"tempIdealMin":true} (esperado 400)
+{"message":["tempIdealMin tiene que ser un número, llegó boolean"],"error":"Bad Request","statusCode":400}
+HTTP 400
+### PATCH DEFAULT {} (body vacío; ¿escribe? esperado 400 o no-op)
+{"id":"37df44eb-983f-4abd-ad5f-5140374587dc","stage":"DEFAULT","tempIdealMin":18,"tempIdealMax":28,"tempWideMin":15,"tempWideMax":30,"humidityIdealMin":40,"humidityIdealMax":65,"humidityWideMin":30,"humidityWideMax":75,"vpdIdealMin":0.8,"vpdIdealMax":1.4,"vpdWideMin":0.4,"vpdWideMax":1.6,"co2IdealMin":400,"co2IdealMax":1500,"co2WideMin":300,"co2WideMax":2000,"createdAt":"2026-09-08T13:05:20.493Z","updatedAt":"2026-09-08T13:47:36.006Z"}
+HTTP 200
+
+### PUT NOEXISTE (esperado 400)
+{"message":["tempIdealMin tiene que ser un número, llegó string"],"error":"Bad Request","statusCode":400}
+HTTP 400
+
+### PATCH DEFAULT array body
+{"message":["property 0 should not exist"],"error":"Bad Request","statusCode":400}
+HTTP 400
+
+### GET /stage-ranges updated_at después de las pruebas
+   DEFAULT 2026-09-08T13:47:36.006Z
+   GERMINACION 2026-09-08T13:05:20.493Z
+   VEGETATIVO 2026-09-08T13:05:20.493Z
+   PRE_FLORA 2026-09-08T13:05:20.493Z
+   FLORACION 2026-09-08T13:05:20.493Z
+   SECADO 2026-09-08T13:05:20.493Z
+   CURADO 2026-09-08T13:05:20.493Z
+### GET /rooms
+HTTP 200
+   225305da-c624-43ff-916f-b68049aa2cd1 Sala de Cultivo
+   16fab41e-a1fd-4cc0-be2d-1858e0720133 Terraza
+### GET /users (roles)
+   jpautasso@gmail.com USER
+   admin ADMIN

@@ -38,3 +38,7 @@ GEMINI.md
 test-results/
 playwright-report/
 blob-report/
+
+# Transcripts crudos del crítico (3-4 MB por corrida, sin valor documental)
+docs/critica/**/runner.json
+docs/critica/**/runner.stderr

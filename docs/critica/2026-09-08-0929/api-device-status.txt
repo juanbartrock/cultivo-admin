@@ -1,0 +1,23 @@
+cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a -> {"device":{"id":"cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a","name":"vege-led-150","connector":"TUYA","externalId":"eb2ec61130a11f5b19lbic","type":"LUZ","sectionId":"f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","metadata":null,"createdAt":"2025-12-07T15:01:08.578Z","updatedAt":"2025-12-13T20:26:35.269Z","control
+
+ac4df493-f610-4106-81f2-020bd3cac85a -> {"device":{"id":"ac4df493-f610-4106-81f2-020bd3cac85a","name":"vege-temp-hum","connector":"TUYA","externalId":"eb3f0dab13d64a1ba21l9z","type":"SENSOR","sectionId":"f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","metadata":null,"createdAt":"2025-12-10T21:13:56.786Z","updatedAt":"2025-12-13T20:26:35.269Z","con
+
+c04963d5-c091-426f-9618-4e61ac8c015a -> {"device":{"id":"c04963d5-c091-426f-9618-4e61ac8c015a","name":"Termohigometro Indoor","connector":"SONOFF","externalId":"10018e3624","type":"SENSOR","sectionId":"ba2f7493-8f0b-45f1-99b6-5427d014de75","metadata":null,"createdAt":"2025-12-07T14:59:33.581Z","updatedAt":"2026-02-01T16:52:19.047Z","contr
+
+932fa966-5a4c-4a56-bca4-3d6dcbd2ea51 -> {"device":{"id":"932fa966-5a4c-4a56-bca4-3d6dcbd2ea51","name":"Tapo Camara","connector":"TAPO","externalId":"tapo-camera-192-168-68-64","type":"CAMARA","sectionId":"766abd7c-9ab5-40d7-9f60-e62ff942f6b1","metadata":null,"createdAt":"2025-12-07T15:01:00.461Z","updatedAt":"2025-12-13T20:26:35.269Z","co
+
+402d593c-953b-493a-8c0a-b1d6c3f73887 -> {"device":{"id":"402d593c-953b-493a-8c0a-b1d6c3f73887","name":"flora-humidificador","connector":"VIRTUAL","externalId":"virtual-1765935760353","type":"HUMIDIFICADOR","sectionId":"766abd7c-9ab5-40d7-9f60-e62ff942f6b1","metadata":null,"createdAt":"2025-12-17T01:42:41.482Z","updatedAt":"2025-12-17T01:4
+
+9f253b4a-956f-46f3-b62a-0daff1a32e21 -> {"device":{"id":"9f253b4a-956f-46f3-b62a-0daff1a32e21","name":"Operación Tanque Riego","connector":"TUYA","externalId":"eba52df33cd2bca09dxbbw","type":"BOMBA_RIEGO","sectionId":"a0ac06b9-a995-4d8a-b1e0-9b222db01635","metadata":null,"createdAt":"2026-01-03T17:37:34.780Z","updatedAt":"2026-01-03T17:3
+
+8b43633a-a49f-4634-823d-f49ff1492b3f -> {"device":{"id":"8b43633a-a49f-4634-823d-f49ff1492b3f","name":"Switch Tanque Riego","connector":"TUYA","externalId":"ebde769cb6f3c8c2f9ikmn","type":"BOMBA_RIEGO","sectionId":"a0ac06b9-a995-4d8a-b1e0-9b222db01635","metadata":null,"createdAt":"2026-01-03T17:37:53.029Z","updatedAt":"2026-01-03T17:37:53
+
+STATUS cecc8d14 sin status en 300 chars
+STATUS ac4df493 sin status en 300 chars
+STATUS c04963d5 sin status en 300 chars
+STATUS 932fa966 sin status en 300 chars
+STATUS 402d593c sin status en 300 chars
+STATUS 9f253b4a sin status en 300 chars
+STATUS 8b43633a sin status en 300 chars
+vege-temp-hum {"online": false}
+Termohigometro Indoor {"online": false, "state": "off", "switch": "off", "temperature": 18.1, "humidity": 80.2}

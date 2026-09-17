@@ -1,0 +1,91 @@
+{
+  "desktop": {
+    "collapsedWidth": 64,
+    "ls": "true",
+    "afterReloadWidth": 64,
+    "expandedWidth": 240,
+    "userMenu": [
+      "Usuarios",
+      "Cerrar sesión"
+    ],
+    "homeAlertsHeading": [
+      "ALERTAS actualizado hace 0 s",
+      "CARPAS",
+      "CICLOS ACTIVOS",
+      "DISPOSITIVOS CON PROBLEMA",
+      "CLIMA EXTERIOR"
+    ],
+    "secado": {
+      "text": "Salas Sala de Cultivo Secado Secado 80x80x160 Layout Activa Actualizar Para secado y clones. 1 dispositivo 1 planta 1 sensor Plantas por etapa: SECADO: 1 Ambiente Termohigometro Indoor Historial ON Bajo Temperatura 18.1°C Óptimo: 20-28 °C Alto Humedad 80% Óptimo: 40-70 % CO₂ -- Bajo VPD 0.41kPa Óptimo: 0.8-1.2 kPa Control del Sensor Salida inactiva • SONOFF OFF Historial de Sensores Plantas 1",
+      "readings": [
+        "18.1°C [text-3xl.font-bold.text-blue-400]",
+        "80% [text-3xl.font-bold.text-orange-400]",
+        "0.41kPa [text-3xl.font-bold.text-blue-400]"
+      ]
+    },
+    "automatizaciones10s": {
+      "h1": [
+        "Automatizaciones"
+      ],
+      "text": "Automatizaciones Sin automatizaciones Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales. Crear Automatización"
+    },
+    "logout": {
+      "ok": true,
+      "url": "https://cultivo.ramsesvii.com/login"
+    },
+    "tokenAfterLogout": [],
+    "errors": [
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/ac4df493-f610-4106-81f2-020bd3cac85a/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/c04963d5-c091-426f-9618-4e61ac8c015a/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/932fa966-5a4c-4a56-bca4-3d6dcbd2ea51/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/9f253b4a-956f-46f3-b62a-0daff1a32e21/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/8b43633a-a49f-4634-823d-f49ff1492b3f/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/402d593c-953b-493a-8c0a-b1d6c3f73887/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  "movil": {
+    "secado": {
+      "sw": 390,
+      "text": "Layout Activa Actualizar Secado 80x80x160 Para secado y clones. 1 dispositivo 1 planta 1 sensor Plantas por etapa: SECADO: 1 Ambiente Termohigometro Indoor Historial ON Bajo Temperatura 18.1°C Óptimo: 20-28 °C Alto Humedad 80% Óptimo: 40-70 % CO₂ -- Bajo VPD 0.41kPa Óptimo: 0.8-1.2 kPa Control del Sensor Salida inactiva • SONOFF OFF Historial de Sensores Plantas 1"
+    },
+    "seguimientos": {
+      "selects": 0,
+      "combos": 1,
+      "buttons": []
+    },
+    "artefactosSearch": [
+      {
+        "ph": "Buscar dispositivo...",
+        "w": 10
+      }
+    ],
+    "logout": {
+      "ok": true,
+      "url": "https://cultivo.ramsesvii.com/login"
+    },
+    "errors": [
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/ac4df493-f610-4106-81f2-020bd3cac85a/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/402d593c-953b-493a-8c0a-b1d6c3f73887/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/c04963d5-c091-426f-9618-4e61ac8c015a/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/932fa966-5a4c-4a56-bca4-3d6dcbd2ea51/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/8b43633a-a49f-4634-823d-f49ff1492b3f/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()",
+      "HTTP 401: https://cultivo.ramsesvii.com/api/devices/9f253b4a-956f-46f3-b62a-0daff1a32e21/status",
+      "console.error: Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  }
+}

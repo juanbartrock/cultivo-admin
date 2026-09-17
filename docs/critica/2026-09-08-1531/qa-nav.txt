@@ -1,0 +1,49 @@
+
+> cultivo-frontend@1.0.0 qa:nav
+> playwright test -c playwright.qa.config.ts
+
+
+Running 19 tests using 2 workers
+
+(node:2580180) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2580180) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [setup] › tests/qa-nav.setup.ts:10:6 › login por formulario (1.6s)
+(node:2580312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2580311) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2580311) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2580312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: artefactos (4.3s)
+  ✓   3 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: home (4.7s)
+  ✓   4 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: notificaciones (2.5s)
+  ✓   6 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: admin de usuarios (2.2s)
+  ✓   5 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: sala (6.9s)
+  ✓   7 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: admin de rangos (2.7s)
+(node:2580761) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2580761) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   9 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: home (4.6s)
+  ✓   8 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: primera carpa (8.9s)
+  ✓  11 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: ciclos (2.1s)
+  ✓  10 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: sala (5.4s)
+  ✓  12 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: automatizaciones (2.0s)
+(node:2581029) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2581029) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  14 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: artefactos (3.5s)
+  ✓  13 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: primera carpa (8.6s)
+  ✓  15 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: notificaciones (3.6s)
+  ✓  16 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: ciclos (2.4s)
+  ✓  17 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: admin de usuarios (2.0s)
+  ✓  18 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: automatizaciones (3.1s)
+  ✓  19 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: admin de rangos (2.6s)
+
+  19 passed (42.6s)
+qa:nav exit 0

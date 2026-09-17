@@ -1,6 +1,157 @@
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
+<!-- [agent:server-audit][date:2026-09-16][action:created] -->
+## 2026-09-16 — Checks de la compuerta en la rúbrica y commit de los informes del crítico
+
+`docs/rubrica-critico.md` suma la sección `## Checks de la compuerta` (typecheck y lint del
+frontend, tsc y jest del backend): los corre `critic-gate`, la capa 1 del crítico que
+`delegate-agent --critic N` ejecuta antes de cada corrida de Fable, en el árbol actual y en el
+commit base del loop. La política de checks preexistentes está en la rúbrica global de
+server-audit (falla dura 3). Se commitean además la rúbrica, los informes y evidencia de
+`docs/critica/` y las capturas del kill switch, que estaban solo en disco; los `runner.json`
+(transcripts crudos) quedan ignorados. Cambio documental, sin build ni reinicio.
+
+## 2026-09-08 — Ronda 2 del crítico sobre el kill switch de lecturas (rama `redisenio-2026-09`)
+
+Correcciones sobre `docs/critica/2026-09-08-1508/informe.md` (REPROBADO 7.77, cero fallas duras).
+Los siete hallazgos quedaron resueltos.
+
+- **#1 · alta: un actuador pausado quedaba incontrolable y decía "Apagado".** El botón de
+  `DeviceControlCard` estaba deshabilitado por `!isOnline` y el label salía de un `isOn` derivado
+  de un status que nadie consultó. Pausar las lecturas corta la consulta al conector; el comando
+  de control es otra operación. Con `readingsPaused` la tarjeta muestra "Estado desconocido" y dos
+  botones explícitos, Encender y Apagar, que llaman a `control(action)` sin adivinar el estado.
+  `EnvironmentPanel` ya no mostraba estado inventado: su bloque de control depende de
+  `currentState !== undefined`, que con la pausa es `undefined`, así que el bloque no se dibuja.
+- **#2 · media: la home decía "Todo en rango" sin una sola lectura.** `useHomeDashboard` expone
+  `readingsPaused` (hay carpas con sensor y todas están pausadas) y `AlertsBlock` muestra
+  "Lecturas desactivadas" con token `offline`, sin el ícono ok. El meta "actualizado hace X"
+  también se calla en ese estado.
+- **#3 · media: `PUT /devices/:id` aceptaba `readingsEnabled` como string.** `BooleanBodyInterceptor`
+  pasó a `backend/src/common/interceptors/` como fábrica parametrizada
+  (`BooleanBodyInterceptor('readingsEnabled', 'recordHistory')`) y corre en `POST /devices`,
+  `PUT /devices/:id` y `PUT /readings-settings`.
+- **#4 · media: un VIRTUAL con controlador pausado seguía saliendo a la red.** `getDeviceStatus`
+  lee el interruptor general una vez y evalúa `isDeviceReadable` sobre el controlador antes de
+  llamar al gateway. El gate del frontend hace lo mismo: `isReadingPaused` recibe un `findDevice`
+  que resuelve `controlledByDeviceId` contra la lista de la pantalla, porque las secciones traen
+  el id del controlador sin la fila entera.
+- **#5 · media: la fila del sensor apretada a 390.** El header de `EnvironmentPanel` apila en
+  móvil (nombre en su línea, badges y switches abajo con `flex-wrap`) y vuelve a una sola fila en
+  `sm` con `sm:contents`. El nombre va con `truncate` y los badges con `whitespace-nowrap`.
+- **#6 · baja: el GET del interruptor creaba la fila.** `get()` devuelve el default en memoria
+  cuando la fila falta. La siembra queda en la migración y en `onModuleInit`. Se borró `canRead()`,
+  que quedó sin usos.
+- **#7 · baja: con la query de settings en vuelo se pedía status de pausados.** `useDevicesStatus`
+  y `useDeviceStatus` no consultan mientras `useReadingsSettings` está en `isLoading`.
+
+### Verificación
+
+- typecheck frontend y backend exit 0; lint frontend con 0 errores (warnings de línea base).
+- `app-restart cultivo-backend --build` y `app-restart cultivo-frontend --build` exit 0.
+- `npx jest` en backend: 5 suites en verde, 18 tests. `grow.service.spec.ts` sigue con sus 2
+  fallas, preexistentes y ajenas a esta tarea (confirmado en la ronda 1 corriéndolo con los
+  cambios stasheados).
+- **#3 por API**: `PUT /api/devices/<luz>` con `{"readingsEnabled":"false"}` → 400
+  (`readingsEnabled tiene que ser booleano, llegó string`); con `{"recordHistory":"true"}` → 400;
+  con `{"readingsEnabled":false}` → 200 y el valor sigue en `false` (escritura idempotente, sin
+  cambiar el estado de producción).
+- **#4 por test ejecutado**: `backend/src/modules/devices/readings-gate.spec.ts`, 5/5. Cubre el
+  VIRTUAL con controlador pausado (responde `readingsPaused` y el gateway no se llama) y el
+  VIRTUAL con controlador activo (el gateway sí se llama). No se probó contra producción porque
+  exigía asignarle un controlador al humidificador virtual, que Juan pidió no tocar.
+- **#1, #2, #5, #7 navegados** contra producción, 4/4: con caché frío y 40 s de espera no sale un
+  solo `GET /devices/<id>/status` para `vege-temp-hum`, `Termohigometro Indoor` ni `vege-led-150`;
+  el bloque de Alertas de la home no contiene "Todo en rango" y muestra "Lecturas desactivadas";
+  en la carpa la tarjeta de `vege-led-150` dice "Estado desconocido", sin la palabra "Apagado",
+  con Encender habilitado, y tocarlo dispara el `POST /api/devices/<id>/control` con
+  `{"action":"on"}` (interceptado en el navegador para no mandarle un comando a un Tuya
+  desenchufado, que dejaría un WARN en el log del panel); a 390 px los seis textos de la fila del
+  sensor tienen un solo rect y terminan dentro del viewport (`Historial pausado` cierra en x=334).
+- `qa:nav` 19/19 a 1440×900 y 390×844. Logs de `cultivo-backend`: 0 coincidencias de
+  `/error|exception|fatal|panic/i` en las últimas 300 líneas después de los dos rebuilds y del QA.
+- Producción sigue en el estado pedido: `sensorsEnabled = false`, `readingsEnabled = false` en los
+  tres Tuya actuadores, los dos SENSOR en `true`, cámara Tapo y humidificador virtual sin tocar.
+
+Capturas en `docs/rediseno-2026-09/capturas/kill-switch-lecturas-r2/`.
+
+### Fuera de alcance
+
+El botón flotante del asistente tapa el badge "Historial pausado" en la carpa a 390 px. La fila
+mide bien (todos los elementos dentro del viewport, sin cortes); lo que se superpone es el botón,
+que pertenece a las fases 2-4 del rediseño y ya se había dejado explícitamente afuera.
+
+<!-- [agent:cultivo-admin][date:2026-09-08][action:created] -->
+## 2026-09-08 — Kill switch de lecturas, general y por dispositivo (rama `redisenio-2026-09`)
+
+El panel se llenaba con `WARN [IoTGatewayService] Error getting status for TUYA/<id>` cada 30 s
+por aparatos desenchufados. El panel matchea `/error|exception|fatal|panic/i` sobre las últimas
+300 líneas del contenedor, así que ese WARN contaba como error. El arreglo es dejar de consultar
+al conector.
+
+### Datos
+
+- Migración `20260908170000_add_readings_kill_switch`, aditiva e idempotente: tabla
+  `readings_settings` (fila única `singleton`, `sensors_enabled BOOLEAN DEFAULT true`, sembrada
+  con `ON CONFLICT DO NOTHING`) y `devices.readings_enabled BOOLEAN NOT NULL DEFAULT true`
+  (`ADD COLUMN IF NOT EXISTS`). Aplicada con `prisma migrate deploy` antes del restart; el
+  contenedor arranca con `node dist/src/main` y no corre migraciones por su cuenta.
+- `recordHistory` queda como estaba: decide si se persiste historial, no si se lee.
+
+### Backend
+
+- Módulo `readings-settings/`: `GET /readings-settings` para cualquier usuario autenticado y
+  `PUT /readings-settings` con `RolesGuard` + `@Roles(ADMIN)`. `BooleanBodyInterceptor` mira el
+  body crudo y rechaza `{"sensorsEnabled":"false"}` con 400, porque el `ValidationPipe` global
+  corre con `enableImplicitConversion`. `onModuleInit` siembra la fila si falta, con el error
+  atrapado para no tumbar el arranque.
+- `DevicesService.getDeviceStatus` corta antes de salir a la red: devuelve 200 con
+  `{ device, status: { online: false, readingsPaused: true } }` y no loguea. Como las
+  automatizaciones pasan por ese mismo método, quedan cubiertas.
+- `SensorPollerService` y `SensorHistoryService` filtran por `readingsEnabled: true` y saltan el
+  ciclo entero con el interruptor general apagado, así que tampoco queda el
+  `⚠️ No valid sensor data`.
+- `readingsEnabled` entra en `CreateDeviceDto`/`UpdateDeviceDto`, en `create()` y en `update()`;
+  el listado de devices y las secciones ya lo devuelven porque incluyen la fila completa.
+
+### Frontend
+
+- `features/lecturas/`: `useReadingsSettings` (react-query, invalida al togglear),
+  `SensorReadingsSwitch` (general) y `DeviceReadingsSwitch` (por dispositivo), más
+  `isReadingPaused()`, que replica la semántica del backend.
+- `useDevicesStatus` / `useDeviceStatus` filtran los pausados antes de pedir: arman el mapa local
+  con `readingsPaused: true` y no emiten un solo `GET /devices/:id/status`. Los handlers de
+  socket ignoran pushes de un dispositivo pausado.
+- Interruptor general en `/artefactos` (junto al `PageHeader`) y en la home (al lado de
+  Actualizar). Solo ADMIN ve el switch; el resto ve el estado. Columna "Lecturas" con un switch
+  por fila en `/artefactos`, y switch "Lecturas" separado del de "Historial" en `EnvironmentPanel`
+  y `DeviceControlCard`. Cuando el aparato tiene sus lecturas activas y lo frena el general, el
+  switch acompaña con "General off".
+- `sectionReadings` distingue pausa de caída: pausado deja las métricas en `null` con
+  `sensorPaused: true` y `sensorOffline: false`. Un sensor pausado queda fuera de Alertas y de
+  `deviceIssues`; las carpas muestran `—` y el badge neutro "Lecturas desactivadas" (token
+  `offline`).
+
+### Estado en que quedó producción
+
+`sensorsEnabled = false`. `readingsEnabled = false` en `vege-led-150`, `Operación Tanque Riego` y
+`Switch Tanque Riego`. Los dos SENSOR (`vege-temp-hum` y `Termohigometro Indoor`) quedan en
+`readingsEnabled = true`, cubiertos por el general, para que al reactivarlo vuelvan a leerse. La
+cámara Tapo y el humidificador virtual quedaron sin tocar.
+
+**Verificado.** typecheck y lint de frontend y backend en exit 0 (warnings de línea base);
+`app-restart cultivo-backend --build` y `app-restart cultivo-frontend --build` en exit 0 con los
+contenedores sanos. `qa:nav` 19/19 a 1440×900 y 390×844, sin errores de consola ni overflow
+móvil. Navegación real: con el general encendido la home consulta `GET /devices/<sensor>/status`;
+al apagarlo el `PUT /readings-settings` devuelve 200 y en 70 s no sale ni un pedido de estado de
+ese sensor; lo mismo apagando `vege-led-150` por su switch. Por API: `PUT` con
+`{"sensorsEnabled":"false"}` da 400, y el status de un actuador pausado da 200 con
+`{"online": false, "readingsPaused": true}`. Logs de `cultivo-backend`: cero coincidencias de
+`/error|exception|fatal|panic/i` desde que se apagaron los tres Tuya. Capturas en
+`docs/rediseno-2026-09/capturas/kill-switch-lecturas/`.
+
+<!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
 ## 2026-09-08 — Ronda 2 del crítico sobre los rangos por etapa (rama `redisenio-2026-09`)
 
 Correcciones sobre `docs/critica/2026-09-08-1027/informe.md` (REPROBADO 7.41, una falla dura).
@@ -321,3 +472,16 @@ Historial de modificaciones realizadas por agentes sobre los archivos de este pr
 - **Archivo:** `CLAUDE.md`
 - **Acción:** Agregada sección "Nivel 6 — Operación como Subagente" al final del archivo
 - **Motivo:** Alinear con el patrón estándar de todos los proyectos del servidor (openclaw, finanzia, panel)
+
+
+<!-- [agent:codex][date:2026-09-12][action:created] -->
+## 2026-09-12 — Herramientas creativas y computer use (contexto compartido)
+
+Por acuerdo con Juan, `server-audit` sincronizó el bloque `ecosystem-context` desde
+`/opt/server-audit/ECOSYSTEM.md`: considerar herramientas especializadas y combinar
+algoritmos, APIs/MCP e interfaz según la tarea, observar el resultado real y conservar
+editables. Blender y Godot primero; Unreal Engine, Unity, Photoshop, DaVinci Resolve y
+alternativas quedan para incorporación posterior. Verificar acceso efectivo por agente.
+Contenido local y enlaces conservados; cambio documental. Registro central y validación:
+`/opt/server-audit/CHANGES.md`. Backup de instrucciones:
+`/opt/backups/agent-context/20260912-223420/`.

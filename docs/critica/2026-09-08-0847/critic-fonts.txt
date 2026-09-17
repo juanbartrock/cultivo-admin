@@ -1,0 +1,23 @@
+{
+ "loaded": [
+  "__Manrope_73ee6c 200 800 unloaded",
+  "__Manrope_73ee6c 200 800 unloaded",
+  "__Manrope_73ee6c 200 800 unloaded",
+  "__Manrope_73ee6c 200 800 unloaded",
+  "__Manrope_73ee6c 200 800 unloaded",
+  "__Manrope_73ee6c 200 800 loaded",
+  "__Manrope_Fallback_73ee6c normal unloaded",
+  "__Space_Grotesk_dd5b2f 300 700 unloaded",
+  "__Space_Grotesk_dd5b2f 300 700 unloaded",
+  "__Space_Grotesk_dd5b2f 300 700 loaded",
+  "__Space_Grotesk_Fallback_dd5b2f normal unloaded"
+ ],
+ "bodyFont": "__Manrope_73ee6c, __Manrope_Fallback_73ee6c",
+ "spanText": "actualizado hace 0 s",
+ "spanFont": "400 12px __Manrope_73ee6c, __Manrope_Fallback_73ee6c",
+ "spaceWidth": 2,
+ "letterN": 8,
+ "spanHTML": "<span>actualizado hace 0 s</span>",
+ "wordSpacing": "0px",
+ "letterSpacing": "normal"
+}

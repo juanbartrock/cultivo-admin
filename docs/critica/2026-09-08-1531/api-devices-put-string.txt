@@ -1,0 +1,5 @@
+## PUT /devices/<luz> con string (rechazo en interceptor, sin escritura)
+readingsEnabled string -> {"message":["readingsEnabled tiene que ser booleano, llegó string"],"error":"Bad Request","statusCode":400} [400]
+recordHistory string -> {"message":["recordHistory tiene que ser booleano, llegó string"],"error":"Bad Request","statusCode":400} [400]
+POST /devices readingsEnabled string -> {"message":["readingsEnabled tiene que ser booleano, llegó string"],"error":"Bad Request","statusCode":400} [400]
+PUT sin token -> 401

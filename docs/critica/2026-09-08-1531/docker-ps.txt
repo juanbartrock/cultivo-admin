@@ -1,0 +1,5 @@
+cultivo-frontend	Up 7 minutes	127.0.0.1:3001->3000/tcp
+cultivo-backend	Up 9 minutes (healthy)	127.0.0.1:4000->4000/tcp
+tapo-service	Up 2 days (healthy)	3000/tcp
+sonoff-ewelink-service	Up 2 days (healthy)	3000/tcp
+tuya-service	Up 2 days (healthy)	3000/tcp

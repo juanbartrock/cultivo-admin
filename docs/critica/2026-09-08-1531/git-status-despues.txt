@@ -1,0 +1,32 @@
+ M CHANGES.md
+ M CLAUDE.md
+ M backend/prisma/schema.prisma
+ M backend/src/app.module.ts
+ M backend/src/modules/devices/devices.controller.ts
+ M backend/src/modules/devices/devices.module.ts
+ M backend/src/modules/devices/devices.service.ts
+ M backend/src/modules/devices/dto/device.dto.ts
+ M backend/src/modules/devices/iot-gateway.service.ts
+ M backend/src/modules/devices/sensor-history.service.ts
+ M backend/src/modules/devices/sensor-poller.service.ts
+ M frontend/src/app/artefactos/page.tsx
+ M frontend/src/components/CarpaCard.tsx
+ M frontend/src/components/DeviceControlCard.tsx
+ M frontend/src/components/EnvironmentPanel.tsx
+ M frontend/src/features/home/components/AlertsBlock.tsx
+ M frontend/src/features/home/components/CarpaStatusCard.tsx
+ M frontend/src/features/home/hooks/useHomeDashboard.ts
+ M frontend/src/features/home/lib/readings.ts
+ M frontend/src/features/home/screens/HomePage.tsx
+ M frontend/src/hooks/useDeviceStatus.ts
+ M frontend/src/types/index.ts
+?? backend/prisma/migrations/20260908170000_add_readings_kill_switch/
+?? backend/src/common/interceptors/boolean-body.interceptor.ts
+?? backend/src/modules/devices/readings-gate.spec.ts
+?? backend/src/modules/readings-settings/
+?? docs/critica/
+?? docs/rediseno-2026-09/capturas/kill-switch-lecturas-r2/
+?? docs/rediseno-2026-09/capturas/kill-switch-lecturas/
+?? docs/rubrica-critico.md
+?? frontend/src/features/lecturas/
+?? frontend/src/services/readingsSettingsService.ts

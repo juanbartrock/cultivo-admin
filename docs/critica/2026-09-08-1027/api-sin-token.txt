@@ -1,0 +1,8 @@
+### sin token
+GET /stage-ranges -> 401
+GET /sections -> 401
+GET /rooms -> 401
+GET /users -> 401
+GET /auth/me -> 401
+PUT /stage-ranges/DEFAULT sin token -> 401
+PATCH /stage-ranges/DEFAULT sin token -> 401

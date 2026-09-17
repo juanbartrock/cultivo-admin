@@ -1,0 +1,2 @@
+vege-temp-hum | status: {'online': False, 'temperature': None, 'humidity': None} | metadata: {'temperature': None, 'humidity': None}
+Termohigometro Indoor | status: {'online': False, 'temperature': 18.1, 'humidity': 80.2} | metadata: {'temperature': None, 'humidity': None}

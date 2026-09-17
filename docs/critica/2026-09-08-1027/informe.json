@@ -1,0 +1,209 @@
+{
+  "puntaje": 7.41,
+  "umbral": 8.0,
+  "aprobado": false,
+  "resumen": "Evalué F0+F1 en producción tras d38bb8a con foco en los rangos por etapa: typecheck, lint, tsc del backend y el spec de effective-stage en exit 0; qa:nav 17/17; 10 rutas × 2 viewports con cero errores de consola, scrollWidth igual al viewport y tab bar tocable; GET/PUT/PATCH de stage-ranges en 401 sin token; validaciones del backend y del diálogo espejadas (min>max, amplio sin contener al ideal, texto, vacío) y Cancelar/Escape sin ningún PUT/PATCH; home y carpa muestran los mismos rangos de la base (Ideal 18-28 · amplio 15-30) y la misma etapa efectiva que devuelve la API (Secado → Curado por desempate, sin plantas → Por defecto). Reprobado por falla dura: /sala sigue coloreando el VPD con umbrales escritos en CarpaCard.tsx (0.4/0.8/1.4/1.6) y además pinta valores viejos de metadata ignorando online=false, mientras CLAUDE.md y CHANGES.md afirman que no queda ningún rango en el frontend. Ponderado 7.41 bajo el umbral: diálogo móvil con Guardar/Cancelar fuera del viewport, mensaje \"Número inválido\" que nunca se muestra, restos de fases 2-4. Aviso: mi PATCH de prueba con \"18\" como string devolvió 200 y tocó updated_at de la fila DEFAULT (valores idénticos); lo declaro como escritura mía en producción.",
+  "dimensiones": [
+    {
+      "nombre": "Correctitud funcional",
+      "puntaje": 7.5,
+      "peso": 3,
+      "justificacion": "critic-nav.txt: 10 rutas × 2 viewports con err=0, cero escrituras, selector de sala a ?sala=16fab41e…, /admin/rangos con 7 filas y diálogo que rechaza min>max, amplio sin contener al ideal, texto y vacío (Guardar deshabilitado) y Cancelar/Escape sin PUT/PATCH; api-con-token.txt: effectiveStage correcto (Secado CURADO:1+SECADO:1 → CURADO, sin plantas → DEFAULT), 400 en min>max, amplio no contenedor, campo extra y string no numérico; qa-nav.txt 17/17. Baja por /sala: CarpaCard.tsx:63-69 decide warn/danger con constantes propias y :107-108 cae a metadata sin mirar online=false, así que la misma carpa puede verse distinta que en la home; y por el mensaje 'Número inválido' que se calcula pero no se muestra (case_texto alerts [])."
+    },
+    {
+      "nombre": "UI y experiencia",
+      "puntaje": 7.5,
+      "peso": 3,
+      "justificacion": "Ancla 7-8 del proyecto: scrollWidth 390/1440 en las 10 rutas, tab bar dentro del viewport con hit-test ok, grad=0/blur=0 en las 7 principales y en /admin/rangos, tabla plana con borde 1 px en desktop y tarjetas en móvil con tabular-nums, ítem Rangos en sidebar y en el sheet Más (capturas/admin-rangos-desktop.png, admin-rangos-movil.png, mas-sheet-movil.png). Restan: diálogo móvil con Cancelar en top 959 > innerHeight 844 (hay que desplazar 16 inputs para llegar a Guardar), botón flotante del asistente tapando valores en listas móviles, carpa Vegetativo blur=1 y /notificaciones con 20 emojis (fases 2-4)."
+    },
+    {
+      "nombre": "Seguridad y datos",
+      "puntaje": 7,
+      "peso": 2,
+      "justificacion": "api-sin-token.txt: GET/PUT/PATCH de stage-ranges y 4 endpoints más en 401; controller con @UseGuards(RolesGuard) + @Roles(ADMIN) en PUT/PATCH y guard global SupabaseAuthGuard (app.module.ts:60); forbidNonWhitelisted rechaza 'stage' en el body; compose-ps.txt sin puertos al host en los IoT; sin secretos en el diff. Baja por los umbrales de VPD escritos en CarpaCard.tsx:63-69 (mínimo del proyecto: rangos nunca de constantes del frontend) y por enableImplicitConversion (main.ts:33) que acepta '18' como número (api-con-token.txt: PATCH string numérico → 200)."
+    },
+    {
+      "nombre": "Código y arquitectura",
+      "puntaje": 7.5,
+      "peso": 2,
+      "justificacion": "typecheck.txt, lint.txt, backend-typecheck.txt y backend-test-stage-ranges.txt (4/4) en exit 0; módulo stage-ranges con service/controller/dto/constantes según CLAUDE.md; migración aditiva e idempotente (IF NOT EXISTS, ON CONFLICT DO NOTHING); readings.ts con una sola función readingStatus consumida por home, carpa y EnvironmentPanel. Deuda: CarpaCard duplica calculateVPD y umbrales propios y /sala quedó fuera de la migración; findAll del GET tiene efecto de escritura (siembra) y findOne consulta las 7 filas por cada PUT/PATCH (stage-ranges.service.ts:24-45)."
+    },
+    {
+      "nombre": "Verificación y entrega",
+      "puntaje": 7.5,
+      "peso": 1,
+      "justificacion": "CHANGES.md registra la ronda con marcador de agente; app-restart-log.txt: backend 10:15:54 y frontend 10:17:57 OK; qa:nav reproducido 17/17; las afirmaciones navegadas del constructor (7 filas, diálogo rechazando min>max, Cancelar sin guardar, 403 con no admin en api-no-admin.txt) coinciden con lo observado. Baja porque CLAUDE.md ('No hay rangos escritos en el frontend') y CHANGES.md ('useStageRanges es la única fuente') se contradicen con CarpaCard.tsx:63-69, y porque qa-nav.spec.ts termina en 07_admin_usuarios sin cubrir /admin/rangos."
+    }
+  ],
+  "fallas_duras": [
+    {
+      "regla": "Global #4 / mínimo del proyecto: dato hardcodeado donde el proyecto exige que viva en la base con CRUD (los rangos ok/warn/danger nunca salen de constantes del frontend)",
+      "evidencia": "frontend/src/components/CarpaCard.tsx:63-69 (getVPDColor: <0.4 danger, <0.8 warn, <=1.4 ok, <=1.6 warn) usado en :244-245 para colorear el VPD de cada carpa en /sala (frontend/src/app/sala/page.tsx:171); :107-108 además cae a sensor.metadata sin mirar online=false. grep -rnE '(temp|hum|vpd)[A-Za-z]*\\s*(<|>|<=|>=)\\s*[0-9]' frontend/src devuelve sólo esas líneas. CLAUDE.md afirma 'No hay rangos escritos en el frontend' y CHANGES.md 'useStageRanges es la única fuente'."
+    }
+  ],
+  "hallazgos": [
+    {
+      "orden": 1,
+      "severidad": "bloqueante",
+      "dimension": "Seguridad y datos",
+      "titulo": "/sala colorea el VPD con umbrales escritos en CarpaCard y pinta valores viejos de metadata ignorando el sensor offline",
+      "evidencia": "frontend/src/components/CarpaCard.tsx:63-69, :106-111 y :244-245; frontend/src/app/sala/page.tsx:171; docs/critica/2026-09-08-1027/critic-nav.txt (sala=[] hoy porque ambos sensores están offline, por eso no se ve en captura); CLAUDE.md sección 'Rangos de sensores' y CHANGES.md 2026-09-08 afirman que no queda ningún rango en el frontend",
+      "accion": "Reemplazar getVPDColor y el calculateVPD local por sectionReadings + readingStatus de features/home/lib/readings.ts con rangeFor(section.effectiveStage) de useStageRanges, y aplicar la regla online=false → '—' sin color, igual que la home.",
+      "verificacion": "grep -rnE '(temp|hum|vpd)[A-Za-z]*\\s*(<|>|<=|>=)\\s*[0-9]' frontend/src vacío; en /sala la carpa Secado muestra '—' y 'Sensor sin respuesta' igual que la home, y con un sensor vivo el color coincide entre /, /sala y la carpa."
+    },
+    {
+      "orden": 2,
+      "severidad": "media",
+      "dimension": "UI y experiencia",
+      "titulo": "En móvil los botones Guardar y Cancelar del diálogo quedan fuera del viewport",
+      "evidencia": "docs/critica/2026-09-08-1027/critic-nav.json → viewports.movil.rangos.footerInViewport {top:959, bottom:995, innerHeight:844, inside:false}; capturas/admin-rangos-dialogo-movil.png (el diálogo termina en CO₂ sin acciones visibles)",
+      "accion": "DialogFooter sticky al fondo del DialogContent (o presentar el formulario como sheet a pantalla completa en móvil) para que las acciones estén siempre a la vista.",
+      "verificacion": "A 390×844, apenas se abre el diálogo, el boundingClientRect de Cancelar y Guardar está dentro del viewport sin desplazar."
+    },
+    {
+      "orden": 3,
+      "severidad": "media",
+      "dimension": "Correctitud funcional",
+      "titulo": "El error 'Número inválido' se calcula pero nunca se muestra: con texto o campo vacío sólo hay borde rojo y Guardar deshabilitado",
+      "evidencia": "frontend/src/features/rangos/components/StageRangeDialog.tsx:45 (errors[key] = 'Número inválido') y :104 (sólo se renderiza errors[metric.key]); critic-nav.json case_texto {alerts:[], saveEnabled:false, ariaInvalid:'true'} y case_vacio {alerts:[]} en ambos viewports",
+      "accion": "Renderizar el error del campo debajo del input (o volcarlo al alert de la métrica) para que el usuario sepa por qué no puede guardar.",
+      "verificacion": "Escribir 'abc' o vaciar un campo muestra un texto de error visible junto al input; Guardar sigue deshabilitado."
+    },
+    {
+      "orden": 4,
+      "severidad": "media",
+      "dimension": "Verificación y entrega",
+      "titulo": "CLAUDE.md y CHANGES.md afirman que no queda ningún rango en el frontend, y la suite qa:nav no cubre /admin/rangos",
+      "evidencia": "CLAUDE.md 'No hay rangos escritos en el frontend' y CHANGES.md 'useStageRanges es la única fuente' contra CarpaCard.tsx:63-69; frontend/tests/qa-nav.spec.ts:108 (la lista de rutas termina en 07_admin_usuarios); qa-nav.txt 17 passed sin la ruta nueva",
+      "accion": "Corregir la afirmación cuando se resuelva el hallazgo 1 y agregar 08_admin_rangos a qa-nav.spec.ts.",
+      "verificacion": "npm run qa:nav navega /admin/rangos en móvil y desktop; el texto de CLAUDE.md coincide con el grep vacío del hallazgo 1."
+    },
+    {
+      "orden": 5,
+      "severidad": "baja",
+      "dimension": "Seguridad y datos",
+      "titulo": "La API acepta strings numéricos por enableImplicitConversion: un PATCH con \"18\" entre comillas se guarda",
+      "evidencia": "backend/src/main.ts:28-35 (transformOptions.enableImplicitConversion: true) y docs/critica/2026-09-08-1027/api-con-token.txt: PATCH /stage-ranges/DEFAULT {\"tempIdealMin\":\"18\"} → 200 (esa prueba mía tocó updated_at de DEFAULT, valores sin cambio)",
+      "accion": "Decidir si se admite la coerción; si no, desactivar implicitConversion en este DTO (o validar typeof number antes del pipe) y documentarlo en el swagger.",
+      "verificacion": "PATCH con un valor string devuelve 400 'must be a number'."
+    },
+    {
+      "orden": 6,
+      "severidad": "baja",
+      "dimension": "Código y arquitectura",
+      "titulo": "GET /stage-ranges siembra filas (escritura en un GET) y cada PUT/PATCH lee las 7 filas para encontrar una",
+      "evidencia": "backend/src/modules/stage-ranges/stage-ranges.service.ts:24-36 (createMany dentro de findAll) y :41-45 (findOne → findAll)",
+      "accion": "Mover la siembra de filas faltantes a onModuleInit (o dejarla sólo en la migración) y usar findUnique({where:{stage}}) en findOne.",
+      "verificacion": "Un GET no genera INSERT en los logs de Prisma; PUT hace una sola lectura previa."
+    },
+    {
+      "orden": 7,
+      "severidad": "baja",
+      "dimension": "Correctitud funcional",
+      "titulo": "Las 7 etapas están sembradas con los mismos valores: hoy la etapa efectiva no cambia ningún color",
+      "evidencia": "docs/critica/2026-09-08-1027/api-con-token.txt: DEFAULT…CURADO todas 18-28/15-30, 40-65/30-75, 0.8-1.4/0.4-1.6, 400-1500/300-2000; capturas/admin-rangos-desktop.png",
+      "accion": "Decisión de datos para Juan: cargar en /admin/rangos los valores propios de cada etapa (por ejemplo Secado y Curado con humedad y temperatura más bajas). Sin código.",
+      "verificacion": "GET /api/stage-ranges devuelve al menos dos filas con valores distintos y la carpa Secado muestra 'Ideal …' distinto de la home de Vegetativo."
+    },
+    {
+      "orden": 8,
+      "severidad": "baja",
+      "dimension": "UI y experiencia",
+      "titulo": "Restos de fases 2-4 y botón flotante del asistente tapando valores en listas móviles",
+      "evidencia": "critic-nav.txt: carpa Vegetativo blur=1 en ambos viewports, /notificaciones emojis=20; capturas/admin-rangos-movil.png (el botón verde flotante cubre 'Humedad 40-65' de la tarjeta Vegetativo)",
+      "accion": "Fase 2-4: carpa sin blur, notificaciones sin emoji, y reubicar o achicar el botón flotante en móvil (por ejemplo dentro del sheet Más).",
+      "verificacion": "critic-nav.cjs con blur=[] en carpa y emojis=0 en /notificaciones; ningún elemento fixed solapa valores de las tarjetas a 390 px."
+    }
+  ],
+  "evidencia": {
+    "comandos": [
+      "cd frontend && npm run typecheck → docs/critica/2026-09-08-1027/typecheck.txt (exit 0)",
+      "cd frontend && npm run lint → docs/critica/2026-09-08-1027/lint.txt (exit 0, warnings preexistentes)",
+      "cd backend && npx tsc --noEmit → backend-typecheck.txt (exit 0); npx jest src/modules/stage-ranges → backend-test-stage-ranges.txt (4/4, exit 0)",
+      "set -a; . ~/.config/secrets/cultivo-admin-login.env; set +a; QA_LABEL=../../critica/2026-09-08-1027/qa-nav npm run qa:nav → qa-nav.txt (17 passed, exit 0) + qa-nav/ capturas",
+      "NODE_PATH=frontend/node_modules node docs/critica/2026-09-08-1027/critic-nav.cjs → critic-nav.txt / critic-nav.json (login por formulario; 10 rutas × 2 viewports con consola, HTTP≥400, scrollWidth, tab bar con hit-test, degradés/blur, ceros; tarjetas de la home con tono y etapa; carpa con 'Rangos:' e 'Ideal … amplio …'; selector de sala; /admin/rangos con 7 filas, diálogo, 7 casos de validación, Cancelar, reapertura, Escape y conteo de PUT/PATCH; llegada a Rangos desde el sheet Más y desde la sidebar) exit 0, 0 escrituras",
+      "curl sin token a GET /stage-ranges, /sections, /rooms, /users, /auth/me y PUT/PATCH /stage-ranges/DEFAULT → api-sin-token.txt (7×401)",
+      "POST /api/auth/login (username) + GET /stage-ranges (200, 7 filas → api-stage-ranges.json), PUT NOEXISTE/body vacío (400), PUT min>max (400), PATCH amplio no contenedor (400), PATCH campo extra (400), PATCH string 'abc' (400), PATCH string '18' (200: escritura mía, updated_at de DEFAULT cambió con valores idénticos), GET /sections con effectiveStage y plantas por etapa → api-sections.json, GET /sections/:id y /dashboard, GET /users (roles) → api-con-token.txt",
+      "GET /devices/:id/status de los 2 sensores → api-device-status.txt (ambos online:false)",
+      "docker compose ps → compose-ps.txt; grep ports docker-compose.yml → compose-ports.txt (sólo 127.0.0.1:4000 y 127.0.0.1:3001)",
+      "docker inspect imágenes (backend 10:14:45, frontend 10:17:50) vs commit d38bb8a 10:26:11; grep cultivo /var/log/app-restart.log → app-restart-log.txt (10:15:54 y 10:17:57 OK)",
+      "docker logs cultivo-backend --since 70m | grep ERROR → 0 (backend-logs-errores.txt con el mapeo de rutas de stage-ranges)",
+      "git show --stat d38bb8a; grep -rn 'RANGES|OPTIMAL_RANGES' frontend/src (vacío); grep de umbrales numéricos en frontend/src (sólo CarpaCard.tsx:64-67); grep de secretos en el diff (nada); ls -l del archivo de credencial (600); git status --porcelain antes y después (idéntico: sólo docs/critica/ y docs/rubrica-critico.md sin trackear)"
+    ],
+    "capturas": [
+      "docs/critica/2026-09-08-1027/capturas/login-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/login-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/home-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/home-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/sala-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/sala-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/sala-cambiada-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/sala-cambiada-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/seguimientos-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/seguimientos-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/automatizaciones-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/automatizaciones-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/artefactos-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/artefactos-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/notificaciones-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/notificaciones-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-usuarios-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-usuarios-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-dialogo-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-dialogo-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-dialogo-invalido-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-dialogo-invalido-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-tras-cancelar-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-tras-cancelar-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-desde-menu-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/admin-rangos-desde-menu-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/mas-sheet-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/carpa-secado-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/carpa-secado-desktop.png",
+      "docs/critica/2026-09-08-1027/capturas/carpa-vegetativo-movil.png",
+      "docs/critica/2026-09-08-1027/capturas/carpa-vegetativo-desktop.png",
+      "docs/critica/2026-09-08-1027/qa-nav/ (17 capturas de la suite qa:nav)"
+    ],
+    "rutas_navegadas": [
+      "/login (formulario real, móvil y desktop)",
+      "/",
+      "/sala",
+      "/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133 (cambio de sala por el Select)",
+      "/seguimientos",
+      "/automatizaciones",
+      "/artefactos",
+      "/notificaciones",
+      "/admin/usuarios",
+      "/admin/rangos (7 filas; Editar 'Por defecto' → diálogo; min>max, texto, amplio sin contener, vacío, coma decimal, amplio==ideal, ideal min==max; Cancelar; reabrir; Escape)",
+      "/admin/rangos llegando desde el sheet Más (móvil) y desde la sidebar (desktop)",
+      "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75 (Secado, 'Rangos: Curado')",
+      "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3 (Vegetativo, 'Rangos: Por defecto')"
+    ]
+  },
+  "no_evaluado": [
+    "PUT/PATCH con un usuario de rol USER (403): sin credencial de un usuario no admin en el servidor; verificado por código (RolesGuard + @Roles(ADMIN) en stage-ranges.controller.ts:31-58) y por el api-no-admin.txt del constructor, sin reproducirlo.",
+    "Colores ok/warn/danger con lecturas reales en home, carpa y /sala: los dos sensores devuelven online:false (api-device-status.txt), así que todas las lecturas están en '—'. La regla se verificó por código (readings.ts:51-62) y por los textos 'Ideal … amplio …' que llegan de la base.",
+    "Guardado real desde el diálogo y repintado de home/carpa tras un cambio: exigiría un PUT con datos válidos en producción; se verificó sólo que Cancelar y Escape no disparan ningún PUT/PATCH.",
+    "npm run build del frontend: no corrido por tiempo; typecheck, lint y qa:nav sí. La imagen publicada responde con la pantalla y la API nuevas.",
+    "Identidad exacta entre la imagen publicada (10:17:50) y el commit d38bb8a (10:26:11): el build salió del árbol de trabajo 8 minutos antes del commit; se comprobó equivalencia funcional, sin prueba de que no hubiera cambios entre medio."
+  ],
+  "meta": {
+    "app": "cultivo-admin",
+    "dir": "/opt/apps/cultivo-admin",
+    "fecha": "2026-09-08T10:39:57",
+    "alcance": "El rediseño F0+F1 publicado en producción (https://cultivo.ramsesvii.com, rama redisenio-2026-09) y el estado general de la app como la ve un administrador, con foco en la feature nueva: rangos de estado de sensores por etapa configurables desde la base con su CRUD (decisión de Juan del 2026-09-08). Informe anterior: docs/critica/2026-09-08-0929/informe.md. Verificá que no quede ninguna tabla de rangos hardcodeada en el frontend, que la home y la página de carpa usen la misma fuente, que la pantalla de edición funcione navegándola (sin guardar cambios en producción: abrí el formulario, verificá validaciones y cancelá), y que el backend proteja la edición con rol ADMIN.",
+    "modelo": "claude-fable-5-1",
+    "modelos_reales": "claude-fable-5-1,claude-haiku-4-5-20251001",
+    "fallback_usado": false,
+    "costo_usd": 5.51,
+    "turnos": "32",
+    "duracion_s": 772,
+    "piso": 6.0,
+    "dimensiones_bajo_piso": [],
+    "arbol_modificado": false,
+    "rubrica_app": true,
+    "evidencia_dir": "/opt/apps/cultivo-admin/docs/critica/2026-09-08-1027"
+  }
+}

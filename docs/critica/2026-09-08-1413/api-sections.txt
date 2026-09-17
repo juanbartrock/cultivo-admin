@@ -1,0 +1,21 @@
+### GET /rooms/225305da-c624-43ff-916f-b68049aa2cd1/sections
+HTTP 200
+   f1ed3032-cf56-4487-90a3-0d79dfd3f9b3 Vegetativo effectiveStage=DEFAULT devices=2 plants=0 stages=[] keys=id,name,dimensions,image,description,roomId,createdAt,updatedAt,enabled,devices,plants,_count,effectiveStage
+   ba2f7493-8f0b-45f1-99b6-5427d014de75 Secado effectiveStage=CURADO devices=1 plants=2 stages=["CURADO","SECADO"] keys=id,name,dimensions,image,description,roomId,createdAt,updatedAt,enabled,devices,plants,_count,effectiveStage
+   766abd7c-9ab5-40d7-9f60-e62ff942f6b1 Floración effectiveStage=PRE_FLORA devices=2 plants=4 stages=["PRE_FLORA","PRE_FLORA","PRE_FLORA","PRE_FLORA"] keys=id,name,dimensions,image,description,roomId,createdAt,updatedAt,enabled,devices,plants,_count,effectiveStage
+   b1716b3a-fb55-4131-aa6d-6efe342b2dff Germinadora effectiveStage=DEFAULT devices=0 plants=0 stages=[] keys=id,name,dimensions,image,description,roomId,createdAt,updatedAt,enabled,devices,plants,_count,effectiveStage
+### GET /rooms/16fab41e-a1fd-4cc0-be2d-1858e0720133/sections
+HTTP 200
+   a0ac06b9-a995-4d8a-b1e0-9b222db01635 Exterior Directo effectiveStage=FLORACION devices=2 plants=11 stages=["FLORACION","FLORACION","FLORACION","FLORACION","FLORACION","FLORACION","FLORACION","FLORACION","FLORACION","FLORACION","FLORACION"] keys=id,name,dimensions,image,description,roomId,createdAt,updatedAt,enabled,devices,plants,_count,effectiveStage
+   73eb465b-9d1c-4fe9-bc59-84961372c4c5 Invernadero effectiveStage=DEFAULT devices=0 plants=0 stages=[] keys=id,name,dimensions,image,description,roomId,createdAt,updatedAt,enabled,devices,plants,_count,effectiveStage
+### GET /sections
+HTTP 200
+   f1ed3032-cf56-4487-90a3-0d79dfd3f9b3 Vegetativo effectiveStage=DEFAULT devices=2 plants=0 sensor=["ac4df493-f610-4106-81f2-020bd3cac85a"]
+   ba2f7493-8f0b-45f1-99b6-5427d014de75 Secado effectiveStage=CURADO devices=1 plants=2 sensor=["c04963d5-c091-426f-9618-4e61ac8c015a"]
+   766abd7c-9ab5-40d7-9f60-e62ff942f6b1 Floración effectiveStage=PRE_FLORA devices=2 plants=4 sensor=[]
+   a0ac06b9-a995-4d8a-b1e0-9b222db01635 Exterior Directo effectiveStage=FLORACION devices=2 plants=11 sensor=[]
+   73eb465b-9d1c-4fe9-bc59-84961372c4c5 Invernadero effectiveStage=DEFAULT devices=0 plants=0 sensor=[]
+   b1716b3a-fb55-4131-aa6d-6efe342b2dff Germinadora effectiveStage=DEFAULT devices=0 plants=0 sensor=[]
+### estado de sensores
+  ac4df493-f610-4106-81f2-020bd3cac85a: {"device":{"id":"ac4df493-f610-4106-81f2-020bd3cac85a","name":"vege-temp-hum","connector":"TUYA","externalId":"eb3f0dab13d64a1ba21l9z","type":"SENSOR","sectionId":"f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","metadata":null,"createdAt":"2025-12-10T21:13:56.786Z","updatedAt":"2025-12-13T20:26:35.269Z","controlledByDeviceId":null,"recordHistory":true,"userId":"7f4c3ade-1244-4eef-a68e-49c5d35eb848","sectio
+  c04963d5-c091-426f-9618-4e61ac8c015a: {"device":{"id":"c04963d5-c091-426f-9618-4e61ac8c015a","name":"Termohigometro Indoor","connector":"SONOFF","externalId":"10018e3624","type":"SENSOR","sectionId":"ba2f7493-8f0b-45f1-99b6-5427d014de75","metadata":null,"createdAt":"2025-12-07T14:59:33.581Z","updatedAt":"2026-02-01T16:52:19.047Z","controlledByDeviceId":null,"recordHistory":true,"userId":"7f4c3ade-1244-4eef-a68e-49c5d35eb848","section"

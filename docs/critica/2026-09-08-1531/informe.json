@@ -1,0 +1,165 @@
+{
+  "puntaje": 8.36,
+  "umbral": 8.0,
+  "aprobado": true,
+  "resumen": "Ronda 2 del kill switch de lecturas. Verifiqué los siete hallazgos del informe 1508 con evidencia nueva y los siete quedaron resueltos (código, API con curl, jest readings-gate 5/5 y navegación real en 1440×900 y 390×844, 16 rutas con cero errores de consola y cero escrituras reales). Todo el alcance re-evaluado: el backend responde 200 con readingsPaused para los 5 pausados sin un WARN, el contenedor arrancado a las 18:22 UTC no tiene ni una línea WARN/ERROR, la home dice \"Lecturas desactivadas\" en lugar de \"Todo en rango\", el actuador pausado muestra \"Estado desconocido\" con Encender habilitado y dispara el POST de control, la fila del sensor a 390 px cierra en x=334 con un solo rect por texto, y PUT /devices/:id rechaza booleanos como string con 400. APROBADO 8.36 sin fallas duras. Lo más grave que queda: el interruptor por dispositivo (PUT /devices/:id) lo mueve cualquier usuario autenticado mientras el general exige ADMIN, y ese switch falla en silencio.",
+  "dimensiones": [
+    {
+      "nombre": "Correctitud funcional",
+      "puntaje": 9,
+      "peso": 3,
+      "justificacion": "Hallazgos 1 a 7 resueltos con evidencia propia: api-devices-status.txt (5 pausados → {online:false, readingsPaused:true}, 200) con cero líneas en backend-log-durante-status.txt; qa-kill-switch-r2.json home con 40 s de caché frío en ambos viewports sin GET /status de ningún pausado; carpa con 'Estado desconocido', 'Apagado' 0, Encender habilitado y POST /control {action:on} disparado (interceptado en el navegador); PUT /devices con string → 400; readings-gate.spec 5/5 incluye VIRTUAL con controlador pausado. Cero 'Error getting status' desde el arranque del contenedor."
+    },
+    {
+      "nombre": "UI y experiencia",
+      "puntaje": 8,
+      "peso": 3,
+      "justificacion": "Interruptor general visible en / y /artefactos en ambos viewports, 18 '—' y 0 ceros en home, badges 'Lecturas desactivadas' con token offline en home, /sala y carpa, bloque de Alertas neutro. Móvil: scrollWidth = innerWidth en las 8 rutas, tab bar en y=788 h=56 sin nada encima, fila del sensor con un rect por texto y cierre en x=334. qa:nav 19/19. Asperezas: DeviceControlCard conserva backdrop-blur y degradé (carpa, fase posterior) con botones nuevos en paleta zinc; el switch por dispositivo revierte sin mensaje al fallar."
+    },
+    {
+      "nombre": "Seguridad y datos",
+      "puntaje": 7.5,
+      "peso": 2,
+      "justificacion": "GET/PUT /readings-settings y GET /devices sin token → 401; PUT con string, campo extra y body vacío → 400; PUT /devices/:id y POST /devices rechazan readingsEnabled/recordHistory como string con 400 (api-devices-put-string.txt); compose solo expone 127.0.0.1:4000 y :3001; sin secretos en el alcance. Falta: PUT /devices/:id no lleva RolesGuard, así que el interruptor por dispositivo lo mueve cualquier usuario autenticado mientras el general exige ADMIN (devices.controller.ts:157-168 vs readings-settings.controller.ts)."
+    },
+    {
+      "nombre": "Código y arquitectura",
+      "puntaje": 8.5,
+      "peso": 2,
+      "justificacion": "typecheck y lint frontend exit 0 (24 warnings de línea base), tsc backend exit 0, readings-gate.spec.ts 5/5. BooleanBodyInterceptor pasó a common/interceptors como fábrica y se reutiliza en tres endpoints; canRead() borrado sin usos; get() ya no escribe; gate espejado en frontend con findDevice. Deuda: grow.service.spec.ts con 2 fallas preexistentes (jest exit 1; módulo sin tocar en el diff) y estilos legacy en DeviceControlCard."
+    },
+    {
+      "nombre": "Verificación y entrega",
+      "puntaje": 9,
+      "peso": 1,
+      "justificacion": "CHANGES.md registra hallazgo por hallazgo con su corrección y verificación; app-restart backend 15:22:29 y frontend 15:24:14 OK (app-restart-log.txt); capturas del constructor en kill-switch-lecturas-r2/ (desktop, móvil y tres específicas). Cada afirmación contrastada (400 con string, cero GET /status de pausados, 'Estado desconocido' con POST control, fila a 390 cerrando en x=334, log limpio, estado de producción) coincide con lo medido."
+    }
+  ],
+  "fallas_duras": [],
+  "hallazgos": [
+    {
+      "orden": 1,
+      "severidad": "media",
+      "dimension": "Seguridad y datos",
+      "titulo": "El interruptor por dispositivo lo mueve cualquier usuario autenticado; el general exige ADMIN",
+      "evidencia": "backend/src/modules/devices/devices.controller.ts:157-168: @Put(':id') solo con BooleanBodyInterceptor, sin RolesGuard ni @Roles. backend/src/modules/readings-settings/readings-settings.controller.ts: PUT con RolesGuard + @Roles(ADMIN). frontend/src/features/lecturas/components/DeviceReadingsSwitch.tsx no consulta isAdmin y renderiza el Switch a todos; SensorReadingsSwitch.tsx sí lo gatea. No probado en vivo: no hay credencial no-admin.",
+      "accion": "Decidir una sola política para el kill switch: si es de admin, agregar RolesGuard + @Roles(ADMIN) a PUT /devices/:id (o a un endpoint dedicado para readingsEnabled) y ocultar el Switch de DeviceReadingsSwitch a no-admin mostrando solo el estado, igual que el general. Si cualquier usuario puede, documentarlo en CLAUDE.md.",
+      "verificacion": "Con un token de rol USER: PUT /api/devices/<id> {\"readingsEnabled\":false} → 403 y en /artefactos la columna Lecturas muestra estado sin switch; con ADMIN sigue en 200."
+    },
+    {
+      "orden": 2,
+      "severidad": "baja",
+      "dimension": "UI y experiencia",
+      "titulo": "El switch por dispositivo falla en silencio",
+      "evidencia": "frontend/src/features/lecturas/components/DeviceReadingsSwitch.tsx:47-49: catch {} revierte el estado local sin toast ni mensaje; el resto de la app usa useToast (DeviceControlCard.tsx:210, :232).",
+      "accion": "En el catch, mostrar toast.error('No se pudo cambiar las lecturas de <nombre>') además de revertir.",
+      "verificacion": "Con el backend devolviendo 4xx/5xx al PUT (route.fulfill en Playwright), aparece el toast y el switch vuelve a su valor."
+    },
+    {
+      "orden": 3,
+      "severidad": "baja",
+      "dimension": "Código y arquitectura",
+      "titulo": "Suite jest del backend sale 1 por grow.service.spec.ts, preexistente",
+      "evidencia": "docs/critica/2026-09-08-1531/backend-jest.txt: 1 failed suite, 2 failed tests (GrowService › updates plant zones… TypeError: Cannot read properties of undefined (reading 'findUnique')). git diff --stat -- backend/src/modules/grow vacío: el módulo no fue tocado por esta tarea.",
+      "accion": "Arreglar el mock de prisma.plant en grow.service.spec.ts o marcarlo como skip documentado, para que npx jest salga 0 y sirva como check del proyecto.",
+      "verificacion": "cd backend && npx jest --ci → exit 0."
+    },
+    {
+      "orden": 4,
+      "severidad": "baja",
+      "dimension": "UI y experiencia",
+      "titulo": "DeviceControlCard conserva blur, degradé y paleta zinc en los botones nuevos (fase posterior)",
+      "evidencia": "frontend/src/components/DeviceControlCard.tsx:245 (bg-zinc-800/50 backdrop-blur-sm), :254 (bg-gradient-to-br), :428 y :436 (bg-zinc-700 en Encender/Apagar añadidos por esta tarea). Captura carpa-desktop.png y carpa-mobile.png. La tarjeta vive en la carpa, fuera de las siete rutas principales y dentro de las fases 2-4.",
+      "accion": "Al rediseñar la carpa: tarjeta plana con border-edge y bg-surface, botones con tokens (surface-2, fg, edge) y sin glow.",
+      "verificacion": "grep -n 'backdrop-blur\\|bg-gradient\\|zinc-' frontend/src/components/DeviceControlCard.tsx vacío."
+    },
+    {
+      "orden": 5,
+      "severidad": "baja",
+      "dimension": "Seguridad y datos",
+      "titulo": "GET /devices/:id/status de la cámara Tapo expone URLs internas (fuera del alcance de esta tarea)",
+      "evidencia": "docs/critica/2026-09-08-1531/api-devices-status.txt, Tapo Camara: tapoServiceUrl http://localhost:3003, snapshotUrl http://tapo-service:3000/snapshots, streamUrl rtsp://192.168.68.64:554/stream1, MAC y firmware. Preexistente, sin relación con el kill switch.",
+      "accion": "Filtrar en DevicesService.getDeviceStatus (rama CAMARA) los campos internos antes de responder, dejando solo lo que la UI usa.",
+      "verificacion": "curl GET /api/devices/932fa966-.../status con token admin: sin tapoServiceUrl, snapshotUrl interno ni rtsp."
+    }
+  ],
+  "evidencia": {
+    "comandos": [
+      "git status --porcelain antes y después: idénticos (docs/critica/2026-09-08-1531/git-status-antes.txt vs git-status-despues.txt)",
+      "cd frontend && npm run typecheck → exit 0 (frontend-typecheck.txt)",
+      "cd frontend && npm run lint → exit 0, 24 warnings de línea base (frontend-lint.txt)",
+      "cd backend && npx tsc --noEmit -p tsconfig.json → exit 0 (backend-typecheck.txt)",
+      "cd backend && npx jest --ci → readings-gate.spec 5/5 PASS; 18 passed, 2 failed en grow.service.spec.ts (preexistente); exit 1 (backend-jest.txt)",
+      "docker logs cultivo-backend | grep -c 'Error getting status' → 0 desde el arranque 18:22:20Z; grep WARN|ERROR → 0 líneas (backend-warn-error-resumen.txt); --tail 300 con /error|exception|fatal|panic/i → 0 en los 5 contenedores, también al cierre (panel-regex-tail300.txt)",
+      "grep cultivo- /var/log/app-restart.log → backend 15:22:29 OK, frontend 15:24:14 OK (app-restart-log.txt); docker ps → backend healthy, IoT sin ports al host (docker-ps.txt)",
+      "curl sin token GET/PUT /api/readings-settings y GET /api/devices → 401; con admin GET → sensorsEnabled:false; PUT con string, campo extra y vacío → 400 (api-readings-settings.txt)",
+      "curl GET /api/devices → 7 dispositivos en el estado esperado: 3 Tuya actuadores readingsEnabled=false, 2 SENSOR true, Tapo y virtual sin tocar (api-devices.txt); GET /api/devices/<id>/status × 7 → 5 con {online:false, readingsPaused:true} 200, cero WARN durante la corrida (api-devices-status.txt, backend-log-durante-status.txt)",
+      "curl PUT /api/devices/<luz> {readingsEnabled:'false'} → 400; {recordHistory:'true'} → 400; POST /devices con string → 400; PUT sin token → 401; valor sigue false y siguen 7 dispositivos (api-devices-put-string.txt)",
+      "curl GET /api/sections → readingsEnabled por device y effectiveStage por carpa (api-sections.txt)",
+      "node docs/critica/2026-09-08-1531/qa-kill-switch-r2.js → exit 0, 8 rutas × 2 viewports: 0 errores de consola, 0 escrituras reales (el único POST /control fue interceptado con route.fulfill en el navegador), scrollWidth = innerWidth en las 16, tab bar móvil en y=788 h=56 sin nada encima, home 40 s sin GET /status de pausados, carpa: 'Estado desconocido' 1, 'Apagado' 0, Encender habilitado y POST /control {action:on} emitido, fila del sensor a 390 con un rect por texto y cierre en x=334 (qa-kill-switch-r2.log, qa-kill-switch-r2.json)",
+      "cd frontend && QA_LABEL=../../critica/2026-09-08-1531/qa-nav npm run qa:nav → 19 passed, exit 0, a 1440×900 y 390×844 (qa-nav.txt, qa-nav/)",
+      "grep -nE '^\\s*(ports:|- \"?[0-9])' docker-compose.yml → solo 127.0.0.1:4000 y 127.0.0.1:3001",
+      "grep de rangos hardcodeados (temp|hum|vpd)… en frontend/src → vacío; grep de secretos en readings-settings/, common/interceptors, features/lecturas, readingsSettingsService.ts y la migración → vacío",
+      "grep -rn canRead backend/src frontend/src → vacío (código muerto eliminado)"
+    ],
+    "capturas": [
+      "docs/critica/2026-09-08-1531/capturas/home-desktop.png",
+      "docs/critica/2026-09-08-1531/capturas/home-mobile.png",
+      "docs/critica/2026-09-08-1531/capturas/home-mobile-viewport.png",
+      "docs/critica/2026-09-08-1531/capturas/sala-desktop.png",
+      "docs/critica/2026-09-08-1531/capturas/sala-mobile.png",
+      "docs/critica/2026-09-08-1531/capturas/carpa-desktop.png",
+      "docs/critica/2026-09-08-1531/capturas/carpa-desktop-tras-encender.png",
+      "docs/critica/2026-09-08-1531/capturas/carpa-mobile.png",
+      "docs/critica/2026-09-08-1531/capturas/carpa-mobile-viewport.png",
+      "docs/critica/2026-09-08-1531/capturas/carpa-mobile-tras-encender.png",
+      "docs/critica/2026-09-08-1531/capturas/seguimientos-desktop.png",
+      "docs/critica/2026-09-08-1531/capturas/seguimientos-mobile.png",
+      "docs/critica/2026-09-08-1531/capturas/automatizaciones-desktop.png",
+      "docs/critica/2026-09-08-1531/capturas/automatizaciones-mobile.png",
+      "docs/critica/2026-09-08-1531/capturas/artefactos-desktop.png",
+      "docs/critica/2026-09-08-1531/capturas/artefactos-mobile.png",
+      "docs/critica/2026-09-08-1531/capturas/artefactos-mobile-viewport.png",
+      "docs/critica/2026-09-08-1531/capturas/notificaciones-desktop.png",
+      "docs/critica/2026-09-08-1531/capturas/notificaciones-mobile.png",
+      "docs/critica/2026-09-08-1531/capturas/admin-usuarios-desktop.png",
+      "docs/critica/2026-09-08-1531/capturas/admin-usuarios-mobile.png",
+      "docs/critica/2026-09-08-1531/qa-nav/ (19 capturas de la suite del proyecto, desktop y móvil)"
+    ],
+    "rutas_navegadas": [
+      "/login",
+      "/",
+      "/sala",
+      "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+      "/seguimientos",
+      "/automatizaciones",
+      "/artefactos",
+      "/notificaciones",
+      "/admin/usuarios",
+      "/admin/rangos (vía qa:nav)"
+    ]
+  },
+  "no_evaluado": [
+    "Reactivación en vivo (mover el interruptor general o el de un aparato y ver volver las lecturas): exige PUT en producción. Verifiqué el contrato por API (PUT valida con 400/401, GET refleja) y que los switches están habilitados en el DOM, sin tocarlos.",
+    "VIRTUAL con controlador pausado contra producción: flora-humidificador no tiene controlador; queda cubierto solo por readings-gate.spec.ts (5/5).",
+    "PUT /readings-settings y PUT /devices/:id con usuario sin rol ADMIN (esperado 403 en el primero; el segundo hoy daría 200): no hay credencial no-admin disponible.",
+    "Inspección visual de las capturas: los checks de esta ronda son métricas de DOM (textos, rects, scrollWidth, tab bar) y la suite qa:nav; las PNG quedan en el directorio para revisión de Juan."
+  ],
+  "meta": {
+    "app": "cultivo-admin",
+    "dir": "/opt/apps/cultivo-admin",
+    "fecha": "2026-09-08T15:40:43",
+    "alcance": "Feature publicada: pausar lecturas de sensores a nivel global y por dispositivo. Verificar interruptores en / y /artefactos, que con lecturas desactivadas no se consulte Tuya/Sonoff (cero Error getting status en logs), que la UI distinga pausa de sensor caído (— y Lecturas desactivadas, sin alerta), y que se pueda reactivar. El constructor deja el interruptor global apagado y los tres actuadores Tuya en readingsEnabled=false: ese es el estado esperado. Sin escrituras extra en producción.\n\nRonda 2 de 3 del loop. El constructor dice haber corregido el informe anterior (/opt/apps/cultivo-admin/docs/critica/2026-09-08-1508/informe.md): verificá hallazgo por hallazgo si quedó resuelto, con evidencia nueva, y volvé a evaluar todo el alcance desde cero.",
+    "modelo": "claude-fable-5-1",
+    "modelos_reales": "claude-fable-5-1,claude-haiku-4-5-20251001",
+    "fallback_usado": false,
+    "costo_usd": 4.76,
+    "turnos": "4",
+    "duracion_s": 566,
+    "piso": 6.0,
+    "dimensiones_bajo_piso": [],
+    "arbol_modificado": false,
+    "rubrica_app": true,
+    "evidencia_dir": "/opt/apps/cultivo-admin/docs/critica/2026-09-08-1531"
+  }
+}

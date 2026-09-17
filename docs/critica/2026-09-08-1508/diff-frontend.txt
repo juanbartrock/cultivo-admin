@@ -1,0 +1,513 @@
+diff --git a/frontend/src/app/artefactos/page.tsx b/frontend/src/app/artefactos/page.tsx
+index 43c6e2c..fc46c2b 100644
+--- a/frontend/src/app/artefactos/page.tsx
++++ b/frontend/src/app/artefactos/page.tsx
+@@ -41,6 +41,7 @@ import {
+   SelectValue,
+ } from '@/components/ui/select';
+ import { PageHeader } from '@/components/shell';
++import { DeviceReadingsSwitch, SensorReadingsSwitch } from '@/features/lecturas';
+ import { motion, AnimatePresence } from 'framer-motion';
+ import { deviceService } from '@/services/deviceService';
+ import { sectionService } from '@/services/locationService';
+@@ -385,6 +386,7 @@ export default function ArtefactosPage() {
+         title="Dispositivos"
+         actions={
+           <>
++            <SensorReadingsSwitch />
+             <Button variant="secondary" size="sm" onClick={() => setShowVirtualModal(true)}>
+               <Plus className="h-4 w-4" />
+               Agregar virtual
+@@ -545,11 +547,12 @@ export default function ArtefactosPage() {
+         {/* Tabla de Dispositivos */}
+         <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden">
+           {/* Header */}
+-          <div className="hidden sm:grid sm:grid-cols-6 gap-4 px-4 py-3 bg-zinc-800/50 border-b border-zinc-700/50 text-sm font-medium text-zinc-400">
++          <div className="hidden sm:grid sm:grid-cols-7 gap-4 px-4 py-3 bg-zinc-800/50 border-b border-zinc-700/50 text-sm font-medium text-zinc-400">
+             <div>Nombre</div>
+             <div>Conector</div>
+             <div>Tipo</div>
+             <div>Sección</div>
++            <div>Lecturas</div>
+             <div>Control</div>
+             <div>Acciones</div>
+           </div>
+@@ -583,7 +586,7 @@ export default function ArtefactosPage() {
+                     initial={{ opacity: 0, x: -20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     transition={{ delay: index * 0.03 }}
+-                    className="grid grid-cols-1 sm:grid-cols-6 gap-2 sm:gap-4 px-4 py-4 hover:bg-zinc-800/30 transition-colors"
++                    className="grid grid-cols-1 sm:grid-cols-7 gap-2 sm:gap-4 px-4 py-4 hover:bg-zinc-800/30 transition-colors"
+                   >
+                     {/* Nombre */}
+                     <div className="flex items-center gap-3">
+@@ -615,6 +618,12 @@ export default function ArtefactosPage() {
+                       <span className="text-zinc-300">{section?.name || 'Sin asignar'}</span>
+                     </div>
+ 
++                    {/* Lecturas: corta la consulta al conector para este aparato. */}
++                    <div className="flex items-center gap-2">
++                      <span className="text-sm text-zinc-400 sm:hidden">Lecturas:</span>
++                      <DeviceReadingsSwitch device={device} label={null} onChanged={loadInitialData} />
++                    </div>
++
+                     {/* Control */}
+                     <div className="flex items-center gap-2">
+                       {device.type !== 'SENSOR' && device.type !== 'CAMARA' ? (
+diff --git a/frontend/src/components/CarpaCard.tsx b/frontend/src/components/CarpaCard.tsx
+index d3f09c0..6d09d76 100644
+--- a/frontend/src/components/CarpaCard.tsx
++++ b/frontend/src/components/CarpaCard.tsx
+@@ -188,6 +188,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
+           {hasEnvironmentData && (
+             <div className="space-y-2">
+               <div className="flex flex-wrap items-center justify-center gap-2">
++                {readings.sensorPaused ? <Badge variant="offline">Lecturas desactivadas</Badge> : null}
+                 {readings.sensorOffline ? <Badge variant="offline">Sensor sin respuesta</Badge> : null}
+                 <span className="text-xs text-fg-faint" title="Etapa cuyos rangos se aplican">
+                   Rangos: {RANGE_STAGE_LABELS[section.effectiveStage ?? 'DEFAULT']}
+diff --git a/frontend/src/components/DeviceControlCard.tsx b/frontend/src/components/DeviceControlCard.tsx
+index 7fd8003..5ea5ee0 100644
+--- a/frontend/src/components/DeviceControlCard.tsx
++++ b/frontend/src/components/DeviceControlCard.tsx
+@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
+ import { motion } from 'framer-motion';
+ import { Device, DeviceType, DeviceStatus } from '@/types';
+ import { useDeviceControl } from '@/hooks/useDeviceStatus';
++import { DeviceReadingsSwitch } from '@/features/lecturas';
+ import CameraViewer from './CameraViewer';
+ import { 
+   Thermometer, 
+@@ -128,6 +129,8 @@ export default function DeviceControlCard({
+   const [isReassigning, setIsReassigning] = useState(false);
+ 
+   const isOnline = status?.online !== false;
++  /** Nadie consultó al conector: es una pausa decidida, no un aparato caído. */
++  const readingsPaused = status?.readingsPaused === true;
+   
+   // Detectar estado ON/OFF - puede venir como 'state' o 'switch' (SONOFF usa 'switch')
+   const switchState = status?.switch as string | undefined;
+@@ -248,6 +251,8 @@ export default function DeviceControlCard({
+           {/* Status indicator */}
+           {loading ? (
+             <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
++          ) : readingsPaused ? (
++            <span className="text-xs text-offline">Lecturas off</span>
+           ) : isOnline ? (
+             <div className="flex items-center gap-1.5">
+               <Wifi className="w-3.5 h-3.5 text-cultivo-green-400" />
+@@ -350,6 +355,12 @@ export default function DeviceControlCard({
+             </div>
+           )}
+ 
++          {/* Lecturas: corta la consulta al conector. Distinto del historial, que persiste. */}
++          <div className="flex w-full items-center justify-between rounded-lg bg-zinc-900/50 px-3 py-2">
++            <span className="text-xs text-zinc-400">Lecturas</span>
++            <DeviceReadingsSwitch device={device} label={null} onChanged={onStatusChange} />
++          </div>
++
+           {/* Toggle registrar historial */}
+           <button
+             onClick={handleToggleRecordHistory}
+@@ -378,10 +389,16 @@ export default function DeviceControlCard({
+ 
+           {/* Si no hay valores */}
+           {status.temperature === undefined && status.humidity === undefined && (
+-            <div className="flex items-center justify-center gap-2 py-4 text-zinc-500">
+-              <AlertCircle className="w-4 h-4" />
+-              <span className="text-xs">Sin datos del sensor</span>
+-            </div>
++            readingsPaused ? (
++              <div className="flex items-center justify-center py-4">
++                <span className="text-xs text-offline">Lecturas desactivadas</span>
++              </div>
++            ) : (
++              <div className="flex items-center justify-center gap-2 py-4 text-zinc-500">
++                <AlertCircle className="w-4 h-4" />
++                <span className="text-xs">Sin datos del sensor</span>
++              </div>
++            )
+           )}
+         </div>
+       )}
+diff --git a/frontend/src/components/EnvironmentPanel.tsx b/frontend/src/components/EnvironmentPanel.tsx
+index 2b3a766..7833aea 100644
+--- a/frontend/src/components/EnvironmentPanel.tsx
++++ b/frontend/src/components/EnvironmentPanel.tsx
+@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
+ import { motion } from 'framer-motion';
+ import { DeviceStatus, Device, RangeStage, StageRange } from '@/types';
+ import { useDeviceControl } from '@/hooks/useDeviceStatus';
++import { DeviceReadingsSwitch } from '@/features/lecturas';
+ import { 
+   Thermometer, 
+   Droplets, 
+@@ -205,6 +206,8 @@ export default function EnvironmentPanel({
+   // mostrarlo con color de estado miente sobre el presente. Misma regla que `sectionReadings`
+   // en la home, para que la carpa y la home cuenten la misma historia.
+   const isOnline = status?.online !== false;
++  /** Nadie consultó al conector: es una pausa decidida, no un aparato caído. */
++  const readingsPaused = status?.readingsPaused === true;
+ 
+   // Extraer y parsear valores del status (pueden venir como string o number)
+   const temperature = isOnline && status?.temperature !== undefined
+@@ -367,7 +370,12 @@ export default function EnvironmentPanel({
+                 <span className="text-sm font-medium text-zinc-300">{sensorName}</span>
+               </div>
+             )}
+-            {!isOnline && (
++            {readingsPaused && (
++              <span className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface-2 px-2 py-1 text-xs text-offline">
++                Lecturas desactivadas
++              </span>
++            )}
++            {!isOnline && !readingsPaused && (
+               <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs bg-zinc-800/50 text-zinc-400 border border-zinc-700/50">
+                 <AlertTriangle className="w-3.5 h-3.5" />
+                 Sensor sin respuesta
+@@ -382,6 +390,12 @@ export default function EnvironmentPanel({
+                 Rangos: {RANGE_STAGE_LABELS[stage]}
+               </span>
+             )}
++            {/* Lecturas del sensor: corta la consulta al conector. Distinto del historial. */}
++            {device && (
++              <div className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface-2 px-2 py-1">
++                <DeviceReadingsSwitch device={device} label="Lecturas" onChanged={onRefresh} />
++              </div>
++            )}
+             {/* Toggle registrar historial */}
+             {device && (
+               <button
+diff --git a/frontend/src/features/home/components/CarpaStatusCard.tsx b/frontend/src/features/home/components/CarpaStatusCard.tsx
+index dd89aeb..949ee0a 100644
+--- a/frontend/src/features/home/components/CarpaStatusCard.tsx
++++ b/frontend/src/features/home/components/CarpaStatusCard.tsx
+@@ -56,6 +56,7 @@ export function CarpaStatusCard({ summary }: CarpaStatusCardProps) {
+         </div>
+         <div className="flex shrink-0 flex-wrap justify-end gap-1">
+           {section.enabled === false ? <Badge variant="offline">Inactiva</Badge> : null}
++          {readings.sensorPaused ? <Badge variant="offline">Lecturas desactivadas</Badge> : null}
+           {readings.sensorOffline ? <Badge variant="offline">Sensor sin respuesta</Badge> : null}
+         </div>
+       </div>
+diff --git a/frontend/src/features/home/hooks/useHomeDashboard.ts b/frontend/src/features/home/hooks/useHomeDashboard.ts
+index 7d0334a..33c0b7f 100644
+--- a/frontend/src/features/home/hooks/useHomeDashboard.ts
++++ b/frontend/src/features/home/hooks/useHomeDashboard.ts
+@@ -134,6 +134,9 @@ export function useHomeDashboard() {
+         roomName: section.room?.name,
+       };
+ 
++      // Un sensor con las lecturas desactivadas no es una alerta: es una decisión tomada.
++      if (readings.sensorPaused) continue;
++
+       if (readings.sensorOffline && readings.sensor) {
+         result.push({ ...base, label: readings.sensor.name, detail: 'Sensor sin respuesta', severity: 'offline' });
+         continue;
+@@ -173,7 +176,8 @@ export function useHomeDashboard() {
+     for (const section of sections) {
+       for (const device of section.devices ?? []) {
+         const status = getStatus(device.id);
+-        if (status && status.online === false) {
++        // `readingsPaused` queda afuera: nadie consultó ese aparato, así que no está caído.
++        if (status && status.online === false && !status.readingsPaused) {
+           issues.push({ device, sectionName: section.name });
+         }
+       }
+diff --git a/frontend/src/features/home/lib/readings.ts b/frontend/src/features/home/lib/readings.ts
+index fbad31f..5401588 100644
+--- a/frontend/src/features/home/lib/readings.ts
++++ b/frontend/src/features/home/lib/readings.ts
+@@ -120,6 +120,8 @@ export interface SectionReadings {
+   sensor: Device | null;
+   /** El sensor existe y el backend lo informa sin respuesta: no hay lectura viva. */
+   sensorOffline: boolean;
++  /** El sensor tiene las lecturas desactivadas: nadie lo consultó, no está caído. */
++  sensorPaused: boolean;
+ }
+ 
+ /**
+@@ -127,6 +129,9 @@ export interface SectionReadings {
+  * sensor sin respuesta, o sin `status`, no tiene lectura y las tres métricas quedan en
+  * `null`. `sensor.metadata` es el último valor guardado en la base, sin antigüedad ni forma
+  * de saber de cuándo es; pintarlo con color de estado miente sobre el presente.
++ *
++ * Un sensor con las lecturas desactivadas queda en `sensorPaused`: tampoco hay dato, y la
++ * diferencia con `sensorOffline` importa porque un aparato pausado no genera alerta.
+  */
+ export function sectionReadings(
+   section: Section,
+@@ -134,12 +139,39 @@ export function sectionReadings(
+ ): SectionReadings {
+   const sensor = section.devices?.find((device) => device.type === 'SENSOR') ?? null;
+   if (!sensor) {
+-    return { temperature: null, humidity: null, vpd: null, sensor: null, sensorOffline: false };
++    return {
++      temperature: null,
++      humidity: null,
++      vpd: null,
++      sensor: null,
++      sensorOffline: false,
++      sensorPaused: false,
++    };
+   }
+ 
+   const status = getStatus(sensor.id);
++
++  // Lecturas desactivadas: nadie preguntó. Es un estado neutro, sin alerta.
++  if (status?.readingsPaused) {
++    return {
++      temperature: null,
++      humidity: null,
++      vpd: null,
++      sensor,
++      sensorOffline: false,
++      sensorPaused: true,
++    };
++  }
++
+   if (status?.online === false) {
+-    return { temperature: null, humidity: null, vpd: null, sensor, sensorOffline: true };
++    return {
++      temperature: null,
++      humidity: null,
++      vpd: null,
++      sensor,
++      sensorOffline: true,
++      sensorPaused: false,
++    };
+   }
+ 
+   const temperature = (status?.temperature as number | undefined) ?? null;
+@@ -151,6 +183,7 @@ export function sectionReadings(
+     vpd: calculateVPD(temperature, humidity),
+     sensor,
+     sensorOffline: false,
++    sensorPaused: false,
+   };
+ }
+ 
+diff --git a/frontend/src/features/home/screens/HomePage.tsx b/frontend/src/features/home/screens/HomePage.tsx
+index 0fee7d7..379362f 100644
+--- a/frontend/src/features/home/screens/HomePage.tsx
++++ b/frontend/src/features/home/screens/HomePage.tsx
+@@ -4,6 +4,7 @@ import { RefreshCw, Tent } from 'lucide-react';
+ import { PageHeader } from '@/components/shell';
+ import { Button } from '@/components/ui/button';
+ import { EmptyState } from '@/components/ui/empty-state';
++import { SensorReadingsSwitch } from '@/features/lecturas';
+ import { Skeleton } from '@/components/ui/skeleton';
+ import { ActiveCyclesBlock } from '../components/ActiveCyclesBlock';
+ import { AlertsBlock } from '../components/AlertsBlock';
+@@ -35,18 +36,21 @@ export default function HomePage() {
+       <PageHeader
+         title="Inicio"
+         actions={
+-          <Button
+-            variant="secondary"
+-            size="sm"
+-            onClick={() => {
+-              void sectionsQuery.refetch();
+-              void cyclesQuery.refetch();
+-              void refreshStatuses();
+-            }}
+-          >
+-            <RefreshCw className={statusLoading ? 'animate-spin' : undefined} />
+-            Actualizar
+-          </Button>
++          <>
++            <SensorReadingsSwitch />
++            <Button
++              variant="secondary"
++              size="sm"
++              onClick={() => {
++                void sectionsQuery.refetch();
++                void cyclesQuery.refetch();
++                void refreshStatuses();
++              }}
++            >
++              <RefreshCw className={statusLoading ? 'animate-spin' : undefined} />
++              Actualizar
++            </Button>
++          </>
+         }
+       />
+ 
+diff --git a/frontend/src/hooks/useDeviceStatus.ts b/frontend/src/hooks/useDeviceStatus.ts
+index a1f52eb..276d037 100644
+--- a/frontend/src/hooks/useDeviceStatus.ts
++++ b/frontend/src/hooks/useDeviceStatus.ts
+@@ -7,6 +7,10 @@ import { deviceService } from '@/services/deviceService';
+ import { Device, DeviceStatus } from '@/types';
+ import { useAuth } from '@/contexts/AuthContext';
+ import { useSocket } from '@/contexts/SocketContext';
++import { isReadingPaused, useReadingsSettings } from '@/features/lecturas';
++
++/** Estado local de un dispositivo con las lecturas pausadas: no se consulta al conector. */
++const PAUSED_STATUS: DeviceStatus = { online: false, readingsPaused: true };
+ 
+ interface DeviceWithStatus {
+   device: Device;
+@@ -27,11 +31,13 @@ interface UseDeviceStatusOptions {
+  */
+ export function useDeviceStatus(
+   deviceId: string,
+-  options: UseDeviceStatusOptions = {}
++  options: UseDeviceStatusOptions & { device?: Device } = {}
+ ) {
+-  const { pollingInterval = 30000, autoRefresh = true } = options;
++  const { pollingInterval = 30000, autoRefresh = true, device } = options;
+ 
+   const { isAuthenticated } = useAuth();
++  const { sensorsEnabled } = useReadingsSettings();
++  const paused = device ? isReadingPaused(device, sensorsEnabled) : false;
+   const [status, setStatus] = useState<DeviceStatus | null>(null);
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState<string | null>(null);
+@@ -42,6 +48,13 @@ export function useDeviceStatus(
+       setLoading(false);
+       return;
+     }
++    // Con las lecturas pausadas el estado se arma acá: cero pedidos al conector.
++    if (paused) {
++      setStatus(PAUSED_STATUS);
++      setError(null);
++      setLoading(false);
++      return;
++    }
+     try {
+       const response = await deviceService.getStatus(deviceId);
+       setStatus(response.status);
+@@ -51,7 +64,7 @@ export function useDeviceStatus(
+     } finally {
+       setLoading(false);
+     }
+-  }, [deviceId, isAuthenticated]);
++  }, [deviceId, isAuthenticated, paused]);
+ 
+   useEffect(() => {
+     fetchStatus();
+@@ -81,6 +94,7 @@ export function useDevicesStatus(
+   const { pollingInterval = 30000, autoRefresh = true, sectionId } = options;
+   const { socket, isConnected, joinSection, leaveSection } = useSocket();
+   const { isAuthenticated } = useAuth();
++  const { sensorsEnabled } = useReadingsSettings();
+ 
+   const [statuses, setStatuses] = useState<Map<string, DeviceStatus>>(new Map());
+   const [loading, setLoading] = useState(true);
+@@ -114,10 +128,13 @@ export function useDevicesStatus(
+     const controller = new AbortController();
+     abortRef.current = controller;
+ 
++    // Los pausados salen del mapa local, sin pedido: el kill switch corta acá, antes de la red.
++    const activos = devices.filter((device) => !isReadingPaused(device, sensorsEnabled));
++
+     try {
+       // Hacer todas las peticiones en paralelo para estado inicial
+       const results = await Promise.allSettled(
+-        devices.map(async (device) => {
++        activos.map(async (device) => {
+           const response = await deviceService.getStatus(device.id, { signal: controller.signal });
+           return { id: device.id, status: response.status };
+         })
+@@ -127,16 +144,22 @@ export function useDevicesStatus(
+ 
+       const newStatuses = new Map<string, DeviceStatus>();
+ 
++      for (const device of devices) {
++        if (isReadingPaused(device, sensorsEnabled)) {
++          newStatuses.set(device.id, PAUSED_STATUS);
++        }
++      }
++
+       results.forEach((result, index) => {
+         if (result.status === 'fulfilled') {
+           newStatuses.set(result.value.id, result.value.status);
+         } else {
+           // Si falla, usar estado anterior o marcar offline
+-          const prev = statuses.get(devices[index].id);
+-          if (prev) {
+-            newStatuses.set(devices[index].id, prev);
++          const prev = statuses.get(activos[index].id);
++          if (prev && !prev.readingsPaused) {
++            newStatuses.set(activos[index].id, prev);
+           } else {
+-            newStatuses.set(devices[index].id, { online: false });
++            newStatuses.set(activos[index].id, { online: false });
+           }
+         }
+       });
+@@ -153,7 +176,7 @@ export function useDevicesStatus(
+         setLoading(false);
+       }
+     }
+-  }, [devices, isAuthenticated]);
++  }, [devices, isAuthenticated, sensorsEnabled]);
+ 
+   // Efecto para suscribirse a la sección via WebSocket
+   useEffect(() => {
+@@ -173,9 +196,10 @@ export function useDevicesStatus(
+     if (!socket || !isConnected) return;
+ 
+     const handleDeviceUpdate = (data: { deviceId: string; status: DeviceStatus; sectionId?: string }) => {
+-      // Solo actualizar si el dispositivo está en nuestra lista
+-      const deviceIds = devices.map(d => d.id);
+-      if (deviceIds.includes(data.deviceId)) {
++      // Un dispositivo pausado conserva su estado local aunque llegue un push viejo del ciclo
++      // que todavía estaba en vuelo cuando se apagó el interruptor.
++      const target = devices.find((d) => d.id === data.deviceId);
++      if (target && !isReadingPaused(target, sensorsEnabled)) {
+         setStatuses((prev) => {
+           const newMap = new Map(prev);
+           newMap.set(data.deviceId, data.status);
+@@ -187,8 +211,8 @@ export function useDevicesStatus(
+ 
+     const handleSensorUpdate = (data: { deviceId: string; reading: any; sectionId?: string }) => {
+       // Actualizar el status con los datos del sensor
+-      const deviceIds = devices.map(d => d.id);
+-      if (deviceIds.includes(data.deviceId)) {
++      const target = devices.find((d) => d.id === data.deviceId);
++      if (target && !isReadingPaused(target, sensorsEnabled)) {
+         setStatuses((prev) => {
+           const newMap = new Map(prev);
+           const currentStatus = prev.get(data.deviceId) || { online: true };
+@@ -213,7 +237,7 @@ export function useDevicesStatus(
+       socket.off('device_update', handleDeviceUpdate);
+       socket.off('sensor_update', handleSensorUpdate);
+     };
+-  }, [socket, isConnected, devices]);
++  }, [socket, isConnected, devices, sensorsEnabled]);
+ 
+   // Efecto para Polling (carga inicial + backup si socket no está conectado)
+   useEffect(() => {
+diff --git a/frontend/src/types/index.ts b/frontend/src/types/index.ts
+index 7c4f946..5e7d4f2 100644
+--- a/frontend/src/types/index.ts
++++ b/frontend/src/types/index.ts
+@@ -172,6 +172,8 @@ export interface Device {
+   section?: Section;
+   metadata?: Record<string, unknown>;
+   recordHistory?: boolean; // Si registra historial (solo sensores)
++  /** Si se consulta el estado al conector. En false no sale ningún pedido por este aparato. */
++  readingsEnabled?: boolean;
+   // Dependencia: dispositivo que controla a este
+   controlledByDeviceId?: string;
+   controlledBy?: Device; // Ej: Sonoff que controla al extractor
+@@ -186,9 +188,17 @@ export interface DeviceStatus {
+   state?: 'on' | 'off';
+   temperature?: number;
+   humidity?: number;
++  /** Las lecturas del dispositivo están pausadas: no se consultó al conector. */
++  readingsPaused?: boolean;
+   [key: string]: unknown;
+ }
+ 
++/** Interruptor general de lecturas: fila única de `readings_settings`. */
++export interface ReadingsSettings {
++  sensorsEnabled: boolean;
++  updatedAt: string;
++}
++
+ // Dispositivo detectado en escaneo (no persistido)
+ export interface ScannedDevice {
+   id: string;           // ID externo del conector

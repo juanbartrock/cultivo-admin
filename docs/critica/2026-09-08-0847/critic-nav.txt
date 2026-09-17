@@ -1,0 +1,368 @@
+
+## movil  login -> https://cultivo.ramsesvii.com/ errors=1
+home               sw=390/390 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Inicio [oculto]"] rh=["Inicio"] zeros=[] emojis=0 tab=inVP items=Inicio,Salas,Ciclos,Automatizaciones,Más
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+sala               sw=390/390 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Sala de Cultivo [oculto]"] rh=["Sala de Cultivo"] zeros=[] emojis=0 tab=inVP items=Inicio,Salas,Ciclos,Automatizaciones,Más
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+seguimientos       sw=390/390 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Ciclos [oculto]"] rh=["Ciclos"] zeros=[] emojis=0 tab=inVP items=Inicio,Salas,Ciclos,Automatizaciones,Más
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+automatizaciones   sw=390/390 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Automatizaciones [oculto]"] rh=["Automatizaciones"] zeros=[] emojis=0 tab=inVP items=Inicio,Salas,Ciclos,Automatizaciones,Más
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+artefactos         sw=390/390 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Dispositivos [oculto]"] rh=["Dispositivos"] zeros=[] emojis=0 tab=inVP items=Inicio,Salas,Ciclos,Automatizaciones,Más
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+notificaciones     sw=390/390 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Notificaciones [oculto]"] rh=["Notificaciones"] zeros=[] emojis=20 tab=inVP items=Inicio,Salas,Ciclos,Automatizaciones,Más
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+admin-usuarios     sw=390/390 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Usuarios [oculto]"] rh=["Usuarios"] zeros=[] emojis=0 tab=inVP items=Inicio,Salas,Ciclos,Automatizaciones,Más
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+carpa              sw=390/390 err=1 grad=0 blur=1 sel=0 chk=0 h1=["Vegetativo [oculto]"] rh=["Vegetativo"] zeros=[] emojis=0 tab=inVP items=Inicio,Salas,Ciclos,Automatizaciones,Más
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+   blur: [ 'div..relative.overflow-hidden.bg-zinc-800/50' ]
+   samples: [{"t":300,"url":"/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","headerTitle":"Carpa","back":true,"h1":["Carpa"],"mainHead":"Cargando sección..."},{"t":1000,"url":"/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","headerTitle":"Vegetativo","back":true,"h1":["Vegetativo"],"mainHead":"Layout Activa Actualizar Vegetativo 100x100x200 2 dispositivos 0 plantas 1 sensor 1 controlable Ambiente Sin datos ambie"},{"t":2500,"url":"/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","headerTitle":"Vegetativo","back":true,"h1":["Vegetativo"],"mainHead":"Layout Activa Actualizar Vegetativo 100x100x200 2 dispositivos 0 plantas 1 sensor 1 controlable Ambiente Sin datos ambie"}]
+extra: {
+ "salaSelector": {
+  "before": "https://cultivo.ramsesvii.com/sala",
+  "beforeText": "Sala de Cultivo",
+  "options": 2,
+  "labels": [
+   "Sala de Cultivo",
+   "Terraza"
+  ],
+  "after": "https://cultivo.ramsesvii.com/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133",
+  "afterText": "Terraza",
+  "afterDom": {
+   "gradients": [],
+   "blur": [],
+   "scrollWidth": 390,
+   "innerWidth": 390,
+   "bodyScroll": 390,
+   "zeros": [],
+   "dashes": 0,
+   "nativeSelects": 0,
+   "nativeCheckbox": 0,
+   "title": "Cultivo Manager - Administración de Cultivo Casero",
+   "h1": [
+    "Terraza [oculto]"
+   ],
+   "roleHeadings": [
+    "Terraza"
+   ],
+   "dangerWarnText": [],
+   "emojis": 0,
+   "bodyTextHead": "Terraza A Terraza Nueva carpa 11 plantas Exterior Directo Son las plantas que están fuera del invernadero 2 dispositivos Ver detalle Inactiva Invernadero 0 dispositivos Ver detalle Inicio Salas Ciclos Automatizaciones Más Asistente de Cultivo",
+   "overflowers": []
+  },
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ },
+ "homeCards": {
+  "cards": [
+   {
+    "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+    "text": "Vegetativo · vege-temp-hum Sensor sin respuesta",
+    "colored": [],
+    "tabular": 1
+   },
+   {
+    "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+    "text": "Secado · Termohigometro Indoor Sensor sin respuesta",
+    "colored": [],
+    "tabular": 1
+   },
+   {
+    "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+    "text": "Vegetativo Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 0",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+    "text": "Secado Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 2 Curado",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+    "text": "Floración Sala de Cultivo Temp. — Humedad — VPD — 4 Pre-flora",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+    "text": "Exterior Directo Terraza Temp. — Humedad — VPD — 11 Floración",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+    "text": "Invernadero Terraza Inactiva Temp. — Humedad — VPD — 0",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+    "text": "Germinadora Sala de Cultivo Temp. — Humedad — VPD — 0",
+    "colored": [],
+    "tabular": 4
+   }
+  ],
+  "alerts": null,
+  "alertsHead": null,
+  "hasActualizar": true,
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ },
+ "mas_home": {
+  "from": "/",
+  "tapMs": 185,
+  "sheetLinks": [
+   "Dispositivos",
+   "Notificaciones",
+   "Usuarios",
+   "Cerrar sesión",
+   "Close"
+  ],
+  "landed": "https://cultivo.ramsesvii.com/artefactos",
+  "forced": false,
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ },
+ "mas_seguimientos": {
+  "from": "/seguimientos",
+  "tapMs": 107,
+  "sheetLinks": [
+   "Dispositivos",
+   "Notificaciones",
+   "Usuarios",
+   "Cerrar sesión",
+   "Close"
+  ],
+  "landed": "https://cultivo.ramsesvii.com/artefactos",
+  "forced": false,
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ },
+ "mas_admin-usuarios": {
+  "from": "/admin/usuarios",
+  "tapMs": 224,
+  "sheetLinks": [
+   "Dispositivos",
+   "Notificaciones",
+   "Usuarios",
+   "Cerrar sesión",
+   "Close"
+  ],
+  "landed": "https://cultivo.ramsesvii.com/artefactos",
+  "forced": false,
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ },
+ "tabBarTaps": {
+  "taps": [
+   {
+    "label": "Inicio",
+    "href": "/",
+    "ok": true,
+    "url": "https://cultivo.ramsesvii.com/"
+   },
+   {
+    "label": "Salas",
+    "href": "/sala",
+    "ok": true,
+    "url": "https://cultivo.ramsesvii.com/sala"
+   },
+   {
+    "label": "Ciclos",
+    "href": "/seguimientos",
+    "ok": true,
+    "url": "https://cultivo.ramsesvii.com/seguimientos"
+   },
+   {
+    "label": "Automatizaciones",
+    "href": "/automatizaciones",
+    "ok": true,
+    "url": "https://cultivo.ramsesvii.com/automatizaciones"
+   }
+  ],
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local",
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local",
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local",
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local",
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ }
+}
+
+## desktop  login -> https://cultivo.ramsesvii.com/ errors=1
+home               sw=1440/1440 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Inicio"] rh=["Inicio"] zeros=[] emojis=0 tab=-
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+sala               sw=1440/1440 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Sala de Cultivo"] rh=["Sala de Cultivo"] zeros=[] emojis=0 tab=-
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+seguimientos       sw=1440/1440 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Ciclos"] rh=["Ciclos"] zeros=[] emojis=0 tab=-
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+automatizaciones   sw=1440/1440 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Automatizaciones"] rh=["Automatizaciones"] zeros=[] emojis=0 tab=-
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+artefactos         sw=1440/1440 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Dispositivos"] rh=["Dispositivos"] zeros=[] emojis=0 tab=-
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+notificaciones     sw=1440/1440 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Notificaciones"] rh=["Notificaciones"] zeros=[] emojis=20 tab=-
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+admin-usuarios     sw=1440/1440 err=1 grad=0 blur=0 sel=0 chk=0 h1=["Usuarios"] rh=["Usuarios"] zeros=[] emojis=0 tab=-
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+carpa              sw=1440/1440 err=1 grad=0 blur=1 sel=0 chk=0 h1=["Vegetativo"] rh=["Vegetativo"] zeros=[] emojis=0 tab=-
+   errors: [
+  'warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
+]
+   blur: [ 'div..relative.overflow-hidden.bg-zinc-800/50' ]
+   samples: [{"t":300,"url":"/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","headerTitle":"Carpa","back":true,"h1":["Carpa"],"mainHead":"Salas Carpa Carpa Cargando sección..."},{"t":1000,"url":"/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","headerTitle":"Carpa","back":true,"h1":["Carpa"],"mainHead":"Salas Carpa Carpa Cargando sección..."},{"t":2500,"url":"/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","headerTitle":"Vegetativo","back":true,"h1":["Vegetativo"],"mainHead":"Salas Sala de Cultivo Vegetativo Vegetativo 100x100x200 Layout Activa Actualizar 2 dispositivos 0 plantas 1 sensor 1 con"}]
+extra: {
+ "salaSelector": {
+  "before": "https://cultivo.ramsesvii.com/sala",
+  "beforeText": "Sala de Cultivo",
+  "options": 2,
+  "labels": [
+   "Sala de Cultivo",
+   "Terraza"
+  ],
+  "after": "https://cultivo.ramsesvii.com/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133",
+  "afterText": "Terraza",
+  "afterDom": {
+   "gradients": [],
+   "blur": [],
+   "scrollWidth": 1440,
+   "innerWidth": 1440,
+   "bodyScroll": 1440,
+   "zeros": [],
+   "dashes": 0,
+   "nativeSelects": 0,
+   "nativeCheckbox": 0,
+   "title": "Cultivo Manager - Administración de Cultivo Casero",
+   "h1": [
+    "Terraza"
+   ],
+   "roleHeadings": [
+    "Terraza"
+   ],
+   "dangerWarnText": [],
+   "emojis": 0,
+   "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios A Administrador PREMIUM Colapsar Salas Terraza Terraza Terraza Nueva carpa 11 plantas Exterior Directo Son las plantas que están fuera del invernadero 2 dispositivos Ver detalle Inactiva Invernadero 0 dispositivos Ver detalle Asistente de Cultivo",
+   "overflowers": []
+  },
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ },
+ "homeCards": {
+  "cards": [
+   {
+    "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+    "text": "Vegetativo · vege-temp-hum Sensor sin respuesta",
+    "colored": [],
+    "tabular": 1
+   },
+   {
+    "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+    "text": "Secado · Termohigometro Indoor Sensor sin respuesta",
+    "colored": [],
+    "tabular": 1
+   },
+   {
+    "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+    "text": "Vegetativo Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 0",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+    "text": "Secado Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 2 Curado",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+    "text": "Floración Sala de Cultivo Temp. — Humedad — VPD — 4 Pre-flora",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+    "text": "Exterior Directo Terraza Temp. — Humedad — VPD — 11 Floración",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+    "text": "Invernadero Terraza Inactiva Temp. — Humedad — VPD — 0",
+    "colored": [],
+    "tabular": 4
+   },
+   {
+    "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+    "text": "Germinadora Sala de Cultivo Temp. — Humedad — VPD — 0",
+    "colored": [],
+    "tabular": 4
+   }
+  ],
+  "alerts": null,
+  "alertsHead": null,
+  "hasActualizar": true,
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ },
+ "sidebar": {
+  "sidebarLinks": [
+   "Inicio -> /",
+   "Salas -> /sala",
+   "Ciclos -> /seguimientos",
+   "Automatizaciones -> /automatizaciones",
+   "Dispositivos -> /artefactos",
+   "Notificaciones -> /notificaciones",
+   "Usuarios -> /admin/usuarios"
+  ],
+  "toggleLabel": "Menú de usuario",
+  "asideWidthCollapsed": 240,
+  "localStorage": null,
+  "asideWidthAfterReload": 240,
+  "asideWidthExpanded": 240,
+  "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside button').last()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-label=\"Colapsar el menú\" class=\"mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-fg-faint transition-colors hover:bg-surface-2 hover:text-fg\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m  ",
+  "errors": [
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local",
+   "warning: Supabase credentials not configured. Auth features will not work. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
+  ]
+ }
+}

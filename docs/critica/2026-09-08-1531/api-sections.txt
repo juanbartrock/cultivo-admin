@@ -1,0 +1,6 @@
+f1ed3032-cf56-4487-90a3-0d79dfd3f9b3 Vegetativo effectiveStage= DEFAULT [('vege-temp-hum', True), ('vege-led-150', False)]
+ba2f7493-8f0b-45f1-99b6-5427d014de75 Secado effectiveStage= CURADO [('Termohigometro Indoor', True)]
+766abd7c-9ab5-40d7-9f60-e62ff942f6b1 Floración effectiveStage= PRE_FLORA [('Tapo Camara', True), ('flora-humidificador', True)]
+a0ac06b9-a995-4d8a-b1e0-9b222db01635 Exterior Directo effectiveStage= FLORACION [('Operación Tanque Riego', False), ('Switch Tanque Riego', False)]
+73eb465b-9d1c-4fe9-bc59-84961372c4c5 Invernadero effectiveStage= DEFAULT []
+b1716b3a-fb55-4131-aa6d-6efe342b2dff Germinadora effectiveStage= DEFAULT []

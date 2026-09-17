@@ -1,0 +1,29 @@
+
+> cultivo-frontend@1.0.0 qa:nav
+> playwright test -c playwright.qa.config.ts
+
+
+Running 19 tests using 2 workers
+
+  ✓   1 [setup] › tests/qa-nav.setup.ts:10:6 › login por formulario (2.5s)
+  ✓   3 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: artefactos (4.2s)
+  ✓   2 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: home (6.0s)
+  ✓   4 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: notificaciones (3.9s)
+  ✓   6 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: admin de usuarios (2.0s)
+  ✓   7 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: admin de rangos (1.9s)
+  ✓   5 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: sala (6.5s)
+  ✓   9 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: home (5.3s)
+  ✓   8 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: primera carpa (11.2s)
+  ✓  10 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: sala (5.1s)
+  ✓  11 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: ciclos (2.2s)
+  ✓  13 [desktop] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: automatizaciones (2.8s)
+  ✓  14 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: artefactos (3.7s)
+  ✓  12 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: primera carpa (10.7s)
+  ✓  15 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: notificaciones (3.3s)
+  ✓  16 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: ciclos (2.5s)
+  ✓  17 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: admin de usuarios (2.0s)
+  ✓  18 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: automatizaciones (2.9s)
+  ✓  19 [mobile] › tests/qa-nav.spec.ts:120:9 › QA de navegación › recorrido: admin de rangos (2.3s)
+
+  19 passed (48.4s)
+exit=0

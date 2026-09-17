@@ -1,0 +1,9 @@
+## sin token
+GET /readings-settings -> 401
+PUT /readings-settings -> 401
+GET /devices -> 401
+## con token admin
+GET /readings-settings -> {"id":"singleton","sensorsEnabled":false,"createdAt":"2026-09-08T17:43:02.833Z","updatedAt":"2026-09-08T17:53:23.050Z"} [200]
+PUT /readings-settings string -> {"message":["sensorsEnabled tiene que ser booleano, llegó string"],"error":"Bad Request","statusCode":400} [400]
+PUT /readings-settings extra -> {"message":["property x should not exist"],"error":"Bad Request","statusCode":400} [400]
+PUT /readings-settings vacío -> {"message":["sensorsEnabled must be a boolean value"],"error":"Bad Request","statusCode":400} [400]

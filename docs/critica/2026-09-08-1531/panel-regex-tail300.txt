@@ -1,0 +1,5 @@
+cultivo-backend: 0
+cultivo-frontend: 0
+sonoff-ewelink-service: 0
+tuya-service: 0
+tapo-service: 0

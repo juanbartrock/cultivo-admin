@@ -1,0 +1,24 @@
+const { chromium } = require('playwright');
+const BASE = 'https://cultivo.ramsesvii.com';
+const USER = process.env.CULTIVO_ADMIN_USER, PASS = process.env.CULTIVO_ADMIN_PASSWORD;
+(async () => {
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const p = await ctx.newPage(); const log = []; let t0 = Date.now();
+  p.on('request', (r) => { if (r.url().includes('/api/')) log.push({ t: Date.now() - t0, req: r.method() + ' ' + r.url().replace(BASE, ''), auth: !!r.headers()['authorization'] }); });
+  p.on('response', (r) => { if (r.url().includes('/api/') && r.status() >= 400) log.push({ t: Date.now() - t0, res: r.status() + ' ' + r.url().replace(BASE, '') }); });
+  p.on('console', (m) => { if (m.type() === 'error') log.push({ t: Date.now() - t0, console: m.text().slice(0, 120) }); });
+  await p.goto(BASE + '/login', { waitUntil: 'domcontentloaded' });
+  await p.getByLabel('Email o usuario').fill(USER); await p.getByLabel('Contraseña').fill(PASS);
+  await p.getByRole('button', { name: 'Iniciar sesión' }).click(); await p.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 45000 });
+  await p.waitForLoadState('networkidle').catch(() => {}); await p.waitForTimeout(3000);
+  log.length = 0; t0 = Date.now(); log.push({ t: 0, mark: 'estado estable en /, click en menú de usuario' });
+  await p.getByRole('button', { name: 'Menú de usuario' }).click(); await p.waitForTimeout(400);
+  log.push({ t: Date.now() - t0, mark: 'click Cerrar sesión' });
+  await p.getByRole('menuitem', { name: /Cerrar sesión/ }).click();
+  await p.waitForURL('**/login**', { timeout: 15000 }).catch(() => {});
+  log.push({ t: Date.now() - t0, mark: 'en ' + p.url() });
+  await p.waitForTimeout(4000);
+  console.log(JSON.stringify(log, null, 1));
+  await browser.close();
+})();

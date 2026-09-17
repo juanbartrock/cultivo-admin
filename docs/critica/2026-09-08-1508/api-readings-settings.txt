@@ -1,0 +1,19 @@
+== GET /readings-settings sin token
+401
+== PUT /readings-settings sin token
+401
+== GET /devices/<uuid>/status sin token
+401
+== GET /readings-settings admin
+{"id":"singleton","sensorsEnabled":false,"createdAt":"2026-09-08T17:43:02.833Z","updatedAt":"2026-09-08T17:53:23.050Z"}
+== PUT /readings-settings admin con string "false" (esperado 400; igual al estado actual)
+{"message":["sensorsEnabled tiene que ser booleano, llegó string"],"error":"Bad Request","statusCode":400}
+HTTP 400
+== PUT /readings-settings admin con campo extra (esperado 400)
+{"message":["property otro should not exist"],"error":"Bad Request","statusCode":400}
+HTTP 400
+== PUT /readings-settings admin body vacío (esperado 400)
+{"message":["sensorsEnabled must be a boolean value"],"error":"Bad Request","statusCode":400}
+HTTP 400
+== GET /readings-settings admin (post)
+{"id":"singleton","sensorsEnabled":false,"createdAt":"2026-09-08T17:43:02.833Z","updatedAt":"2026-09-08T17:53:23.050Z"}

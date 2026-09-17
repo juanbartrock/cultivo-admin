@@ -1,0 +1,14 @@
+== Termohigometro Indoor (c04963d5-c091-426f-9618-4e61ac8c015a)
+{"online": false, "readingsPaused": true} [200]
+== Tapo Camara (932fa966-5a4c-4a56-bca4-3d6dcbd2ea51)
+{"online": true, "success": true, "connected": true, "deviceId": "8021B1177878AFA6DB793E8BE9B3EA2B22CAA09C", "name": "M\ufffdh\ufffd-t\ufffd\ufffd\ufffd\u02b6", "model": "C100", "type": "SMART.IPCAMERA", "mac": "6083E73ECACD", "firmware": "1.4.4 Build 260303 Rel.5638n", "connectionType": "cloud", "snapshotsDir": "/app/snapshots", "streamInfo": {"streamUrl": "rtsp://192.168.68.64:554/stream1", "snapshotUrl": "http://tapo-service:3000/snapshots", "quality": "high"}, "tapoServiceUrl": "http://localhost:3003"} [200]
+== vege-led-150 (cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a)
+{"online": false, "readingsPaused": true} [200]
+== vege-temp-hum (ac4df493-f610-4106-81f2-020bd3cac85a)
+{"online": false, "readingsPaused": true} [200]
+== flora-humidificador (402d593c-953b-493a-8c0a-b1d6c3f73887)
+{"online": true, "message": "Este dispositivo virtual no tiene un controlador asignado"} [200]
+== Operación Tanque Riego (9f253b4a-956f-46f3-b62a-0daff1a32e21)
+{"online": false, "readingsPaused": true} [200]
+== Switch Tanque Riego (8b43633a-a49f-4634-823d-f49ff1492b3f)
+{"online": false, "readingsPaused": true} [200]

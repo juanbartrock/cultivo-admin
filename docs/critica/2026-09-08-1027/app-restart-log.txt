@@ -1,0 +1,6 @@
+2026-09-05 22:31:43 | cultivo-frontend | deploy@/opt/apps/cultivo-admin/frontend | build=1 | OK | running, puerto 3001
+2026-09-08 08:32:07 | cultivo-frontend | deploy@/opt/apps/cultivo-admin | build=1 | OK | running, puerto 3001
+2026-09-08 08:41:13 | cultivo-frontend | deploy@/opt/apps/cultivo-admin | build=1 | OK | running, puerto 3001
+2026-09-08 09:23:23 | cultivo-frontend | deploy@/opt/apps/cultivo-admin | build=1 | OK | running, puerto 3001
+2026-09-08 10:15:54 | cultivo-backend | deploy@/opt/apps/cultivo-admin | build=1 | OK | running, puerto 4000
+2026-09-08 10:17:57 | cultivo-frontend | deploy@/opt/apps/cultivo-admin | build=1 | OK | running, puerto 3001

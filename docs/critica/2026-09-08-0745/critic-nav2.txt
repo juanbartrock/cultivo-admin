@@ -1,0 +1,154 @@
+{
+ "desktopSidebar": {
+  "errors": [],
+  "asideButtons": [
+   {
+    "label": "Menú de usuario",
+    "text": "AAdministradorPREMIUM"
+   },
+   {
+    "label": "Colapsar el menú",
+    "text": "Colapsar"
+   }
+  ],
+  "toggleLabel": "Colapsar el menú",
+  "collapsedWidth": 64,
+  "ls": "true",
+  "collapsedAfterReload": 64,
+  "expandedWidth": 240,
+  "userMenu": [
+   "Usuarios",
+   "Cerrar sesión"
+  ]
+ },
+ "automatizaciones": {
+  "errors": [],
+  "samples": [
+   {
+    "t": 1000,
+    "text": "Cargando automatizaciones...",
+    "spinner": true
+   },
+   {
+    "t": 3000,
+    "text": "Sin automatizaciones Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales. Crear Automatización",
+    "spinner": false
+   },
+   {
+    "t": 6000,
+    "text": "Sin automatizaciones Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales. Crear Automatización",
+    "spinner": false
+   },
+   {
+    "t": 10000,
+    "text": "Sin automatizaciones Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales. Crear Automatización",
+    "spinner": false
+   }
+  ],
+  "pending": [
+   "/api/auth/me 157ms",
+   "/api/automations 463ms",
+   "/api/sections 758ms",
+   "/api/rooms 752ms",
+   "/api/sections 1502ms",
+   "/api/notifications/unread-count 463ms"
+  ]
+ },
+ "seguimientos": {
+  "selects": [
+   {
+    "opts": [
+     "Activo",
+     "Completado",
+     "Curado"
+    ],
+    "visible": true,
+    "ctx": "Diciembre 2025 Activo Completado Curado Iniciado el 7/12/2025 • 274 días"
+   },
+   {
+    "opts": [
+     "Todas las plantas",
+     "099",
+     "098",
+     "043",
+     "062"
+    ],
+    "visible": true,
+    "ctx": "Eventos Recientes Todas las plantas 099 098 043 062 046 049"
+   }
+  ],
+  "zeroCtx": [],
+  "combos": [
+   "Todos"
+  ]
+ },
+ "carpaTitle": {
+  "samples": [
+   {
+    "t": 300,
+    "header": {
+     "title": "Salas",
+     "back": false,
+     "main": "Cargando sección..."
+    }
+   },
+   {
+    "t": 1000,
+    "header": {
+     "title": "Salas",
+     "back": false,
+     "main": "Cargando sección..."
+    }
+   },
+   {
+    "t": 2500,
+    "header": {
+     "title": "Vegetativo",
+     "back": true,
+     "main": "Layout Activa Actualizar Vegetativo 100x100x200 2 dispositivos 0 plantas 1 senso"
+    }
+   },
+   {
+    "t": 5000,
+    "header": {
+     "title": "Vegetativo",
+     "back": true,
+     "main": "Layout Activa Actualizar Vegetativo 100x100x200 2 dispositivos 0 plantas 1 senso"
+    }
+   }
+  ],
+  "errors": []
+ },
+ "mas_/seguimientos": {
+  "from": "/seguimientos",
+  "errors": [],
+  "geom": {
+   "navTop": 957,
+   "navBottom": 1013,
+   "innerH": 1013,
+   "innerW": 469,
+   "vvW": 390,
+   "vvH": 844,
+   "scale": 1,
+   "scrollW": 469
+  },
+  "tap": "FALLÓ: TimeoutError: locator.tap: Timeout 6000ms exceeded. | Call log: | \u001b[2m  - waiting for getByRole('button', { name: 'Más' })\u001b[22m | \u001b[2m    - locator resolved to <button type=\"button\" class=\"relative flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] transition-colors text-fg-muted\">…</button>\u001b[22m | \u001b[2m  - attempting tap action\u001b[22m | \u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m",
+  "sheetOpenForced": true
+ },
+ "mas_/admin/usuarios": {
+  "from": "/admin/usuarios",
+  "errors": [],
+  "geom": {
+   "navTop": 1050,
+   "navBottom": 1106,
+   "innerH": 1106,
+   "innerW": 511,
+   "vvW": 390,
+   "vvH": 844,
+   "scale": 1,
+   "scrollW": 511
+  },
+  "tap": "FALLÓ: TimeoutError: locator.tap: Timeout 6000ms exceeded. | Call log: | \u001b[2m  - waiting for getByRole('button', { name: 'Más' })\u001b[22m | \u001b[2m    - locator resolved to <button type=\"button\" class=\"relative flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] transition-colors text-accent\">…</button>\u001b[22m | \u001b[2m  - attempting tap action\u001b[22m | \u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m",
+  "sheetOpenForced": true
+ }
+}

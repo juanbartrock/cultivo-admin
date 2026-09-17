@@ -1,0 +1,750 @@
+[
+  {
+    "viewport": "desktop",
+    "route": "/",
+    "ms": 43781,
+    "errors": [],
+    "statusReqs": [
+      "932fa966-5a4c-4a56-bca4-3d6dcbd2ea51",
+      "402d593c-953b-493a-8c0a-b1d6c3f73887"
+    ],
+    "writes": [],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "textos": {
+      "Lecturas desactivadas": 3,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 1,
+      "Desactivadas": 1,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [
+      {
+        "label": "Lecturas de sensores",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      }
+    ],
+    "dashes": 18,
+    "zeros": 0
+  },
+  {
+    "viewport": "desktop",
+    "route": "/sala",
+    "ms": 7205,
+    "errors": [],
+    "statusReqs": [
+      "932fa966-5a4c-4a56-bca4-3d6dcbd2ea51",
+      "402d593c-953b-493a-8c0a-b1d6c3f73887"
+    ],
+    "writes": [],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "textos": {
+      "Lecturas desactivadas": 2,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 6,
+    "zeros": 0
+  },
+  {
+    "viewport": "desktop",
+    "route": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+    "ms": 42729,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [
+      "POST https://cultivo.ramsesvii.com/api/devices/cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a/control"
+    ],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "textos": {
+      "Lecturas desactivadas": 1,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 1,
+      "General off": 1,
+      "Todo en rango": 0,
+      "Estado desconocido": 1,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 1,
+      "Apagar": 1,
+      "Sin datos del sensor": 0
+    },
+    "switches": [
+      {
+        "label": "Lecturas de vege-temp-hum",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      }
+    ],
+    "dashes": 4,
+    "zeros": 0,
+    "encenderDisabled": false,
+    "controlReqs": [
+      "POST /api/devices/cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a/control {\"action\":\"on\"}"
+    ],
+    "sensorRow": {
+      "vege-temp-hum": [
+        {
+          "rects": 1,
+          "left": 292,
+          "right": 401,
+          "top": 12,
+          "h": 20
+        }
+      ],
+      "Lecturas desactivadas": [
+        {
+          "rects": 1,
+          "left": 413,
+          "right": 553,
+          "top": 9,
+          "h": 26
+        }
+      ],
+      "Rangos: Por defecto": [
+        {
+          "rects": 1,
+          "left": 930,
+          "right": 1068,
+          "top": -351,
+          "h": 20
+        },
+        {
+          "rects": 1,
+          "left": 565,
+          "right": 689,
+          "top": 11,
+          "h": 22
+        }
+      ],
+      "Lecturas": [],
+      "Historial pausado": [
+        {
+          "rects": 1,
+          "left": 927,
+          "right": 1023,
+          "top": 14,
+          "h": 16
+        }
+      ],
+      "Historial OFF": []
+    }
+  },
+  {
+    "viewport": "desktop",
+    "route": "/seguimientos",
+    "ms": 4866,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "desktop",
+    "route": "/automatizaciones",
+    "ms": 4900,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "desktop",
+    "route": "/artefactos",
+    "ms": 5335,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 1,
+      "Desactivadas": 1,
+      "Lecturas off": 0,
+      "General off": 2,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [
+      {
+        "label": "Lecturas de sensores",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de Termohigometro Indoor",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de Tapo Camara",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de vege-led-150",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de vege-temp-hum",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de flora-humidificador",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de Operación Tanque Riego",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de Switch Tanque Riego",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      }
+    ],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "desktop",
+    "route": "/notificaciones",
+    "ms": 5518,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "desktop",
+    "route": "/admin/usuarios",
+    "ms": 4653,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 1440,
+    "innerWidth": 1440,
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "mobile",
+    "route": "/",
+    "ms": 43926,
+    "errors": [],
+    "statusReqs": [
+      "932fa966-5a4c-4a56-bca4-3d6dcbd2ea51",
+      "402d593c-953b-493a-8c0a-b1d6c3f73887"
+    ],
+    "writes": [],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tabBar": {
+      "x": 0,
+      "y": 788,
+      "width": 390,
+      "height": 56
+    },
+    "tabBarTopElement": "dentro de nav",
+    "textos": {
+      "Lecturas desactivadas": 3,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 1,
+      "Desactivadas": 1,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [
+      {
+        "label": "Lecturas de sensores",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      }
+    ],
+    "dashes": 18,
+    "zeros": 0
+  },
+  {
+    "viewport": "mobile",
+    "route": "/sala",
+    "ms": 8070,
+    "errors": [],
+    "statusReqs": [
+      "932fa966-5a4c-4a56-bca4-3d6dcbd2ea51",
+      "402d593c-953b-493a-8c0a-b1d6c3f73887"
+    ],
+    "writes": [],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tabBar": {
+      "x": 0,
+      "y": 788,
+      "width": 390,
+      "height": 56
+    },
+    "tabBarTopElement": "dentro de nav",
+    "textos": {
+      "Lecturas desactivadas": 2,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 6,
+    "zeros": 0
+  },
+  {
+    "viewport": "mobile",
+    "route": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+    "ms": 44016,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [
+      "POST https://cultivo.ramsesvii.com/api/devices/cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a/control"
+    ],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tabBar": {
+      "x": 0,
+      "y": 788,
+      "width": 390,
+      "height": 56
+    },
+    "tabBarTopElement": "dentro de nav",
+    "textos": {
+      "Lecturas desactivadas": 1,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 1,
+      "General off": 1,
+      "Todo en rango": 0,
+      "Estado desconocido": 1,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 1,
+      "Apagar": 1,
+      "Sin datos del sensor": 0
+    },
+    "switches": [
+      {
+        "label": "Lecturas de vege-temp-hum",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      }
+    ],
+    "dashes": 4,
+    "zeros": 0,
+    "encenderDisabled": false,
+    "controlReqs": [
+      "POST /api/devices/cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a/control {\"action\":\"on\"}"
+    ],
+    "sensorRow": {
+      "vege-temp-hum": [
+        {
+          "rects": 1,
+          "left": 44,
+          "right": 153,
+          "top": -456,
+          "h": 20
+        }
+      ],
+      "Lecturas desactivadas": [
+        {
+          "rects": 1,
+          "left": 16,
+          "right": 156,
+          "top": -428,
+          "h": 26
+        }
+      ],
+      "Rangos: Por defecto": [
+        {
+          "rects": 1,
+          "left": 78,
+          "right": 216,
+          "top": -632,
+          "h": 20
+        },
+        {
+          "rects": 1,
+          "left": 164,
+          "right": 288,
+          "top": -426,
+          "h": 22
+        }
+      ],
+      "Lecturas": [],
+      "Historial pausado": [
+        {
+          "rects": 1,
+          "left": 238,
+          "right": 334,
+          "top": -385,
+          "h": 16
+        }
+      ],
+      "Historial OFF": []
+    }
+  },
+  {
+    "viewport": "mobile",
+    "route": "/seguimientos",
+    "ms": 5533,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tabBar": {
+      "x": 0,
+      "y": 788,
+      "width": 390,
+      "height": 56
+    },
+    "tabBarTopElement": "dentro de nav",
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "mobile",
+    "route": "/automatizaciones",
+    "ms": 5321,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tabBar": {
+      "x": 0,
+      "y": 788,
+      "width": 390,
+      "height": 56
+    },
+    "tabBarTopElement": "dentro de nav",
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "mobile",
+    "route": "/artefactos",
+    "ms": 6257,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tabBar": {
+      "x": 0,
+      "y": 788,
+      "width": 390,
+      "height": 56
+    },
+    "tabBarTopElement": "dentro de nav",
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 1,
+      "Desactivadas": 1,
+      "Lecturas off": 0,
+      "General off": 2,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [
+      {
+        "label": "Lecturas de sensores",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de Termohigometro Indoor",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de Tapo Camara",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de vege-led-150",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de vege-temp-hum",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de flora-humidificador",
+        "checked": "true",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de Operación Tanque Riego",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      },
+      {
+        "label": "Lecturas de Switch Tanque Riego",
+        "checked": "false",
+        "disabled": false,
+        "visible": true
+      }
+    ],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "mobile",
+    "route": "/notificaciones",
+    "ms": 5565,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tabBar": {
+      "x": 0,
+      "y": 788,
+      "width": 390,
+      "height": 56
+    },
+    "tabBarTopElement": "dentro de nav",
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 0,
+    "zeros": 0
+  },
+  {
+    "viewport": "mobile",
+    "route": "/admin/usuarios",
+    "ms": 5031,
+    "errors": [],
+    "statusReqs": [],
+    "writes": [],
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "tabBar": {
+      "x": 0,
+      "y": 788,
+      "width": 390,
+      "height": 56
+    },
+    "tabBarTopElement": "dentro de nav",
+    "textos": {
+      "Lecturas desactivadas": 0,
+      "Sensor sin respuesta": 0,
+      "Lecturas de sensores": 0,
+      "Desactivadas": 0,
+      "Lecturas off": 0,
+      "General off": 0,
+      "Todo en rango": 0,
+      "Estado desconocido": 0,
+      "Apagado": 0,
+      "Encendido": 0,
+      "Encender": 0,
+      "Apagar": 0,
+      "Sin datos del sensor": 0
+    },
+    "switches": [],
+    "dashes": 0,
+    "zeros": 0
+  }
+]

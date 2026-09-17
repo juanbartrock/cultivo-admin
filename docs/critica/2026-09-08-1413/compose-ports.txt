@@ -1,0 +1,7 @@
+9:    ports:
+10:      - "127.0.0.1:4000:4000"
+28:      - "host.docker.internal:host-gateway"
+63:      - "host.docker.internal:host-gateway"
+76:    ports:
+77:      - "127.0.0.1:3001:3000"
+142:      - "host.docker.internal:host-gateway"

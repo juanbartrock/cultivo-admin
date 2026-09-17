@@ -1,0 +1,8 @@
+/api/sections -> 401
+/api/cycles -> 401
+/api/events -> 401
+/api/notifications/unread-count -> 401
+/api/rooms -> 401
+/api/users -> 401
+/api/auth/me -> 401
+/api/devices -> 401

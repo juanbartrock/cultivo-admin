@@ -1,0 +1,140 @@
+{
+ "desktop-1": {
+  "summary": {
+   "reqSinAuth": 0,
+   "reqTotal": 0,
+   "http4xx": 0,
+   "consola": 0,
+   "tokensRestantes": []
+  },
+  "log": [
+   {
+    "t": 0,
+    "mark": "estable en https://cultivo.ramsesvii.com/"
+   },
+   {
+    "t": 692,
+    "mark": "click Cerrar sesión"
+   },
+   {
+    "t": 984,
+    "mark": "en https://cultivo.ramsesvii.com/login"
+   }
+  ]
+ },
+ "desktop-2": {
+  "summary": {
+   "reqSinAuth": 0,
+   "reqTotal": 0,
+   "http4xx": 0,
+   "consola": 0,
+   "tokensRestantes": []
+  },
+  "log": [
+   {
+    "t": 0,
+    "mark": "estable en https://cultivo.ramsesvii.com/"
+   },
+   {
+    "t": 507,
+    "mark": "click Cerrar sesión"
+   },
+   {
+    "t": 574,
+    "mark": "en https://cultivo.ramsesvii.com/login"
+   }
+  ]
+ },
+ "desktop-3": {
+  "summary": {
+   "reqSinAuth": 0,
+   "reqTotal": 0,
+   "http4xx": 0,
+   "consola": 0,
+   "tokensRestantes": []
+  },
+  "log": [
+   {
+    "t": 0,
+    "mark": "estable en https://cultivo.ramsesvii.com/"
+   },
+   {
+    "t": 524,
+    "mark": "click Cerrar sesión"
+   },
+   {
+    "t": 624,
+    "mark": "en https://cultivo.ramsesvii.com/login"
+   }
+  ]
+ },
+ "movil-sheet-1": {
+  "summary": {
+   "reqSinAuth": 0,
+   "reqTotal": 0,
+   "http4xx": 0,
+   "consola": 0,
+   "tokensRestantes": []
+  },
+  "log": [
+   {
+    "t": 0,
+    "mark": "estable en https://cultivo.ramsesvii.com/"
+   },
+   {
+    "t": 612,
+    "mark": "tap Cerrar sesión (sheet)"
+   },
+   {
+    "t": 725,
+    "mark": "en https://cultivo.ramsesvii.com/login"
+   }
+  ]
+ },
+ "movil-sheet-2": {
+  "summary": {
+   "reqSinAuth": 0,
+   "reqTotal": 0,
+   "http4xx": 0,
+   "consola": 0,
+   "tokensRestantes": []
+  },
+  "log": [
+   {
+    "t": 0,
+    "mark": "estable en https://cultivo.ramsesvii.com/"
+   },
+   {
+    "t": 593,
+    "mark": "tap Cerrar sesión (sheet)"
+   },
+   {
+    "t": 733,
+    "mark": "en https://cultivo.ramsesvii.com/login"
+   }
+  ]
+ },
+ "desktop-desde-sala": {
+  "summary": {
+   "reqSinAuth": 0,
+   "reqTotal": 0,
+   "http4xx": 0,
+   "consola": 0,
+   "tokensRestantes": []
+  },
+  "log": [
+   {
+    "t": 0,
+    "mark": "estable en https://cultivo.ramsesvii.com/sala"
+   },
+   {
+    "t": 593,
+    "mark": "click Cerrar sesión"
+   },
+   {
+    "t": 700,
+    "mark": "en https://cultivo.ramsesvii.com/login"
+   }
+  ]
+ }
+}

@@ -1,0 +1,7 @@
+desktop-1 {"reqSinAuth":0,"reqTotal":0,"http4xx":0,"consola":0,"tokensRestantes":[]}
+desktop-2 {"reqSinAuth":0,"reqTotal":0,"http4xx":0,"consola":0,"tokensRestantes":[]}
+desktop-3 {"reqSinAuth":0,"reqTotal":0,"http4xx":0,"consola":0,"tokensRestantes":[]}
+movil-sheet-1 {"reqSinAuth":0,"reqTotal":0,"http4xx":0,"consola":0,"tokensRestantes":[]}
+movil-sheet-2 {"reqSinAuth":0,"reqTotal":0,"http4xx":0,"consola":0,"tokensRestantes":[]}
+desktop-desde-sala {"reqSinAuth":0,"reqTotal":0,"http4xx":0,"consola":0,"tokensRestantes":[]}
+exit critic-logout: 0

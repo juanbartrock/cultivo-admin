@@ -1,0 +1,13 @@
+PASS src/modules/stage-ranges/effective-stage.spec.ts (5.309 s)
+  effectiveStage
+    ✓ sin plantas usa la fila DEFAULT (2 ms)
+    ✓ toma la etapa más frecuente (1 ms)
+    ✓ ante empate se queda con la más avanzada (1 ms)
+    ✓ una sola planta manda su etapa
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        5.633 s
+Ran all test suites matching /src\/modules\/stage-ranges/i.
+exit=0

@@ -1,0 +1,15 @@
+[movil] errors=1
+  cultivo {"name":"Vegetativo","rangos":"Rangos: Por defecto","offline":true,"readings":[{"v":"—","tone":"text-sm text-fg-faint"},{"v":"—","tone":"text-sm text-fg-faint"},{"v":"—","tone":"text-sm text-fg-faint"}],"panelText":"Vegetativo 100x100x200 2 dispositivos Ver detalle Sensor sin respuesta Rangos: Por defecto — — —"}
+  cultivo {"name":"Secado","rangos":"Rangos: Curado —","offline":true,"readings":[{"v":"—","tone":"text-sm text-fg-faint"},{"v":"—","tone":"text-sm text-fg-faint"},{"v":"—","tone":"text-sm text-fg-faint"}],"panelText":"2 plantas Secado 80x80x160 Para secado y clones. 1 dispositivo Ver detalle Sensor sin respuesta Rangos: Curado — — —"}
+  cultivo {"name":"Floración","rangos":null,"offline":false,"readings":[],"panelText":"4 plantas Floración 120x120x200 2 dispositivos Ver detalle"}
+  cultivo {"name":"Germinadora","rangos":null,"offline":false,"readings":[],"panelText":"Germinadora 0 dispositivos Ver detalle"}
+  terraza {"name":"Exterior Directo","rangos":null,"offline":false,"readings":[],"panelText":"11 plantas Exterior Directo Son las plantas que están fuera del invernadero 2 dispositivos Ver detalle"}
+  terraza {"name":"Invernadero","rangos":null,"offline":false,"readings":[],"panelText":"Inactiva Invernadero 0 dispositivos Ver detalle"}
+[desktop] errors=1
+  cultivo {"name":"Vegetativo","rangos":"Rangos: Por defecto","offline":true,"readings":[{"v":"—","tone":"text-sm text-fg-faint"},{"v":"—","tone":"text-sm text-fg-faint"},{"v":"—","tone":"text-sm text-fg-faint"}],"panelText":"Vegetativo 100x100x200 2 dispositivos Ver detalle Sensor sin respuesta Rangos: Por defecto — — —"}
+  cultivo {"name":"Secado","rangos":"Rangos: Curado —","offline":true,"readings":[{"v":"—","tone":"text-sm text-fg-faint"},{"v":"—","tone":"text-sm text-fg-faint"},{"v":"—","tone":"text-sm text-fg-faint"}],"panelText":"2 plantas Secado 80x80x160 Para secado y clones. 1 dispositivo Ver detalle Sensor sin respuesta Rangos: Curado — — —"}
+  cultivo {"name":"Floración","rangos":null,"offline":false,"readings":[],"panelText":"4 plantas Floración 120x120x200 2 dispositivos Ver detalle"}
+  cultivo {"name":"Germinadora","rangos":null,"offline":false,"readings":[],"panelText":"Germinadora 0 dispositivos Ver detalle"}
+  terraza {"name":"Exterior Directo","rangos":null,"offline":false,"readings":[],"panelText":"11 plantas Exterior Directo Son las plantas que están fuera del invernadero 2 dispositivos Ver detalle"}
+  terraza {"name":"Invernadero","rangos":null,"offline":false,"readings":[],"panelText":"Inactiva Invernadero 0 dispositivos Ver detalle"}
+exit=0

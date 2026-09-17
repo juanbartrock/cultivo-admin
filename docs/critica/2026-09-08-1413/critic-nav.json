@@ -1,0 +1,4206 @@
+{
+  "startedAt": "2026-09-08T17:18:43.847Z",
+  "viewports": {
+    "movil": {
+      "login": {
+        "landed": "https://cultivo.ramsesvii.com/",
+        "errors": []
+      },
+      "routes": {
+        "home": {
+          "url": "https://cultivo.ramsesvii.com/",
+          "ms": 6664,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 18,
+            "nativeSelects": 0,
+            "h1": [
+              "Inicio"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Inicio A Actualizar ALERTAS actualizado hace 0 s Vegetativo · vege-temp-hum Sensor sin respuesta Secado · Termohigometro Indoor Sensor sin respuesta CARPAS Vegetativo Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 0 Rangos: Por defecto Secado Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 2 Rangos: Curado Floración Sala de Cultivo Temp. — Humedad — VPD — 4 Rangos: Pre-f"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          },
+          "cards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "Sensor sin respuesta",
+                  "tone": "text-sm text-offline"
+                }
+              ],
+              "rangos": null,
+              "offline": true
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "Sensor sin respuesta",
+                  "tone": "text-sm text-offline"
+                }
+              ],
+              "rangos": null,
+              "offline": true
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "name": "Vegetativo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": true
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "name": "Secado",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "2",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Curado",
+              "offline": true
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "name": "Floración",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "4",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Pre-flora",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "name": "Exterior Directo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "11",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Floración",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "name": "Invernadero",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "name": "Germinadora",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            }
+          ]
+        },
+        "sala": {
+          "url": "https://cultivo.ramsesvii.com/sala",
+          "ms": 8951,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 6,
+            "nativeSelects": 0,
+            "h1": [
+              "Sala de Cultivo"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Sala de Cultivo A Sala de Cultivo Nueva carpa Vegetativo 100x100x200 2 dispositivos Ver detalle Sensor sin respuesta Rangos: Por defecto — — — 2 plantas Secado 80x80x160 Para secado y clones. 1 dispositivo Ver detalle Sensor sin respuesta Rangos: Curado — — — 4 plantas Floración 120x120x200 2 dispositivos Ver detalle Germinadora 0 dispositivos Ver detalle Inicio Salas Ciclos Automatizaciones Más A"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          },
+          "sala": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ]
+        },
+        "seguimientos": {
+          "url": "https://cultivo.ramsesvii.com/seguimientos",
+          "ms": 5345,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Ciclos"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Ciclos A Genéticas Nuevo ciclo Ciclos Todos Diciembre 2025 Completado 274 días 6 plantas Octubre 2025 Completado 324 días 10 plantas Ciclo Final Pave y Otras Completado 403 días 3 plantas Selecciona un ciclo Selecciona un ciclo del panel izquierdo o crea uno nuevo Crear Ciclo Inicio Salas Ciclos Automatizaciones Más Asistente de Cultivo"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          }
+        },
+        "automatizaciones": {
+          "url": "https://cultivo.ramsesvii.com/automatizaciones",
+          "ms": 5954,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Automatizaciones"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Automatizaciones A Sin automatizaciones Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales. Crear Automatización Inicio Salas Ciclos Automatizaciones Más Asistente de Cultivo"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          }
+        },
+        "artefactos": {
+          "url": "https://cultivo.ramsesvii.com/artefactos",
+          "ms": 5654,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Dispositivos"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Dispositivos A Agregar virtual Escanear Dispositivos Disponibles No se detectaron dispositivos Asegurate que los servicios Sonoff, Tuya y Tapo estén corriendo Dispositivos Asignados (7) Todos los tipos Termohigometro Indoor Conector: SONOFF Tipo: Sensor Sección: Secado - Tapo Camara Conector: TAPO Tipo: Cámara Sección: Floración - vege-led-150 Conector: TUYA Tipo: Luz Sección: Vegetativo ON OFF ve"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          }
+        },
+        "notificaciones": {
+          "url": "https://cultivo.ramsesvii.com/notificaciones",
+          "ms": 5438,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Notificaciones"
+            ],
+            "emojis": 20,
+            "bodyTextHead": "Notificaciones A Filtros Seleccionar todo Martes, 28 De Julio 🌩️ Pronóstico: Tormenta Tormenta eléctrica prevista para 2026-08-01 28 de julio Clima Prioridad Alta 🌩️ Pronóstico: Tormenta Tormenta con granizo ligero prevista para 2026-07-31 28 de julio Clima Prioridad Alta 🌩️ Pronóstico: Tormenta Tormenta eléctrica prevista para 2026-08-01 28 de julio Clima Prioridad Alta 🌩️ Pronóstico: Torment"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          }
+        },
+        "admin-usuarios": {
+          "url": "https://cultivo.ramsesvii.com/admin/usuarios",
+          "ms": 4793,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Usuarios"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Usuarios A Nuevo usuario P prueba jpautasso@gmail.com 0 salas 0 dispositivos 0 ciclos PREMIUM Administrador Tú admin 2 salas 4 dispositivos 3 ciclos PREMIUM Inicio Salas Ciclos Automatizaciones Más Asistente de Cultivo"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          }
+        },
+        "admin-rangos": {
+          "url": "https://cultivo.ramsesvii.com/admin/rangos",
+          "ms": 4745,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Rangos de sensores"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Rangos de sensores A Por defecto Editar Temperatura (°C) 18–28 15–30 Humedad (%) 40–65 30–75 VPD (kPa) 0.8–1.4 0.4–1.6 CO₂ (ppm) 400–1500 300–2000 Germinación Editar Temperatura (°C) 18–28 15–30 Humedad (%) 40–65 30–75 VPD (kPa) 0.8–1.4 0.4–1.6 CO₂ (ppm) 400–1500 300–2000 Vegetativo Editar Temperatura (°C) 18–28 15–30 Humedad (%) 40–65 30–75 VPD (kPa) 0.8–1.4 0.4–1.6 CO₂ (ppm) 400–1500 300–2000 Pr"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          }
+        },
+        "carpa-secado": {
+          "url": "https://cultivo.ramsesvii.com/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+          "ms": 9041,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 4,
+            "nativeSelects": 0,
+            "h1": [
+              "Secado"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Secado A Layout Activa Actualizar Secado 80x80x160 Para secado y clones. 1 dispositivo 1 planta Rangos: Curado 1 sensor Plantas por etapa: SECADO: 1 Ambiente Termohigometro Indoor Sensor sin respuesta Rangos: Curado Historial pausado Temperatura — Ideal 18-28 · amplio 15-30 °C Humedad — Ideal 40-65 · amplio 30-75 % CO₂ — Ideal 400-1500 · amplio 300-2000 ppm VPD — Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          },
+          "carpa": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              }
+            ],
+            "labels": [
+              "Sensor sin respuesta",
+              "Historial pausado"
+            ]
+          }
+        },
+        "carpa-vegetativo": {
+          "url": "https://cultivo.ramsesvii.com/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+          "ms": 7215,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [
+              "div..relative.overflow-hidden.bg-zinc-800/50"
+            ],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 4,
+            "nativeSelects": 0,
+            "h1": [
+              "Vegetativo"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Vegetativo A Layout Activa Actualizar Vegetativo 100x100x200 2 dispositivos 0 plantas Rangos: Por defecto 1 sensor 1 controlable Ambiente vege-temp-hum Sensor sin respuesta Rangos: Por defecto Historial pausado Temperatura — Ideal 18-28 · amplio 15-30 °C Humedad — Ideal 40-65 · amplio 30-75 % CO₂ — Ideal 400-1500 · amplio 300-2000 ppm VPD — Ideal 0.8-1.4 · amplio 0.4-1.6 kPa Control de Dispositivo"
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          },
+          "carpa": {
+            "rangos": "Rangos: Por defecto",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Vegetativo",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              }
+            ],
+            "labels": [
+              "Sensor sin respuesta",
+              "Historial pausado"
+            ]
+          }
+        }
+      },
+      "rangos": {
+        "errors": [],
+        "url": "https://cultivo.ramsesvii.com/admin/rangos",
+        "stages": [
+          "Por defecto",
+          "Germinación",
+          "Vegetativo",
+          "Pre-flora",
+          "Floración",
+          "Secado",
+          "Curado",
+          "Por defecto",
+          "Germinación",
+          "Vegetativo",
+          "Pre-flora",
+          "Floración",
+          "Secado",
+          "Curado"
+        ],
+        "headerText": "Rangos de sensores A Por defecto Editar Temperatura (°C) 18–28 15–30 Humedad (%) 40–65 30–75 VPD (kPa) 0.8–1.4 0.4–1.6 CO₂ (ppm) 400–1500 300–2000 Germinación Editar Temperatura (°C) 18–28 15–30 Humedad (%) 40–65 30–75 VPD (kPa) 0.8–1.4 0.4–1.6 CO₂ (ppm) 400–1500 300–2000 Vegetativo Editar Temperatura (°C) 18–28 15–30 Humedad (%) 40–65 30–75 VPD (kPa) 0.8–1.4 0.4–1.6 CO₂ (ppm) 400–1500 300–2000 Pr",
+        "dialogTitle": "Rangos · Por defecto",
+        "inputs": 16,
+        "initial": {
+          "tempIdealMin": "18",
+          "tempIdealMax": "28",
+          "tempWideMin": "15",
+          "tempWideMax": "30",
+          "humidityIdealMin": "40",
+          "humidityIdealMax": "65",
+          "humidityWideMin": "30",
+          "humidityWideMax": "75",
+          "vpdIdealMin": "0.8",
+          "vpdIdealMax": "1.4",
+          "vpdWideMin": "0.4",
+          "vpdWideMax": "1.6",
+          "co2IdealMin": "400",
+          "co2IdealMax": "1500",
+          "co2WideMin": "300",
+          "co2WideMax": "2000"
+        },
+        "footerOnOpen": {
+          "cancelar": {
+            "top": 732,
+            "bottom": 768
+          },
+          "guardar": {
+            "top": 688,
+            "bottom": 724
+          },
+          "dialog": {
+            "t": 63,
+            "b": 781,
+            "l": 16,
+            "r": 374
+          },
+          "innerHeight": 844,
+          "innerWidth": 390,
+          "scrollWidth": 390,
+          "inside": true,
+          "hitCancelar": true,
+          "hitGuardar": true
+        },
+        "saveEnabledInitially": true,
+        "case_minMayorMax": {
+          "alerts": [
+            "El mínimo ideal tiene que ser menor que el máximo"
+          ],
+          "saveEnabled": false
+        },
+        "case_texto": {
+          "alerts": [
+            "Número inválido"
+          ],
+          "saveEnabled": false,
+          "ariaInvalid": "true",
+          "errorVisible": true
+        },
+        "case_amplioNoContiene": {
+          "alerts": [
+            "El rango amplio tiene que contener al ideal"
+          ],
+          "saveEnabled": false
+        },
+        "case_vacio": {
+          "alerts": [
+            "Número inválido"
+          ],
+          "saveEnabled": false
+        },
+        "case_comaDecimal": {
+          "alerts": [],
+          "saveEnabled": true
+        },
+        "case_negativo": {
+          "alerts": [],
+          "saveEnabled": true
+        },
+        "case_exponente": {
+          "alerts": [],
+          "saveEnabled": true
+        },
+        "restored": {
+          "alerts": [],
+          "saveEnabled": true
+        },
+        "lastInputAfterScroll": {
+          "top": 634,
+          "bottom": 674,
+          "innerHeight": 844,
+          "visibleAndHit": true
+        },
+        "footerAfterScroll": {
+          "cancelar": {
+            "top": 732,
+            "bottom": 768
+          },
+          "guardar": {
+            "top": 688,
+            "bottom": 724
+          },
+          "dialog": {
+            "t": 63,
+            "b": 781,
+            "l": 16,
+            "r": 374
+          },
+          "innerHeight": 844,
+          "innerWidth": 390,
+          "scrollWidth": 390,
+          "inside": true,
+          "hitCancelar": true,
+          "hitGuardar": true
+        },
+        "dialogClosedAfterCancel": true,
+        "reopened": {
+          "tempIdealMin": "18",
+          "tempIdealMax": "28",
+          "tempWideMin": "15",
+          "tempWideMax": "30",
+          "humidityIdealMin": "40",
+          "humidityIdealMax": "65",
+          "humidityWideMin": "30",
+          "humidityWideMax": "75",
+          "vpdIdealMin": "0.8",
+          "vpdIdealMax": "1.4",
+          "vpdWideMin": "0.4",
+          "vpdWideMax": "1.6",
+          "co2IdealMin": "400",
+          "co2IdealMax": "1500",
+          "co2WideMin": "300",
+          "co2WideMax": "2000"
+        },
+        "reopenedEqualsInitial": true,
+        "dialogClosedAfterEscape": true,
+        "writesDuring": []
+      },
+      "extra": {
+        "salaSelector": {
+          "before": "https://cultivo.ramsesvii.com/sala",
+          "errors": [],
+          "beforeText": "Sala de Cultivo",
+          "options": [
+            "Sala de Cultivo",
+            "Terraza"
+          ],
+          "after": "https://cultivo.ramsesvii.com/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133",
+          "afterText": "Terraza",
+          "salaAfter": [
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ]
+        },
+        "navRangos": {
+          "errors": [],
+          "sheetItems": [
+            "Dispositivos /artefactos",
+            "Notificaciones /notificaciones",
+            "Usuarios /admin/usuarios",
+            "Rangos /admin/rangos"
+          ],
+          "landed": "https://cultivo.ramsesvii.com/admin/rangos",
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "withinViewport": true,
+            "allHit": true,
+            "items": [
+              {
+                "label": "Inicio",
+                "inside": true
+              },
+              {
+                "label": "Salas",
+                "inside": true
+              },
+              {
+                "label": "Ciclos",
+                "inside": true
+              },
+              {
+                "label": "Automatizaciones",
+                "inside": true
+              },
+              {
+                "label": "Más",
+                "inside": true
+              }
+            ]
+          }
+        }
+      },
+      "colores": {
+        "todo_ok": {
+          "lectura": {
+            "temperature": 24,
+            "humidity": 55
+          },
+          "errors": [],
+          "home": [
+            {
+              "v": "24 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34 kPa",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "24 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34 kPa",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "15.1 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "57 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "homeCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "name": "Vegetativo",
+              "readings": [
+                {
+                  "v": "24 °C",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "55 %",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "1.34 kPa",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "name": "Secado",
+              "readings": [
+                {
+                  "v": "24 °C",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "55 %",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "1.34 kPa",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "2",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Curado",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "name": "Floración",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "4",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Pre-flora",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "name": "Exterior Directo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "11",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Floración",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "name": "Invernadero",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "name": "Germinadora",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            }
+          ],
+          "sala": [
+            {
+              "v": "24 °C",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55 %",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34 kPa",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "24 °C",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55 %",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34 kPa",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "salaCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ],
+          "carpa": [
+            {
+              "v": "24.0°C",
+              "tone": "text-3xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55%",
+              "tone": "text-3xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34kPa",
+              "tone": "text-3xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "carpaScan": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "24.0°C",
+                "tone": "text-3xl text-fg"
+              },
+              {
+                "v": "55%",
+                "tone": "text-3xl text-fg"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "1.34kPa",
+                "tone": "text-3xl text-fg"
+              }
+            ],
+            "labels": [
+              "En rango"
+            ]
+          }
+        },
+        "mixto": {
+          "lectura": {
+            "temperature": 29,
+            "humidity": 20
+          },
+          "errors": [],
+          "home": [
+            {
+              "v": "20 %",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "15.1 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "57 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "homeCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "20 %",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "3.2 kPa",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "20 %",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "3.2 kPa",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "29 °C",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "29 °C",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "name": "Vegetativo",
+              "readings": [
+                {
+                  "v": "29 °C",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "20 %",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "3.2 kPa",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "name": "Secado",
+              "readings": [
+                {
+                  "v": "29 °C",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "20 %",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "3.2 kPa",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "2",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Curado",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "name": "Floración",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "4",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Pre-flora",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "name": "Exterior Directo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "11",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Floración",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "name": "Invernadero",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "name": "Germinadora",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            }
+          ],
+          "sala": [
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            }
+          ],
+          "salaCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ],
+          "carpa": [
+            {
+              "v": "29.0°C",
+              "tone": "text-3xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20%",
+              "tone": "text-3xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.20kPa",
+              "tone": "text-3xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            }
+          ],
+          "carpaScan": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "29.0°C",
+                "tone": "text-3xl text-warn"
+              },
+              {
+                "v": "20%",
+                "tone": "text-3xl text-danger"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "3.20kPa",
+                "tone": "text-3xl text-danger"
+              }
+            ],
+            "labels": [
+              "Al límite",
+              "Fuera de rango"
+            ]
+          }
+        },
+        "borde": {
+          "lectura": {
+            "temperature": 30,
+            "humidity": 30
+          },
+          "errors": [],
+          "home": [
+            {
+              "v": "2.97 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "15.1 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "57 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "homeCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "2.97 kPa",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "2.97 kPa",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "30 °C",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "30 %",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "30 °C",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "30 %",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "name": "Vegetativo",
+              "readings": [
+                {
+                  "v": "30 °C",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "30 %",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "2.97 kPa",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "name": "Secado",
+              "readings": [
+                {
+                  "v": "30 °C",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "30 %",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "2.97 kPa",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "2",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Curado",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "name": "Floración",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "4",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Pre-flora",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "name": "Exterior Directo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "11",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Floración",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "name": "Invernadero",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "name": "Germinadora",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            }
+          ],
+          "sala": [
+            {
+              "v": "30 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            }
+          ],
+          "salaCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ],
+          "carpa": [
+            {
+              "v": "30.0°C",
+              "tone": "text-3xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30%",
+              "tone": "text-3xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97kPa",
+              "tone": "text-3xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            }
+          ],
+          "carpaScan": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "30.0°C",
+                "tone": "text-3xl text-warn"
+              },
+              {
+                "v": "30%",
+                "tone": "text-3xl text-warn"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "2.97kPa",
+                "tone": "text-3xl text-danger"
+              }
+            ],
+            "labels": [
+              "Al límite",
+              "Fuera de rango"
+            ]
+          }
+        },
+        "rangosCaidos": {
+          "errors": [
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+          ],
+          "home": [
+            {
+              "v": "29 °C",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "15.1 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "57 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "homeText": "Inicio A Actualizar ALERTAS Todo en rango · actualizado hace 0 s CARPAS Vegetativo Sala de Cultivo Temp. 29 °C Humedad 20 % VPD 3.2 kPa 0 Rangos: Por defecto Secado Sala de Cultivo Temp. 29 °C Humedad 20 % VPD 3.2 kPa 2 Rangos: Curado Floración Sala de Cultivo Temp. — Humedad — VPD — 4 Rangos: Pre-f",
+          "sala": [
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            }
+          ],
+          "carpa": [
+            {
+              "v": "29.0°C",
+              "tone": "text-3xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20%",
+              "tone": "text-3xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.20kPa",
+              "tone": "text-3xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            }
+          ],
+          "carpaScan": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "29.0°C",
+                "tone": "text-3xl text-fg-faint"
+              },
+              {
+                "v": "20%",
+                "tone": "text-3xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "3.20kPa",
+                "tone": "text-3xl text-fg-faint"
+              }
+            ],
+            "labels": []
+          }
+        }
+      },
+      "writes": []
+    },
+    "desktop": {
+      "login": {
+        "landed": "https://cultivo.ramsesvii.com/",
+        "errors": []
+      },
+      "routes": {
+        "home": {
+          "url": "https://cultivo.ramsesvii.com/",
+          "ms": 7813,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 18,
+            "nativeSelects": 0,
+            "h1": [
+              "Inicio"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Inicio Actualizar ALERTAS actualizado hace 0 s Vegetativo · vege-temp-hum Sensor sin respuesta Secado · Termohigometro Indoor Sensor sin respuesta CARPAS Vegetativo Sala de Cultivo Sensor sin respuesta Temp. — Humedad — VPD — 0 Rangos: Por defecto Secado Sala de Cultivo Sensor "
+          },
+          "tab": null,
+          "cards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "Sensor sin respuesta",
+                  "tone": "text-sm text-offline"
+                }
+              ],
+              "rangos": null,
+              "offline": true
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "Sensor sin respuesta",
+                  "tone": "text-sm text-offline"
+                }
+              ],
+              "rangos": null,
+              "offline": true
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "name": "Vegetativo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": true
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "name": "Secado",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "2",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Curado",
+              "offline": true
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "name": "Floración",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "4",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Pre-flora",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "name": "Exterior Directo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "11",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Floración",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "name": "Invernadero",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "name": "Germinadora",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            }
+          ]
+        },
+        "sala": {
+          "url": "https://cultivo.ramsesvii.com/sala",
+          "ms": 9137,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 6,
+            "nativeSelects": 0,
+            "h1": [
+              "Sala de Cultivo"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Salas Sala de Cultivo Sala de Cultivo En donde se encuentran las 3 carpas Sala de Cultivo Nueva carpa Vegetativo 100x100x200 2 dispositivos Ver detalle Sensor sin respuesta Rangos: Por defecto — — — 2 plantas Secado 80x80x160 Para secado y clones. 1 dispositivo Ver detalle Sens"
+          },
+          "tab": null,
+          "sala": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ]
+        },
+        "seguimientos": {
+          "url": "https://cultivo.ramsesvii.com/seguimientos",
+          "ms": 5880,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Ciclos"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Ciclos Genéticas Nuevo ciclo Ciclos Todos Diciembre 2025 Completado 274 días 6 plantas Octubre 2025 Completado 324 días 10 plantas Ciclo Final Pave y Otras Completado 403 días 3 plantas Selecciona un ciclo Selecciona un ciclo del panel izquierdo o crea uno nuevo Crear Ciclo Asi"
+          },
+          "tab": null
+        },
+        "automatizaciones": {
+          "url": "https://cultivo.ramsesvii.com/automatizaciones",
+          "ms": 5984,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Automatizaciones"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Automatizaciones Sin automatizaciones Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales. Crear Automatización Asistente de Cultivo"
+          },
+          "tab": null
+        },
+        "artefactos": {
+          "url": "https://cultivo.ramsesvii.com/artefactos",
+          "ms": 6021,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Dispositivos"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Dispositivos Agregar virtual Escanear Dispositivos Disponibles No se detectaron dispositivos Asegurate que los servicios Sonoff, Tuya y Tapo estén corriendo Dispositivos Asignados (7) Todos los tipos Nombre Conector Tipo Sección Control Acciones Termohigometro Indoor SONOFF Sen"
+          },
+          "tab": null
+        },
+        "notificaciones": {
+          "url": "https://cultivo.ramsesvii.com/notificaciones",
+          "ms": 5177,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Notificaciones"
+            ],
+            "emojis": 20,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Notificaciones 0 sin leer · 387 en total Filtros Seleccionar todo Martes, 28 De Julio 🌩️ Pronóstico: Tormenta Tormenta eléctrica prevista para 2026-08-01 28 de julio Clima Prioridad Alta 🌩️ Pronóstico: Tormenta Tormenta con granizo ligero prevista para 2026-07-31 28 de julio "
+          },
+          "tab": null
+        },
+        "admin-usuarios": {
+          "url": "https://cultivo.ramsesvii.com/admin/usuarios",
+          "ms": 4753,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Usuarios"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Usuarios 2 registrados Nuevo usuario P prueba jpautasso@gmail.com 0 salas 0 dispositivos 0 ciclos PREMIUM Administrador Tú admin 2 salas 4 dispositivos 3 ciclos PREMIUM Asistente de Cultivo"
+          },
+          "tab": null
+        },
+        "admin-rangos": {
+          "url": "https://cultivo.ramsesvii.com/admin/rangos",
+          "ms": 4734,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "h1": [
+              "Rangos de sensores"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Rangos de sensores Dentro del ideal: en rango · entre ideal y amplio: al límite · fuera: fuera de rango Etapa Temperatura (°C) Humedad (%) VPD (kPa) CO₂ (ppm) Por defecto 18–28 15–30 40–65 30–75 0.8–1.4 0.4–1.6 400–1500 300–2000 Editar Germinación 18–28 15–30 40–65 30–75 0.8–1."
+          },
+          "tab": null
+        },
+        "carpa-secado": {
+          "url": "https://cultivo.ramsesvii.com/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+          "ms": 7510,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 4,
+            "nativeSelects": 0,
+            "h1": [
+              "Secado"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Salas Sala de Cultivo Secado Secado 80x80x160 Layout Activa Actualizar Para secado y clones. 1 dispositivo 1 planta Rangos: Curado 1 sensor Plantas por etapa: SECADO: 1 Ambiente Termohigometro Indoor Sensor sin respuesta Rangos: Curado Historial pausado Temperatura — Ideal 18-2"
+          },
+          "tab": null,
+          "carpa": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              }
+            ],
+            "labels": [
+              "Sensor sin respuesta",
+              "Historial pausado"
+            ]
+          }
+        },
+        "carpa-vegetativo": {
+          "url": "https://cultivo.ramsesvii.com/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+          "ms": 6939,
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [
+              "div..relative.overflow-hidden.bg-zinc-800/50"
+            ],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 4,
+            "nativeSelects": 0,
+            "h1": [
+              "Vegetativo"
+            ],
+            "emojis": 0,
+            "bodyTextHead": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Salas Sala de Cultivo Vegetativo Vegetativo 100x100x200 Layout Activa Actualizar 2 dispositivos 0 plantas Rangos: Por defecto 1 sensor 1 controlable Ambiente vege-temp-hum Sensor sin respuesta Rangos: Por defecto Historial pausado Temperatura — Ideal 18-28 · amplio 15-30 °C Hum"
+          },
+          "tab": null,
+          "carpa": {
+            "rangos": "Rangos: Por defecto",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Vegetativo",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              }
+            ],
+            "labels": [
+              "Sensor sin respuesta",
+              "Historial pausado"
+            ]
+          }
+        }
+      },
+      "rangos": {
+        "errors": [],
+        "url": "https://cultivo.ramsesvii.com/admin/rangos",
+        "stages": [
+          "Por defecto",
+          "Germinación",
+          "Vegetativo",
+          "Pre-flora",
+          "Floración",
+          "Secado",
+          "Curado",
+          "Por defecto",
+          "Germinación",
+          "Vegetativo",
+          "Pre-flora",
+          "Floración",
+          "Secado",
+          "Curado"
+        ],
+        "headerText": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Rangos de sensores Dentro del ideal: en rango · entre ideal y amplio: al límite · fuera: fuera de rango Etapa Temperatura (°C) Humedad (%) VPD (kPa) CO₂ (ppm) Por defecto 18–28 15–30 40–65 30–75 0.8–1.4 0.4–1.6 400–1500 300–2000 Editar Germinación 18–28 15–30 40–65 30–75 0.8–1.",
+        "dialogTitle": "Rangos · Por defecto",
+        "inputs": 16,
+        "initial": {
+          "tempIdealMin": "18",
+          "tempIdealMax": "28",
+          "tempWideMin": "15",
+          "tempWideMax": "30",
+          "humidityIdealMin": "40",
+          "humidityIdealMax": "65",
+          "humidityWideMin": "30",
+          "humidityWideMax": "75",
+          "vpdIdealMin": "0.8",
+          "vpdIdealMax": "1.4",
+          "vpdWideMin": "0.4",
+          "vpdWideMax": "1.6",
+          "co2IdealMin": "400",
+          "co2IdealMax": "1500",
+          "co2WideMin": "300",
+          "co2WideMax": "2000"
+        },
+        "footerOnOpen": {
+          "cancelar": {
+            "top": 713,
+            "bottom": 749
+          },
+          "guardar": {
+            "top": 713,
+            "bottom": 749
+          },
+          "dialog": {
+            "t": 138,
+            "b": 762,
+            "l": 384,
+            "r": 1056
+          },
+          "innerHeight": 900,
+          "innerWidth": 1440,
+          "scrollWidth": 1440,
+          "inside": true,
+          "hitCancelar": true,
+          "hitGuardar": true
+        },
+        "saveEnabledInitially": true,
+        "case_minMayorMax": {
+          "alerts": [
+            "El mínimo ideal tiene que ser menor que el máximo"
+          ],
+          "saveEnabled": false
+        },
+        "case_texto": {
+          "alerts": [
+            "Número inválido"
+          ],
+          "saveEnabled": false,
+          "ariaInvalid": "true",
+          "errorVisible": true
+        },
+        "case_amplioNoContiene": {
+          "alerts": [
+            "El rango amplio tiene que contener al ideal"
+          ],
+          "saveEnabled": false
+        },
+        "case_vacio": {
+          "alerts": [
+            "Número inválido"
+          ],
+          "saveEnabled": false
+        },
+        "case_comaDecimal": {
+          "alerts": [],
+          "saveEnabled": true
+        },
+        "case_negativo": {
+          "alerts": [],
+          "saveEnabled": true
+        },
+        "case_exponente": {
+          "alerts": [],
+          "saveEnabled": true
+        },
+        "restored": {
+          "alerts": [],
+          "saveEnabled": true
+        },
+        "lastInputAfterScroll": {
+          "top": 631,
+          "bottom": 671,
+          "innerHeight": 900,
+          "visibleAndHit": true
+        },
+        "footerAfterScroll": {
+          "cancelar": {
+            "top": 713,
+            "bottom": 749
+          },
+          "guardar": {
+            "top": 713,
+            "bottom": 749
+          },
+          "dialog": {
+            "t": 138,
+            "b": 762,
+            "l": 384,
+            "r": 1056
+          },
+          "innerHeight": 900,
+          "innerWidth": 1440,
+          "scrollWidth": 1440,
+          "inside": true,
+          "hitCancelar": true,
+          "hitGuardar": true
+        },
+        "dialogClosedAfterCancel": true,
+        "reopened": {
+          "tempIdealMin": "18",
+          "tempIdealMax": "28",
+          "tempWideMin": "15",
+          "tempWideMax": "30",
+          "humidityIdealMin": "40",
+          "humidityIdealMax": "65",
+          "humidityWideMin": "30",
+          "humidityWideMax": "75",
+          "vpdIdealMin": "0.8",
+          "vpdIdealMax": "1.4",
+          "vpdWideMin": "0.4",
+          "vpdWideMax": "1.6",
+          "co2IdealMin": "400",
+          "co2IdealMax": "1500",
+          "co2WideMin": "300",
+          "co2WideMax": "2000"
+        },
+        "reopenedEqualsInitial": true,
+        "dialogClosedAfterEscape": true,
+        "writesDuring": []
+      },
+      "extra": {
+        "salaSelector": {
+          "before": "https://cultivo.ramsesvii.com/sala",
+          "errors": [],
+          "beforeText": "Sala de Cultivo",
+          "options": [
+            "Sala de Cultivo",
+            "Terraza"
+          ],
+          "after": "https://cultivo.ramsesvii.com/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133",
+          "afterText": "Terraza",
+          "salaAfter": [
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ]
+        },
+        "navRangos": {
+          "errors": [],
+          "sidebarItems": [
+            "Inicio /",
+            "Salas /sala",
+            "Ciclos /seguimientos",
+            "Automatizaciones /automatizaciones",
+            "Dispositivos /artefactos",
+            "Notificaciones /notificaciones",
+            "Usuarios /admin/usuarios",
+            "Rangos /admin/rangos"
+          ],
+          "landed": "https://cultivo.ramsesvii.com/admin/rangos",
+          "tab": null
+        }
+      },
+      "colores": {
+        "todo_ok": {
+          "lectura": {
+            "temperature": 24,
+            "humidity": 55
+          },
+          "errors": [],
+          "home": [
+            {
+              "v": "24 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34 kPa",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "24 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34 kPa",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "15.1 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "57 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "homeCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "name": "Vegetativo",
+              "readings": [
+                {
+                  "v": "24 °C",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "55 %",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "1.34 kPa",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "name": "Secado",
+              "readings": [
+                {
+                  "v": "24 °C",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "55 %",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "1.34 kPa",
+                  "tone": "text-xl text-fg"
+                },
+                {
+                  "v": "2",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Curado",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "name": "Floración",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "4",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Pre-flora",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "name": "Exterior Directo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "11",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Floración",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "name": "Invernadero",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "name": "Germinadora",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            }
+          ],
+          "sala": [
+            {
+              "v": "24 °C",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55 %",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34 kPa",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "24 °C",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55 %",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34 kPa",
+              "tone": "text-sm text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "salaCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ],
+          "carpa": [
+            {
+              "v": "24.0°C",
+              "tone": "text-3xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "55%",
+              "tone": "text-3xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "1.34kPa",
+              "tone": "text-3xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "carpaScan": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "24.0°C",
+                "tone": "text-3xl text-fg"
+              },
+              {
+                "v": "55%",
+                "tone": "text-3xl text-fg"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "1.34kPa",
+                "tone": "text-3xl text-fg"
+              }
+            ],
+            "labels": [
+              "En rango"
+            ]
+          }
+        },
+        "mixto": {
+          "lectura": {
+            "temperature": 29,
+            "humidity": 20
+          },
+          "errors": [],
+          "home": [
+            {
+              "v": "20 %",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "15.1 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "57 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "homeCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "20 %",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "3.2 kPa",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "20 %",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "3.2 kPa",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "29 °C",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "29 °C",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "name": "Vegetativo",
+              "readings": [
+                {
+                  "v": "29 °C",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "20 %",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "3.2 kPa",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "name": "Secado",
+              "readings": [
+                {
+                  "v": "29 °C",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "20 %",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "3.2 kPa",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "2",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Curado",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "name": "Floración",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "4",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Pre-flora",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "name": "Exterior Directo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "11",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Floración",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "name": "Invernadero",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "name": "Germinadora",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            }
+          ],
+          "sala": [
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            }
+          ],
+          "salaCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ],
+          "carpa": [
+            {
+              "v": "29.0°C",
+              "tone": "text-3xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "20%",
+              "tone": "text-3xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "3.20kPa",
+              "tone": "text-3xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            }
+          ],
+          "carpaScan": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "29.0°C",
+                "tone": "text-3xl text-warn"
+              },
+              {
+                "v": "20%",
+                "tone": "text-3xl text-danger"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "3.20kPa",
+                "tone": "text-3xl text-danger"
+              }
+            ],
+            "labels": [
+              "Al límite",
+              "Fuera de rango"
+            ]
+          }
+        },
+        "borde": {
+          "lectura": {
+            "temperature": 30,
+            "humidity": 30
+          },
+          "errors": [],
+          "home": [
+            {
+              "v": "2.97 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "15.1 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "57 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "homeCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "2.97 kPa",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "2.97 kPa",
+                  "tone": "text-sm text-danger"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "30 °C",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [
+                {
+                  "v": "30 %",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "30 °C",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [
+                {
+                  "v": "30 %",
+                  "tone": "text-sm text-warn"
+                }
+              ],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "name": "Vegetativo",
+              "readings": [
+                {
+                  "v": "30 °C",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "30 %",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "2.97 kPa",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "name": "Secado",
+              "readings": [
+                {
+                  "v": "30 °C",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "30 %",
+                  "tone": "text-xl text-warn"
+                },
+                {
+                  "v": "2.97 kPa",
+                  "tone": "text-xl text-danger"
+                },
+                {
+                  "v": "2",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Curado",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "name": "Floración",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "4",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Pre-flora",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/a0ac06b9-a995-4d8a-b1e0-9b222db01635",
+              "name": "Exterior Directo",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "11",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Floración",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/73eb465b-9d1c-4fe9-bc59-84961372c4c5",
+              "name": "Invernadero",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "name": "Germinadora",
+              "readings": [
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "—",
+                  "tone": "text-xl text-fg-faint"
+                },
+                {
+                  "v": "0",
+                  "tone": ""
+                }
+              ],
+              "rangos": "Rangos: Por defecto",
+              "offline": false
+            }
+          ],
+          "sala": [
+            {
+              "v": "30 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            },
+            {
+              "v": "30 °C",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30 %",
+              "tone": "text-sm text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97 kPa",
+              "tone": "text-sm text-danger",
+              "color": "rgb(229, 72, 77)"
+            }
+          ],
+          "salaCards": [
+            {
+              "href": "/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/766abd7c-9ab5-40d7-9f60-e62ff942f6b1",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            },
+            {
+              "href": "/sala/carpa/b1716b3a-fb55-4131-aa6d-6efe342b2dff",
+              "readings": [],
+              "rangos": null,
+              "offline": false
+            }
+          ],
+          "carpa": [
+            {
+              "v": "30.0°C",
+              "tone": "text-3xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "30%",
+              "tone": "text-3xl text-warn",
+              "color": "rgb(224, 168, 46)"
+            },
+            {
+              "v": "2.97kPa",
+              "tone": "text-3xl text-danger",
+              "color": "rgb(229, 72, 77)"
+            }
+          ],
+          "carpaScan": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [
+              "Ideal 18-28 · amplio 15-30 °C",
+              "Ideal 40-65 · amplio 30-75 %",
+              "Ideal 400-1500 · amplio 300-2000 ppm",
+              "Ideal 0.8-1.4 · amplio 0.4-1.6 kPa"
+            ],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "30.0°C",
+                "tone": "text-3xl text-warn"
+              },
+              {
+                "v": "30%",
+                "tone": "text-3xl text-warn"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "2.97kPa",
+                "tone": "text-3xl text-danger"
+              }
+            ],
+            "labels": [
+              "Al límite",
+              "Fuera de rango"
+            ]
+          }
+        },
+        "rangosCaidos": {
+          "errors": [
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+            "HTTP 500: https://cultivo.ramsesvii.com/api/stage-ranges",
+            "error: Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+          ],
+          "home": [
+            {
+              "v": "29 °C",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "15.1 °C",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            },
+            {
+              "v": "57 %",
+              "tone": "text-xl text-fg",
+              "color": "rgb(232, 239, 234)"
+            }
+          ],
+          "homeText": "Cultivo Inicio Salas Ciclos Automatizaciones Dispositivos Notificaciones Usuarios Rangos A Administrador PREMIUM Colapsar Inicio Actualizar ALERTAS Todo en rango · actualizado hace 0 s CARPAS Vegetativo Sala de Cultivo Temp. 29 °C Humedad 20 % VPD 3.2 kPa 0 Rangos: Por defecto Secado Sala de Cultivo",
+          "sala": [
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "29 °C",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20 %",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.2 kPa",
+              "tone": "text-sm text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            }
+          ],
+          "carpa": [
+            {
+              "v": "29.0°C",
+              "tone": "text-3xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "20%",
+              "tone": "text-3xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            },
+            {
+              "v": "3.20kPa",
+              "tone": "text-3xl text-fg-faint",
+              "color": "rgb(95, 111, 102)"
+            }
+          ],
+          "carpaScan": {
+            "rangos": "Rangos: Curado 1",
+            "ideal": [],
+            "metrics": [
+              {
+                "v": "Secado",
+                "tone": "text-base text-fg"
+              },
+              {
+                "v": "29.0°C",
+                "tone": "text-3xl text-fg-faint"
+              },
+              {
+                "v": "20%",
+                "tone": "text-3xl text-fg-faint"
+              },
+              {
+                "v": "—",
+                "tone": "text-2xl text-fg-faint"
+              },
+              {
+                "v": "3.20kPa",
+                "tone": "text-3xl text-fg-faint"
+              }
+            ],
+            "labels": []
+          }
+        }
+      },
+      "writes": []
+    }
+  },
+  "finishedAt": "2026-09-08T17:24:48.350Z"
+}

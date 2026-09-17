@@ -1,0 +1,13 @@
+login token len: 233
+/sections -> 200
+/rooms -> 200
+/users -> 200
+/auth/me -> 200
+/devices -> 200
+/notifications/unread-count -> 200
+f1ed3032-cf56-4487-90a3-0d79dfd3f9b3 Vegetativo | devices: [('cecc8d14', 'LUZ', 'vege-led-150', False), ('ac4df493', 'SENSOR', 'vege-temp-hum', False)]
+ba2f7493-8f0b-45f1-99b6-5427d014de75 Secado | devices: [('c04963d5', 'SENSOR', 'Termohigometro Indoor', False)]
+766abd7c-9ab5-40d7-9f60-e62ff942f6b1 Floración | devices: [('932fa966', 'CAMARA', 'Tapo Camara', False), ('402d593c', 'HUMIDIFICADOR', 'flora-humidificador', False)]
+a0ac06b9-a995-4d8a-b1e0-9b222db01635 Exterior Directo | devices: [('9f253b4a', 'BOMBA_RIEGO', 'Operación Tanque Riego', False), ('8b43633a', 'BOMBA_RIEGO', 'Switch Tanque Riego', False)]
+73eb465b-9d1c-4fe9-bc59-84961372c4c5 Invernadero | devices: []
+b1716b3a-fb55-4131-aa6d-6efe342b2dff Germinadora | devices: []

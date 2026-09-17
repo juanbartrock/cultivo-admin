@@ -1,0 +1,185 @@
+# Informe del crítico — cultivo-admin — 2026-09-08-0929
+
+**Veredicto: REPROBADO · 7.41 / 10 (umbral 8, piso 6)**
+
+| | |
+|---|---|
+| Alcance | El rediseño F0+F1 publicado en producción (https://cultivo.ramsesvii.com, rama redisenio-2026-09) y el estado general de la app como la ve un administrador. El hallazgo de los rangos de sensores hardcodeados quedó explícitamente fuera del alcance por decisión de Juan: marcalo como falla dura si sigue igual, sin penalizar al constructor. Informe anterior: docs/critica/2026-09-08-0847/informe.md; verificá hallazgo por hallazgo y reevaluá todo. |
+| Modelo | claude-fable-5-1 · uso real: claude-fable-5-1,claude-haiku-4-5-20251001 |
+| Costo / turnos / duración | US$ 4.68 · 4 · 543 s |
+| Rúbrica del proyecto | sí |
+| Árbol modificado por el crítico | no |
+| Evidencia | `/opt/apps/cultivo-admin/docs/critica/2026-09-08-0929` |
+
+## Resumen
+
+Evalué F0+F1 en producción tras el commit 8be1a0a (hallazgos 1, 3, 4, 7 y 8 de la ronda 0847): typecheck, lint (24 warnings de línea base) y qa:nav 17/17 en exit 0; imagen del frontend creada 09:23:15, posterior al commit de 09:21:11, app-restart OK 09:23:23; API con 9 endpoints en 401 sin token y 200 con token; compose sin puertos al host en los IoT. Los cinco hallazgos corregidos están verificados con navegación propia: cerrar sesión en 6 corridas (menú de usuario ×3, sheet Más ×2, desde /sala) con cero requests, cero 401 y cero mensajes de consola; carpa Secado con el sensor offline muestra guiones sin color, badge "Sensor sin respuesta" e "Historial pausado"; buscador de /artefactos en 300 px a 390 px; consola sin errores ni warnings en las 8 rutas y ambos viewports; selector de sala cambia a ?sala=<id>; tab bar dentro del viewport con hit-test correcto y scrollWidth 390 en todas las rutas. Reprobado por la falla dura de los rangos ok/warn/danger hardcodeados en dos tablas contradictorias (fuera del alcance del constructor por decisión de Juan) y por el ponderado 7.41 bajo el umbral: los restos del diseño anterior siguen intactos en carpa (1 blur y 4 degradés), /notificaciones (20 emojis) y el word-spacing sin tocar.
+
+## Fallas duras
+
+- **Global #4 / mínimo del proyecto: los rangos ok/warn/danger salen de configuración de carpa o ciclo, nunca de constantes del frontend (fuera del alcance del constructor por decisión de Juan; se marca sin penalizarlo)** — frontend/src/features/home/lib/readings.ts:17-21 (RANGES temp 18-28/15-30, hum 40-65/30-75, VPD 0.8-1.4/0.4-1.6) y frontend/src/components/EnvironmentPanel.tsx:55-60 (OPTIMAL_RANGES temp 20-28, hum 40-70, CO₂ 400-1500, VPD 0.8-1.2). grep -rn 'RANGES|OPTIMAL_RANGES' frontend/src devuelve ambas tablas; backend/prisma/schema.prisma sin campos de rango por carpa o ciclo.
+
+## Dimensiones
+
+| Dimensión | Puntaje | Peso | Justificación |
+|---|---:|---:|---|
+| Correctitud funcional | 8 | 3 | critic-nav.txt: 8 rutas × 2 viewports con err=0 (errores, warnings, pageerror y HTTP≥400), sin ceros como lectura, selector de sala a ?sala=16fab41e…, carpa con flecha y título 'Carpa' a 300 ms; critic-logout.txt: 6 corridas con reqTotal 0, http4xx 0, consola 0 y sin token en localStorage; critic-nav2.json: Secado con readings [] y 'Sensor sin respuesta · Historial pausado · Temperatura — Humedad — CO₂ — VPD —', buscador de artefactos 300 px; qa-nav.txt 17 passed. Queda en 8 por la carpa Vegetativo que a 2500 ms muestra 'Sin datos ambientales' con el sensor offline (samples t=2500 en critic-nav.txt) y porque el filtrado real del buscador no se comprobó (critic-extra.cjs sin correr). |
+| UI y experiencia | 7 | 3 | Ancla 7 de la rúbrica del proyecto: shell y home planos, scrollWidth 390 en las 8 rutas, tab bar inVP con los 5 items tocables, un solo heading por ruta, grad=0 blur=0 en las 7 rutas principales (critic-nav.txt). Restos del diseño anterior sin tocar: carpa con blur=1 (div.bg-zinc-800/50) y grad=4 (bg-gradient-to-br from-white/[0.02]), /notificaciones con 20 emojis, spinner 'Cargando sección…' contra los skeletons del brief, y el word-spacing de Manrope sin corrección (grep vacío). Todo pertenece a fases 2-4. |
+| Seguridad y datos | 6.5 | 2 | api-sin-token.txt: 9 endpoints en 401; api-con-token.txt 6×200; .env de backend y 3 IoT en deploy:deploy 600; compose-ps.txt: sólo 127.0.0.1:4000 y 127.0.0.1:3001 al host; sin credenciales de acceso en el repo; critic-logout.json: token borrado y cero pedidos sin Authorization. Baja por los rangos hardcodeados en readings.ts:17-21 y EnvironmentPanel.tsx:55-60 (mínimo del proyecto, fuera del alcance del constructor) y por el appId/appSecret de eWeLink en sonoff-service/src/ewelink.js:18-19. |
+| Código y arquitectura | 7.5 | 2 | typecheck.txt y lint.txt en exit 0 (24 warnings preexistentes). El diff 8be1a0a es limpio: api.get y deviceService.getStatus aceptan signal, isConnected pasa a ref con comentario del porqué, readings.ts deja de leer metadata, EnvironmentPanel reutiliza la regla de la home. Deuda: dos tablas de rangos distintas para la misma lectura; el hook individual useDeviceStatus (líneas 55-64) sigue sin AbortController; EnvironmentPanel conserva paleta zinc, blur y spinner (fase 2). |
+| Verificación y entrega | 8.5 | 1 | CHANGES.md registra la ronda con marcador de agente; publicado con app-restart (09:23:23 OK, imagen 09:23:15 posterior al commit); qa:nav reproducido 17/17; logout-desktop-x3.txt y verificacion.json del constructor coinciden con mis mediciones (logout limpio, Secado en guiones, buscador 300 px, consola en 0). Punto flojo: verificacion.json registra searchTyped 'vege' con rows: 0 mientras api-sections.json lista vege-led-150 y vege-temp-hum, y el reporte lo cuenta como 'filtra' sin explicar el cero. |
+
+## Hallazgos (rankeados por impacto)
+
+### 1. [bloqueante] Rangos de estado de sensores hardcodeados en dos tablas que se contradicen (fuera del alcance del constructor)
+
+- **Dimensión:** Seguridad y datos
+- **Evidencia:** frontend/src/features/home/lib/readings.ts:17-21 y frontend/src/components/EnvironmentPanel.tsx:55-60; grep -rn 'RANGES\|OPTIMAL_RANGES' frontend/src; backend/prisma/schema.prisma sin campos de rango
+- **Acción:** Pendiente de la decisión de esquema de Juan: rangos por carpa con override por ciclo, CRUD en el backend y expuestos en GET /sections; sin rangos el estado es unknown. Mientras tanto, una sola tabla compartida entre home y carpa.
+- **Verificación:** grep -rn 'RANGES\|OPTIMAL_RANGES' frontend/src vacío; cambiar un rango desde la UI cambia el color en home y carpa sin rebuild.
+
+### 2. [media] Restos del diseño anterior en carpa, /notificaciones, /seguimientos y /admin/usuarios siguen intactos (fases 2-4)
+
+- **Dimensión:** UI y experiencia
+- **Evidencia:** docs/critica/2026-09-08-0929/critic-nav.txt: carpa blur=1 ('div.relative.overflow-hidden.bg-zinc-800/50') y grad=4 ('bg-gradient-to-br from-white/[0.02]') en móvil y desktop; notificaciones emojis=20; capturas/carpa-movil.png, capturas/notificaciones-movil-viewport.png; git show --stat 8be1a0a no toca esas pantallas; brief docs/rediseno-2026-09/01-direccion-visual.md:135-143
+- **Acción:** Programar en fases 2-4: carpa plana con tokens, skeletons en vez de spinner y sin blur ni degradés; Checkbox de shadcn y títulos sin emoji en notificaciones; usuarios y ciclos con tokens.
+- **Verificación:** critic-nav.cjs con blur=[] y gradients=[] en carpa, emojis=0 en /notificaciones; sin clases bg-zinc-*/text-blue-*/text-orange-* en esas pantallas.
+
+### 3. [media] La verificación del constructor registra 0 filas al buscar 'vege' en /artefactos y el reporte lo cuenta como 'filtra'
+
+- **Dimensión:** Verificación y entrega
+- **Evidencia:** docs/rediseno-2026-09/capturas/fix-critico-r2-20260908/verificacion.json: searchTyped {value:'vege', rows:0} en móvil y desktop; docs/critica/2026-09-08-0929/api-sections.json lista vege-led-150 y vege-temp-hum; frontend/src/app/artefactos/page.tsx:166-167 filtra por name y connector
+- **Acción:** Reproducir la búsqueda y aclarar si el cero es del contador del script o del filtro (por ejemplo un filtro de tipo activo). Si el filtro no encuentra vege-*, corregirlo.
+- **Verificación:** NODE_PATH=frontend/node_modules node docs/critica/2026-09-08-0929/critic-extra.cjs: al escribir 'vege' quedan visibles vege-led-150 y vege-temp-hum, y con 'zzzz' aparece 'No hay dispositivos que coincidan'.
+
+### 4. [media] Espacios entre palabras casi invisibles con Manrope a 12-14 px, sin corrección
+
+- **Dimensión:** UI y experiencia
+- **Evidencia:** grep -n 'word-spacing' frontend/src/app/globals.css frontend/tailwind.config.ts vacío; docs/critica/2026-09-08-0929/capturas/home-desktop.png y home-movil-viewport.png ('actualizadohace N s', 'Sala deCultivo'); critic-fonts.txt de la ronda 0847 (espacio de 2 px contra 8 px de la 'n')
+- **Acción:** Agregar word-spacing (≈0.06em) a text-xs/text-sm en globals.css o cambiar la fuente de cuerpo; revisar en capturas reales.
+- **Verificación:** Captura de la home a 390 y 1440 px donde 'actualizado hace N s' y 'Sala de Cultivo' se leen con espacios.
+
+### 5. [baja] La carpa Vegetativo muestra 'Sin datos ambientales' con el sensor offline en vez del panel con guiones y badge
+
+- **Dimensión:** Correctitud funcional
+- **Evidencia:** docs/critica/2026-09-08-0929/critic-nav.txt samples t=2500: mainHead 'Vegetativo 100x100x200 2 dispositivos 0 plantas 1 sensor 1 controlable Ambiente Sin datos ambie…'; api-device-status.txt: vege-temp-hum status {online:false} sin temperatura; EnvironmentPanel.tsx:306 (!hasAnyData && isOnline) depende de que status ya haya llegado
+- **Acción:** Confirmar si es el estado transitorio antes de la primera respuesta de /status (status null → isOnline true) o el estado final; en ambos casos mostrar skeleton mientras carga y el panel con 'Sensor sin respuesta' cuando online=false, igual que Secado.
+- **Verificación:** En /sala/carpa/f1ed3032-… con el sensor offline, a 2,5 s y a 10 s el panel muestra badge 'Sensor sin respuesta' y las métricas en '—', sin el bloque 'Sin datos ambientales'.
+
+### 6. [baja] El hook individual useDeviceStatus sigue sin abortar pedidos en vuelo al desmontar
+
+- **Dimensión:** Código y arquitectura
+- **Evidencia:** frontend/src/hooks/useDeviceStatus.ts:38-64: fetchStatus corta por isAuthenticated pero no usa AbortController ni chequea montaje antes de setStatus; usado en EnvironmentPanel.tsx y DeviceControlCard.tsx
+- **Acción:** Aplicar el mismo patrón que useDevicesStatus: AbortController en el efecto y descartar respuestas tras el cleanup.
+- **Verificación:** Navegar de una carpa a otra rápido sin warnings de setState en componente desmontado ni respuestas cruzadas entre dispositivos.
+
+### 7. [baja] appId y appSecret de eWeLink en texto plano en el microservicio Sonoff
+
+- **Dimensión:** Seguridad y datos
+- **Evidencia:** sonoff-service/src/ewelink.js:18-19 (clave pública del fork, preexistente)
+- **Acción:** Leerlos de EWELINK_APP_ID/EWELINK_APP_SECRET con el valor actual como default documentado en .env.example.
+- **Verificación:** grep -n appSecret sonoff-service/src/ewelink.js sólo muestra lectura de process.env.
+
+### 8. [baja] Conocidos fuera del alcance que siguen vivos: Tuya sin estado y alertas de clima con emoji
+
+- **Dimensión:** Correctitud funcional
+- **Evidencia:** docs/critica/2026-09-08-0929/backend-logs.txt: 312 WARN 'Error getting status for TUYA/…' en 45 min (0 ERROR); api-device-status.txt: vege-temp-hum {online:false}; critic-nav.txt notificaciones emojis=20
+- **Acción:** Credenciales Tuya/Sonoff y notificaciones de clima como tareas aparte del rediseño; sin penalización acá.
+- **Verificación:** Log del backend sin WARN de IoT durante 15 min.
+
+## Evidencia reunida
+
+**Comandos:**
+- `cd frontend && npm run typecheck → docs/critica/2026-09-08-0929/typecheck.txt (exit 0)`
+- `cd frontend && npm run lint → docs/critica/2026-09-08-0929/lint.txt (exit 0, 24 warnings preexistentes)`
+- `set -a; . ~/.config/secrets/cultivo-admin-login.env; set +a; QA_LABEL=../../critica/2026-09-08-0929/qa-nav npm run qa:nav → docs/critica/2026-09-08-0929/qa-nav.txt (17 passed, exit 0)`
+- `NODE_PATH=frontend/node_modules node docs/critica/2026-09-08-0929/critic-nav.cjs → critic-nav.txt / critic-nav.json (8 rutas × 2 viewports: consola incl. warnings, HTTP≥400, scrollWidth, tab bar con hit-test, degradés/blur, headings, selector de sala, tarjetas de la home, tap en Más y en cada pestaña, header de carpa a 300/1000/2500 ms) exit 0`
+- `node docs/critica/2026-09-08-0929/critic-nav2.cjs → critic-nav2.txt / critic-nav2.json (sidebar, menú de usuario, carpa Secado, automatizaciones a 10 s, buscador de artefactos, logout desde menú y desde sheet Más) exit 0`
+- `node docs/critica/2026-09-08-0929/critic-logout.cjs → critic-logout.txt / critic-logout.json (6 corridas: desktop menú ×3, móvil sheet ×2, desktop desde /sala; requests, 4xx, consola y tokens tras Cerrar sesión) exit 0`
+- `node docs/critica/2026-09-08-0929/critic-fonts.cjs → critic-fonts.txt (exit 0; la medición del ancho de espacio devolvió null, no concluyente)`
+- `curl sin token a /api/sections, /cycles, /events, /notifications/unread-count, /rooms, /users, /auth/me, /devices, /devices/:id/status → api-sin-token.txt (9×401)`
+- `POST /api/auth/login + GET con token → api-con-token.txt (6×200), api-sections.json, api-device-status.txt (7 dispositivos; Secado online:false con 18.1/80.2; vege-temp-hum online:false)`
+- `docker logs cultivo-backend --since 45m → backend-logs.txt (0 ERROR, 312 WARN Tuya); docker logs cultivo-frontend (sólo arranque)`
+- `docker compose ps → compose-ps.txt (sólo 127.0.0.1:4000 y 127.0.0.1:3001 al host); grep -n ports: docker-compose.yml`
+- `docker inspect cultivo-frontend (imagen creada 2026-09-08 09:23:15, posterior al commit 8be1a0a de 09:21:11) + grep cultivo /var/log/app-restart.log (09:23:23 OK)`
+- `git show 8be1a0a (diff de los 7 archivos del fix); git status --porcelain antes y después (idéntico: sólo docs/critica/ y docs/rubrica-critico.md sin trackear)`
+- `grep -rn 'RANGES|OPTIMAL_RANGES' frontend/src; grep de secretos en el repo sin node_modules (sólo ewelink.js y un fixture de test); ls -l de los 4 .env (600); grep word-spacing en globals.css/tailwind.config.ts (vacío)`
+
+**Rutas navegadas:**
+- `/login (formulario real, móvil y desktop)`
+- `/`
+- `/sala`
+- `/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133 (cambio de sala por el Select)`
+- `/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3 (Vegetativo, header a 300/1000/2500 ms)`
+- `/sala/carpa/ba2f7493-8f0b-45f1-99b6-5427d014de75 (Secado, sensor offline)`
+- `/seguimientos (y tap real en cada pestaña de la tab bar desde acá)`
+- `/automatizaciones (también a 10 s)`
+- `/artefactos (también llegando desde el sheet Más en móvil desde /, /seguimientos y /admin/usuarios)`
+- `/notificaciones`
+- `/admin/usuarios`
+- `Cerrar sesión desde el menú de usuario (desktop ×3 y desde /sala), desde el sheet Más (móvil ×2) → /login`
+
+**Capturas:**
+- `docs/critica/2026-09-08-0929/capturas/login-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/login-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/home-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/home-movil-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/home-movil-3s.png`
+- `docs/critica/2026-09-08-0929/capturas/home-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/home-desktop-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/home-desktop-3s.png`
+- `docs/critica/2026-09-08-0929/capturas/home-desktop-sidebar-colapsada.png`
+- `docs/critica/2026-09-08-0929/capturas/home-desktop-menu-usuario.png`
+- `docs/critica/2026-09-08-0929/capturas/sala-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/sala-movil-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/sala-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/sala-desktop-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/sala-selector-abierto-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/sala-selector-abierto-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/sala-cambiada-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/sala-cambiada-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/carpa-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/carpa-movil-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/carpa-movil-300ms.png`
+- `docs/critica/2026-09-08-0929/capturas/carpa-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/carpa-desktop-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/carpa-desktop-300ms.png`
+- `docs/critica/2026-09-08-0929/capturas/carpa-secado-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/carpa-secado-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/seguimientos-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/seguimientos-movil-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/seguimientos-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/seguimientos-desktop-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/automatizaciones-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/automatizaciones-movil-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/automatizaciones-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/automatizaciones-desktop-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/automatizaciones-desktop-10s.png`
+- `docs/critica/2026-09-08-0929/capturas/artefactos-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/artefactos-movil-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/artefactos-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/artefactos-desktop-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/notificaciones-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/notificaciones-movil-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/notificaciones-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/notificaciones-desktop-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/admin-usuarios-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/admin-usuarios-movil-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/admin-usuarios-desktop.png`
+- `docs/critica/2026-09-08-0929/capturas/admin-usuarios-desktop-viewport.png`
+- `docs/critica/2026-09-08-0929/capturas/mas-sheet-desde-home-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/mas-sheet-desde-seguimientos-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/mas-sheet-desde-admin-usuarios-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/logout-movil.png`
+- `docs/critica/2026-09-08-0929/capturas/logout-desktop.png`
+- `docs/critica/2026-09-08-0929/qa-nav/ (17 PNG de la suite qa:nav del proyecto)`
+
+## No evaluado
+
+- Filtrado real del buscador de /artefactos (escribir 'vege' y contar dispositivos visibles) y logout desde la página de carpa: critic-extra.cjs quedó creado en el directorio de evidencia pero sin correr por el límite de tiempo.
+- Medición del ancho del espacio con Manrope: critic-fonts.txt devolvió spaceWidth null (el selector del script no encontró el span); el hallazgo se sostiene con las capturas de esta ronda y la medición de la ronda 0847.
+- npm run build: no se corrió por tiempo; la imagen publicada a las 09:23:15 se construyó con el mismo commit y app-restart salió 0.
+- Fallback a sensor.metadata: los 7 dispositivos tienen metadata null (api-sections.json); el camino sólo se verifica por código (readings.ts ya no lo lee) y por la inyección del constructor (home-metadata-sin-status.png).
+- Colores warn/danger con lecturas reales en rango: los dos sensores de producción están offline (Tuya y Sonoff fallan).
+- Aislamiento de datos entre usuarios: sin credencial de un usuario no admin; sólo por código /users exige rol ADMIN.
+- Flujos con escritura (crear/editar/eliminar sala, carpa, ciclo, usuario; marcar notificaciones; toggles de dispositivos): prohibidos por la regla de no escribir en producción.

@@ -1,0 +1,937 @@
+{
+  "viewports": {
+    "movil": {
+      "login": {
+        "dom": {
+          "gradients": [],
+          "blur": [],
+          "scrollWidth": 390,
+          "innerWidth": 390,
+          "bodyScroll": 390,
+          "zeros": [],
+          "dashes": 0,
+          "nativeSelects": 0,
+          "nativeCheckbox": 0,
+          "title": "Cultivo Manager - Administración de Cultivo Casero",
+          "h1": [
+            "Bienvenido"
+          ],
+          "overflowers": []
+        },
+        "landed": "https://cultivo.ramsesvii.com/",
+        "errors": []
+      },
+      "routes": {
+        "home": {
+          "url": "https://cultivo.ramsesvii.com/",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 15,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Inicio",
+              "Inicio"
+            ],
+            "overflowers": []
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "left": 0,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "visualH": 844,
+            "visualScale": 1,
+            "items": [
+              {
+                "label": "Inicio",
+                "cx": 39,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Salas",
+                "cx": 117,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Ciclos",
+                "cx": 195,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Automatizaciones",
+                "cx": 273,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Más",
+                "cx": 351,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              }
+            ]
+          }
+        },
+        "sala": {
+          "url": "https://cultivo.ramsesvii.com/sala",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Sala de Cultivo",
+              "Sala de Cultivo"
+            ],
+            "overflowers": []
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "left": 0,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "visualH": 844,
+            "visualScale": 1,
+            "items": [
+              {
+                "label": "Inicio",
+                "cx": 39,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Salas",
+                "cx": 117,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Ciclos",
+                "cx": 195,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Automatizaciones",
+                "cx": 273,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Más",
+                "cx": 351,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              }
+            ]
+          }
+        },
+        "seguimientos": {
+          "url": "https://cultivo.ramsesvii.com/seguimientos",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 469,
+            "innerWidth": 469,
+            "bodyScroll": 468,
+            "zeros": [
+              "\n0%"
+            ],
+            "dashes": 0,
+            "nativeSelects": 2,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Ciclos",
+              "Ciclos"
+            ],
+            "overflowers": [
+              "div.flex.gap-2 right=468",
+              "button.flex.items-center.gap-2.px-3 right=468",
+              "nav.fixed.inset-x-0.bottom-0.z-30 right=469",
+              "button.relative.flex.min-w-0.flex-col right=469",
+              "svg.[object.SVGAnimatedString] right=432",
+              "circle.[object.SVGAnimatedString] right=423"
+            ]
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 957,
+              "bottom": 1013,
+              "left": 0,
+              "right": 469
+            },
+            "innerHeight": 1013,
+            "visualH": 844,
+            "visualScale": 1,
+            "items": [
+              {
+                "label": "Inicio",
+                "cx": 47,
+                "cy": 986,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Salas",
+                "cx": 141,
+                "cy": 986,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Ciclos",
+                "cx": 234,
+                "cy": 986,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Automatizaciones",
+                "cx": 328,
+                "cy": 986,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Más",
+                "cx": 422,
+                "cy": 986,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              }
+            ]
+          }
+        },
+        "automatizaciones": {
+          "url": "https://cultivo.ramsesvii.com/automatizaciones",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Automatizaciones"
+            ],
+            "overflowers": []
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "left": 0,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "visualH": 844,
+            "visualScale": 1,
+            "items": [
+              {
+                "label": "Inicio",
+                "cx": 39,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Salas",
+                "cx": 117,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Ciclos",
+                "cx": 195,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Automatizaciones",
+                "cx": 273,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Más",
+                "cx": 351,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              }
+            ]
+          }
+        },
+        "artefactos": {
+          "url": "https://cultivo.ramsesvii.com/artefactos",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Dispositivos",
+              "Dispositivos"
+            ],
+            "overflowers": []
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "left": 0,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "visualH": 844,
+            "visualScale": 1,
+            "items": [
+              {
+                "label": "Inicio",
+                "cx": 39,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Salas",
+                "cx": 117,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Ciclos",
+                "cx": 195,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Automatizaciones",
+                "cx": 273,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Más",
+                "cx": 351,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              }
+            ]
+          }
+        },
+        "notificaciones": {
+          "url": "https://cultivo.ramsesvii.com/notificaciones",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Notificaciones",
+              "Notificaciones"
+            ],
+            "overflowers": []
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "left": 0,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "visualH": 844,
+            "visualScale": 1,
+            "items": [
+              {
+                "label": "Inicio",
+                "cx": 39,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Salas",
+                "cx": 117,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Ciclos",
+                "cx": 195,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Automatizaciones",
+                "cx": 273,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Más",
+                "cx": 351,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              }
+            ]
+          }
+        },
+        "admin-usuarios": {
+          "url": "https://cultivo.ramsesvii.com/admin/usuarios",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 511,
+            "innerWidth": 511,
+            "bodyScroll": 511,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Usuarios",
+              "Usuarios"
+            ],
+            "overflowers": [
+              "div.p-4.bg-zinc-800/50.border.rounded-xl right=511",
+              "div.flex.items-center.justify-between right=494",
+              "div.flex.items-center.gap-4 right=494",
+              "div.flex.items-center.gap-2.px-3 right=410",
+              "span.text-sm.font-medium right=398",
+              "div.flex.items-center.gap-1 right=494"
+            ]
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 1050,
+              "bottom": 1106,
+              "left": 0,
+              "right": 511
+            },
+            "innerHeight": 1106,
+            "visualH": 844,
+            "visualScale": 1,
+            "items": [
+              {
+                "label": "Inicio",
+                "cx": 51,
+                "cy": 1079,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Salas",
+                "cx": 153,
+                "cy": 1079,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Ciclos",
+                "cx": 255,
+                "cy": 1079,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Automatizaciones",
+                "cx": 358,
+                "cy": 1079,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Más",
+                "cx": 460,
+                "cy": 1079,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              }
+            ]
+          }
+        },
+        "carpa": {
+          "url": "https://cultivo.ramsesvii.com/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [
+              "div..relative.overflow-hidden.bg-zinc-800/50"
+            ],
+            "scrollWidth": 390,
+            "innerWidth": 390,
+            "bodyScroll": 390,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Vegetativo",
+              "Vegetativo"
+            ],
+            "overflowers": []
+          },
+          "tab": {
+            "present": true,
+            "rect": {
+              "top": 788,
+              "bottom": 844,
+              "left": 0,
+              "right": 390
+            },
+            "innerHeight": 844,
+            "visualH": 844,
+            "visualScale": 1,
+            "items": [
+              {
+                "label": "Inicio",
+                "cx": 39,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Salas",
+                "cx": 117,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Ciclos",
+                "cx": 195,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Automatizaciones",
+                "cx": 273,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              },
+              {
+                "label": "Más",
+                "cx": 351,
+                "cy": 817,
+                "inside": true,
+                "hit": "svg.[object.SVGAnimatedString]"
+              }
+            ]
+          }
+        }
+      },
+      "extra": {
+        "salaSelector": {
+          "before": "https://cultivo.ramsesvii.com/sala",
+          "beforeText": "Sala de Cultivo",
+          "options": 2,
+          "labels": [
+            "Sala de Cultivo",
+            "Terraza"
+          ],
+          "after": "https://cultivo.ramsesvii.com/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133",
+          "afterText": "Terraza",
+          "errors": []
+        },
+        "mas_/": {
+          "from": "/",
+          "sheetLinks": [
+            "Dispositivos",
+            "Notificaciones",
+            "Usuarios",
+            "Cerrar sesión",
+            "Close"
+          ],
+          "landed": "https://cultivo.ramsesvii.com/artefactos",
+          "forced": false,
+          "errors": []
+        },
+        "mas_/seguimientos": {
+          "from": "/seguimientos",
+          "error": "TimeoutError: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Más' })\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"relative flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] transition-colors text-fg-muted\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visi",
+          "errors": []
+        },
+        "carpaTopBar": {
+          "text": "Salas | A",
+          "h": 56
+        }
+      }
+    },
+    "desktop": {
+      "login": {
+        "dom": {
+          "gradients": [],
+          "blur": [],
+          "scrollWidth": 1440,
+          "innerWidth": 1440,
+          "bodyScroll": 1440,
+          "zeros": [],
+          "dashes": 0,
+          "nativeSelects": 0,
+          "nativeCheckbox": 0,
+          "title": "Cultivo Manager - Administración de Cultivo Casero",
+          "h1": [
+            "Bienvenido"
+          ],
+          "overflowers": [
+            "div.min-h-screen.bg-bg.flex.items-center right=1440",
+            "div.w-full.max-w-md right=944",
+            "div.text-center.mb-8 right=944",
+            "div.inline-flex.items-center.justify-center.w-16 right=752",
+            "svg.[object.SVGAnimatedString] right=736",
+            "path.[object.SVGAnimatedString] right=732"
+          ]
+        },
+        "landed": "https://cultivo.ramsesvii.com/",
+        "errors": []
+      },
+      "routes": {
+        "home": {
+          "url": "https://cultivo.ramsesvii.com/",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 15,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Inicio",
+              "Inicio"
+            ],
+            "overflowers": [
+              "div.min-h-screen right=1440",
+              "div.flex.min-h-screen.flex-col.lg:pl-60 right=1440",
+              "main.mx-auto.w-full.max-w-[1400px].flex-1 right=1440",
+              "div.space-y-8 right=1416",
+              "div.flex.flex-col.gap-3.sm:flex-row right=1416",
+              "div.flex.flex-wrap.items-center.gap-2 right=1416"
+            ]
+          },
+          "tab": null
+        },
+        "sala": {
+          "url": "https://cultivo.ramsesvii.com/sala",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Sala de Cultivo",
+              "Sala de Cultivo"
+            ],
+            "overflowers": [
+              "div.min-h-screen right=1440",
+              "div.flex.min-h-screen.flex-col.lg:pl-60 right=1440",
+              "main.mx-auto.w-full.max-w-[1400px].flex-1 right=1440",
+              "div.space-y-6 right=1416",
+              "div.flex.flex-col.gap-3.sm:flex-row right=1416",
+              "div.hidden.min-w-0.lg:block right=509"
+            ]
+          },
+          "tab": null
+        },
+        "seguimientos": {
+          "url": "https://cultivo.ramsesvii.com/seguimientos",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [
+              "\n0%"
+            ],
+            "dashes": 0,
+            "nativeSelects": 2,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Ciclos",
+              "Ciclos"
+            ],
+            "overflowers": [
+              "div.min-h-screen right=1440",
+              "div.flex.min-h-screen.flex-col.lg:pl-60 right=1440",
+              "main.mx-auto.w-full.max-w-[1400px].flex-1 right=1440",
+              "div.space-y-6 right=1416",
+              "div.flex.flex-col.gap-3.sm:flex-row right=1416",
+              "div.flex.flex-wrap.items-center.gap-2 right=1416"
+            ]
+          },
+          "tab": null
+        },
+        "automatizaciones": {
+          "url": "https://cultivo.ramsesvii.com/automatizaciones",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Automatizaciones"
+            ],
+            "overflowers": [
+              "div.min-h-screen right=1440",
+              "div.flex.min-h-screen.flex-col.lg:pl-60 right=1440",
+              "main.mx-auto.w-full.max-w-[1400px].flex-1 right=1440",
+              "div.flex.flex-col.items-center.justify-center right=1416",
+              "svg.[object.SVGAnimatedString] right=852",
+              "path.[object.SVGAnimatedString] right=849"
+            ]
+          },
+          "tab": null
+        },
+        "artefactos": {
+          "url": "https://cultivo.ramsesvii.com/artefactos",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Dispositivos",
+              "Dispositivos"
+            ],
+            "overflowers": [
+              "div.min-h-screen right=1440",
+              "div.flex.min-h-screen.flex-col.lg:pl-60 right=1440",
+              "main.mx-auto.w-full.max-w-[1400px].flex-1 right=1440",
+              "div.space-y-6 right=1416",
+              "div.flex.flex-col.gap-3.sm:flex-row right=1416",
+              "div.hidden.min-w-0.lg:block right=398"
+            ]
+          },
+          "tab": null
+        },
+        "notificaciones": {
+          "url": "https://cultivo.ramsesvii.com/notificaciones",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Notificaciones",
+              "Notificaciones"
+            ],
+            "overflowers": [
+              "div.min-h-screen right=1440",
+              "div.flex.min-h-screen.flex-col.lg:pl-60 right=1440",
+              "main.mx-auto.w-full.max-w-[1400px].flex-1 right=1440",
+              "div.space-y-6 right=1416",
+              "div.flex.flex-col.gap-3.sm:flex-row right=1416",
+              "div.hidden.min-w-0.lg:block right=423"
+            ]
+          },
+          "tab": null
+        },
+        "admin-usuarios": {
+          "url": "https://cultivo.ramsesvii.com/admin/usuarios",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Usuarios",
+              "Usuarios"
+            ],
+            "overflowers": [
+              "div.min-h-screen right=1440",
+              "div.flex.min-h-screen.flex-col.lg:pl-60 right=1440",
+              "main.mx-auto.w-full.max-w-[1400px].flex-1 right=1440",
+              "div.space-y-6 right=1416",
+              "div.flex.flex-col.gap-3.sm:flex-row right=1416",
+              "div.flex.flex-wrap.items-center.gap-2 right=1416"
+            ]
+          },
+          "tab": null
+        },
+        "carpa": {
+          "url": "https://cultivo.ramsesvii.com/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3",
+          "errors": [],
+          "dom": {
+            "gradients": [],
+            "blur": [
+              "div..relative.overflow-hidden.bg-zinc-800/50"
+            ],
+            "scrollWidth": 1440,
+            "innerWidth": 1440,
+            "bodyScroll": 1440,
+            "zeros": [],
+            "dashes": 0,
+            "nativeSelects": 0,
+            "nativeCheckbox": 0,
+            "title": "Cultivo Manager - Administración de Cultivo Casero",
+            "h1": [
+              "Vegetativo",
+              "Vegetativo"
+            ],
+            "overflowers": [
+              "div.min-h-screen right=1440",
+              "div.flex.min-h-screen.flex-col.lg:pl-60 right=1440",
+              "main.mx-auto.w-full.max-w-[1400px].flex-1 right=1440",
+              "div.space-y-8 right=1416",
+              "div.flex.flex-col.gap-3.sm:flex-row right=1416",
+              "div.hidden.min-w-0.lg:block right=468"
+            ]
+          },
+          "tab": null
+        }
+      },
+      "extra": {
+        "salaSelector": {
+          "before": "https://cultivo.ramsesvii.com/sala",
+          "beforeText": "Sala de Cultivo",
+          "options": 2,
+          "labels": [
+            "Sala de Cultivo",
+            "Terraza"
+          ],
+          "after": "https://cultivo.ramsesvii.com/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133",
+          "afterText": "Terraza",
+          "errors": []
+        },
+        "sidebar": {
+          "sidebarLinks": [
+            "Inicio -> /",
+            "Salas -> /sala",
+            "Ciclos -> /seguimientos",
+            "Automatizaciones -> /automatizaciones",
+            "Dispositivos -> /artefactos",
+            "Notificaciones -> /notificaciones",
+            "Usuarios -> /admin/usuarios"
+          ],
+          "toggleLabel": "Menú de usuario",
+          "asideWidthCollapsed": 240,
+          "localStorage": null,
+          "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside button').first()\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"radix-:r0:\" data-state=\"open\" aria-haspopup=\"menu\" aria-expanded=\"true\" aria-controls=\"radix-:r1:\" aria-label=\"Menú de usuario\" data-radix-popper-side=\"top\" data-radix-popper-align=\"start\" class=\"flex w-full items-center g",
+          "errors": []
+        }
+      }
+    }
+  }
+}

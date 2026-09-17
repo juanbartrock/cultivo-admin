@@ -1,0 +1,250 @@
+diff --git a/backend/prisma/schema.prisma b/backend/prisma/schema.prisma
+index 1ffd4ef..3115a97 100644
+--- a/backend/prisma/schema.prisma
++++ b/backend/prisma/schema.prisma
+@@ -112,6 +112,7 @@ model Device {
+   updatedAt            DateTime              @updatedAt @map("updated_at")
+   controlledByDeviceId String?               @map("controlled_by_device_id")
+   recordHistory        Boolean               @default(false) @map("record_history")
++  readingsEnabled      Boolean               @default(true) @map("readings_enabled")
+   userId               String?               @map("user_id")
+   automationActions    AutomationAction[]
+   automationConditions AutomationCondition[]
+@@ -677,6 +678,18 @@ model StageRange {
+   @@map("stage_ranges")
+ }
+ 
++/// Interruptor general de lecturas. Fila única (`id = "singleton"`): con `sensorsEnabled` en
++/// false ningún SENSOR se consulta al conector. El corte por dispositivo vive en
++/// `Device.readingsEnabled` y aplica a cualquier tipo.
++model ReadingsSettings {
++  id             String   @id @default("singleton")
++  sensorsEnabled Boolean  @default(true) @map("sensors_enabled")
++  createdAt      DateTime @default(now()) @map("created_at")
++  updatedAt      DateTime @updatedAt @map("updated_at")
++
++  @@map("readings_settings")
++}
++
+ enum SubscriptionTier {
+   BASIC
+   PRO
+diff --git a/backend/src/app.module.ts b/backend/src/app.module.ts
+index a1c94ce..c8a44c8 100644
+--- a/backend/src/app.module.ts
++++ b/backend/src/app.module.ts
+@@ -20,6 +20,7 @@ import { UsersModule } from './modules/users/users.module';
+ import { IoTCredentialsModule } from './modules/iot-credentials/iot-credentials.module';
+ import { WeatherModule } from './modules/weather/weather.module';
+ import { StageRangesModule } from './modules/stage-ranges/stage-ranges.module';
++import { ReadingsSettingsModule } from './modules/readings-settings/readings-settings.module';
+ import { HealthController } from './health.controller';
+ import { SupabaseAuthGuard } from './modules/auth/guards/supabase-auth.guard';
+ 
+@@ -52,6 +53,7 @@ import { SupabaseAuthGuard } from './modules/auth/guards/supabase-auth.guard';
+     AIAssistantModule,
+     WeatherModule,
+     StageRangesModule,
++    ReadingsSettingsModule,
+   ],
+   controllers: [HealthController],
+   providers: [
+diff --git a/backend/src/modules/devices/devices.module.ts b/backend/src/modules/devices/devices.module.ts
+index 4f83314..0491e32 100644
+--- a/backend/src/modules/devices/devices.module.ts
++++ b/backend/src/modules/devices/devices.module.ts
+@@ -5,6 +5,7 @@ import { DevicesService } from './devices.service';
+ import { IoTGatewayService } from './iot-gateway.service';
+ import { SensorHistoryService } from './sensor-history.service';
+ import { SensorPollerService } from './sensor-poller.service';
++import { ReadingsSettingsModule } from '../readings-settings/readings-settings.module';
+ 
+ @Module({
+   imports: [
+@@ -12,6 +13,7 @@ import { SensorPollerService } from './sensor-poller.service';
+       timeout: 10000,
+       maxRedirects: 3,
+     }),
++    ReadingsSettingsModule,
+   ],
+   controllers: [DevicesController],
+   providers: [
+diff --git a/backend/src/modules/devices/devices.service.ts b/backend/src/modules/devices/devices.service.ts
+index 9572ce9..81ba79e 100644
+--- a/backend/src/modules/devices/devices.service.ts
++++ b/backend/src/modules/devices/devices.service.ts
+@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
+ import { IoTGatewayService, DeviceStatus, CameraStreamInfo } from './iot-gateway.service';
+ import { CreateDeviceDto, UpdateDeviceDto, AssignDeviceDto } from './dto/device.dto';
+ import { Connector, DeviceType, Prisma } from '@prisma/client';
++import { ReadingsSettingsService } from '../readings-settings/readings-settings.service';
+ 
+ export interface ScannedDevice {
+   id: string;
+@@ -25,6 +26,7 @@ export class DevicesService {
+   constructor(
+     private prisma: PrismaService,
+     private iotGateway: IoTGatewayService,
++    private readingsSettings: ReadingsSettingsService,
+   ) {}
+ 
+   /**
+@@ -115,6 +117,8 @@ export class DevicesService {
+       externalId: data.externalId,
+       type: data.type,
+       metadata: data.metadata as Prisma.InputJsonValue,
++      ...(data.recordHistory !== undefined && { recordHistory: data.recordHistory }),
++      ...(data.readingsEnabled !== undefined && { readingsEnabled: data.readingsEnabled }),
+       ...(data.sectionId && {
+         section: { connect: { id: data.sectionId } },
+       }),
+@@ -162,6 +166,7 @@ export class DevicesService {
+       ...(data.type && { type: data.type }),
+       ...(data.metadata !== undefined && { metadata: data.metadata as Prisma.InputJsonValue }),
+       ...(data.recordHistory !== undefined && { recordHistory: data.recordHistory }),
++      ...(data.readingsEnabled !== undefined && { readingsEnabled: data.readingsEnabled }),
+       ...(data.sectionId !== undefined && {
+         section: data.sectionId ? { connect: { id: data.sectionId } } : { disconnect: true },
+       }),
+@@ -332,6 +337,13 @@ export class DevicesService {
+   async getDeviceStatus(id: string): Promise<{ device: Awaited<ReturnType<typeof this.findById>>; status: DeviceStatus }> {
+     const device = await this.findById(id);
+ 
++    // Kill switch de lecturas: con las lecturas pausadas no se sale a la red. Responde 200 con
++    // `readingsPaused` para que la pantalla distinga una pausa de un aparato caído, y sin log:
++    // un aparato desenchufado a propósito no es un error del sistema.
++    if (!(await this.readingsSettings.canRead(device))) {
++      return { device, status: { online: false, readingsPaused: true } };
++    }
++
+     // Si es un dispositivo VIRTUAL, obtener el estado del controlador
+     if (device.connector === Connector.VIRTUAL) {
+       if (device.controlledBy) {
+diff --git a/backend/src/modules/devices/dto/device.dto.ts b/backend/src/modules/devices/dto/device.dto.ts
+index a09e460..0d61146 100644
+--- a/backend/src/modules/devices/dto/device.dto.ts
++++ b/backend/src/modules/devices/dto/device.dto.ts
+@@ -75,6 +75,16 @@ export class CreateDeviceDto {
+   @IsBoolean()
+   @IsOptional()
+   recordHistory?: boolean;
++
++  @ApiPropertyOptional({
++    description:
++      'Si se consulta el estado del dispositivo al conector. En false no sale ningún pedido ' +
++      'a la red por este dispositivo, de cualquier tipo.',
++    example: true,
++  })
++  @IsBoolean()
++  @IsOptional()
++  readingsEnabled?: boolean;
+ }
+ 
+ export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}
+diff --git a/backend/src/modules/devices/iot-gateway.service.ts b/backend/src/modules/devices/iot-gateway.service.ts
+index 00f6bcd..4530172 100644
+--- a/backend/src/modules/devices/iot-gateway.service.ts
++++ b/backend/src/modules/devices/iot-gateway.service.ts
+@@ -19,6 +19,8 @@ export interface DeviceStatus {
+   state?: 'on' | 'off';
+   temperature?: number;
+   humidity?: number;
++  /** El dispositivo tiene las lecturas pausadas: no se consultó al conector. */
++  readingsPaused?: boolean;
+   [key: string]: unknown;
+ }
+ 
+diff --git a/backend/src/modules/devices/sensor-history.service.ts b/backend/src/modules/devices/sensor-history.service.ts
+index 71556d0..752cad2 100644
+--- a/backend/src/modules/devices/sensor-history.service.ts
++++ b/backend/src/modules/devices/sensor-history.service.ts
+@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
+ import { PrismaService } from '../../prisma/prisma.service';
+ import { IoTGatewayService } from './iot-gateway.service';
+ import { DeviceType } from '@prisma/client';
++import { ReadingsSettingsService } from '../readings-settings/readings-settings.service';
+ 
+ @Injectable()
+ export class SensorHistoryService {
+@@ -12,6 +13,7 @@ export class SensorHistoryService {
+   constructor(
+     private prisma: PrismaService,
+     private iotGateway: IoTGatewayService,
++    private readingsSettings: ReadingsSettingsService,
+   ) {}
+ 
+   /**
+@@ -28,11 +30,19 @@ export class SensorHistoryService {
+     this.logger.log('🔄 Starting sensor recording cycle...');
+ 
+     try {
++      // Kill switch general: con las lecturas apagadas el ciclo no consulta a ningún conector.
++      if (!(await this.readingsSettings.sensorsEnabled())) {
++        this.logger.log('Lecturas de sensores desactivadas, ciclo de historial omitido');
++        return;
++      }
++
+       // Obtener dispositivos con recordHistory = true (incluir sectionId)
+       const devices = await this.prisma.device.findMany({
+         where: {
+           recordHistory: true,
+           type: DeviceType.SENSOR, // Solo sensores
++          // Un sensor con las lecturas pausadas no se consulta ni para el historial.
++          readingsEnabled: true,
+         },
+         select: {
+           id: true,
+diff --git a/backend/src/modules/devices/sensor-poller.service.ts b/backend/src/modules/devices/sensor-poller.service.ts
+index 35a6389..a78ed3d 100644
+--- a/backend/src/modules/devices/sensor-poller.service.ts
++++ b/backend/src/modules/devices/sensor-poller.service.ts
+@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
+ import { IoTGatewayService } from './iot-gateway.service';
+ import { RealtimeGateway } from '../realtime/realtime.gateway';
+ import { Connector, DeviceType } from '@prisma/client';
++import { ReadingsSettingsService } from '../readings-settings/readings-settings.service';
+ 
+ interface SensorReading {
+   temperature?: number;
+@@ -41,6 +42,7 @@ export class SensorPollerService {
+     private prisma: PrismaService,
+     private iotGateway: IoTGatewayService,
+     private realtimeGateway: RealtimeGateway,
++    private readingsSettings: ReadingsSettingsService,
+   ) {}
+ 
+   /**
+@@ -56,6 +58,12 @@ export class SensorPollerService {
+     this.isPolling = true;
+ 
+     try {
++      // Kill switch general: con las lecturas apagadas el ciclo no consulta a ningún conector.
++      if (!(await this.readingsSettings.sensorsEnabled())) {
++        this.logger.debug('Lecturas de sensores desactivadas, ciclo omitido');
++        return;
++      }
++
+       const sensors = await this.getSensorsToRead();
+ 
+       if (sensors.length === 0) {
+@@ -81,6 +89,9 @@ export class SensorPollerService {
+     return this.prisma.device.findMany({
+       where: {
+         type: DeviceType.SENSOR,
++        // El corte por dispositivo se aplica en la consulta: un sensor pausado nunca llega
++        // al gateway, así que no deja ni un WARN por ciclo.
++        readingsEnabled: true,
+         // Solo sensores que tienen sección asignada o recordHistory activo
+         OR: [
+           { sectionId: { not: null } },
+@@ -252,6 +263,10 @@ export class SensorPollerService {
+    * Fuerza una lectura inmediata de todos los sensores (útil para testing/debug)
+    */
+   async forceReadAll(): Promise<Map<string, SensorReading>> {
++    if (!(await this.readingsSettings.sensorsEnabled())) {
++      return new Map();
++    }
++
+     const sensors = await this.getSensorsToRead();
+     const results = new Map<string, SensorReading>();
+ 

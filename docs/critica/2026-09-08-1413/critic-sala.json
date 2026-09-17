@@ -1,0 +1,158 @@
+{
+  "movil": {
+    "salaCultivo": [
+      {
+        "name": "Vegetativo",
+        "rangos": "Rangos: Por defecto",
+        "offline": true,
+        "readings": [
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          },
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          },
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          }
+        ],
+        "panelText": "Vegetativo 100x100x200 2 dispositivos Ver detalle Sensor sin respuesta Rangos: Por defecto — — —"
+      },
+      {
+        "name": "Secado",
+        "rangos": "Rangos: Curado —",
+        "offline": true,
+        "readings": [
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          },
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          },
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          }
+        ],
+        "panelText": "2 plantas Secado 80x80x160 Para secado y clones. 1 dispositivo Ver detalle Sensor sin respuesta Rangos: Curado — — —"
+      },
+      {
+        "name": "Floración",
+        "rangos": null,
+        "offline": false,
+        "readings": [],
+        "panelText": "4 plantas Floración 120x120x200 2 dispositivos Ver detalle"
+      },
+      {
+        "name": "Germinadora",
+        "rangos": null,
+        "offline": false,
+        "readings": [],
+        "panelText": "Germinadora 0 dispositivos Ver detalle"
+      }
+    ],
+    "url": "https://cultivo.ramsesvii.com/sala",
+    "terraza": [
+      {
+        "name": "Exterior Directo",
+        "rangos": null,
+        "offline": false,
+        "readings": [],
+        "panelText": "11 plantas Exterior Directo Son las plantas que están fuera del invernadero 2 dispositivos Ver detalle"
+      },
+      {
+        "name": "Invernadero",
+        "rangos": null,
+        "offline": false,
+        "readings": [],
+        "panelText": "Inactiva Invernadero 0 dispositivos Ver detalle"
+      }
+    ],
+    "errors": [
+      "[AuthContext] Error fetching user profile: TypeError: Failed to fetch\n    at https://cultivo.ramsesvii.com/_next/static/chunks/48-7da2c4e1bab8a294.js:1:23265\n    at k (https://cultivo.ramsesvii.com/_n"
+    ]
+  },
+  "desktop": {
+    "salaCultivo": [
+      {
+        "name": "Vegetativo",
+        "rangos": "Rangos: Por defecto",
+        "offline": true,
+        "readings": [
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          },
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          },
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          }
+        ],
+        "panelText": "Vegetativo 100x100x200 2 dispositivos Ver detalle Sensor sin respuesta Rangos: Por defecto — — —"
+      },
+      {
+        "name": "Secado",
+        "rangos": "Rangos: Curado —",
+        "offline": true,
+        "readings": [
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          },
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          },
+          {
+            "v": "—",
+            "tone": "text-sm text-fg-faint"
+          }
+        ],
+        "panelText": "2 plantas Secado 80x80x160 Para secado y clones. 1 dispositivo Ver detalle Sensor sin respuesta Rangos: Curado — — —"
+      },
+      {
+        "name": "Floración",
+        "rangos": null,
+        "offline": false,
+        "readings": [],
+        "panelText": "4 plantas Floración 120x120x200 2 dispositivos Ver detalle"
+      },
+      {
+        "name": "Germinadora",
+        "rangos": null,
+        "offline": false,
+        "readings": [],
+        "panelText": "Germinadora 0 dispositivos Ver detalle"
+      }
+    ],
+    "url": "https://cultivo.ramsesvii.com/sala",
+    "terraza": [
+      {
+        "name": "Exterior Directo",
+        "rangos": null,
+        "offline": false,
+        "readings": [],
+        "panelText": "11 plantas Exterior Directo Son las plantas que están fuera del invernadero 2 dispositivos Ver detalle"
+      },
+      {
+        "name": "Invernadero",
+        "rangos": null,
+        "offline": false,
+        "readings": [],
+        "panelText": "Inactiva Invernadero 0 dispositivos Ver detalle"
+      }
+    ],
+    "errors": [
+      "[AuthContext] Error fetching user profile: TypeError: Failed to fetch\n    at https://cultivo.ramsesvii.com/_next/static/chunks/48-7da2c4e1bab8a294.js:1:23265\n    at k (https://cultivo.ramsesvii.com/_n"
+    ]
+  }
+}

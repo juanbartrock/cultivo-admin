@@ -1,0 +1,7 @@
+Vegetativo | vege-temp-hum SENSOR readingsEnabled= True
+Vegetativo | vege-led-150 LUZ readingsEnabled= False
+Secado | Termohigometro Indoor SENSOR readingsEnabled= True
+Floración | Tapo Camara CAMARA readingsEnabled= True
+Floración | flora-humidificador HUMIDIFICADOR readingsEnabled= True
+Exterior Directo | Operación Tanque Riego BOMBA_RIEGO readingsEnabled= False
+Exterior Directo | Switch Tanque Riego BOMBA_RIEGO readingsEnabled= False

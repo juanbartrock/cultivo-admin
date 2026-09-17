@@ -1,0 +1,522 @@
+commit 1958eba392b3e8b8940beeabfe8c5f845dfad101
+Author: Juan Pautasso <jpautasso@gmail.com>
+Date:   Tue Sep 8 11:10:24 2026 -0300
+
+    fix(rangos): /sala usa la fuente unica de rangos y correcciones de la ronda 2 del critico
+    
+    Sobre docs/critica/2026-09-08-1027/informe.md.
+    
+    - #1 (falla dura): CarpaCard pierde getVPDColor y su calculateVPD; usa sectionReadings +
+      readingStatus con rangeFor(effectiveStage) y respeta online=false ('-' sin color, badge
+      "Sensor sin respuesta"). GET /rooms/:id/sections devuelve devices, plants y effectiveStage
+      para que /sala tenga los mismos datos que la home. La tarjeta muestra que etapa aplica.
+    - #2: el dialogo de /admin/rangos acota el alto y deja el pie fijo; en 390x844 Guardar y
+      Cancelar quedan dentro del viewport.
+    - #3: el error por campo ("Numero invalido") se muestra debajo del input.
+    - #4: CLAUDE.md documenta las tres pantallas y el grep de verificacion; qa-nav suma
+      08_admin_rangos (19 casos).
+    - #5: NumericBodyInterceptor rechaza los rangos que llegan como string, que el
+      enableImplicitConversion del ValidationPipe global dejaba pasar.
+    - #6: la siembra de filas faltantes pasa a onModuleInit; findAll solo lee y findOne usa
+      findUnique.
+    - El numero de una lectura usa READING_TONE en las tres pantallas: misma lectura, mismo color.
+    
+    Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 9e110b1..2497791 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -98,6 +98,9 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
+   temperatura, humedad, VPD y CO₂. Dentro del ideal la lectura es `ok`, entre el ideal y el
+   amplio `warn`, fuera `danger`. **No hay rangos escritos en el frontend**: mientras
+   `GET /api/stage-ranges` no responde, el estado es `unknown` y la lectura va sin color.
++  El chequeo de que sigue siendo cierto es
++  `grep -rnE '(temp|hum|vpd)[A-Za-z]*\s*(<|>|<=|>=)\s*[0-9]' frontend/src`, que tiene que
++  salir vacío.
+   - Se editan en **`/admin/rangos`** (ítem "Rangos" del menú de admin; en móvil, dentro del
+     sheet "Más"). `PUT`/`PATCH /api/stage-ranges/:stage` exigen rol `ADMIN`; el `GET` lo puede
+     leer cualquier usuario autenticado. El backend valida min < max y que el rango amplio
+@@ -105,9 +108,13 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
+   - Código: `backend/src/modules/stage-ranges/` (servicio, controller, constantes y seed) y
+     `frontend/src/features/rangos/` (hook `useStageRanges`, pantalla y diálogo). El estado de
+     una lectura lo calcula `readingStatus(metric, value, range)` en
+-    `frontend/src/features/home/lib/readings.ts`.
++    `frontend/src/features/home/lib/readings.ts`, y lo consumen las tres pantallas que pintan
++    lecturas: home (`CarpaStatusCard`), `/sala` (`CarpaCard`) y la carpa (`EnvironmentPanel`).
++  - Los rangos se escriben con números: el `ValidationPipe` global tiene
++    `enableImplicitConversion`, así que `PUT`/`PATCH` pasan por `NumericBodyInterceptor`, que
++    mira el body crudo y rechaza `{"tempIdealMin":"18"}` con 400.
+   - **Qué etapa aplica a una carpa**: la calcula el backend y viaja como `effectiveStage` en
+-    `GET /sections`, `GET /sections/:id` y el dashboard de la carpa. Es la etapa más frecuente
++    `GET /sections`, `GET /sections/:id`, `GET /rooms/:id/sections` y el dashboard de la carpa. Es la etapa más frecuente
+     entre las plantas asignadas a la carpa; ante empate gana la más avanzada
+     (`GERMINACION → VEGETATIVO → PRE_FLORA → FLORACION → SECADO → CURADO`) y sin plantas es
+     `DEFAULT`. El frontend no la recalcula.
+diff --git a/backend/src/modules/locations/locations.service.ts b/backend/src/modules/locations/locations.service.ts
+index c1330ea..2d0fdee 100644
+--- a/backend/src/modules/locations/locations.service.ts
++++ b/backend/src/modules/locations/locations.service.ts
+@@ -94,12 +94,18 @@ export class LocationsService {
+     });
+   }
+ 
++  /**
++   * Carpas de una sala. Devuelve lo mismo que `findAllSections` (dispositivos, plantas y
++   * `effectiveStage`) para que /sala pinte las lecturas con la misma fuente que la home.
++   */
+   async getRoomSections(roomId: string, userId?: string) {
+     await this.findRoomById(roomId, userId);
+ 
+-    return this.prisma.section.findMany({
++    const sections = await this.prisma.section.findMany({
+       where: { roomId },
+       include: {
++        devices: true,
++        plants: true,
+         _count: {
+           select: {
+             devices: true,
+@@ -109,6 +115,11 @@ export class LocationsService {
+       },
+       orderBy: { createdAt: 'asc' },
+     });
++
++    return sections.map((section) => ({
++      ...section,
++      effectiveStage: effectiveStage(section.plants),
++    }));
+   }
+ 
+   // ============================================
+diff --git a/backend/src/modules/stage-ranges/numeric-body.interceptor.ts b/backend/src/modules/stage-ranges/numeric-body.interceptor.ts
+new file mode 100644
+index 0000000..2b69962
+--- /dev/null
++++ b/backend/src/modules/stage-ranges/numeric-body.interceptor.ts
+@@ -0,0 +1,38 @@
++import {
++  BadRequestException,
++  CallHandler,
++  ExecutionContext,
++  Injectable,
++  NestInterceptor,
++} from '@nestjs/common';
++import { Observable } from 'rxjs';
++import { SEED_RANGE_VALUES } from './stage-range.constants';
++
++const RANGE_KEYS = new Set(Object.keys(SEED_RANGE_VALUES));
++
++/**
++ * Rechaza los rangos que llegan como string (`{"tempIdealMin":"18"}`).
++ *
++ * El `ValidationPipe` global corre con `enableImplicitConversion`, así que para cuando el DTO
++ * se valida `"18"` ya es `18` y `@IsNumber()` lo deja pasar. Los interceptores corren antes que
++ * los pipes: acá se mira el body crudo, que es el único lugar donde todavía se sabe que vino
++ * entre comillas. Las claves que no son del DTO las sigue rechazando `forbidNonWhitelisted`.
++ */
++@Injectable()
++export class NumericBodyInterceptor implements NestInterceptor {
++  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
++    const body = context.switchToHttp().getRequest<{ body?: unknown }>().body;
++
++    if (body && typeof body === 'object' && !Array.isArray(body)) {
++      const invalid = Object.entries(body as Record<string, unknown>)
++        .filter(([key, value]) => RANGE_KEYS.has(key) && typeof value !== 'number')
++        .map(([key, value]) => `${key} tiene que ser un número, llegó ${typeof value}`);
++
++      if (invalid.length) {
++        throw new BadRequestException(invalid);
++      }
++    }
++
++    return next.handle();
++  }
++}
+diff --git a/backend/src/modules/stage-ranges/stage-ranges.controller.ts b/backend/src/modules/stage-ranges/stage-ranges.controller.ts
+index 22c35db..cc4d1ea 100644
+--- a/backend/src/modules/stage-ranges/stage-ranges.controller.ts
++++ b/backend/src/modules/stage-ranges/stage-ranges.controller.ts
+@@ -7,12 +7,14 @@ import {
+   Patch,
+   Put,
+   UseGuards,
++  UseInterceptors,
+ } from '@nestjs/common';
+ import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+ import { RangeStage, UserRole } from '@prisma/client';
+ import { Roles } from '../auth/decorators/roles.decorator';
+ import { RolesGuard } from '../auth/guards/roles.guard';
+ import { PatchStageRangeDto, UpdateStageRangeDto } from './dto/stage-range.dto';
++import { NumericBodyInterceptor } from './numeric-body.interceptor';
+ import { StageRangesService } from './stage-ranges.service';
+ 
+ @ApiTags('stage-ranges')
+@@ -30,6 +32,7 @@ export class StageRangesController {
+ 
+   @Put(':stage')
+   @UseGuards(RolesGuard)
++  @UseInterceptors(NumericBodyInterceptor)
+   @Roles(UserRole.ADMIN)
+   @ApiOperation({ summary: 'Reemplazar los rangos de una etapa (solo admin)' })
+   @ApiParam({ name: 'stage', enum: RangeStage })
+@@ -45,6 +48,7 @@ export class StageRangesController {
+ 
+   @Patch(':stage')
+   @UseGuards(RolesGuard)
++  @UseInterceptors(NumericBodyInterceptor)
+   @Roles(UserRole.ADMIN)
+   @ApiOperation({ summary: 'Actualizar algunos rangos de una etapa (solo admin)' })
+   @ApiParam({ name: 'stage', enum: RangeStage })
+diff --git a/backend/src/modules/stage-ranges/stage-ranges.service.ts b/backend/src/modules/stage-ranges/stage-ranges.service.ts
+index db0939a..2189663 100644
+--- a/backend/src/modules/stage-ranges/stage-ranges.service.ts
++++ b/backend/src/modules/stage-ranges/stage-ranges.service.ts
+@@ -1,4 +1,10 @@
+-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
++import {
++  BadRequestException,
++  Injectable,
++  Logger,
++  NotFoundException,
++  OnModuleInit,
++} from '@nestjs/common';
+ import { RangeStage, StageRange } from '@prisma/client';
+ import { PrismaService } from '../../prisma/prisma.service';
+ import { PatchStageRangeDto, UpdateStageRangeDto } from './dto/stage-range.dto';
+@@ -12,42 +18,52 @@ import {
+ } from './stage-range.constants';
+ 
+ @Injectable()
+-export class StageRangesService {
++export class StageRangesService implements OnModuleInit {
+   private readonly logger = new Logger(StageRangesService.name);
+ 
+   constructor(private prisma: PrismaService) {}
+ 
+   /**
+-   * Las 7 filas en orden de etapa. Si falta alguna (base sembrada a mano, etapa nueva) la crea
+-   * con los valores de siembra: `skipDuplicates` la hace idempotente y nunca pisa una existente.
++   * Siembra al arrancar las filas que falten (base sembrada a mano, etapa nueva). Va acá y no
++   * en el GET para que leer los rangos no escriba en la base; la migración ya las crea y
++   * `skipDuplicates` nunca pisa una fila existente.
+    */
+-  async findAll(): Promise<StageRange[]> {
+-    const existing = await this.prisma.stageRange.findMany();
+-
+-    if (existing.length < RANGE_STAGES.length) {
++  async onModuleInit(): Promise<void> {
++    try {
++      const existing = await this.prisma.stageRange.findMany({ select: { stage: true } });
+       const missing = RANGE_STAGES.filter(
+         (stage) => !existing.some((row) => row.stage === stage),
+       );
++      if (!missing.length) return;
++
+       this.logger.warn(`Sembrando rangos faltantes: ${missing.join(', ')}`);
+       await this.prisma.stageRange.createMany({
+         data: missing.map((stage) => ({ stage, ...SEED_RANGE_VALUES })),
+         skipDuplicates: true,
+       });
+-      return this.sorted(await this.prisma.stageRange.findMany());
++    } catch (error) {
++      // Que la base no responda al arrancar no puede tumbar el proceso: el GET falla solo.
++      this.logger.error(`No se pudieron sembrar los rangos: ${(error as Error).message}`);
+     }
++  }
+ 
+-    return this.sorted(existing);
++  /** Las 7 filas en orden de etapa. Sólo lee. */
++  async findAll(): Promise<StageRange[]> {
++    return this.sorted(await this.prisma.stageRange.findMany());
+   }
+ 
+   async findOne(stage: RangeStage): Promise<StageRange> {
+-    const rows = await this.findAll();
+-    return rows.find((row) => row.stage === stage) as StageRange;
++    const row = await this.prisma.stageRange.findUnique({ where: { stage } });
++    if (!row) {
++      throw new NotFoundException(`No hay rangos cargados para la etapa ${stage}`);
++    }
++    return row;
+   }
+ 
+   /** PUT: reemplaza los 16 valores de una etapa. */
+   async update(stage: RangeStage, data: UpdateStageRangeDto): Promise<StageRange> {
+     this.validate(data);
+-    await this.findOne(stage); // asegura que la fila exista antes del upsert
++    await this.findOne(stage); // 404 claro si la fila no existe, en vez del P2025 de Prisma
+     return this.prisma.stageRange.update({ where: { stage }, data });
+   }
+ 
+diff --git a/frontend/src/components/CarpaCard.tsx b/frontend/src/components/CarpaCard.tsx
+index b37a469..d3f09c0 100644
+--- a/frontend/src/components/CarpaCard.tsx
++++ b/frontend/src/components/CarpaCard.tsx
+@@ -3,6 +3,16 @@
+ import { motion } from 'framer-motion';
+ import Link from 'next/link';
+ import { Section, Device, DeviceType, DeviceStatus } from '@/types';
++import { Badge } from '@/components/ui/badge';
++import { useStageRanges } from '@/features/rangos';
++import {
++  RANGE_STAGE_LABELS,
++  READING_TONE,
++  formatReading,
++  isDeviceOn,
++  readingStatus,
++  sectionReadings,
++} from '@/features/home/lib/readings';
+ import { 
+   Leaf, 
+   Thermometer, 
+@@ -41,33 +51,6 @@ function getSectionIcon(sectionName: string) {
+   return { icon: Leaf, color: 'text-fg-muted' };
+ }
+ 
+-// Calcula el VPD (Vapor Pressure Deficit) en kPa
+-function calculateVPD(temperature: number, humidity: number): number | null {
+-  // Validar que los valores sean números válidos
+-  if (typeof temperature !== 'number' || typeof humidity !== 'number' ||
+-      isNaN(temperature) || isNaN(humidity) ||
+-      !isFinite(temperature) || !isFinite(humidity)) {
+-    return null;
+-  }
+-  // Presión de vapor de saturación (SVP) usando la fórmula de Tetens
+-  const svp = 0.6108 * Math.exp((17.27 * temperature) / (temperature + 237.3));
+-  // Presión de vapor actual (AVP)
+-  const avp = (humidity / 100) * svp;
+-  // VPD = SVP - AVP
+-  const vpd = Math.round((svp - avp) * 100) / 100;
+-  // Validar resultado
+-  return isNaN(vpd) || !isFinite(vpd) ? null : vpd;
+-}
+-
+-// Obtener el color del VPD según el rango
+-function getVPDColor(vpd: number): string {
+-  if (vpd < 0.4) return 'text-danger'; // Muy bajo: riesgo de moho
+-  if (vpd < 0.8) return 'text-warn'; // Bajo
+-  if (vpd <= 1.4) return 'text-fg'; // En rango
+-  if (vpd <= 1.6) return 'text-warn'; // Alto: estrés leve
+-  return 'text-danger'; // Muy alto: estrés severo
+-}
+-
+ interface CarpaCardProps {
+   section: Section & { _count?: { devices: number; plants: number } };
+   delay?: number;
+@@ -78,6 +61,8 @@ interface CarpaCardProps {
+ }
+ 
+ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusLoading = false }: CarpaCardProps) {
++  // Rangos de la etapa que aplica a la carpa; sin ellos las lecturas van sin color.
++  const { rangeFor } = useStageRanges();
+   // Obtener el sensor si existe
+   const sensor = section.devices?.find(d => d.type === 'SENSOR');
+   // Usar _count si existe, si no usar el array de devices
+@@ -91,24 +76,14 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
+   const luzDevice = section.devices?.find(d => d.type === 'LUZ');
+   
+   // Verificar si la luz está encendida (para el efecto de borde iluminado)
+-  const isLuzEncendida = (() => {
+-    if (!luzDevice) return false;
+-    if (getDeviceStatus) {
+-      const status = getDeviceStatus(luzDevice.id);
+-      if (status) {
+-        return status.state === 'on' || status.switch === 'on' || status.power === true;
+-      }
+-    }
+-    return luzDevice.metadata?.state === 'on' || luzDevice.metadata?.switch === 'on' || luzDevice.metadata?.power === true;
+-  })();
++  const isLuzEncendida = luzDevice
++    ? isDeviceOn(getDeviceStatus?.(luzDevice.id) ?? null, luzDevice)
++    : false;
+ 
+-  // Obtener datos ambientales del sensor - PREFERIR estado en tiempo real
+-  const sensorStatus = sensor && getDeviceStatus ? getDeviceStatus(sensor.id) : null;
+-  const temperature = sensorStatus?.temperature as number | undefined ?? sensor?.metadata?.temperature as number | undefined;
+-  const humidity = sensorStatus?.humidity as number | undefined ?? sensor?.metadata?.humidity as number | undefined;
+-  const vpd = temperature !== undefined && humidity !== undefined 
+-    ? calculateVPD(temperature, humidity) 
+-    : undefined;
++  // Lecturas y estado: la misma fuente que la home y la carpa. Un sensor sin respuesta no
++  // tiene lectura viva, así que las tres métricas van en '—' sin color.
++  const readings = sectionReadings(section, (deviceId) => getDeviceStatus?.(deviceId) ?? null);
++  const range = rangeFor(section.effectiveStage);
+ 
+   // Obtener dispositivos por tipo
+   const getDeviceByType = (type: DeviceType): Device | undefined => {
+@@ -120,22 +95,12 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
+   const extractor = getDeviceByType('EXTRACTOR');
+   const ventilador = getDeviceByType('VENTILADOR');
+ 
+-  // Obtener el estado de un dispositivo controlable
+-  const getDeviceState = (device: Device | undefined): boolean => {
+-    if (!device) return false;
+-    // Primero intentar estado en tiempo real
+-    if (getDeviceStatus) {
+-      const status = getDeviceStatus(device.id);
+-      if (status) {
+-        return status.state === 'on' || status.switch === 'on' || status.power === true;
+-      }
+-    }
+-    // Fallback a metadata guardada
+-    return device.metadata?.state === 'on' || device.metadata?.switch === 'on' || device.metadata?.power === true;
+-  };
++  // Estado de un dispositivo controlable, con la misma regla que el resto de la app.
++  const getDeviceState = (device: Device | undefined): boolean =>
++    device ? isDeviceOn(getDeviceStatus?.(device.id) ?? null, device) : false;
+ 
+-  // Verificar si hay datos ambientales o dispositivos para mostrar
+-  const hasEnvironmentData = temperature !== undefined || humidity !== undefined;
++  // La carpa con sensor siempre muestra la fila de lecturas: sin dato va '—', nunca se esconde.
++  const hasEnvironmentData = Boolean(readings.sensor);
+   const hasDeviceStatus = luz || humidificador || extractor || ventilador;
+   const hasExtraInfo = hasEnvironmentData || hasDeviceStatus;
+ 
+@@ -221,32 +186,47 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
+         >
+           {/* Datos ambientales */}
+           {hasEnvironmentData && (
+-            <div className="flex items-center justify-between gap-2">
+-              {/* Temperatura */}
+-              {temperature !== undefined && (
++            <div className="space-y-2">
++              <div className="flex flex-wrap items-center justify-center gap-2">
++                {readings.sensorOffline ? <Badge variant="offline">Sensor sin respuesta</Badge> : null}
++                <span className="text-xs text-fg-faint" title="Etapa cuyos rangos se aplican">
++                  Rangos: {RANGE_STAGE_LABELS[section.effectiveStage ?? 'DEFAULT']}
++                </span>
++              </div>
++              <div className="flex items-center justify-between gap-2">
+                 <div className="flex items-center gap-1.5 flex-1 justify-center">
+                   <Thermometer className="w-3.5 h-3.5 text-fg-faint" />
+-                  <span className="text-sm font-medium tabular-nums text-fg">{temperature} °C</span>
++                  <span
++                    className={`text-sm font-medium tabular-nums ${
++                      READING_TONE[readingStatus('temperature', readings.temperature, range)]
++                    }`}
++                  >
++                    {formatReading(readings.temperature, ' °C')}
++                  </span>
+                 </div>
+-              )}
+-              
+-              {/* Humedad */}
+-              {humidity !== undefined && (
++
+                 <div className="flex items-center gap-1.5 flex-1 justify-center">
+                   <Droplets className="w-3.5 h-3.5 text-fg-faint" />
+-                  <span className="text-sm font-medium tabular-nums text-fg">{humidity} %</span>
++                  <span
++                    className={`text-sm font-medium tabular-nums ${
++                      READING_TONE[readingStatus('humidity', readings.humidity, range)]
++                    }`}
++                  >
++                    {formatReading(readings.humidity, ' %', 0)}
++                  </span>
+                 </div>
+-              )}
+-              
+-              {/* VPD */}
+-              {vpd !== undefined && vpd !== null && (
++
+                 <div className="flex items-center gap-1.5 flex-1 justify-center">
+-                  <Activity className={`w-3.5 h-3.5 ${getVPDColor(vpd)}`} />
+-                  <span className={`text-sm font-medium tabular-nums ${getVPDColor(vpd)}`}>
+-                    {vpd} kPa
++                  <Activity className="w-3.5 h-3.5 text-fg-faint" />
++                  <span
++                    className={`text-sm font-medium tabular-nums ${
++                      READING_TONE[readingStatus('vpd', readings.vpd, range)]
++                    }`}
++                  >
++                    {formatReading(readings.vpd, ' kPa', 2)}
+                   </span>
+                 </div>
+-              )}
++              </div>
+             </div>
+           )}
+ 
+diff --git a/frontend/src/components/EnvironmentPanel.tsx b/frontend/src/components/EnvironmentPanel.tsx
+index c1e0cf8..2b3a766 100644
+--- a/frontend/src/components/EnvironmentPanel.tsx
++++ b/frontend/src/components/EnvironmentPanel.tsx
+@@ -28,6 +28,7 @@ import { useToast } from '@/contexts/ToastContext';
+ import {
+   RANGE_STAGE_LABELS,
+   RangeMetric,
++  READING_TONE,
+   ReadingStatus,
+   metricRange,
+   readingStatus,
+@@ -153,8 +154,10 @@ function MetricCard({ icon: Icon, label, value, metric, decimals = 1, iconColor,
+ 
+         <p className="text-xs text-fg-muted mb-1">{label}</p>
+ 
++        {/* El número usa el mismo tono que la home y /sala (READING_TONE): la misma lectura no
++            puede verse de dos colores distintos según la pantalla. */}
+         {hasValue ? (
+-          <p className={`font-display text-3xl font-semibold tabular-nums ${getStatusColor(status)}`}>
++          <p className={`font-display text-3xl font-semibold tabular-nums ${READING_TONE[status]}`}>
+             {typeof value === 'number' ? value.toFixed(decimals) : value}
+             <span className="text-lg font-normal text-fg-faint ml-1">{unit}</span>
+           </p>
+diff --git a/frontend/src/features/rangos/components/StageRangeDialog.tsx b/frontend/src/features/rangos/components/StageRangeDialog.tsx
+index e6b74a5..d279771 100644
+--- a/frontend/src/features/rangos/components/StageRangeDialog.tsx
++++ b/frontend/src/features/rangos/components/StageRangeDialog.tsx
+@@ -96,8 +96,14 @@ function MetricFields({
+               value={draft[key]}
+               onChange={(event) => onChange(key, event.target.value)}
+               aria-invalid={Boolean(errors[key]) || undefined}
++              aria-describedby={errors[key] ? `${key}-error` : undefined}
+               className={errors[key] ? 'border-danger' : undefined}
+             />
++            {errors[key] ? (
++              <p id={`${key}-error`} role="alert" className="text-xs text-danger">
++                {errors[key]}
++              </p>
++            ) : null}
+           </div>
+         ))}
+       </div>
+@@ -126,12 +132,14 @@ export function StageRangeDialog({ range, open, onOpenChange, onSave, saving }:
+ 
+   return (
+     <Dialog open={open} onOpenChange={onOpenChange}>
+-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+-        <DialogHeader>
++      {/* Alto acotado y cuerpo con scroll propio: en móvil Guardar y Cancelar quedan siempre
++          a la vista, sin tener que recorrer los 16 campos. */}
++      <DialogContent className="flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0">
++        <DialogHeader className="shrink-0 border-b border-edge px-4 py-3 text-left sm:px-6">
+           <DialogTitle>Rangos · {RANGE_STAGE_LABELS[range.stage]}</DialogTitle>
+         </DialogHeader>
+ 
+-        <div className="space-y-3">
++        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
+           {METRIC_FIELDS.map((metric) => (
+             <MetricFields
+               key={metric.key}
+@@ -143,7 +151,7 @@ export function StageRangeDialog({ range, open, onOpenChange, onSave, saving }:
+           ))}
+         </div>
+ 
+-        <DialogFooter>
++        <DialogFooter className="shrink-0 gap-2 border-t border-edge bg-surface-3 px-4 py-3 sm:px-6">
+           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={saving}>
+             Cancelar
+           </Button>
+diff --git a/frontend/tests/qa-nav.spec.ts b/frontend/tests/qa-nav.spec.ts
+index be81db1..d136ff5 100644
+--- a/frontend/tests/qa-nav.spec.ts
++++ b/frontend/tests/qa-nav.spec.ts
+@@ -106,6 +106,7 @@ const ROUTES: Route[] = [
+   { slug: '05_artefactos', title: 'artefactos', path: '/artefactos' },
+   { slug: '06_notificaciones', title: 'notificaciones', path: '/notificaciones' },
+   { slug: '07_admin_usuarios', title: 'admin de usuarios', path: '/admin/usuarios' },
++  { slug: '08_admin_rangos', title: 'admin de rangos', path: '/admin/rangos' },
+ ];
+ 
+ test.beforeAll(() => {

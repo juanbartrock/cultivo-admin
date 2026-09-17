@@ -1,0 +1,24 @@
+=== GET /api/auth/me
+{"authenticated":true,"user":{"id":"7f4c3ade-1244-4eef-a68e-49c5d35eb848","email":"admin","name":"Administrador","role":"ADMIN","subscriptionTier":"PREMIUM","isActive":true,"createdAt":"2025-12-13T20:26:32.650Z","updatedAt":"2026-09-06T00:13:39.719Z"}}
+HTTP 200
+
+=== GET /api/sections
+[{"id":"f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","name":"Vegetativo","dimensions":"100x100x200","image":null,"description":null,"roomId":"225305da-c624-43ff-916f-b68049aa2cd1","createdAt":"2025-12-07T14:57:50.867Z","updatedAt":"2025-12-07T14:57:50.867Z","enabled":true,"room":{"id":"225305da-c624-43ff-916f-b68049aa2cd1","name":"Sala de Cultivo","description":"En donde se encuentran las 3 carpas","createdAt":"2025-12-07T14:57:14.153Z","updatedAt":"2025-12-13T20:26:33.787Z","userId":"7f4c3ade-1244-4eef-a68e-49c5d35eb848"},"devices":[{"id":"cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a","name":"vege-led-150","connector":"TUYA","externalId":"eb2ec61130a11f5b19lbic","type":"LUZ","sectionId":"f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","metadata":null,"createdAt":"2025-12-07T15:01:08.578Z","updatedAt":"2025-12-13T20:26:35.269Z","controlledByDeviceId":null,"recordHistory":false,"userId":"7f4c3ade-1244-4eef-a68e-49c5d35eb848"},{"id":"ac4df493-f610-4106-81f2-020bd3cac85a","name":"vege-temp-hum","connector":"TUYA","externalId":"eb3f0dab13d64a1ba21l9z","type":"SENSOR","sectionId":"f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","metadata":null,"createdAt":"2025-12-10T21:13:56.786Z","updatedAt":"2025-12-13T20:26:35.269Z","controlledByDeviceId":null,"recordHistory":true,"userId":"7f4c3ade-1244-4eef-a68e-49c5d35eb848"}],"plants":[],"_count":{"devices":2,"plants":0}},{"id":"ba2f7493-8f0b-45f1-99b6-5427d014de75","name":"Secado","dimensions":"80x80x160","image":null,"description":"Para secado y clones.","roomId":"225305d
+=== GET /api/cycles?status=ACTIVE
+[]
+HTTP 200
+
+=== GET /api/notifications/unread-count
+{"count":0}
+HTTP 200
+
+=== GET /api/notifications/summary
+{"total":387,"unread":0,"byType":{},"byPriority":{}}
+HTTP 200
+
+=== GET /api/rooms
+[{"id":"225305da-c624-43ff-916f-b68049aa2cd1","name":"Sala de Cultivo","description":"En donde se encuentran las 3 carpas","createdAt":"2025-12-07T14:57:14.153Z","updatedAt":"2025-12-13T20:26:33.787Z","userId":"7f4c3ade-1244-4eef-a68e-49c5d35eb848","sections":[{"id":"f1ed3032-cf56-4487-90a3-0d79dfd3f9b3","name":"Vegetativo","dimensions":"100x100x200","image":null,"description":null,"roomId":"225305da-c624-43ff-916f-b68049aa2cd1","createdAt":"2025-12-07T14:57:50.867Z","updatedAt":"2025-12-07T14:57:50.867Z","enabled":true,"_count":{"devices":2,"plants":0}},{"id":"766abd7c-9ab5-40d7-9f60-e62ff942f6b1","name":"Floración","dimensions":"120x120x200","image":null,"description":null,"roomId":"225305da-c624-43ff-916f-b68049aa2cd1","createdAt":"2025-12-07T14:58:49.504Z","updatedAt":"2025-12-07T14:58:49.504Z","enabled":true,"_count":{"devices":2,"plants":4}},{"id":"ba2f7493-8f0b-45f1-99b6-5427d014de75","name":"Secado","dimensions":"80x80x160","image":null,"description":"Para secado y clones.","roomId":"225305da-c624-43ff-916f-b68049aa2cd1","createdAt":"2025-12-07T14:58:13.474Z","updatedAt":"2026-01-25T14:53:39.011Z","enabled":true,"_count":{"devices":1,"plants":2}},{"id":"b1716b3a-fb55-4131-aa6d-6efe342b2dff","name":"Germinadora","dimensions":null,"image":null,"description":null,"roomId":"225305da-c624-43ff-916f-b68049aa2cd1","createdAt":"2025-12-09T01:33:16.727Z","updatedAt":"2026-02-23T14:39:21.558Z","enabled":true,"_count":{"devices":0,"plants":0}}]},{"id":"16fab41e-a1fd-4cc0-be2d-18
+=== GET /api/users
+[{"id":"9ea5f0eb-8047-46cc-bdd4-adcd58868728","email":"jpautasso@gmail.com","name":"prueba","role":"USER","subscriptionTier":"PREMIUM","isActive":true,"createdAt":"2025-12-14T00:51:33.363Z","updatedAt":"2025-12-15T21:21:39.426Z"},{"id":"7f4c3ade-1244-4eef-a68e-49c5d35eb848","email":"admin","name":"Administrador","role":"ADMIN","subscriptionTier":"PREMIUM","isActive":true,"createdAt":"2025-12-13T20:26:32.650Z","updatedAt":"2026-09-06T00:13:39.719Z"}]
+HTTP 200
+

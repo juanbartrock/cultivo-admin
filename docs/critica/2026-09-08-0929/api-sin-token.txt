@@ -1,0 +1,9 @@
+/sections -> 401
+/cycles -> 401
+/events -> 401
+/notifications/unread-count -> 401
+/rooms -> 401
+/users -> 401
+/auth/me -> 401
+/devices -> 401
+/devices/ba2f7493-8f0b-45f1-99b6-5427d014de75/status -> 401

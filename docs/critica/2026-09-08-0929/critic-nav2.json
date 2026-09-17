@@ -1,0 +1,57 @@
+{
+  "desktop": {
+    "collapsedWidth": 64,
+    "ls": "true",
+    "afterReloadWidth": 64,
+    "expandedWidth": 240,
+    "userMenu": [
+      "Usuarios",
+      "Cerrar sesión"
+    ],
+    "homeAlertsHeading": [
+      "ALERTAS actualizado hace 0 s",
+      "CARPAS",
+      "CICLOS ACTIVOS",
+      "DISPOSITIVOS CON PROBLEMA",
+      "CLIMA EXTERIOR"
+    ],
+    "secado": {
+      "text": "Salas Sala de Cultivo Secado Secado 80x80x160 Layout Activa Actualizar Para secado y clones. 1 dispositivo 1 planta 1 sensor Plantas por etapa: SECADO: 1 Ambiente Termohigometro Indoor Sensor sin respuesta Historial pausado Temperatura — Humedad — CO₂ — VPD — Control del Sensor Salida inactiva • SONOFF OFF Historial de Sensores Plantas 1",
+      "readings": []
+    },
+    "automatizaciones10s": {
+      "h1": [
+        "Automatizaciones"
+      ],
+      "text": "Automatizaciones Sin automatizaciones Crea reglas automáticas para controlar tus dispositivos según horarios o condiciones ambientales. Crear Automatización"
+    },
+    "logout": {
+      "ok": true,
+      "url": "https://cultivo.ramsesvii.com/login"
+    },
+    "tokenAfterLogout": [],
+    "errors": []
+  },
+  "movil": {
+    "secado": {
+      "sw": 390,
+      "text": "Layout Activa Actualizar Secado 80x80x160 Para secado y clones. 1 dispositivo 1 planta 1 sensor Plantas por etapa: SECADO: 1 Ambiente Termohigometro Indoor Sensor sin respuesta Historial pausado Temperatura — Humedad — CO₂ — VPD — Control del Sensor Salida inactiva • SONOFF OFF Historial de Sensores Plantas 1"
+    },
+    "seguimientos": {
+      "selects": 0,
+      "combos": 1,
+      "buttons": []
+    },
+    "artefactosSearch": [
+      {
+        "ph": "Buscar dispositivo...",
+        "w": 300
+      }
+    ],
+    "logout": {
+      "ok": true,
+      "url": "https://cultivo.ramsesvii.com/login"
+    },
+    "errors": []
+  }
+}

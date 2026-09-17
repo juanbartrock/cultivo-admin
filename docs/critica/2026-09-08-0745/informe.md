@@ -1,0 +1,187 @@
+# Informe del crítico — cultivo-admin — 2026-09-08-0745
+
+**Veredicto: REPROBADO · 7.05 / 10 (umbral 8, piso 6)**
+
+| | |
+|---|---|
+| Alcance | El rediseño de la UI en sus fases F0 y F1, publicado en producción (https://cultivo.ramsesvii.com) desde la rama redisenio-2026-09: shell nuevo (sidebar desktop, tab bar móvil), sistema de diseño con tokens y shadcn/ui, home operativa en /, y el estado general de la app tal como la ve hoy un administrador. Reportes del constructor en docs/rediseno-2026-09/02-reporte-fase0.md y 03-reporte-fase1.md: contrastalos contra lo observado, sin creerles. |
+| Modelo | claude-fable-5-1 · uso real: claude-fable-5-1,claude-haiku-4-5-20251001 |
+| Costo / turnos / duración | US$ 5.669127249999999 · 47 · 819 s |
+| Rúbrica del proyecto | sí |
+| Árbol modificado por el crítico | no |
+| Evidencia | `/opt/apps/cultivo-admin/docs/critica/2026-09-08-0745` |
+
+## Resumen
+
+Evalué F0+F1 en producción: typecheck, lint y build pasan; qa:nav 15/17 (2 fixme); recorrido propio de 8 rutas en 390×844 y 1440×900 sin errores de consola, pageerror ni 5xx; API rechaza sin token y responde con token de admin; compose sin puertos IoT al host; sin secretos en el repo. El shell (sidebar colapsable con memoria, top bar, tab bar, sheet Más) y la home cumplen el brief. Reprobado por dos fallas duras: /seguimientos (469 px) y /admin/usuarios (511 px) desbordan en móvil y la pestaña "Más" no responde al tap sin force; y los rangos de estado de sensores están hardcodeados en readings.ts, cosa que la rúbrica exige en configuración. Lo más grave a nivel producto: la tarjeta Secado muestra 18.1 °C / 80 % en rojo como lectura viva cuando el backend informa el sensor offline. Cinco de las siete rutas principales conservan el diseño anterior (fases 2-4, según el constructor). El reporte del constructor dice la verdad en todo lo que pude contrastar.
+
+## Fallas duras
+
+- **Proyecto #1: scroll horizontal en móvil (scrollWidth > 390) en una ruta principal, o tab bar inalcanzable** — critic-nav.json: /seguimientos scrollWidth=469, /admin/usuarios scrollWidth=511 a viewport 390. critic-nav2.txt: desde /seguimientos y /admin/usuarios el tap en el botón "Más" de la tab bar falla por timeout ("waiting for element to be visible, enabled and stable") y solo abre con click({force:true}). Capturas: capturas/seguimientos-movil-viewport.png, capturas/admin-usuarios-movil-viewport.png (tarjeta cortada a la derecha). El constructor lo documenta como fase 3/4, pero la rúbrica lo fija como falla dura en las siete rutas principales.
+- **Global #4 / mínimo del proyecto: rangos de estado de sensores salen de configuración de la carpa o del ciclo, nunca de constantes inventadas en el frontend** — frontend/src/features/home/lib/readings.ts:17-21 define RANGES (temperatura 18-28/15-30, humedad 40-65/30-75, VPD 0,8-1,4/0,4-1,6) y readingStatus() decide ok/warn/danger con eso; useHomeDashboard.ts:83-90 y 130-149 lo usan para color y alertas. El schema Prisma (models Section, Cycle, Room) no tiene ningún campo de rango. El propio reporte 03-reporte-fase1.md §5.6 lo admite: "Rangos de estado inventados por mí".
+
+## Dimensiones
+
+| Dimensión | Puntaje | Peso | Justificación |
+|---|---:|---:|---|
+| Correctitud funcional | 7 | 3 | Las 7 rutas + carpa cargan con sesión admin sin console.error/pageerror/5xx en ambos viewports (critic-nav.json); selector de sala cambia URL a ?sala=<id>; sidebar colapsa a 64 px y persiste tras reload; sheet Más navega. Fallas: tarjeta Secado muestra lectura stale con color de estado con sensor offline; overflow móvil en 2 rutas rompe el tap de la tab bar (critic-nav2.txt); top bar de carpa muestra "Salas" sin flecha durante ~2 s de carga. |
+| UI y experiencia | 7 | 3 | Shell y home: plano, borde 1 px, tabular-nums, guiones para sin dato, sin degradés ni blur en las 7 rutas (scan de computed styles). Restos del diseño anterior en /sala, carpa (backdrop-blur, chips naranja/azul, spinner), /seguimientos (select nativos, overflow, colores decorativos), /artefactos (buscador aplastado), /notificaciones (checkbox nativo, emojis), /admin/usuarios (overflow). Ancla 7 de la rúbrica del proyecto. |
+| Seguridad y datos | 6 | 2 | Sin credenciales en el repo (grep), .env en 600, /api/* devuelve 401 sin token, /users con RolesGuard ADMIN, IoT sin ports: al host. Baja al piso por el dato hardcodeado que la rúbrica exige en configuración: RANGES en frontend/src/features/home/lib/readings.ts:17-21 decide ok/warn/danger. Login sin rate limit (preexistente). |
+| Código y arquitectura | 7.5 | 2 | typecheck exit 0, lint exit 0 (warnings preexistentes), build exit 0 (typecheck.txt, lint.txt, build.txt). Shell único en layout raíz, PageHeader por página, sin max-w-7xl salvo en código muerto. Deuda: components/dashboard/*, WeatherWidget.tsx y weatherService.ts sin uso; useWeather arranca con temperature 0 / humidity 0; dos <h1> por página en el DOM. |
+| Verificación y entrega | 8.5 | 1 | qa:nav reproduce 15 passed / 2 skipped; 34 PNG en capturas/fase1; 7 corridas OK de app-restart en /var/log/app-restart.log; el chunk publicado contiene el cambio de b4a0d0f; CHANGES.md registra la fase. El reporte admite los rangos inventados, el overflow y el tap con force. Único desvío: el commit b4a0d0f dice "sin truncar en móvil" y la etiqueta del sensor sigue truncada (home-movil-viewport.png). |
+
+## Hallazgos (rankeados por impacto)
+
+### 1. [bloqueante] Desborde horizontal en /seguimientos y /admin/usuarios deja la tab bar sin tap fiable en móvil
+
+- **Dimensión:** UI y experiencia
+- **Evidencia:** critic-nav.json (movil.routes.seguimientos.dom.scrollWidth=469, overflowers: div.flex.gap-2 con "Agregar Planta"; admin-usuarios scrollWidth=511, div.p-4.bg-zinc-800/50). critic-nav2.txt: tap en "Más" falla desde ambas rutas y solo abre con force. capturas/seguimientos-movil-viewport.png, capturas/admin-usuarios-movil-viewport.png
+- **Acción:** Contener el ancho ya, sin esperar las fases 3/4: en SeguimientosPage el contenedor de acciones del ciclo pasa a flex-wrap con min-w-0 y botones w-full en <sm; en admin/usuarios la fila de usuario apila los chips debajo del nombre en móvil (flex-col sm:flex-row) y quita el ancho fijo. Como red de seguridad, main con overflow-x-hidden. Sacar los dos test.fixme de tests/qa-nav.spec.ts.
+- **Verificación:** QA_LABEL=faseX npm run qa:nav en 390 px: 17 passed sin skipped; document.documentElement.scrollWidth === 390 en las siete rutas; desde /seguimientos, getByRole('button',{name:'Más'}).tap() abre el sheet sin force.
+
+### 2. [bloqueante] Rangos ok/warn/danger inventados en el frontend en vez de configuración de carpa o ciclo
+
+- **Dimensión:** Seguridad y datos
+- **Evidencia:** frontend/src/features/home/lib/readings.ts:17-21 (RANGES) y :23-31 (readingStatus); consumidos en useHomeDashboard.ts:83-90 y :130-149. Schema Prisma sin campos de rango en Section/Cycle. 03-reporte-fase1.md §5.6 lo reconoce.
+- **Acción:** Agregar rangos configurables en el backend (por carpa, con override por ciclo si aplica): campos o tabla de umbrales con CRUD en /sections/:id, expuestos en GET /sections. El frontend lee los rangos de la respuesta; sin rangos configurados el estado es unknown (sin color) y nunca un valor por defecto en código. Borrar RANGES.
+- **Verificación:** grep -rn RANGES frontend/src devuelve vacío; cambiar el rango de humedad de una carpa desde la UI cambia el color de la lectura en la home sin rebuild; carpa sin rangos muestra la lectura en text-fg sin warn/danger.
+
+### 3. [alta] La tarjeta Secado muestra una lectura stale con color de estado mientras el sensor está offline
+
+- **Dimensión:** Correctitud funcional
+- **Evidencia:** api-con-token.txt: GET /api/devices/c04963d5…/status → {"online":false,"temperature":18.1,"humidity":80.2}. capturas/home-movil-viewport.png y home-desktop.png: Secado muestra 18.1 °C, 80 % en rojo y 0.41 kPa en ámbar, y dos líneas más arriba el bloque Alertas dice "Secado · Termohigometro Indoor · Sensor sin respuesta". Causa: readings.ts:112-121 toma status.temperature sin mirar status.online; useHomeDashboard.ts:83-90 calcula el color igual.
+- **Acción:** En sectionReadings, si status.online === false devolver null en temperature/humidity/vpd (o marcarlas como stale y renderizarlas en fg-faint con "última lectura hace N min" y sin color de estado). La tarjeta y las alertas deben contar la misma historia. Aplica el principio 4 del brief: si un servicio falló se dice cuál y hace cuánto.
+- **Verificación:** Con el sensor de Secado offline (estado actual de producción), la tarjeta muestra — en las tres lecturas o el valor en gris con la antigüedad, y ninguna clase text-danger/text-warn en esa tarjeta.
+
+### 4. [media] Carpa conserva backdrop-blur, ilustración grande, chips de color decorativo y spinner a pantalla completa (fase 2)
+
+- **Dimensión:** UI y experiencia
+- **Evidencia:** critic-nav.json routes.carpa.dom.blur = ['div.relative.overflow-hidden.bg-zinc-800/50'] en móvil y desktop. capturas/carpa-movil-5s.png: ilustración verde 300 px, chips "1 sensor" naranja y "1 controlable" azul, texto "El sensor no está enviando datos o no está configurado correctamente". critic-nav2.txt: "Cargando sección..." con spinner hasta ~2,5 s.
+- **Acción:** Fase 2 según el plan: reemplazar CarpaCard/CarpaDetailPage por tarjetas planas con tokens, sin blur, color solo para estado, skeleton en vez de spinner, y Tabs para Historial/Plantas/Planes.
+- **Verificación:** El scan de computed styles (critic-nav.cjs DOM_SCAN) devuelve blur=[] y gradients=[] en /sala/carpa/:id; sin clases bg-zinc-*, backdrop-blur ni text-orange/blue en CarpaDetailPage.
+
+### 5. [media] Al entrar a una carpa en móvil, la barra superior muestra "Salas" sin flecha atrás durante la carga
+
+- **Dimensión:** Correctitud funcional
+- **Evidencia:** critic-nav2.txt carpaTitle.samples: a 300 ms y 1000 ms header.title="Salas", back=false, main="Cargando sección..."; recién a 2500 ms aparece "Vegetativo" con flecha. capturas/carpa-movil-300ms.png. Causa: CarpaDetailPage monta PageHeader después de resolver la query y MobileTopBar cae a routeTitle() (nav.ts:47-52).
+- **Acción:** Registrar la meta de página antes de tener datos: PageHeader con título provisorio (skeleton) y backHref=/sala desde el primer render de la carpa, o que routeTitle/backHref del shell derive la flecha de la ruta hija (/sala/carpa/*) sin depender de la página.
+- **Verificación:** A 300 ms de tocar una carpa en /sala (390 px), header a[aria-label="Volver"] existe y el h1 no dice "Salas".
+
+### 6. [media] Restos del diseño anterior en /seguimientos, /artefactos y /notificaciones (fases 3-4)
+
+- **Dimensión:** UI y experiencia
+- **Evidencia:** critic-nav2.txt seguimientos.selects: dos <select> nativos visibles (estado del ciclo "Activo/Completado/Curado" y filtro "Todas las plantas"); capturas/seguimientos-movil-viewport.png: rosa/violeta decorativos en plantas, botón "Agregar Planta" fuera del viewport. capturas/artefactos-movil-viewport.png: buscador reducido a ~110 px con placeholder cortado ("Bi"), texto instructivo en el estado vacío. capturas/notificaciones-movil-viewport.png: checkbox nativos, títulos con emoji ("⛈️ Pronóstico: Tormenta"), borde izquierdo naranja decorativo, fila de acciones con un solo ícono suelto arriba.
+- **Acción:** Programar en las fases 3 y 4: Select/Checkbox de shadcn, quitar colores decorativos, buscador con min-w o w-full en móvil, estado vacío con ícono + título + acción; en el backend, notificaciones sin emoji en el título (ícono Lucide por tipo en el frontend).
+- **Verificación:** document.querySelectorAll('select, input[type=checkbox]').length === 0 en las 7 rutas; sin emojis en títulos de /notificaciones; buscador de /artefactos ≥ 200 px en 390.
+
+### 7. [baja] Código muerto que quedó al reemplazar la home
+
+- **Dimensión:** Código y arquitectura
+- **Evidencia:** grep de usos: components/dashboard/DashboardSummary.tsx 0 usos (y es el único max-w-7xl del árbol, línea 164); AlertsList, QuickActions y StatsGrid solo los importa DashboardSummary; components/WeatherWidget.tsx 0 usos; services/weatherService.ts solo lo usa WeatherWidget. Reconocido en 03-reporte-fase1.md §6.
+- **Acción:** Borrar components/dashboard/, WeatherWidget.tsx y weatherService.ts. Ya que se toca useWeather.ts, arrancar con temperature/humidity null en vez de 0 y que la UI formatee null como —.
+- **Verificación:** grep -rn 'DashboardSummary\|WeatherWidget\|weatherService\|max-w-7xl' frontend/src vacío; typecheck y build en verde.
+
+### 8. [baja] Detalles del bloque Alertas de la home contra el brief y el commit
+
+- **Dimensión:** UI y experiencia
+- **Evidencia:** AlertsBlock.tsx:20-26 muestra "Todo en rango" sin el "· actualizado hace N s" que pide 01-direccion-visual.md §Home (1). capturas/home-movil-viewport.png: la etiqueta del sensor queda truncada ("vege-t…", "Termohigo…") pese al mensaje del commit b4a0d0f ("sin truncar en móvil"). PageHeader deja el botón "Actualizar" solo en una fila en móvil.
+- **Acción:** Agregar la antigüedad de la última consulta de estados al bloque; en móvil apilar carpa y etiqueta en dos líneas (o mover el detalle a una segunda línea) en vez de truncate; evaluar llevar "Actualizar" a la top bar en móvil.
+- **Verificación:** Con todos los sensores en rango el bloque dice "Todo en rango · actualizado hace Ns"; en 390 px ninguna alerta contiene texto con text-overflow ellipsis aplicado.
+
+### 9. [baja] Login con frase de bienvenida y subtítulo decorativo
+
+- **Dimensión:** UI y experiencia
+- **Evidencia:** capturas/login-desktop.png: "Bienvenido" y "Inicia sesión en tu cuenta". El brief (principio 5) prohíbe prosa perecedera; el login se evalúa aparte pero con el mismo brief.
+- **Acción:** Título "Cultivo" o "Iniciar sesión" y nada más; sin subtítulo.
+- **Verificación:** El login no contiene "Bienvenido" ni "Inicia sesión en tu cuenta".
+
+### 10. [baja] Dos <h1> por página en el DOM
+
+- **Dimensión:** Código y arquitectura
+- **Evidencia:** critic-nav.json dom.h1 = ['Inicio','Inicio'] en cada ruta: MobileTopBar.tsx:34 y PageHeader.tsx:53 renderizan ambos un h1 y se ocultan por CSS según el breakpoint.
+- **Acción:** Que el h1 visible sea uno solo: PageHeader renderiza h1 y la top bar móvil usa un <p aria-hidden> o viceversa según viewport.
+- **Verificación:** document.querySelectorAll('h1').length === 1 en cada ruta.
+
+### 11. [baja] Conocidos fuera del alcance que siguen vivos
+
+- **Dimensión:** Correctitud funcional
+- **Evidencia:** backend-logs.txt: 21 WARN "Error getting status for TUYA/… 500" en 15 min; /api/notifications/summary total 387 con las alertas de clima STORM; auth.module.ts sin throttling en /api/auth/login.
+- **Acción:** Credenciales Tuya/Sonoff y throttler en el login como tareas aparte del rediseño; sin penalización acá.
+- **Verificación:** Log del backend sin 500 de IoT; login responde 429 tras N intentos fallidos.
+
+## Evidencia reunida
+
+**Comandos:**
+- `cd frontend && npm run typecheck → docs/critica/2026-09-08-0745/typecheck.txt (exit 0)`
+- `cd frontend && npm run lint → lint.txt (exit 0, warnings preexistentes)`
+- `cd frontend && npm run build → build.txt (exit 0)`
+- `set -a; . ~/.config/secrets/cultivo-admin-login.env; set +a; QA_LABEL=../../critica/2026-09-08-0745/qa-nav npm run qa:nav → qa-nav.txt (15 passed, 2 skipped) + qa-nav/*.png`
+- `NODE_PATH=frontend/node_modules node docs/critica/2026-09-08-0745/critic-nav.cjs → critic-nav.txt / critic-nav.json (8 rutas × 2 viewports, consola, scrollWidth, tab bar, gradientes/blur, selector de sala, sheet Más, sidebar)`
+- `NODE_PATH=frontend/node_modules node docs/critica/2026-09-08-0745/critic-nav2.cjs → critic-nav2.txt (sidebar colapsable, automatizaciones a 10 s, selects de ciclos, título de carpa en el tiempo, tap real en Más desde /seguimientos y /admin/usuarios)`
+- `curl sin token a /api/sections, /api/cycles, /api/events, /api/notifications/unread-count, /api/rooms, /api/users, /api/auth/me → 401`
+- `POST /api/auth/login + GET con token: /api/auth/me, /api/sections, /api/cycles?status=ACTIVE, /api/events, /api/notifications/unread-count, /summary, /api/rooms, /api/users, /api/devices/:id/status → api-con-token.txt`
+- `docker logs cultivo-backend --since 15m → backend-logs.txt; docker logs cultivo-frontend --since 15m (vacío)`
+- `grep -n ports: docker-compose.yml (solo 127.0.0.1:4000 y 127.0.0.1:3001)`
+- `grep de secretos (password/api key/Bearer/eyJ) en el repo sin node_modules → solo placeholders de README`
+- `grep -rl 'bg-gradient|backdrop-blur' frontend/src (19 archivos, ninguno del shell ni de la home)`
+- `docker inspect cultivo-frontend (imagen 2026-09-06T01:31Z) + grep del cambio de b4a0d0f en .next/static/chunks/app/page-*.js dentro del contenedor`
+- `grep cultivo /var/log/app-restart.log (7 corridas OK el 2026-09-05)`
+- `git status --short antes y después (solo CHANGES.md, CLAUDE.md, docs/critica/, docs/rubrica-critico.md, todos previos al informe)`
+
+**Rutas navegadas:**
+- `/login (form real, móvil y desktop)`
+- `/`
+- `/sala`
+- `/sala?sala=16fab41e-a1fd-4cc0-be2d-1858e0720133 (cambio de sala por el Select)`
+- `/sala/carpa/f1ed3032-cf56-4487-90a3-0d79dfd3f9b3`
+- `/seguimientos`
+- `/automatizaciones`
+- `/artefactos (también llegando desde el sheet Más en móvil)`
+- `/notificaciones`
+- `/admin/usuarios`
+
+**Capturas:**
+- `docs/critica/2026-09-08-0745/capturas/home-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/home-movil-viewport.png`
+- `docs/critica/2026-09-08-0745/capturas/home-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/home-desktop-sidebar-colapsada.png`
+- `docs/critica/2026-09-08-0745/capturas/home-desktop-menu-usuario.png`
+- `docs/critica/2026-09-08-0745/capturas/sala-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/sala-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/sala-selector-abierto-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/sala-selector-abierto-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/sala-cambiada-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/sala-cambiada-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/carpa-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/carpa-movil-300ms.png`
+- `docs/critica/2026-09-08-0745/capturas/carpa-movil-5s.png`
+- `docs/critica/2026-09-08-0745/capturas/carpa-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/seguimientos-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/seguimientos-movil-viewport.png`
+- `docs/critica/2026-09-08-0745/capturas/seguimientos-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/automatizaciones-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/automatizaciones-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/automatizaciones-desktop-10s.png`
+- `docs/critica/2026-09-08-0745/capturas/artefactos-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/artefactos-movil-viewport.png`
+- `docs/critica/2026-09-08-0745/capturas/artefactos-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/notificaciones-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/notificaciones-movil-viewport.png`
+- `docs/critica/2026-09-08-0745/capturas/notificaciones-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/admin-usuarios-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/admin-usuarios-movil-viewport.png`
+- `docs/critica/2026-09-08-0745/capturas/admin-usuarios-desktop.png`
+- `docs/critica/2026-09-08-0745/capturas/mas-sheet-desde-home-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/mas-desde-seguimientos-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/mas-desde-admin-usuarios-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/login-movil.png`
+- `docs/critica/2026-09-08-0745/capturas/login-desktop.png`
+- `docs/critica/2026-09-08-0745/qa-nav/ (17 PNG de la suite qa:nav del proyecto)`
+
+## No evaluado
+
+- Refresco del contador de no leídas por el evento `alert` del socket: el backend informa unread 0 y no hubo alertas durante la sesión; no se generan datos en producción.
+- Colores warn/danger con lecturas reales en rango: los dos sensores de producción están offline (Tuya y Sonoff devuelven 500); solo se vio el color sobre la lectura stale de Secado.
+- Aislamiento de datos entre usuarios: no hay credencial de un usuario no admin; solo se comprobó que /api/users exige rol ADMIN por código (RolesGuard).
+- Flujos con escritura (crear/editar/eliminar sala, carpa, ciclo, usuario; marcar notificaciones): prohibidos por la regla de no escribir en producción.
+- Cerrar sesión desde el menú de usuario y el sheet Más: no lo ejecuté; lo cubre el recorrido manual del constructor (capturas/fase1/recorrido-*-logout.png).

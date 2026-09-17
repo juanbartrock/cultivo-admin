@@ -1,0 +1,7 @@
+c04963d5-c091-426f-9618-4e61ac8c015a  Termohigometro Indoor        SENSOR       SONOFF   readingsEnabled=True recordHistory=True controlledBy=None
+932fa966-5a4c-4a56-bca4-3d6dcbd2ea51  Tapo Camara                  CAMARA       TAPO     readingsEnabled=True recordHistory=False controlledBy=None
+cecc8d14-269c-4ccb-ae1c-a1dc3b366a1a  vege-led-150                 LUZ          TUYA     readingsEnabled=False recordHistory=False controlledBy=None
+ac4df493-f610-4106-81f2-020bd3cac85a  vege-temp-hum                SENSOR       TUYA     readingsEnabled=True recordHistory=True controlledBy=None
+402d593c-953b-493a-8c0a-b1d6c3f73887  flora-humidificador          HUMIDIFICADOR VIRTUAL  readingsEnabled=True recordHistory=False controlledBy=None
+9f253b4a-956f-46f3-b62a-0daff1a32e21  Operación Tanque Riego       BOMBA_RIEGO  TUYA     readingsEnabled=False recordHistory=False controlledBy=None
+8b43633a-a49f-4634-823d-f49ff1492b3f  Switch Tanque Riego          BOMBA_RIEGO  TUYA     readingsEnabled=False recordHistory=False controlledBy=None

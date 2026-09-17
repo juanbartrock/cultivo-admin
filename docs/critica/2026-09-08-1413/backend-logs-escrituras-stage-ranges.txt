@@ -1,0 +1,5 @@
+[Nest] 1  - 09/08/2026, 10:49:55 AM     LOG [HttpRequest] {"event":"http.request.completed","requestId":"f00a5efb-a34a-4ab3-8295-f03d856a51d3","method":"PATCH","path":"/api/stage-ranges/DEFAULT","statusCode":200,"durationMs":2}
+[Nest] 1  - 09/08/2026, 10:49:55 AM     LOG [HttpRequest] {"event":"http.request.completed","requestId":"08f7c75f-bd0e-495e-aa45-8d5ba79c722f","method":"PUT","path":"/api/stage-ranges/GERMINACION","statusCode":200,"durationMs":1}
+[Nest] 1  - 09/08/2026, 10:49:55 AM     LOG [HttpRequest] {"event":"http.request.completed","requestId":"5812a7ee-0021-4275-a275-a3ec17bf4ebf","method":"PATCH","path":"/api/stage-ranges/DEFAULT","statusCode":200,"durationMs":1}
+[Nest] 1  - 09/08/2026, 10:49:55 AM     LOG [HttpRequest] {"event":"http.request.completed","requestId":"2a5928dc-1d0b-40ab-bfb3-9eed753a329a","method":"PATCH","path":"/api/stage-ranges/DEFAULT","statusCode":200,"durationMs":4}
+[Nest] 1  - 09/08/2026, 10:49:56 AM     LOG [HttpRequest] {"event":"http.request.completed","requestId":"573c11a0-1287-458a-9a2d-5c5e053cfba0","method":"PUT","path":"/api/stage-ranges/GERMINACION","statusCode":200,"durationMs":2}

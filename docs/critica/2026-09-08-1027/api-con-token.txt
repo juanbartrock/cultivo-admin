@@ -1,0 +1,31 @@
+### con token admin (login por username)
+GET /auth/me -> role: None
+GET /stage-ranges -> 200
+filas: 7
+DEFAULT 18 28 15 30 | 40 65 30 75 | 0.8 1.4 0.4 1.6 | 400 1500 300 2000 2026-09-08T13:05:20.493Z
+GERMINACION 18 28 15 30 | 40 65 30 75 | 0.8 1.4 0.4 1.6 | 400 1500 300 2000 2026-09-08T13:05:20.493Z
+VEGETATIVO 18 28 15 30 | 40 65 30 75 | 0.8 1.4 0.4 1.6 | 400 1500 300 2000 2026-09-08T13:05:20.493Z
+PRE_FLORA 18 28 15 30 | 40 65 30 75 | 0.8 1.4 0.4 1.6 | 400 1500 300 2000 2026-09-08T13:05:20.493Z
+FLORACION 18 28 15 30 | 40 65 30 75 | 0.8 1.4 0.4 1.6 | 400 1500 300 2000 2026-09-08T13:05:20.493Z
+SECADO 18 28 15 30 | 40 65 30 75 | 0.8 1.4 0.4 1.6 | 400 1500 300 2000 2026-09-08T13:05:20.493Z
+CURADO 18 28 15 30 | 40 65 30 75 | 0.8 1.4 0.4 1.6 | 400 1500 300 2000 2026-09-08T13:05:20.493Z
+PUT /stage-ranges/NOEXISTE -> {"message":["tempIdealMin must be a number conforming to the specified constraints","tempIdealMax must be a number conforming to the specified constraints","tempWideMin must be a number conforming to the specified constraints","tempWideMax must be a number conforming to the specified constraints","h
+PUT /stage-ranges/DEFAULT body vacio -> {"message":["tempIdealMin must be a number conforming to the specified constraints","tempIdealMax must be a number conforming to the specified constraints","tempWideMin must be a number conforming to the specified constraints","tempWideMax must be a number conforming to the specified constraints","h
+PUT /stage-ranges/DEFAULT min>max (no escribe) -> {"message":"El mínimo ideal de temperatura (30) tiene que ser menor que el máximo (28)","error":"Bad Request","statusCode":400} 400
+PATCH /stage-ranges/DEFAULT amplio no contiene ideal (no escribe) -> {"message":"El rango amplio de temperatura (20-30) tiene que contener al ideal (18-28)","error":"Bad Request","statusCode":400} 400
+PATCH /stage-ranges/DEFAULT campo extra (no escribe) -> {"message":["property stage should not exist"],"error":"Bad Request","statusCode":400} 400
+PATCH /stage-ranges/DEFAULT string (no escribe) -> {"message":["tempIdealMin must be a number conforming to the specified constraints"],"error":"Bad Request","statusCode":400} 400
+PATCH /stage-ranges/DEFAULT NaN como string numerico (no escribe) -> {"id":"37df44eb-983f-4abd-ad5f-5140374587dc","stage":"DEFAULT","tempIdealMin":18,"tempIdealMax":28,"tempWideMin":15,"tempWideMax":30,"humidityIdealMin":40,"humidityIdealMax":65,"humidityWideMin":30,"humidityWideMax":75,"vpdIdealMin":0.8,"vpdIdealMax":1.4,"vpdWideMin":0.4,"vpdWideMax":1.6,"co2IdealMi
+GET /stage-ranges tras los rechazos (updatedAt DEFAULT) -> [('DEFAULT', '2026-09-08T13:30:51.868Z', 18, 15)]
+GET /sections -> 200
+f1ed3032-cf56-4487-90a3-0d79dfd3f9b3 Vegetativo | effectiveStage: DEFAULT | plantas: {} | sensor: ['vege-temp-hum']
+ba2f7493-8f0b-45f1-99b6-5427d014de75 Secado | effectiveStage: CURADO | plantas: {'CURADO': 1, 'SECADO': 1} | sensor: ['Termohigometro Indoor']
+766abd7c-9ab5-40d7-9f60-e62ff942f6b1 Floración | effectiveStage: PRE_FLORA | plantas: {'PRE_FLORA': 4} | sensor: []
+a0ac06b9-a995-4d8a-b1e0-9b222db01635 Exterior Directo | effectiveStage: FLORACION | plantas: {'FLORACION': 11} | sensor: []
+73eb465b-9d1c-4fe9-bc59-84961372c4c5 Invernadero | effectiveStage: DEFAULT | plantas: {} | sensor: []
+b1716b3a-fb55-4131-aa6d-6efe342b2dff Germinadora | effectiveStage: DEFAULT | plantas: {} | sensor: []
+GET /sections/:id (primera) -> Vegetativo DEFAULT
+GET /sections/:id/dashboard -> Vegetativo DEFAULT {}
+### usuarios (rol y estado)
+USER jp*** True
+ADMIN ad*** True
