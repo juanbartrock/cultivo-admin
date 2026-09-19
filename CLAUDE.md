@@ -119,6 +119,68 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
     (`GERMINACION → VEGETATIVO → PRE_FLORA → FLORACION → SECADO → CURADO`) y sin plantas es
     `DEFAULT`. El frontend no la recalcula.
 
+<!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
+- **Kill switch de lecturas**: apaga las consultas de estado a los conectores, en dos niveles y
+  desde la base. Existe porque el panel (`panel.ramsesvii.com`, card "Errores en logs") matchea
+  `/error|exception|fatal|panic/i` sobre las últimas 300 líneas de cada contenedor, y un aparato
+  desenchufado dejaba un `WARN [IoTGatewayService] Error getting status for TUYA/<id>` cada 30 s.
+  El arreglo es dejar de consultar al conector, nunca filtrar el panel.
+  - **General**: tabla `readings_settings`, fila única `singleton`, columna `sensors_enabled`.
+    En `false` ningún dispositivo de tipo SENSOR se consulta.
+  - **Por dispositivo**: `Device.readingsEnabled` (`readings_enabled`), default `true`. Aplica a
+    cualquier tipo: en un SENSOR corta la lectura, en una LUZ o una BOMBA_RIEGO corta el poll de
+    estado. Es otra cosa que `recordHistory`, que decide si se persiste historial.
+  - **Semántica efectiva**: se consulta al conector solo si `device.readingsEnabled === true` y,
+    cuando `device.type === 'SENSOR'`, además `readings_settings.sensorsEnabled === true`.
+    La calculan `ReadingsSettingsService.isDeviceReadable()` en el backend e `isReadingPaused()`
+    en `frontend/src/features/lecturas/lib/readingsGate.ts`. Un dispositivo `VIRTUAL` sale a la
+    red por su controlador, así que hereda su pausa: con el controlador en `readingsEnabled=false`
+    el virtual también responde `readingsPaused`. En el frontend eso se resuelve pasándole a
+    `isReadingPaused` un `findDevice` que busca `controlledByDeviceId` en la lista de la pantalla,
+    porque las secciones traen el id del controlador sin la fila entera.
+  - **Sin consulta**: `GET /devices/:id/status` responde **200** con
+    `{ device, status: { online: false, readingsPaused: true } }` sin HTTP al microservicio y sin
+    un solo `logger.warn` ni `logger.error`. `SensorPollerService` y `SensorHistoryService`
+    filtran por `readingsEnabled` y cortan el ciclo entero con el general apagado. El frontend no
+    dispara `getStatus` para los pausados: arma el mapa local con `readingsPaused: true`.
+  - **API**: `GET /readings-settings` (cualquier usuario autenticado) y
+    `PUT /readings-settings` con body `{ sensorsEnabled: boolean }` (rol `ADMIN`, `RolesGuard` +
+    `@Roles(ADMIN)`, igual que `stage-ranges`). El `GET` sólo lee: si la fila falta devuelve el
+    default en memoria, y la siembra queda en la migración y en `onModuleInit`. El campo por
+    dispositivo viaja en `PUT /devices/:id` (`readingsEnabled`) y sale en el listado de devices
+    y en las secciones.
+  - **Booleanos por body crudo**: `BooleanBodyInterceptor(...claves)` vive en
+    `backend/src/common/interceptors/` y es una fábrica. Corre en `PUT /readings-settings`
+    (`sensorsEnabled`) y en `POST /devices` y `PUT /devices/:id` (`readingsEnabled`,
+    `recordHistory`). Rechaza con 400 el booleano que llega como string, porque el
+    `ValidationPipe` global corre con `enableImplicitConversion` y un `"false"` mal convertido
+    dejaría las lecturas prendidas creyendo que se apagaron.
+  - **Dónde se togglea**: interruptor general en `/artefactos` (junto al `PageHeader`) y en la
+    home (acción del `PageHeader`, al lado de Actualizar); solo ADMIN lo mueve, el resto ve el
+    estado. Interruptor por dispositivo en la columna "Lecturas" de `/artefactos` y en las
+    tarjetas de sensor (`EnvironmentPanel`, `DeviceControlCard`), separado del de "Historial".
+  - **Cómo se ve la pausa**: un sensor pausado va con `—` y el badge neutro
+    "Lecturas desactivadas" (token `offline`), queda fuera de Alertas y fuera de `deviceIssues`.
+    Un sensor que se consultó y no respondió sigue siendo "Sensor sin respuesta".
+    `sectionReadings` (`frontend/src/features/home/lib/readings.ts`) los distingue con
+    `sensorPaused` y `sensorOffline`. Con todas las carpas con sensor pausadas, el bloque de
+    Alertas de la home dice "Lecturas desactivadas" en lugar de "Todo en rango": sin lectura viva
+    no se afirma nada sobre los rangos.
+  - **Pausar lecturas no es apagar el control**: un actuador pausado sigue siendo controlable.
+    `DeviceControlCard` muestra "Estado desconocido" con los botones Encender y Apagar en vez de
+    un toggle que diría "Apagado" sin haber consultado nada.
+  - **Antes del primer fetch se espera el interruptor**: `useDevicesStatus` y `useDeviceStatus`
+    no consultan mientras `useReadingsSettings` está en vuelo, porque el valor optimista es
+    `true` y la primera tanda saldría a buscar sensores ya pausados.
+  - **Código**: `backend/src/modules/readings-settings/` (servicio, controller, DTO) y
+    `frontend/src/features/lecturas/` (hook `useReadingsSettings`, los dos switches y el gate).
+    Migración `20260908170000_add_readings_kill_switch`. El gate del backend está cubierto por
+    `backend/src/modules/devices/readings-gate.spec.ts`, que incluye el caso del VIRTUAL con
+    controlador pausado (no reproducible contra producción sin asignarle un controlador al
+    humidificador).
+  - **Reactivar cuando enchufen los sensores**: prender el interruptor general en la home o en
+    `/artefactos`, y el switch de cada aparato en su fila de `/artefactos`.
+
 ---
 
 ## Nivel 3 — Contexto del servidor
@@ -344,6 +406,18 @@ Ampliá o repetí pruebas ante cambios nuevos, fallas o dudas concretas. Evitá 
 reproduzcan cambios pequeños y reversibles. Conservá el QA visual y la navegación real de UI;
 verificá aislamiento de datos antes de pruebas con escrituras. Los cambios exclusivamente
 documentales se validan con revisión, links y sincronización, sin build ni reinicio de servicios.
+
+<!-- [agent:codex][date:2026-09-12][action:created] -->
+**Herramientas creativas y computer use:** en trabajos visuales, audiovisuales, 3D o
+interactivos, contemplá herramientas especializadas para explorar el rumbo y hacer ajustes
+finos. Elegí y combiná algoritmos, APIs/MCP y manejo de la interfaz según precisión, calidad,
+tiempo y costo; explicá brevemente la elección cuando afecte el resultado. Observá el resultado
+real, comparalo con el pedido y las referencias, iterá y conservá los archivos editables.
+Para movimiento, interacción y audio, verificá también la secuencia o reproducción.
+Incorporación gradual acordada: **Blender y Godot** primero; **Unreal Engine, Unity, Photoshop,
+DaVinci Resolve o herramientas análogas** más adelante, según la tarea. Consultá `SERVICES.md`
+vía su ruta absoluta abajo y verificá el acceso efectivo de tu agente, la observación y el
+guardado antes de dar una integración por operativa.
 
 **Dónde vive la verdad del servidor:**
 - `/opt/server-audit/SERVICES.md` — inventario de servicios, dominios, puertos y dependencias.

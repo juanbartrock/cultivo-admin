@@ -188,6 +188,7 @@ export default function CarpaCard({ section, delay = 0, getDeviceStatus, statusL
           {hasEnvironmentData && (
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-center gap-2">
+                {readings.sensorPaused ? <Badge variant="offline">Lecturas desactivadas</Badge> : null}
                 {readings.sensorOffline ? <Badge variant="offline">Sensor sin respuesta</Badge> : null}
                 <span className="text-xs text-fg-faint" title="Etapa cuyos rangos se aplican">
                   Rangos: {RANGE_STAGE_LABELS[section.effectiveStage ?? 'DEFAULT']}

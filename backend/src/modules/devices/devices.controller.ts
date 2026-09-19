@@ -8,7 +8,9 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
+  UseInterceptors,
 } from '@nestjs/common';
+import { BooleanBodyInterceptor } from '../../common/interceptors/boolean-body.interceptor';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DevicesService, ScannedDevice } from './devices.service';
 import { SensorHistoryService } from './sensor-history.service';
@@ -118,8 +120,10 @@ export class DevicesController {
   }
 
   @Post()
+  @UseInterceptors(BooleanBodyInterceptor('readingsEnabled', 'recordHistory'))
   @ApiOperation({ summary: 'Registrar un nuevo dispositivo' })
   @ApiResponse({ status: 201, description: 'Dispositivo creado exitosamente' })
+  @ApiResponse({ status: 400, description: 'readingsEnabled o recordHistory sin ser booleanos' })
   @ApiResponse({ status: 409, description: 'Dispositivo ya existe' })
   async create(@Body() createDeviceDto: CreateDeviceDto) {
     return this.devicesService.create(createDeviceDto);
@@ -151,8 +155,10 @@ export class DevicesController {
   }
 
   @Put(':id')
+  @UseInterceptors(BooleanBodyInterceptor('readingsEnabled', 'recordHistory'))
   @ApiOperation({ summary: 'Actualizar un dispositivo' })
   @ApiResponse({ status: 200, description: 'Dispositivo actualizado exitosamente' })
+  @ApiResponse({ status: 400, description: 'readingsEnabled o recordHistory sin ser booleanos' })
   @ApiResponse({ status: 404, description: 'Dispositivo no encontrado' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,

@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PageHeader } from '@/components/shell';
+import { DeviceReadingsSwitch, SensorReadingsSwitch } from '@/features/lecturas';
 import { motion, AnimatePresence } from 'framer-motion';
 import { deviceService } from '@/services/deviceService';
 import { sectionService } from '@/services/locationService';
@@ -385,6 +386,7 @@ export default function ArtefactosPage() {
         title="Dispositivos"
         actions={
           <>
+            <SensorReadingsSwitch />
             <Button variant="secondary" size="sm" onClick={() => setShowVirtualModal(true)}>
               <Plus className="h-4 w-4" />
               Agregar virtual
@@ -545,11 +547,12 @@ export default function ArtefactosPage() {
         {/* Tabla de Dispositivos */}
         <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden">
           {/* Header */}
-          <div className="hidden sm:grid sm:grid-cols-6 gap-4 px-4 py-3 bg-zinc-800/50 border-b border-zinc-700/50 text-sm font-medium text-zinc-400">
+          <div className="hidden sm:grid sm:grid-cols-7 gap-4 px-4 py-3 bg-zinc-800/50 border-b border-zinc-700/50 text-sm font-medium text-zinc-400">
             <div>Nombre</div>
             <div>Conector</div>
             <div>Tipo</div>
             <div>Sección</div>
+            <div>Lecturas</div>
             <div>Control</div>
             <div>Acciones</div>
           </div>
@@ -583,7 +586,7 @@ export default function ArtefactosPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.03 }}
-                    className="grid grid-cols-1 sm:grid-cols-6 gap-2 sm:gap-4 px-4 py-4 hover:bg-zinc-800/30 transition-colors"
+                    className="grid grid-cols-1 sm:grid-cols-7 gap-2 sm:gap-4 px-4 py-4 hover:bg-zinc-800/30 transition-colors"
                   >
                     {/* Nombre */}
                     <div className="flex items-center gap-3">
@@ -613,6 +616,12 @@ export default function ArtefactosPage() {
                     <div className="flex items-center">
                       <span className="text-sm text-zinc-400 sm:hidden mr-2">Sección:</span>
                       <span className="text-zinc-300">{section?.name || 'Sin asignar'}</span>
+                    </div>
+
+                    {/* Lecturas: corta la consulta al conector para este aparato. */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-zinc-400 sm:hidden">Lecturas:</span>
+                      <DeviceReadingsSwitch device={device} label={null} onChanged={loadInitialData} />
                     </div>
 
                     {/* Control */}

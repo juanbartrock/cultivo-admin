@@ -20,6 +20,7 @@ import { UsersModule } from './modules/users/users.module';
 import { IoTCredentialsModule } from './modules/iot-credentials/iot-credentials.module';
 import { WeatherModule } from './modules/weather/weather.module';
 import { StageRangesModule } from './modules/stage-ranges/stage-ranges.module';
+import { ReadingsSettingsModule } from './modules/readings-settings/readings-settings.module';
 import { HealthController } from './health.controller';
 import { SupabaseAuthGuard } from './modules/auth/guards/supabase-auth.guard';
 
@@ -52,6 +53,7 @@ import { SupabaseAuthGuard } from './modules/auth/guards/supabase-auth.guard';
     AIAssistantModule,
     WeatherModule,
     StageRangesModule,
+    ReadingsSettingsModule,
   ],
   controllers: [HealthController],
   providers: [

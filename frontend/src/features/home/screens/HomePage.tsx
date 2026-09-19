@@ -4,6 +4,7 @@ import { RefreshCw, Tent } from 'lucide-react';
 import { PageHeader } from '@/components/shell';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { SensorReadingsSwitch } from '@/features/lecturas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ActiveCyclesBlock } from '../components/ActiveCyclesBlock';
 import { AlertsBlock } from '../components/AlertsBlock';
@@ -19,6 +20,7 @@ export default function HomePage() {
   const {
     summaries,
     alerts,
+    readingsPaused,
     deviceIssues,
     cycles,
     lastEventByCycle,
@@ -35,24 +37,27 @@ export default function HomePage() {
       <PageHeader
         title="Inicio"
         actions={
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              void sectionsQuery.refetch();
-              void cyclesQuery.refetch();
-              void refreshStatuses();
-            }}
-          >
-            <RefreshCw className={statusLoading ? 'animate-spin' : undefined} />
-            Actualizar
-          </Button>
+          <>
+            <SensorReadingsSwitch />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                void sectionsQuery.refetch();
+                void cyclesQuery.refetch();
+                void refreshStatuses();
+              }}
+            >
+              <RefreshCw className={statusLoading ? 'animate-spin' : undefined} />
+              Actualizar
+            </Button>
+          </>
         }
       />
 
       <HomeSection
         title="Alertas"
-        meta={alerts.length > 0 && updatedAgo ? <span>actualizado {updatedAgo}</span> : null}
+        meta={alerts.length > 0 && !readingsPaused && updatedAgo ? <span>actualizado {updatedAgo}</span> : null}
       >
         {sectionsQuery.isError ? (
           <BlockError
@@ -62,7 +67,7 @@ export default function HomePage() {
         ) : sectionsQuery.isLoading ? (
           <Skeleton className="h-12 w-full" />
         ) : (
-          <AlertsBlock alerts={alerts} updatedAt={statusUpdatedAt} />
+          <AlertsBlock alerts={alerts} updatedAt={statusUpdatedAt} readingsPaused={readingsPaused} />
         )}
       </HomeSection>
 

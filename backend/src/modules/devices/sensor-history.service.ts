@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { IoTGatewayService } from './iot-gateway.service';
 import { DeviceType } from '@prisma/client';
+import { ReadingsSettingsService } from '../readings-settings/readings-settings.service';
 
 @Injectable()
 export class SensorHistoryService {
@@ -12,6 +13,7 @@ export class SensorHistoryService {
   constructor(
     private prisma: PrismaService,
     private iotGateway: IoTGatewayService,
+    private readingsSettings: ReadingsSettingsService,
   ) {}
 
   /**
@@ -28,11 +30,19 @@ export class SensorHistoryService {
     this.logger.log('🔄 Starting sensor recording cycle...');
 
     try {
+      // Kill switch general: con las lecturas apagadas el ciclo no consulta a ningún conector.
+      if (!(await this.readingsSettings.sensorsEnabled())) {
+        this.logger.log('Lecturas de sensores desactivadas, ciclo de historial omitido');
+        return;
+      }
+
       // Obtener dispositivos con recordHistory = true (incluir sectionId)
       const devices = await this.prisma.device.findMany({
         where: {
           recordHistory: true,
           type: DeviceType.SENSOR, // Solo sensores
+          // Un sensor con las lecturas pausadas no se consulta ni para el historial.
+          readingsEnabled: true,
         },
         select: {
           id: true,

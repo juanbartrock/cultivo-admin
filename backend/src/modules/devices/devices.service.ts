@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { IoTGatewayService, DeviceStatus, CameraStreamInfo } from './iot-gateway.service';
 import { CreateDeviceDto, UpdateDeviceDto, AssignDeviceDto } from './dto/device.dto';
 import { Connector, DeviceType, Prisma } from '@prisma/client';
+import { ReadingsSettingsService } from '../readings-settings/readings-settings.service';
 
 export interface ScannedDevice {
   id: string;
@@ -25,6 +26,7 @@ export class DevicesService {
   constructor(
     private prisma: PrismaService,
     private iotGateway: IoTGatewayService,
+    private readingsSettings: ReadingsSettingsService,
   ) {}
 
   /**
@@ -115,6 +117,8 @@ export class DevicesService {
       externalId: data.externalId,
       type: data.type,
       metadata: data.metadata as Prisma.InputJsonValue,
+      ...(data.recordHistory !== undefined && { recordHistory: data.recordHistory }),
+      ...(data.readingsEnabled !== undefined && { readingsEnabled: data.readingsEnabled }),
       ...(data.sectionId && {
         section: { connect: { id: data.sectionId } },
       }),
@@ -162,6 +166,7 @@ export class DevicesService {
       ...(data.type && { type: data.type }),
       ...(data.metadata !== undefined && { metadata: data.metadata as Prisma.InputJsonValue }),
       ...(data.recordHistory !== undefined && { recordHistory: data.recordHistory }),
+      ...(data.readingsEnabled !== undefined && { readingsEnabled: data.readingsEnabled }),
       ...(data.sectionId !== undefined && {
         section: data.sectionId ? { connect: { id: data.sectionId } } : { disconnect: true },
       }),
@@ -332,9 +337,23 @@ export class DevicesService {
   async getDeviceStatus(id: string): Promise<{ device: Awaited<ReturnType<typeof this.findById>>; status: DeviceStatus }> {
     const device = await this.findById(id);
 
+    // Kill switch de lecturas: con las lecturas pausadas no se sale a la red. Responde 200 con
+    // `readingsPaused` para que la pantalla distinga una pausa de un aparato caído, y sin log:
+    // un aparato desenchufado a propósito no es un error del sistema.
+    const sensorsEnabled = await this.readingsSettings.sensorsEnabled();
+    if (!this.readingsSettings.isDeviceReadable(device, sensorsEnabled)) {
+      return { device, status: { online: false, readingsPaused: true } };
+    }
+
     // Si es un dispositivo VIRTUAL, obtener el estado del controlador
     if (device.connector === Connector.VIRTUAL) {
       if (device.controlledBy) {
+        // El virtual sale a la red por su controlador: si el controlador está pausado, tampoco
+        // se lo consulta. Sin esto un virtual reabre la puerta al conector que se quiso cerrar.
+        if (!this.readingsSettings.isDeviceReadable(device.controlledBy, sensorsEnabled)) {
+          return { device, status: { online: false, readingsPaused: true } };
+        }
+
         // Obtener estado del dispositivo controlador
         const controllerStatus = await this.iotGateway.getDeviceStatus(
           device.controlledBy.connector,

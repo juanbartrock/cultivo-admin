@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { IoTGatewayService } from './iot-gateway.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { Connector, DeviceType } from '@prisma/client';
+import { ReadingsSettingsService } from '../readings-settings/readings-settings.service';
 
 interface SensorReading {
   temperature?: number;
@@ -41,6 +42,7 @@ export class SensorPollerService {
     private prisma: PrismaService,
     private iotGateway: IoTGatewayService,
     private realtimeGateway: RealtimeGateway,
+    private readingsSettings: ReadingsSettingsService,
   ) {}
 
   /**
@@ -56,6 +58,12 @@ export class SensorPollerService {
     this.isPolling = true;
 
     try {
+      // Kill switch general: con las lecturas apagadas el ciclo no consulta a ningún conector.
+      if (!(await this.readingsSettings.sensorsEnabled())) {
+        this.logger.debug('Lecturas de sensores desactivadas, ciclo omitido');
+        return;
+      }
+
       const sensors = await this.getSensorsToRead();
 
       if (sensors.length === 0) {
@@ -81,6 +89,9 @@ export class SensorPollerService {
     return this.prisma.device.findMany({
       where: {
         type: DeviceType.SENSOR,
+        // El corte por dispositivo se aplica en la consulta: un sensor pausado nunca llega
+        // al gateway, así que no deja ni un WARN por ciclo.
+        readingsEnabled: true,
         // Solo sensores que tienen sección asignada o recordHistory activo
         OR: [
           { sectionId: { not: null } },
@@ -252,6 +263,10 @@ export class SensorPollerService {
    * Fuerza una lectura inmediata de todos los sensores (útil para testing/debug)
    */
   async forceReadAll(): Promise<Map<string, SensorReading>> {
+    if (!(await this.readingsSettings.sensorsEnabled())) {
+      return new Map();
+    }
+
     const sensors = await this.getSensorsToRead();
     const results = new Map<string, SensorReading>();
 

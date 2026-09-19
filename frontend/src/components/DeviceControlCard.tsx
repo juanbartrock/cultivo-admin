@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Device, DeviceType, DeviceStatus } from '@/types';
 import { useDeviceControl } from '@/hooks/useDeviceStatus';
+import { DeviceReadingsSwitch } from '@/features/lecturas';
 import CameraViewer from './CameraViewer';
 import { 
   Thermometer, 
@@ -116,7 +117,7 @@ export default function DeviceControlCard({
   const Icon = iconMap[device.type] || Activity;
   const colors = typeColors[device.type] || { icon: 'text-cultivo-green-400', bg: 'bg-cultivo-green-500/10', border: 'border-cultivo-green-500/30' };
   
-  const { toggle, controlling } = useDeviceControl(device.id);
+  const { control, toggle, controlling } = useDeviceControl(device.id);
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
   const [recordHistory, setRecordHistory] = useState<boolean>(device.recordHistory ?? false);
   const [togglingHistory, setTogglingHistory] = useState(false);
@@ -128,6 +129,8 @@ export default function DeviceControlCard({
   const [isReassigning, setIsReassigning] = useState(false);
 
   const isOnline = status?.online !== false;
+  /** Nadie consultó al conector: es una pausa decidida, no un aparato caído. */
+  const readingsPaused = status?.readingsPaused === true;
   
   // Detectar estado ON/OFF - puede venir como 'state' o 'switch' (SONOFF usa 'switch')
   const switchState = status?.switch as string | undefined;
@@ -161,6 +164,19 @@ export default function DeviceControlCard({
       setOptimisticState(null);
     }
   }, [controlling, isOnline, isOn, toggle, onStatusChange]);
+
+  /**
+   * Encender o apagar sin conocer el estado. Pausar las lecturas corta la consulta al conector;
+   * el comando de control es otra operación y sigue disponible.
+   */
+  const handleControl = useCallback(
+    async (action: 'on' | 'off') => {
+      if (controlling) return;
+      const success = await control(action);
+      if (success) onStatusChange?.();
+    },
+    [control, controlling, onStatusChange]
+  );
 
   const handleToggleRecordHistory = useCallback(async () => {
     if (togglingHistory) return;
@@ -248,6 +264,8 @@ export default function DeviceControlCard({
           {/* Status indicator */}
           {loading ? (
             <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
+          ) : readingsPaused ? (
+            <span className="text-xs text-offline">Lecturas off</span>
           ) : isOnline ? (
             <div className="flex items-center gap-1.5">
               <Wifi className="w-3.5 h-3.5 text-cultivo-green-400" />
@@ -350,6 +368,12 @@ export default function DeviceControlCard({
             </div>
           )}
 
+          {/* Lecturas: corta la consulta al conector. Distinto del historial, que persiste. */}
+          <div className="flex w-full items-center justify-between rounded-lg bg-zinc-900/50 px-3 py-2">
+            <span className="text-xs text-zinc-400">Lecturas</span>
+            <DeviceReadingsSwitch device={device} label={null} onChanged={onStatusChange} />
+          </div>
+
           {/* Toggle registrar historial */}
           <button
             onClick={handleToggleRecordHistory}
@@ -378,16 +402,48 @@ export default function DeviceControlCard({
 
           {/* Si no hay valores */}
           {status.temperature === undefined && status.humidity === undefined && (
-            <div className="flex items-center justify-center gap-2 py-4 text-zinc-500">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-xs">Sin datos del sensor</span>
-            </div>
+            readingsPaused ? (
+              <div className="flex items-center justify-center py-4">
+                <span className="text-xs text-offline">Lecturas desactivadas</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 py-4 text-zinc-500">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-xs">Sin datos del sensor</span>
+              </div>
+            )
           )}
         </div>
       )}
 
+      {/* Con las lecturas pausadas nadie consultó el estado: se ofrecen las dos acciones y no se
+          inventa ni "Encendido" ni "Apagado". El control al conector sigue disponible. */}
+      {isControllable && readingsPaused && (
+        <div className="space-y-2">
+          <p className="text-center text-xs text-offline">Estado desconocido</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => handleControl('on')}
+              disabled={controlling}
+              className="flex items-center justify-center gap-2 rounded-lg bg-zinc-700 py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Power className="h-4 w-4" />
+              <span>Encender</span>
+            </button>
+            <button
+              onClick={() => handleControl('off')}
+              disabled={controlling}
+              className="flex items-center justify-center gap-2 rounded-lg bg-zinc-700 py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Power className="h-4 w-4" />
+              <span>Apagar</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Control buttons for controllable devices */}
-      {isControllable && (
+      {isControllable && !readingsPaused && (
         <button
           onClick={handleToggle}
           disabled={controlling || !isOnline}

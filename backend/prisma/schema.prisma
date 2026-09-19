@@ -112,6 +112,7 @@ model Device {
   updatedAt            DateTime              @updatedAt @map("updated_at")
   controlledByDeviceId String?               @map("controlled_by_device_id")
   recordHistory        Boolean               @default(false) @map("record_history")
+  readingsEnabled      Boolean               @default(true) @map("readings_enabled")
   userId               String?               @map("user_id")
   automationActions    AutomationAction[]
   automationConditions AutomationCondition[]
@@ -675,6 +676,18 @@ model StageRange {
   updatedAt        DateTime   @updatedAt @map("updated_at")
 
   @@map("stage_ranges")
+}
+
+/// Interruptor general de lecturas. Fila única (`id = "singleton"`): con `sensorsEnabled` en
+/// false ningún SENSOR se consulta al conector. El corte por dispositivo vive en
+/// `Device.readingsEnabled` y aplica a cualquier tipo.
+model ReadingsSettings {
+  id             String   @id @default("singleton")
+  sensorsEnabled Boolean  @default(true) @map("sensors_enabled")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("readings_settings")
 }
 
 enum SubscriptionTier {

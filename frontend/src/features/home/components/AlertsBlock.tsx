@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertTriangle, PlugZap, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, PlugZap, PowerOff, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SectionAlert } from '../hooks/useHomeDashboard';
 import { useTimeAgo } from '../lib/timeAgo';
@@ -16,10 +16,22 @@ interface AlertsBlockProps {
   alerts: SectionAlert[];
   /** Momento de la última consulta de estados; da la antigüedad del "todo en rango". */
   updatedAt: Date | null;
+  /** Todas las carpas con sensor están pausadas: no hay lectura contra la cual estar en rango. */
+  readingsPaused?: boolean;
 }
 
-export function AlertsBlock({ alerts, updatedAt }: AlertsBlockProps) {
+export function AlertsBlock({ alerts, updatedAt, readingsPaused = false }: AlertsBlockProps) {
   const updatedAgo = useTimeAgo(updatedAt);
+
+  // Sin lecturas vivas no se afirma nada sobre los rangos: estado neutro, sin el ícono ok.
+  if (!alerts.length && readingsPaused) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-edge bg-surface px-4 py-3 text-sm text-offline">
+        <PowerOff className="h-4 w-4 shrink-0" />
+        <span className="min-w-0">Lecturas desactivadas</span>
+      </div>
+    );
+  }
 
   if (!alerts.length) {
     return (

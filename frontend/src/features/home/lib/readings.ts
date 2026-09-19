@@ -120,6 +120,8 @@ export interface SectionReadings {
   sensor: Device | null;
   /** El sensor existe y el backend lo informa sin respuesta: no hay lectura viva. */
   sensorOffline: boolean;
+  /** El sensor tiene las lecturas desactivadas: nadie lo consultó, no está caído. */
+  sensorPaused: boolean;
 }
 
 /**
@@ -127,6 +129,9 @@ export interface SectionReadings {
  * sensor sin respuesta, o sin `status`, no tiene lectura y las tres métricas quedan en
  * `null`. `sensor.metadata` es el último valor guardado en la base, sin antigüedad ni forma
  * de saber de cuándo es; pintarlo con color de estado miente sobre el presente.
+ *
+ * Un sensor con las lecturas desactivadas queda en `sensorPaused`: tampoco hay dato, y la
+ * diferencia con `sensorOffline` importa porque un aparato pausado no genera alerta.
  */
 export function sectionReadings(
   section: Section,
@@ -134,12 +139,39 @@ export function sectionReadings(
 ): SectionReadings {
   const sensor = section.devices?.find((device) => device.type === 'SENSOR') ?? null;
   if (!sensor) {
-    return { temperature: null, humidity: null, vpd: null, sensor: null, sensorOffline: false };
+    return {
+      temperature: null,
+      humidity: null,
+      vpd: null,
+      sensor: null,
+      sensorOffline: false,
+      sensorPaused: false,
+    };
   }
 
   const status = getStatus(sensor.id);
+
+  // Lecturas desactivadas: nadie preguntó. Es un estado neutro, sin alerta.
+  if (status?.readingsPaused) {
+    return {
+      temperature: null,
+      humidity: null,
+      vpd: null,
+      sensor,
+      sensorOffline: false,
+      sensorPaused: true,
+    };
+  }
+
   if (status?.online === false) {
-    return { temperature: null, humidity: null, vpd: null, sensor, sensorOffline: true };
+    return {
+      temperature: null,
+      humidity: null,
+      vpd: null,
+      sensor,
+      sensorOffline: true,
+      sensorPaused: false,
+    };
   }
 
   const temperature = (status?.temperature as number | undefined) ?? null;
@@ -151,6 +183,7 @@ export function sectionReadings(
     vpd: calculateVPD(temperature, humidity),
     sensor,
     sensorOffline: false,
+    sensorPaused: false,
   };
 }
 

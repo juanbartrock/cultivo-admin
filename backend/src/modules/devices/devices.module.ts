@@ -5,6 +5,7 @@ import { DevicesService } from './devices.service';
 import { IoTGatewayService } from './iot-gateway.service';
 import { SensorHistoryService } from './sensor-history.service';
 import { SensorPollerService } from './sensor-poller.service';
+import { ReadingsSettingsModule } from '../readings-settings/readings-settings.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { SensorPollerService } from './sensor-poller.service';
       timeout: 10000,
       maxRedirects: 3,
     }),
+    ReadingsSettingsModule,
   ],
   controllers: [DevicesController],
   providers: [

@@ -19,6 +19,8 @@ export interface DeviceStatus {
   state?: 'on' | 'off';
   temperature?: number;
   humidity?: number;
+  /** El dispositivo tiene las lecturas pausadas: no se consultó al conector. */
+  readingsPaused?: boolean;
   [key: string]: unknown;
 }
 

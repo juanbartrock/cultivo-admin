@@ -134,6 +134,9 @@ export function useHomeDashboard() {
         roomName: section.room?.name,
       };
 
+      // Un sensor con las lecturas desactivadas no es una alerta: es una decisión tomada.
+      if (readings.sensorPaused) continue;
+
       if (readings.sensorOffline && readings.sensor) {
         result.push({ ...base, label: readings.sensor.name, detail: 'Sensor sin respuesta', severity: 'offline' });
         continue;
@@ -168,12 +171,22 @@ export function useHomeDashboard() {
     return result.sort((a, b) => order[a.severity] - order[b.severity]);
   }, [summaries]);
 
+  /**
+   * Ninguna carpa con sensor tiene lectura viva porque están todas pausadas. Sin esto el bloque
+   * de alertas diría "Todo en rango" sin haber leído nada.
+   */
+  const readingsPaused = useMemo<boolean>(() => {
+    const conSensor = summaries.filter((summary) => summary.readings.sensor);
+    return conSensor.length > 0 && conSensor.every((summary) => summary.readings.sensorPaused);
+  }, [summaries]);
+
   const deviceIssues = useMemo<DeviceIssue[]>(() => {
     const issues: DeviceIssue[] = [];
     for (const section of sections) {
       for (const device of section.devices ?? []) {
         const status = getStatus(device.id);
-        if (status && status.online === false) {
+        // `readingsPaused` queda afuera: nadie consultó ese aparato, así que no está caído.
+        if (status && status.online === false && !status.readingsPaused) {
           issues.push({ device, sectionName: section.name });
         }
       }
@@ -195,6 +208,7 @@ export function useHomeDashboard() {
   return {
     summaries,
     alerts,
+    readingsPaused,
     deviceIssues,
     cycles,
     lastEventByCycle,

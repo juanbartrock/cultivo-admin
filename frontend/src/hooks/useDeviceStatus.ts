@@ -2,11 +2,15 @@
  * Hook para obtener y actualizar estados de dispositivos en tiempo real
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { deviceService } from '@/services/deviceService';
 import { Device, DeviceStatus } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
+import { isReadingPaused, useReadingsSettings } from '@/features/lecturas';
+
+/** Estado local de un dispositivo con las lecturas pausadas: no se consulta al conector. */
+const PAUSED_STATUS: DeviceStatus = { online: false, readingsPaused: true };
 
 interface DeviceWithStatus {
   device: Device;
@@ -27,11 +31,13 @@ interface UseDeviceStatusOptions {
  */
 export function useDeviceStatus(
   deviceId: string,
-  options: UseDeviceStatusOptions = {}
+  options: UseDeviceStatusOptions & { device?: Device } = {}
 ) {
-  const { pollingInterval = 30000, autoRefresh = true } = options;
+  const { pollingInterval = 30000, autoRefresh = true, device } = options;
 
   const { isAuthenticated } = useAuth();
+  const { sensorsEnabled, isLoading: settingsLoading } = useReadingsSettings();
+  const paused = device ? isReadingPaused(device, sensorsEnabled) : false;
   const [status, setStatus] = useState<DeviceStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +45,16 @@ export function useDeviceStatus(
   const fetchStatus = useCallback(async () => {
     // Sin sesión no se pide nada: el backend responde 401 y queda un error en la consola.
     if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+    // Mientras el interruptor general no resolvió no se pide nada: con el valor optimista en
+    // `true` la primera tanda saldría a consultar sensores que están pausados.
+    if (settingsLoading) return;
+    // Con las lecturas pausadas el estado se arma acá: cero pedidos al conector.
+    if (paused) {
+      setStatus(PAUSED_STATUS);
+      setError(null);
       setLoading(false);
       return;
     }
@@ -51,7 +67,7 @@ export function useDeviceStatus(
     } finally {
       setLoading(false);
     }
-  }, [deviceId, isAuthenticated]);
+  }, [deviceId, isAuthenticated, paused, settingsLoading]);
 
   useEffect(() => {
     fetchStatus();
@@ -81,6 +97,13 @@ export function useDevicesStatus(
   const { pollingInterval = 30000, autoRefresh = true, sectionId } = options;
   const { socket, isConnected, joinSection, leaveSection } = useSocket();
   const { isAuthenticated } = useAuth();
+  const { sensorsEnabled, isLoading: settingsLoading } = useReadingsSettings();
+
+  /** Resuelve `controlledByDeviceId` para que un virtual herede la pausa de su controlador. */
+  const findDevice = useMemo(() => {
+    const byId = new Map(devices.map((device) => [device.id, device]));
+    return (id: string) => byId.get(id);
+  }, [devices]);
 
   const [statuses, setStatuses] = useState<Map<string, DeviceStatus>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -110,14 +133,21 @@ export function useDevicesStatus(
       return;
     }
 
+    // Mientras el interruptor general no resolvió no sale la primera tanda: con el valor
+    // optimista en `true` se consultarían sensores que ya están pausados.
+    if (settingsLoading) return;
+
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
+    // Los pausados salen del mapa local, sin pedido: el kill switch corta acá, antes de la red.
+    const activos = devices.filter((device) => !isReadingPaused(device, sensorsEnabled, findDevice));
+
     try {
       // Hacer todas las peticiones en paralelo para estado inicial
       const results = await Promise.allSettled(
-        devices.map(async (device) => {
+        activos.map(async (device) => {
           const response = await deviceService.getStatus(device.id, { signal: controller.signal });
           return { id: device.id, status: response.status };
         })
@@ -127,16 +157,22 @@ export function useDevicesStatus(
 
       const newStatuses = new Map<string, DeviceStatus>();
 
+      for (const device of devices) {
+        if (isReadingPaused(device, sensorsEnabled, findDevice)) {
+          newStatuses.set(device.id, PAUSED_STATUS);
+        }
+      }
+
       results.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           newStatuses.set(result.value.id, result.value.status);
         } else {
           // Si falla, usar estado anterior o marcar offline
-          const prev = statuses.get(devices[index].id);
-          if (prev) {
-            newStatuses.set(devices[index].id, prev);
+          const prev = statuses.get(activos[index].id);
+          if (prev && !prev.readingsPaused) {
+            newStatuses.set(activos[index].id, prev);
           } else {
-            newStatuses.set(devices[index].id, { online: false });
+            newStatuses.set(activos[index].id, { online: false });
           }
         }
       });
@@ -153,7 +189,7 @@ export function useDevicesStatus(
         setLoading(false);
       }
     }
-  }, [devices, isAuthenticated]);
+  }, [devices, findDevice, isAuthenticated, sensorsEnabled, settingsLoading]);
 
   // Efecto para suscribirse a la sección via WebSocket
   useEffect(() => {
@@ -173,9 +209,10 @@ export function useDevicesStatus(
     if (!socket || !isConnected) return;
 
     const handleDeviceUpdate = (data: { deviceId: string; status: DeviceStatus; sectionId?: string }) => {
-      // Solo actualizar si el dispositivo está en nuestra lista
-      const deviceIds = devices.map(d => d.id);
-      if (deviceIds.includes(data.deviceId)) {
+      // Un dispositivo pausado conserva su estado local aunque llegue un push viejo del ciclo
+      // que todavía estaba en vuelo cuando se apagó el interruptor.
+      const target = devices.find((d) => d.id === data.deviceId);
+      if (target && !isReadingPaused(target, sensorsEnabled, findDevice)) {
         setStatuses((prev) => {
           const newMap = new Map(prev);
           newMap.set(data.deviceId, data.status);
@@ -187,8 +224,8 @@ export function useDevicesStatus(
 
     const handleSensorUpdate = (data: { deviceId: string; reading: any; sectionId?: string }) => {
       // Actualizar el status con los datos del sensor
-      const deviceIds = devices.map(d => d.id);
-      if (deviceIds.includes(data.deviceId)) {
+      const target = devices.find((d) => d.id === data.deviceId);
+      if (target && !isReadingPaused(target, sensorsEnabled, findDevice)) {
         setStatuses((prev) => {
           const newMap = new Map(prev);
           const currentStatus = prev.get(data.deviceId) || { online: true };
@@ -213,7 +250,7 @@ export function useDevicesStatus(
       socket.off('device_update', handleDeviceUpdate);
       socket.off('sensor_update', handleSensorUpdate);
     };
-  }, [socket, isConnected, devices]);
+  }, [socket, isConnected, devices, findDevice, sensorsEnabled]);
 
   // Efecto para Polling (carga inicial + backup si socket no está conectado)
   useEffect(() => {

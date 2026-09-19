@@ -56,6 +56,7 @@ export function CarpaStatusCard({ summary }: CarpaStatusCardProps) {
         </div>
         <div className="flex shrink-0 flex-wrap justify-end gap-1">
           {section.enabled === false ? <Badge variant="offline">Inactiva</Badge> : null}
+          {readings.sensorPaused ? <Badge variant="offline">Lecturas desactivadas</Badge> : null}
           {readings.sensorOffline ? <Badge variant="offline">Sensor sin respuesta</Badge> : null}
         </div>
       </div>

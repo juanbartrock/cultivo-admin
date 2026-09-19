@@ -172,6 +172,8 @@ export interface Device {
   section?: Section;
   metadata?: Record<string, unknown>;
   recordHistory?: boolean; // Si registra historial (solo sensores)
+  /** Si se consulta el estado al conector. En false no sale ningún pedido por este aparato. */
+  readingsEnabled?: boolean;
   // Dependencia: dispositivo que controla a este
   controlledByDeviceId?: string;
   controlledBy?: Device; // Ej: Sonoff que controla al extractor
@@ -186,7 +188,15 @@ export interface DeviceStatus {
   state?: 'on' | 'off';
   temperature?: number;
   humidity?: number;
+  /** Las lecturas del dispositivo están pausadas: no se consultó al conector. */
+  readingsPaused?: boolean;
   [key: string]: unknown;
+}
+
+/** Interruptor general de lecturas: fila única de `readings_settings`. */
+export interface ReadingsSettings {
+  sensorsEnabled: boolean;
+  updatedAt: string;
 }
 
 // Dispositivo detectado en escaneo (no persistido)

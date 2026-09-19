@@ -75,6 +75,16 @@ export class CreateDeviceDto {
   @IsBoolean()
   @IsOptional()
   recordHistory?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Si se consulta el estado del dispositivo al conector. En false no sale ningún pedido ' +
+      'a la red por este dispositivo, de cualquier tipo.',
+    example: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  readingsEnabled?: boolean;
 }
 
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}

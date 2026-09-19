@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DeviceStatus, Device, RangeStage, StageRange } from '@/types';
 import { useDeviceControl } from '@/hooks/useDeviceStatus';
+import { DeviceReadingsSwitch } from '@/features/lecturas';
 import { 
   Thermometer, 
   Droplets, 
@@ -205,6 +206,8 @@ export default function EnvironmentPanel({
   // mostrarlo con color de estado miente sobre el presente. Misma regla que `sectionReadings`
   // en la home, para que la carpa y la home cuenten la misma historia.
   const isOnline = status?.online !== false;
+  /** Nadie consultó al conector: es una pausa decidida, no un aparato caído. */
+  const readingsPaused = status?.readingsPaused === true;
 
   // Extraer y parsear valores del status (pueden venir como string o number)
   const temperature = isOnline && status?.temperature !== undefined
@@ -357,30 +360,44 @@ export default function EnvironmentPanel({
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4"
     >
-      {/* Header con nombre del sensor y última actualización */}
+      {/* Header con nombre del sensor y última actualización. En móvil el nombre va en su propia
+          línea y los badges y switches abajo, con wrap: en una sola fila el nombre del sensor se
+          partía en tres renglones. */}
       {(sensorName || lastUpdate || device) && (
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             {sensorName && (
-              <div className="flex items-center gap-2">
-                <Gauge className={`w-5 h-5 ${isOnline ? 'text-cultivo-green-500' : 'text-zinc-500'}`} />
-                <span className="text-sm font-medium text-zinc-300">{sensorName}</span>
+              <div className="flex min-w-0 items-center gap-2">
+                <Gauge className={`w-5 h-5 shrink-0 ${isOnline ? 'text-cultivo-green-500' : 'text-zinc-500'}`} />
+                <span className="truncate text-sm font-medium text-zinc-300">{sensorName}</span>
               </div>
             )}
-            {!isOnline && (
-              <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs bg-zinc-800/50 text-zinc-400 border border-zinc-700/50">
-                <AlertTriangle className="w-3.5 h-3.5" />
+            <div className="flex flex-wrap items-center gap-2 sm:contents">
+            {readingsPaused && (
+              <span className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-edge bg-surface-2 px-2 py-1 text-xs text-offline">
+                Lecturas desactivadas
+              </span>
+            )}
+            {!isOnline && !readingsPaused && (
+              <span className="flex items-center gap-1.5 whitespace-nowrap px-2 py-1 rounded-lg text-xs bg-zinc-800/50 text-zinc-400 border border-zinc-700/50">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                 Sensor sin respuesta
               </span>
             )}
             {/* Qué fila de rangos está pintando estos colores. */}
             {stage && (
               <span
-                className="rounded-sm border border-edge bg-surface-2 px-2 py-0.5 text-xs text-fg-muted"
+                className="whitespace-nowrap rounded-sm border border-edge bg-surface-2 px-2 py-0.5 text-xs text-fg-muted"
                 title="Etapa cuyos rangos se aplican"
               >
                 Rangos: {RANGE_STAGE_LABELS[stage]}
               </span>
+            )}
+            {/* Lecturas del sensor: corta la consulta al conector. Distinto del historial. */}
+            {device && (
+              <div className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface-2 px-2 py-1">
+                <DeviceReadingsSwitch device={device} label="Lecturas" onChanged={onRefresh} />
+              </div>
             )}
             {/* Toggle registrar historial */}
             {device && (
@@ -407,6 +424,7 @@ export default function EnvironmentPanel({
                 </span>
               </button>
             )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {lastUpdate && (
