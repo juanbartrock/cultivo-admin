@@ -360,45 +360,91 @@ Trabajás dentro del VPS de Juan (Ubuntu 24.04, usuario `deploy`), donde convive
 `/opt/apps/`. El agente orquestador del servidor es **`server-audit`** (`/opt/server-audit`): él
 maneja la infraestructura compartida y te delegó esta tarea.
 
+<!-- [agent:codex][date:2026-10-18][action:created] -->
+**Versiones de modelos compartidos:** selección e inventario en `/opt/server-audit/etc/model-rollout.json`;
+procedimiento `/opt/server-audit/docs/model-rollout.md`. Al agregar un uso de DeepSeek Flash, avisá a
+server-audit para registrar configuración, fallback y activación; mantené el modelo parametrizable.
+
+<!-- [agent:codex][date:2026-10-12][action:created] -->
+**Cartel obligatorio al usar Linux desktop (todos los proyectos y harness):** antes de usar
+`desktop-casa` en Linux para cualquier tarea (SSH, escritorio remoto, APIs/MCP, Blender,
+ComfyUI, renders o procesos en segundo plano), abrí el acceso directo de Juan
+`~/Desktop/Cartel de trabajo.desktop`. Desde el VPS, la activación equivalente es:
+
+```bash
+desktop-ssh linux 'nohup ~/.local/bin/cartel-linux on >/tmp/cartel-linux.log 2>&1 </dev/null &'
+desktop-ssh linux '~/.local/bin/cartel-linux status'
+```
+
+Exigí `activo` y comprobá que el cartel se vea en el monitor físico `:0`; la sesión remota
+`:20` por sí sola no alcanza. Mantenelo visible mientras haya trabajo en Linux, incluso si
+el agente termina su turno y deja un render o proceso corriendo. Si no se puede activar o
+verificar, resolvé el problema o avisá a Juan antes de iniciar el trabajo. Ocultalo con
+`desktop-ssh linux '~/.local/bin/cartel-linux off'` solo cuando hayan terminado tus tareas
+y hayas comprobado que no queda trabajo de otros agentes o usuarios que necesite el aviso;
+si hay duda, dejalo visible. Evita reinicios por quienes usan la PC y pérdida de trabajo.
+Detalle: `/opt/server-audit/tools/cartel-linux/README.md`.
+
+<!-- [agent:server-audit][date:2026-09-22][action:created] -->
+Este bloque lo escribe `sync-agent-context` desde `/opt/server-audit/ECOSYSTEM.md`. Si al empezar
+encontrás tu `CLAUDE.md` modificado sin commitear y vos no lo tocaste, lo actualizó `server-audit`:
+**commitealo junto con tu próximo trabajo** (`docs: sincronizar contexto del ecosistema` alcanza) y
+registralo en tu `CHANGES.md` si tu proyecto lo pide. Revertirlo deja a tu agente leyendo
+instrucciones viejas.
+
 **Nunca toques esto — escalá a `server-audit` y esperá confirmación de Juan:**
 `/etc/caddy/Caddyfile` · UFW · SSH · `systemd` del host · Docker y las DB compartidas
 (`panel-db`, `lambdai-db`, `couchdb`, `mosquitto`) · operaciones destructivas de DB de
 producción (DROP/TRUNCATE) · tokens y credenciales de otras apps · los `HERMES_HOME` de otros
 usuarios (`/home/martin`, `/home/cap`, `/home/zaca`, `/home/agus`).
 
-<!-- [agent:codex][date:2026-09-05][action:created] -->
-**Autonomía y alcance:** ante un pedido de implementar o corregir, completá lo autorizado y
-resolvé decisiones rutinarias con el contexto disponible. Conservá las autorizaciones ya dadas
-en la sesión; pedí aclaración cuando falte una decisión que cambie materialmente el resultado.
-Una revisión o diagnóstico termina en un informe salvo que también se haya autorizado corregir.
-La infraestructura compartida sigue a cargo de `server-audit`; una aprobación vigente sobre
-una operación concreta no necesita repetirse.
+<!-- [agent:server-audit][date:2026-09-20][action:created] -->
+**Cómo se escala:** `delegate-agent --dir /opt/server-audit "<pedido>"` — arranca una sesión de
+`server-audit`, con su contexto y sus permisos, que sí alcanza lo de arriba. Pedile diagnósticos y
+verificaciones (leer el Caddyfile, mirar un puerto, revisar una unit del host). Los **cambios**
+sobre esa infraestructura los decide Juan: se piden con el motivo y la evidencia, no se ejecutan
+por esa vía. El buzón (`agent-buzon`) es para agentes fuera del VPS; no lo uses para esto.
 
-**Prioridad de instrucciones:** el pedido explícito actual de Juan y el alcance de la delegación
-prevalecen sobre recomendaciones de skills, memorias o instrucciones locales antiguas, dentro
-de las políticas de seguridad del entorno. Si una skill exige frenar, enlazá su `SKILL.md`, citá
-la instrucción y explicá qué es requisito y qué es interpretación. Avanzá con la preparación y
-el trabajo independiente ya autorizado mientras se resuelve lo pendiente.
+<!-- [agent:server-audit][date:2026-10-14][action:created] -->
+**Kanban de ΛI:** usalo con la CLI `kanban`, parado en tu carpeta (`kanban acceso`, `tareas`, `tarea`,
+`crear`, `editar`, `comentar`; `kanban --help`). Cada app tiene su token, acotado a su proyecto del
+tablero. Si no tenés acceso, o necesitás otro proyecto o escritura, pedilo con
+`kanban pedir --modo lectura|escritura --motivo "…"`: server-audit lo otorga y Juan recibe el aviso.
+No uses tokens de otros agentes ni la API directa.
+
+<!-- [agent:codex][date:2026-09-05][action:created] -->
+<!-- [agent:server-audit][date:2026-09-27][action:modified] recorte N-21: autonomía y prioridad fusionadas -->
+**Autonomía y prioridad:** un pedido de implementar o corregir autoriza completarlo, resolviendo lo
+rutinario con el contexto disponible; una revisión o diagnóstico termina en un informe. Las
+autorizaciones vigentes no se vuelven a pedir; pedí aclaración solo si falta una decisión que cambie
+el resultado. El pedido actual de Juan prevalece sobre skills, memorias o instrucciones viejas; si una
+skill exige frenar, citala y separá requisito de interpretación. La infraestructura compartida es de
+`server-audit`.
 
 <!-- [agent:codex][date:2026-09-05][action:modified] -->
-**Publicá tu propio cambio:** cuando una implementación autorizada requiera poner código o
-configuración en ejecución, usá `app-restart` para reiniciar tu app y verificarla:
+**Publicá tu propio cambio** con `app-restart`, nunca con `systemctl` o `docker` a mano:
 
 ```bash
 app-restart --list              # qué podés reiniciar desde este directorio
-app-restart <target>            # reinicio verificado (estado + puerto + logs)
-app-restart <target> --build    # docker: rebuild de tu servicio; revierte solo si no levanta
+app-restart <target> [--build]  # reinicio verificado; con --build (docker) revierte si no levanta
 ```
 
 <!-- [agent:server-audit][date:2026-09-07][action:modified] -->
-Un target puede declarar un **health propio** además del estado y el puerto: ahí `app-restart`
-sale 0 sólo si el servicio además responde de verdad. Si tu `--list` no muestra nada y tu app
-tiene un servicio, no lo reinicies a mano: pedile a `server-audit` que lo agregue al mapa.
+<!-- [agent:server-audit][date:2026-09-27][action:modified] recorte N-21 -->
+Sale 0 solo si el servicio quedó sano (estado, puerto y health propio si lo declara). Distinto de 0 =
+**el cambio no está publicado**: leé el log y arreglalo o escalá con la salida real. Si `--list` no
+muestra tu servicio, pedile a `server-audit` que lo agregue al mapa.
 
-Sale 0 solo si el servicio quedó sano. Si sale distinto de 0, **el cambio no está publicado**:
-leé el log que imprime y arreglalo o escalá, con la salida real. Cualquier target fuera de tu app
-lo rechaza — eso es infraestructura compartida y la maneja `server-audit`. Usá `app-restart` en
-lugar de `systemctl` o `docker` a mano: deja traza en `/var/log/app-restart.log`.
+<!-- [agent:server-audit][date:2026-09-22][action:created] -->
+<!-- [agent:server-audit][date:2026-10-09][action:modified] replanteo del gate -->
+**Antes de dar una entrega por terminada, corré la compuerta:** `gate "lo que te pidieron"` parado en
+el repo. Juzga lo sin commitear si lo hay, o el último commit; acotalo con `--since <ref>` o
+`--path <ruta>`. Vuelve en segundos con `pasa` / `gris` / `corregir` sobre las reglas duras (secretos,
+hardcodeo, código muerto, infra compartida, requisitos, `CHANGES.md`). Si la rúbrica de tu app marca
+una suite como `[suite]`, lanzala con `gate --suite` apenas termines el código: vuelve enseguida, corre
+en segundo plano y el gate la usa cuando termina. **Solo `corregir` pide acción:** se arregla, o si es
+un falso positivo se explica con evidencia en el reporte. `gris` se informa en la entrega y se sigue.
+Como máximo dos corridas por entrega, sin envolverlo en `timeout`. `app-restart` también la corre al publicar.
 
 <!-- [agent:codex][date:2026-09-05][action:created] -->
 **Verificación proporcional:** comprobá el comportamiento afectado y los checks requeridos.
@@ -408,16 +454,13 @@ verificá aislamiento de datos antes de pruebas con escrituras. Los cambios excl
 documentales se validan con revisión, links y sincronización, sin build ni reinicio de servicios.
 
 <!-- [agent:codex][date:2026-09-12][action:created] -->
-**Herramientas creativas y computer use:** en trabajos visuales, audiovisuales, 3D o
-interactivos, contemplá herramientas especializadas para explorar el rumbo y hacer ajustes
-finos. Elegí y combiná algoritmos, APIs/MCP y manejo de la interfaz según precisión, calidad,
-tiempo y costo; explicá brevemente la elección cuando afecte el resultado. Observá el resultado
-real, comparalo con el pedido y las referencias, iterá y conservá los archivos editables.
-Para movimiento, interacción y audio, verificá también la secuencia o reproducción.
-Incorporación gradual acordada: **Blender y Godot** primero; **Unreal Engine, Unity, Photoshop,
-DaVinci Resolve o herramientas análogas** más adelante, según la tarea. Consultá `SERVICES.md`
-vía su ruta absoluta abajo y verificá el acceso efectivo de tu agente, la observación y el
-guardado antes de dar una integración por operativa.
+<!-- [agent:server-audit][date:2026-09-27][action:modified] recorte N-21: detalle en /opt/server-audit/docs/herramientas-creativas.md -->
+**Trabajos visuales, audiovisuales, 3D o interactivos:** leé
+`/opt/server-audit/docs/herramientas-creativas.md` antes de elegir herramientas.
+<!-- [agent:server-audit][date:2026-10-18][action:modified] referencias de diseño -->
+Para la dirección visual de una superficie web (landing, marca, portfolio) la referencia acordada
+es Awwwards: `awwwards-ficha` la lee desde el VPS; uso y límites en
+`/opt/server-audit/docs/referencias-diseno.md`.
 
 **Dónde vive la verdad del servidor:**
 - `/opt/server-audit/SERVICES.md` — inventario de servicios, dominios, puertos y dependencias.
@@ -428,6 +471,27 @@ guardado antes de dar una integración por operativa.
 **Secretos:** jamás en configs globales, logs, reportes ni commits. Los `.env` van en `600`. Las
 API keys de una sola cuenta van a `~/.config/secrets/<servicio>.env` (600) y la config referencia
 `${VAR}`. Si encontrás un secreto en texto plano donde no corresponde, reportalo.
+
+<!-- [agent:server-audit][date:2026-09-24][action:modified] -->
+**⛔ Antes de correr un script contra la DB de tu app:** `~/.bashrc` y `~/.profile` cargan enteros
+todos los `~/.config/secrets/*.env` con `set -a`, así que cualquier `DATABASE_URL` que aparezca en
+uno de esos archivos queda exportado en **toda** shell de `deploy`. Una variable ya presente en el
+entorno **gana**: `node --env-file` y `dotenv` no la pisan, así que el `.env` de tu proyecto queda
+decorativo y el script escribe en la base equivocada sin ningún error.
+
+<!-- [agent:server-audit][date:2026-09-27][action:modified] recorte N-21: sin la narración del 24/09 -->
+**Toda credencial de base va en una subcarpeta** `~/.config/secrets/<app>/`, nunca en un `*.env`
+suelto (así pasó con `physis-demo` el 24/09). Igual el `unset` se hace siempre: una sesión vieja o el
+próximo `*.env` con `DATABASE_URL` reinstalan el problema.
+
+```bash
+unset DATABASE_URL                       # primero, siempre
+set -a; . .env; set +a                   # el .env de tu proyecto manda
+psql "$DATABASE_URL" -Atc 'select current_database(), current_user'
+```
+
+Confirmá el nombre de la base **antes de la primera escritura**. Para Node/Prisma, el unset va en
+el mismo comando: `env -u DATABASE_URL node --env-file=.env ...`.
 
 **Registro de cambios:** todo cambio relevante va al `CHANGES.md` de tu propio proyecto, con
 `<!-- [agent:<nombre>][date:YYYY-MM-DD][action:created|modified|deleted] -->` antes de la sección.
@@ -443,6 +507,13 @@ divergentes.
 `/opt/server-audit/.claude/skills/voice-casting/SKILL.md`. Primero se acuerdan perfil y un único
 microguion; todas las candidatas leen exactamente ese texto en `video.ramsesvii.com/castings`.
 La locución completa empieza después de registrar la ganadora.
+
+<!-- [agent:server-audit][date:2026-10-18][action:created] catálogo de producciones -->
+**Videos entregados:** cada video que generes en el server (pieza, demo, tutorial o práctica) se
+publica en `video.ramsesvii.com/producciones` con la skill
+`/opt/server-audit/.claude/skills/produccion-video/SKILL.md` y el cliente
+`/opt/apps/video-gen/bin/produccion`: descripción, fotograma, costo por etapa y medio y recursos
+gratuitos. Se republica en cada corte.
 
 **Cómo reportar a Juan:** es argentino, español rioplatense, perfil técnico intermedio/avanzado y
 directo.

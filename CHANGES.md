@@ -1,4 +1,29 @@
+<!-- [agent:codex][date:2026-10-18][action:created] -->
+## 2026-10-18 — Contexto compartido: versiones de modelos
+
+`sync-agent-context` incorporó el enlace al registro `/opt/server-audit/etc/model-rollout.json`
+y al procedimiento `/opt/server-audit/docs/model-rollout.md` para registrar nuevos usos de Flash
+con configuración, fallback y activación. Cambio documental, validado con sync-agent-context --check.
+
 # CHANGES.md — cultivo-admin
+
+<!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
+## 2026-10-24 — Datos de inicio del ciclo Octubre 2026 (base de producción)
+
+Escritura de datos con Prisma contra la base de producción, sin cambios de código ni de esquema.
+
+- **Genéticas nuevas** (`HYBRID`, dueño `admin`): Tropicana WFC, Guaraní Porá y Pastel de Choque
+  (Clon Factory, RNCyFS 11591/AFK2) y Celosa 10 (Pachamama; rótulo Diez Fernando Angel, RNCyFS
+  11275/ABEFHK1). Los DataMatrix de las estampillas INASE contienen solo el número de serie
+  impreso (`01CAA000520611`, `…525674`, `…528924`, `…464314`).
+- **Ciclo** `Octubre 2026`, `ACTIVE`, inicio 2026-10-24: 6 esquejes que vegetan en la carpa
+  Floración y después pasan a 12/12.
+- **Plantas de ciclos `COMPLETED` desasociadas de su carpa** con el mismo flujo de
+  `GrowService.dissociateFromSection` (evento `NOTA` con `previousSectionId`, `sectionId=null`,
+  borrado de zonas). Floración: 046, 049, 062, 099. Exterior Directo: 041, 042, 061, 063–070.
+  Secado: 045 (zonas previas 1:90, 2:70, 4:40, 5:30) y 048. Las 6 carpas quedaron sin plantas.
+- **Pendiente:** alta de las 6 plantas (2 Tropicana WFC, 2 Guaraní Porá, 1 Pastel de Choque,
+  1 Celosa 10; `VEGETATIVO`, `FEM`, carpa Floración) cuando estén los códigos de etiqueta.
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
 <!-- [agent:server-audit][date:2026-09-16][action:created] -->
@@ -485,3 +510,8 @@ alternativas quedan para incorporación posterior. Verificar acceso efectivo por
 Contenido local y enlaces conservados; cambio documental. Registro central y validación:
 `/opt/server-audit/CHANGES.md`. Backup de instrucciones:
 `/opt/backups/agent-context/20260912-223420/`.
+
+<!-- [agent:codex][date:2026-10-12][action:created] -->
+## 2026-10-12 — Regla compartida de cartel Linux desktop
+
+Sincronizado el bloque de ECOSYSTEM.md: antes de usar desktop-casa en Linux, activar el cartel de trabajo y verificarlo en el monitor físico. Mantenerlo mientras haya procesos o trabajo de otros agentes; ocultar solo al terminar. Aplica a todos los harness mediante las entradas de instrucciones del proyecto. Cambio documental, sin reinicios.
