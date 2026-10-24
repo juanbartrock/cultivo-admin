@@ -22,8 +22,16 @@ Escritura de datos con Prisma contra la base de producción, sin cambios de cód
   `GrowService.dissociateFromSection` (evento `NOTA` con `previousSectionId`, `sectionId=null`,
   borrado de zonas). Floración: 046, 049, 062, 099. Exterior Directo: 041, 042, 061, 063–070.
   Secado: 045 (zonas previas 1:90, 2:70, 4:40, 5:30) y 048. Las 6 carpas quedaron sin plantas.
-- **Pendiente:** alta de las 6 plantas (2 Tropicana WFC, 2 Guaraní Porá, 1 Pastel de Choque,
-  1 Celosa 10; `VEGETATIVO`, `FEM`, carpa Floración) cuando estén los códigos de etiqueta.
+- **6 plantas nuevas** en la carpa Floración (`VEGETATIVO`, `FEM`, inicio y etapa 2026-10-24):
+  049 y 067 Tropicana WFC, 043 y 061 Guaraní Porá, 045 Pastel de Choque, 068 Celosa 10.
+  Los códigos se reusan de las etiquetas físicas: las plantas viejas que los tenían pasaron a
+  `049-DIC25`, `043-DIC25`, `061-OCT25`, `067-OCT25`, `068-OCT25` y `045-OCT25`, cada una con un
+  evento `NOTA` (`reason: tag-reuse`, `previousTagCode`).
+- **Verificación:** `GET /api/sections` devuelve Floración con 6 plantas y
+  `effectiveStage=VEGETATIVO`; el resto de las carpas, 0 plantas y `DEFAULT`. QA navegado en
+  `/sala/carpa/<Floración>` con Playwright: las 6 tarjetas con código y genética, sin
+  `console.error` ni 5xx. Hallazgo preexistente: `PlantCard` dice "Sin sección asignada" dentro
+  de la carpa porque el dashboard de la carpa no incluye la relación `section`.
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
 <!-- [agent:server-audit][date:2026-09-16][action:created] -->
