@@ -32,6 +32,21 @@ Escritura de datos con Prisma contra la base de producción, sin cambios de cód
   `/sala/carpa/<Floración>` con Playwright: las 6 tarjetas con código y genética, sin
   `console.error` ni 5xx. Hallazgo preexistente: `PlantCard` dice "Sin sección asignada" dentro
   de la carpa porque el dashboard de la carpa no incluye la relación `section`.
+- **Planes del ciclo** (Prisma, dueño `admin`, Powder Feeding sobre Klasmann TS3, agua EC 0,4):
+  - Alimentación `Octubre 2026 · Vegetativo indoor (Powder Feeding, TS3)` (5 semanas) y
+    `Octubre 2026 · Floración con viaje (Powder Feeding, TS3)` (9 semanas: 1-5 normales, 6-7
+    con dosis reducida por el viaje del 29/12, 8-9 lavado; gramos por tanque de 100 L en notas).
+  - Prevención `Octubre 2026 · Preventivo vegetativo (esquejes de vivero)` (31 días) y
+    `Octubre 2026 · Preventivo floración con viaje` (63 días, foliares solo hasta el día 14).
+  - Los de `VEGETATIVO` asignados a las 6 plantas desde 2026-10-24, con la misma lógica que
+    `assignToPlant`; los de `FLORACION` se asignan en el pase a 12/12 (el backend exige que la
+    etapa del plan coincida con la de la planta).
+  - Se cargaron con Prisma porque `POST /feeding-plans/import` y `/prevention-plans/import` no
+    setean `userId`, y el contexto del asistente IA filtra los planes por `userId`.
+  - Verificado por API (`GET /sections/:id/feeding-plans` y `/prevention-plans`: semana 1 de 5,
+    día 1 de 31) y navegando la carpa: ambos planes visibles con sus 6 plantas, sin errores.
+    Hallazgo preexistente: "Inicio de etapa" se muestra en formato `MM/DD/YYYY` y un día antes
+    (fecha UTC a medianoche leída en `-03`).
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
 <!-- [agent:server-audit][date:2026-09-16][action:created] -->
