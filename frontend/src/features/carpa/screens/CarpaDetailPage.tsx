@@ -63,6 +63,7 @@ import { useStageRanges } from '@/features/rangos';
 import { RANGE_STAGE_LABELS } from '@/features/home/lib/readings';
 import { eventService } from '@/services/eventService';
 import { plantService } from '@/services/growService';
+import { CarpaViva } from '@/features/carpa-viva';
 
 // Iconos según el nombre de la sección
 const sectionIcons: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
@@ -951,6 +952,7 @@ export default function CarpaDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [activeView, setActiveView] = useState<'live' | 'manage'>('live');
   const [selectedPlantForEvent, setSelectedPlantForEvent] = useState<Plant | null>(null);
 
   // Estado para planes de alimentación
@@ -1503,6 +1505,8 @@ export default function CarpaDetailPage() {
 
   const iconConfig = getSectionIcon(section.name);
   const IconComponent = iconConfig.icon;
+  const hasLiveScene = section.name.toLowerCase().includes('flora');
+  const showLiveScene = hasLiveScene && activeView === 'live';
 
   return (
     <div className="space-y-8">
@@ -1518,44 +1522,89 @@ export default function CarpaDetailPage() {
         ]}
         actions={
           <>
-          <button
-            onClick={() => setShowLayoutEditor(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors border border-zinc-700/70"
-            title="Configurar layout de la página"
-          >
-            <Settings2 className="w-4 h-4" />
-            Layout
-          </button>
-          <button
-            onClick={handleToggleEnabled}
-            disabled={isTogglingEnabled}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-              section.enabled !== false
-                ? 'bg-cultivo-green-600/20 text-cultivo-green-400 hover:bg-cultivo-green-600/30 border border-cultivo-green-600/30'
-                : 'bg-zinc-700/50 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
-            }`}
-            title={section.enabled !== false ? 'Sección activa - Click para desactivar' : 'Sección inactiva - Click para activar'}
-          >
-            {isTogglingEnabled ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : section.enabled !== false ? (
-              <Power className="w-4 h-4" />
-            ) : (
-              <PowerOff className="w-4 h-4" />
+            {hasLiveScene && (
+              <div role="tablist" aria-label="Vista de la carpa" className="flex rounded-lg border border-edge bg-surface-2 p-1">
+                <button
+                  role="tab"
+                  aria-selected={activeView === 'live'}
+                  onClick={() => setActiveView('live')}
+                  className={`min-h-8 rounded-md px-3 text-sm transition-colors ${activeView === 'live' ? 'bg-accent-soft text-accent' : 'text-fg-muted hover:text-fg'}`}
+                >
+                  Carpa 3D
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={activeView === 'manage'}
+                  onClick={() => setActiveView('manage')}
+                  className={`min-h-8 rounded-md px-3 text-sm transition-colors ${activeView === 'manage' ? 'bg-accent-soft text-accent' : 'text-fg-muted hover:text-fg'}`}
+                >
+                  Gestión
+                </button>
+              </div>
             )}
-            {section.enabled !== false ? 'Activa' : 'Inactiva'}
-          </button>
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors border border-zinc-700/70"
-          >
-            <RefreshCw className={`w-4 h-4 ${statusLoading ? 'animate-spin' : ''}`} />
-            Actualizar
-          </button>
+            {(!hasLiveScene || activeView === 'manage') && (
+              <>
+                <button
+                  onClick={() => setShowLayoutEditor(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors border border-zinc-700/70"
+                  title="Configurar layout de la página"
+                >
+                  <Settings2 className="w-4 h-4" />
+                  Layout
+                </button>
+                <button
+                  onClick={handleToggleEnabled}
+                  disabled={isTogglingEnabled}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                    section.enabled !== false
+                      ? 'bg-cultivo-green-600/20 text-cultivo-green-400 hover:bg-cultivo-green-600/30 border border-cultivo-green-600/30'
+                      : 'bg-zinc-700/50 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
+                  }`}
+                  title={section.enabled !== false ? 'Sección activa - Click para desactivar' : 'Sección inactiva - Click para activar'}
+                >
+                  {isTogglingEnabled ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : section.enabled !== false ? (
+                    <Power className="w-4 h-4" />
+                  ) : (
+                    <PowerOff className="w-4 h-4" />
+                  )}
+                  {section.enabled !== false ? 'Activa' : 'Inactiva'}
+                </button>
+              </>
+            )}
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors border border-zinc-700/70"
+            >
+              <RefreshCw className={`w-4 h-4 ${statusLoading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </button>
           </>
         }
       />
 
+      {showLiveScene && (
+        <CarpaViva
+          section={section}
+          getStatus={getStatus}
+          statusLoading={statusLoading}
+          range={rangeFor(section.effectiveStage)}
+          lastUpdate={lastUpdate ?? undefined}
+          onRefresh={handleRefresh}
+          onStatusChange={handleStatusChange}
+          onRegisterEvent={(plant) => setSelectedPlantForEvent(plant)}
+          onPlantStageChange={(updatedPlant) => {
+            setSection({
+              ...section,
+              plants: section.plants.map((plant) => plant.id === updatedPlant.id ? updatedPlant : plant),
+            });
+          }}
+        />
+      )}
+
+      {!showLiveScene && (
+      <div className="contents">
       {/* Header con icono */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -2365,6 +2414,8 @@ export default function CarpaDetailPage() {
         )}
       </div>
       {/* Fin de secciones complejas ordenadas */}
+      </div>
+      )}
 
       {/* Modal de registro de evento */}
       {selectedPlantForEvent && (

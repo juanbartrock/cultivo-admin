@@ -55,6 +55,7 @@ Funcionalidades principales:
 | UI Components | shadcn/ui sobre Radix en `frontend/src/components/ui/` (CLI `shadcn@2.10.0`) + Lucide Icons. `Modal`, `ConfirmDialog` y `EmptyState` son propios, escritos sobre `Dialog` |
 | State | TanStack React Query v5 |
 | Animación / gráficos | framer-motion + recharts |
+| 3D | Three.js + React Three Fiber 8 + Drei; puesto operativo con render bajo demanda (`frontend/src/features/carpa-viva/`) |
 | Tests frontend | Playwright (`tests/smoke.spec.ts` con backend mockeado, `tests/qa-nav.spec.ts` contra producción) |
 | IoT | Microservicios separados (Sonoff, Tuya, Tapo) |
 | Deploy | Docker Compose + Caddy |
@@ -513,9 +514,10 @@ el mismo comando: `env -u DATABASE_URL node --env-file=.env ...`.
 Si el cambio afecta el inventario del servidor (puerto nuevo, dominio, servicio), avisá para
 actualizar `SERVICES.md`.
 
+<!-- [agent:server-audit][date:2026-10-24][action:modified] kimi en la lista de runners -->
 **Archivos de instrucciones:** cada proyecto tiene **un archivo real** y tres symlinks a él
-(`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`), para que claude, codex, opencode y
-antigravity lean lo mismo. Editá el archivo real; no rompas los symlinks ni crees copias
+(`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursorrules`), para que claude, codex, opencode, kimi
+y antigravity lean lo mismo. Editá el archivo real; no rompas los symlinks ni crees copias
 divergentes.
 
 **Casting de voz:** ante un pedido de elegir voz, timbre o locutor, leé y aplicá la skill canónica

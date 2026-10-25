@@ -6,6 +6,7 @@ Aplicación web React Next.js 14 con App Router y diseño Tailwind CSS.
 - **Framework**: Next.js 14 (App Router)
 - **Styling**: Tailwind CSS + `clsx` + `tailwind-merge`
 - **UI Libs**: Framer Motion (animaciones), Lucide React (iconos), Recharts (gráficos)
+- **3D**: Three.js + React Three Fiber 8 (compatible con React 18) + Drei. La réplica interactiva vive en `src/features/carpa-viva/`.
 
 ## Skill Mapping (Frontend)
 Skills primarias para tareas en frontend:
@@ -34,7 +35,7 @@ npm run dev
 
 ## Guías de Estilo & UI
 - **Mobile First**: El diseño debe ser totalmente responsive, priorizando la vista móvil.
-- **Estética**: Estilo "Glassmorphism" oscuro, degradados sutiles (cian/verde/violeta), bordes translúcidos.
+- **Estética**: sala de control oscura con los tokens de `globals.css`. Carpa viva es un puesto de operación 3D: modos Cultivo/Ambiente/Equipos, alertas que enfocan objetos, actividad, historial y comparador fotográfico. El texto operativo sigue en HTML, con estados honestos y fallback accesible. La escena usa `frameloop="demand"` y sombras congeladas para evitar render continuo.
 - **Componentes**:
   - Preferir composición sobre herencia.
   - Usar `cn()` (utility en `lib/utils`) para clases condicionales.

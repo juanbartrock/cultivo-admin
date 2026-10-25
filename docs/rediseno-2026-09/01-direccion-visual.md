@@ -106,6 +106,27 @@ Grilla responsive (1 col móvil, 2 col tablet, 3 col desktop) de bloques, en est
 
 Sin saludo, sin fecha decorativa, sin "¿A qué sala quieres ingresar?".
 
+## Carpa viva (`/sala/carpa/[id]`)
+
+La vista inicial de la carpa es un puesto de operación con una réplica 3D construida con Three.js,
+React Three Fiber y Drei. La escena reproduce la carpa Flora de 1,20 × 1,20 × 2 m a partir de las
+fotos de referencia: lona con pliegues, costuras y cierres, LED con diodos y suspensión, dos redes
+SCROG deformadas, seis plantas ramificadas con hojas serradas, ventilación, extracción, sensores y
+equipo de CO₂. La morfología y las alturas son representaciones declaradas; estados y lecturas
+provienen de las plantas y dispositivos reales.
+
+Los modos **Cultivo**, **Ambiente** y **Equipos** cambian los marcadores y accesos disponibles. Las
+alertas enfocan el elemento afectado; el inspector reutiliza `PlantCard` y `DeviceControlCard`,
+muestra actividad reciente y abre el registro de eventos. La banda ambiental conserva los estados
+`unknown`, pausa y offline. El CO₂ proviene del sensor disponible que lo mide, con independencia
+del sensor principal de temperatura/humedad. La evolución usa `SensorHistoryChart`. El comparador
+alterna entre la réplica y la foto real, identificada como imagen estática de referencia.
+
+La pestaña **Gestión** conserva administración, PPFD, planes y formularios extensos. Las vistas
+frontal, cenital y perspectiva, las capas y la lista HTML tienen fallback fotográfico sin WebGL.
+El canvas se carga de forma diferida, usa `frameloop="demand"`, limita DPR y congela las sombras
+para no bloquear la interacción; respeta `prefers-reduced-motion` y mantiene el texto en HTML.
+
 ## Componentes base (shadcn/ui sobre Radix, instalados de verdad)
 
 Instalar con la CLI de shadcn y adaptar a los tokens: `button`, `badge`, `card`, `input`,

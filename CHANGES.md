@@ -7,6 +7,32 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:kimi][date:2026-10-24][action:modified] -->
+## 2026-10-24 — Carpa viva rehecha como puesto de operación 3D
+
+- Reemplazo de la maqueta inicial por una interfaz con modos Cultivo, Ambiente y Equipos,
+  marcadores contextuales, alertas que enfocan el objeto, actividad reciente por planta,
+  historial ambiental y acciones reutilizando los controles y formularios existentes.
+- Réplica más fiel a `docs/fotos-carpa-flora/`: lona con pliegues, estructura y cierres, LED
+  con matriz de diodos y suspensión, redes deformadas, equipos detallados y seis plantas
+  ramificadas con hojas serradas instanciadas. Comparador con foto real identificada como
+  referencia; alturas y morfología se declaran representaciones, no mediciones.
+- Vistas, capas, foco de cámara y accesos HTML equivalentes. Fallback sin WebGL conservado.
+  La primera planta entra enfocada para mostrar de inmediato detalle y acciones. Todos los tipos
+  controlables tienen modelo/marcador; el CO₂ se toma del sensor disponible que realmente lo mide.
+- Publicación y QA real de Floración: recorrido general 19/19; selección de planta y equipo,
+  apertura/cierre del registro, historial, foto y móvil sin errores ni overflow (390/390).
+  Los marcadores HTML detienen la propagación para que `onPointerMissed` del canvas no anule
+  la selección; el caso quedó cubierto en smoke y verificado nuevamente contra producción.
+- Rendimiento: `frameloop="demand"`, sombras congeladas y contacto calculado una sola vez;
+  corrige el bloqueo de interacciones detectado con WebGL por software.
+- Sin cambios de backend, base ni datos. Verificación local: typecheck, lint (warnings
+  preexistentes), Playwright 6/6, build de producción y QA visual desktop/móvil sin overflow
+  ni errores de consola. Capturas en `docs/rediseno-2026-09/capturas/carpa-viva-revision/`.
+- Exención de compuerta: `tests-backend` sigue rojo por dos casos preexistentes de
+  `backend/src/modules/grow/grow.service.spec.ts`. Esta entrega no modifica backend ni esos tests;
+  la validación ejecutada y exigida para estos cambios es la suite de frontend.
+
 <!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — Sensor principal por carpa; fotos del ciclo en `docs/fotos-carpa-flora/`
 
@@ -69,31 +95,6 @@ Lo armó server-audit a pedido de Juan; este agente lo revisa y lo commitea.
   log de tapo-service `Capturando via camara-relay… Snapshot guardado`.
 - Pendiente: reservar `192.168.0.109` para la MAC `60:83:E7:3E:CA:CD` en el router del ISP.
 
-<!-- [agent:server-audit][date:2026-10-24][action:created] -->
-## 2026-10-24 — Diagnóstico de la cámara Tapo de Floración (sin cambios de código)
-
-Pedido de Juan: resolver la captura de la cámara. Quedó diagnosticada; la solución necesita
-decisiones y datos de Juan, así que no se tocó código, `.env` ni infraestructura.
-
-- **Red de casa:** hay doble NAT. desktop-casa (cableada, `192.168.0.208`) cuelga del router del ISP
-  (`192.168.0.1`, Wi-Fi «Casa Griveo»). Los Deco X50 arman otra red, «RedAmpliada»
-  (`192.168.68.x`), y ahí viven las cámaras. `192.168.0.1` no rutea a `192.168.68.x` y ningún Deco
-  ni ninguna cámara aparecen por ARP en `192.168.0.0/24`. El subnet router Tailscale de desktop-casa
-  Linux anuncia solo `192.168.0.0/24`, el VPS no acepta rutas y ese nodo estaba offline (la PC
-  estaba en Windows). Ningún equipo alcanzable hoy desde el VPS llega a `192.168.68.64`.
-- **Nube:** TapoCare devuelve 500, no hay una API pública de snapshot a demanda y el passthrough de
-  la nube TP-Link responde `-20571 Device is offline` para las dos cámaras. Vale solo como indicio,
-  porque la nube también da offline a un Deco satélite que sí emite Wi-Fi.
-- **Configuración de tapo-service:** `TAPO_CAMERA_NAME` no matchea ninguna cámara, así que el
-  servicio toma la primera, `Tapo_C100_Wayra` (C100). La otra es `Tapo_C200c` (C200C). Falta
-  `TAPO_CAMERA_USER` y el RTSP cae en `TAPO_USERNAME`. `GET /devices` devuelve `online: true`
-  hardcodeado, sin consultar el estado.
-- **Síntoma en la app:** `POST /snapshot` tarda ~32 s y termina en 500. ffmpeg queda colgado contra
-  la IP inalcanzable hasta que lo cortan los 30 s del spawn, y para entonces ya venció el
-  `timeout(30000)` del backend.
-- **Pendiente (Juan):** decidir la cámara de la carpa y el camino de red (detalle en el informe de
-  server-audit del 24/10).
-
 <!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — IP de la cámara de la carpa en tapo-service
 
@@ -140,6 +141,47 @@ a "Todo en rango", sin errores de consola.
   de consola ni 5xx. La compuerta solo marcó las 2 fallas preexistentes de
   `grow.service.spec.ts` ("fails atomically when zone creation fails" y "updates plant zones in
   a single transaction"), rojas también en el commit base.
+
+<!-- [agent:server-audit][date:2026-10-24][action:created] -->
+## 2026-10-24 — Diagnóstico de la cámara Tapo de Floración (sin cambios de código)
+
+Pedido de Juan: resolver la captura de la cámara. Quedó diagnosticada; la solución necesita
+decisiones y datos de Juan, así que no se tocó código, `.env` ni infraestructura.
+
+- **Red de casa:** hay doble NAT. desktop-casa (cableada, `192.168.0.208`) cuelga del router del ISP
+  (`192.168.0.1`, Wi-Fi «Casa Griveo»). Los Deco X50 arman otra red, «RedAmpliada»
+  (`192.168.68.x`), y ahí viven las cámaras. `192.168.0.1` no rutea a `192.168.68.x` y ningún Deco
+  ni ninguna cámara aparecen por ARP en `192.168.0.0/24`. El subnet router Tailscale de desktop-casa
+  Linux anuncia solo `192.168.0.0/24`, el VPS no acepta rutas y ese nodo estaba offline (la PC
+  estaba en Windows). Ningún equipo alcanzable hoy desde el VPS llega a `192.168.68.64`.
+- **Nube:** TapoCare devuelve 500, no hay una API pública de snapshot a demanda y el passthrough de
+  la nube TP-Link responde `-20571 Device is offline` para las dos cámaras. Vale solo como indicio,
+  porque la nube también da offline a un Deco satélite que sí emite Wi-Fi.
+- **Configuración de tapo-service:** `TAPO_CAMERA_NAME` no matchea ninguna cámara, así que el
+  servicio toma la primera, `Tapo_C100_Wayra` (C100). La otra es `Tapo_C200c` (C200C). Falta
+  `TAPO_CAMERA_USER` y el RTSP cae en `TAPO_USERNAME`. `GET /devices` devuelve `online: true`
+  hardcodeado, sin consultar el estado.
+- **Síntoma en la app:** `POST /snapshot` tarda ~32 s y termina en 500. ffmpeg queda colgado contra
+  la IP inalcanzable hasta que lo cortan los 30 s del spawn, y para entonces ya venció el
+  `timeout(30000)` del backend.
+- **Pendiente (Juan):** decidir la cámara de la carpa y el camino de red (detalle en el informe de
+  server-audit del 24/10).
+
+<!-- [agent:kimi-code][date:2026-10-24][action:created] -->
+## 2026-10-24 — Carpa viva 3D
+
+Nueva vista inicial de `/sala/carpa/[id]` con réplica paramétrica de la carpa Flora, construida en
+frontend con Three.js, React Three Fiber 8 y Drei. Respeta las medidas físicas, las dos redes, el
+LED y la disposición de los seis esquejes; conecta plantas y dispositivos reales con métricas,
+inspector y controles existentes. Incluye vistas frontal/cenital/perspectiva, apertura de la carpa,
+fallback fotográfico y la pestaña Gestión con toda la funcionalidad anterior. Sin cambios de
+backend, Prisma ni datos.
+
+- **Verificación:** typecheck, lint, build y 5 tests Playwright exitosos. QA visual con datos reales
+  en desktop y móvil; capturas en `docs/rediseno-2026-09/capturas/carpa-viva/`.
+- **Publicación:** `app-restart cultivo-frontend --build` exitoso y 19/19 recorridos QA contra
+  producción. La compuerta sólo señaló las 2 fallas preexistentes de `grow.service.spec.ts`,
+  también rojas en el commit base y fuera del alcance frontend.
 
 <!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — Datos de inicio del ciclo Octubre 2026 (base de producción)
