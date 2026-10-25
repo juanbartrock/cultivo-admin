@@ -13,6 +13,7 @@ import {
   Flame, 
   Activity,
   Video,
+  Plug,
   Wifi,
   WifiOff
 } from 'lucide-react';
@@ -29,6 +30,7 @@ const iconMap: Record<DeviceType, React.ElementType> = {
   BOMBA_RIEGO: Droplets,
   CALEFACTOR: Flame,
   CAMARA: Video,
+  ENCHUFE: Plug,
 };
 
 // Colores por tipo
@@ -43,6 +45,7 @@ const typeColors: Record<DeviceType, string> = {
   BOMBA_RIEGO: 'text-teal-400',
   CALEFACTOR: 'text-red-400',
   CAMARA: 'text-emerald-400',
+  ENCHUFE: 'text-amber-400',
 };
 
 // Labels
@@ -57,6 +60,7 @@ const typeLabels: Record<DeviceType, string> = {
   BOMBA_RIEGO: 'Riego',
   CALEFACTOR: 'Calefactor',
   CAMARA: 'Cámara',
+  ENCHUFE: 'Enchufe',
 };
 
 interface SensorCardProps {

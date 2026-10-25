@@ -150,6 +150,7 @@ export class ContextBuilderService {
     DeviceType.AIRE_ACONDICIONADO,
     DeviceType.BOMBA_RIEGO,
     DeviceType.CALEFACTOR,
+    DeviceType.ENCHUFE,
   ];
 
   // Acciones soportadas por tipo de dispositivo
@@ -164,6 +165,7 @@ export class ContextBuilderService {
     [DeviceType.BOMBA_RIEGO]: [ActionType.TURN_ON, ActionType.TURN_OFF, ActionType.TRIGGER_IRRIGATION],
     [DeviceType.CALEFACTOR]: [ActionType.TURN_ON, ActionType.TURN_OFF, ActionType.TOGGLE],
     [DeviceType.CAMARA]: [ActionType.CAPTURE_PHOTO],
+    [DeviceType.ENCHUFE]: [ActionType.TURN_ON, ActionType.TURN_OFF, ActionType.TOGGLE],
   };
 
   constructor(private prisma: PrismaService) {}
@@ -618,6 +620,8 @@ export class ContextBuilderService {
         return hasTempSensor
           ? 'Podría automatizarse para control de clima cuando temperatura > X°C'
           : 'Necesita sensor de temperatura para automatizar por condición';
+      case DeviceType.ENCHUFE:
+        return 'Podría automatizarse con horario fijo de encendido y apagado';
       default:
         return 'Dispositivo controlable sin automatización';
     }

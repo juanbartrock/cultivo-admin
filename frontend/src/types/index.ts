@@ -16,7 +16,8 @@ export type DeviceType =
   | 'AIRE_ACONDICIONADO'
   | 'BOMBA_RIEGO'
   | 'CALEFACTOR'
-  | 'CAMARA';
+  | 'CAMARA'
+  | 'ENCHUFE';
 
 // Tipos de genéticas
 export type StrainType = 'SATIVA' | 'INDICA' | 'RUDERALIS' | 'HYBRID';
@@ -598,7 +599,8 @@ export type TipoArtefacto =
   | 'aire_acondicionado'
   | 'bomba_riego'
   | 'calefactor'
-  | 'camara';
+  | 'camara'
+  | 'enchufe';
 
 // Estado de un artefacto (legacy)
 export type EstadoArtefacto = 'encendido' | 'apagado' | 'error' | 'standby';
@@ -730,6 +732,7 @@ export function deviceTypeToTipoArtefacto(type: DeviceType): TipoArtefacto {
     BOMBA_RIEGO: 'bomba_riego',
     CALEFACTOR: 'calefactor',
     CAMARA: 'camara',
+    ENCHUFE: 'enchufe',
   };
   return map[type];
 }
@@ -749,6 +752,7 @@ export function tipoArtefactoToDeviceType(tipo: TipoArtefacto): DeviceType {
     bomba_riego: 'BOMBA_RIEGO',
     calefactor: 'CALEFACTOR',
     camara: 'CAMARA',
+    enchufe: 'ENCHUFE',
   };
   return map[tipo];
 }

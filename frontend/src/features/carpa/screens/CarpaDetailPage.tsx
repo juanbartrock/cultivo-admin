@@ -94,7 +94,7 @@ function groupDevicesByCategory(devices: Device[]) {
 
   const controllableTypes: DeviceType[] = [
     'LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR',
-    'DESHUMIDIFICADOR', 'AIRE_ACONDICIONADO', 'BOMBA_RIEGO', 'CALEFACTOR'
+    'DESHUMIDIFICADOR', 'AIRE_ACONDICIONADO', 'BOMBA_RIEGO', 'CALEFACTOR', 'ENCHUFE'
   ];
 
   devices.forEach(device => {

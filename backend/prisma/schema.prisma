@@ -720,6 +720,7 @@ enum DeviceType {
   BOMBA_RIEGO
   CALEFACTOR
   CAMARA
+  ENCHUFE
 }
 
 enum StrainType {

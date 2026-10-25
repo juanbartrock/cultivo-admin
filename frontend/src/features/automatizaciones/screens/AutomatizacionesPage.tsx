@@ -924,7 +924,7 @@ function CreateAutomationModal({
 
   const sensorDevices = devices.filter(d => d.type === 'SENSOR');
   const controllableDevices = devices.filter(d =>
-    ['LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR', 'DESHUMIDIFICADOR', 'BOMBA_RIEGO', 'CALEFACTOR', 'AIRE_ACONDICIONADO', 'CAMARA'].includes(d.type)
+    ['LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR', 'DESHUMIDIFICADOR', 'BOMBA_RIEGO', 'CALEFACTOR', 'AIRE_ACONDICIONADO', 'CAMARA', 'ENCHUFE'].includes(d.type)
   );
 
   const steps: { key: WizardStep; label: string }[] = [

@@ -8,6 +8,25 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
+## 2026-10-24 — Tipo de dispositivo `ENCHUFE` (enchufe inteligente genérico)
+
+- Migración `20261024220000_add_device_type_enchufe` (`ALTER TYPE "DeviceType" ADD VALUE IF NOT
+  EXISTS 'ENCHUFE'`), aplicada con `migrate deploy` después de `migrate status`.
+- Backend: `DeviceType.ENCHUFE`; el asistente IA lo trata como controlable (on/off/toggle). El
+  control pasa por el conector, sin lógica por tipo.
+- Frontend: tipo, ícono `Plug`, etiqueta "Enchufe" y listas de controlables en `/artefactos`,
+  automatizaciones, `DeviceControlCard`, `SensorCard`, `CapabilitiesAnalysisModal` y
+  `CarpaDetailPage`.
+- Datos: Tuya `flora-co2` registrado como `ENCHUFE` en Floración. Evento `CAMBIO_FOTOPERIODO` en
+  Floración: 16/8 con timer analógico, luz de 18:00 a 10:00.
+- Verificación: `tsc` de backend y frontend, lint del frontend, `app-restart cultivo-backend
+  --build` y `cultivo-frontend --build` con exit 0. QA navegado: `flora-co2` con etiqueta
+  "Enchufe" en `/artefactos` y como controlable en la pestaña Gestión de la carpa, sin errores
+  de consola ni 5xx. La compuerta solo marcó las 2 fallas preexistentes de
+  `grow.service.spec.ts` ("fails atomically when zone creation fails" y "updates plant zones in
+  a single transaction"), rojas también en el commit base.
+
+<!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — Datos de inicio del ciclo Octubre 2026 (base de producción)
 
 Escritura de datos con Prisma contra la base de producción, sin cambios de código ni de esquema.

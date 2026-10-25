@@ -17,6 +17,7 @@ export enum DeviceType {
   BOMBA_RIEGO = 'BOMBA_RIEGO',
   CALEFACTOR = 'CALEFACTOR',
   CAMARA = 'CAMARA',
+  ENCHUFE = 'ENCHUFE',
 }
 
 // Tipos de genéticas

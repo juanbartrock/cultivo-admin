@@ -17,6 +17,7 @@ import {
   Flame, 
   Activity,
   Video,
+  Plug,
   Wifi,
   WifiOff,
   Power,
@@ -45,6 +46,7 @@ const iconMap: Record<DeviceType, React.ElementType> = {
   BOMBA_RIEGO: Droplets,
   CALEFACTOR: Flame,
   CAMARA: Video,
+  ENCHUFE: Plug,
 };
 
 // Colores por tipo
@@ -59,6 +61,7 @@ const typeColors: Record<DeviceType, { icon: string; bg: string; border: string 
   BOMBA_RIEGO: { icon: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/30' },
   CALEFACTOR: { icon: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
   CAMARA: { icon: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+  ENCHUFE: { icon: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
 };
 
 // Labels
@@ -73,12 +76,13 @@ const typeLabels: Record<DeviceType, string> = {
   BOMBA_RIEGO: 'Riego',
   CALEFACTOR: 'Calefactor',
   CAMARA: 'Cámara',
+  ENCHUFE: 'Enchufe',
 };
 
 // Tipos de dispositivos que típicamente se pueden controlar (on/off)
 const CONTROLLABLE_TYPES: DeviceType[] = [
   'LUZ', 'EXTRACTOR', 'VENTILADOR', 'HUMIDIFICADOR', 
-  'DESHUMIDIFICADOR', 'AIRE_ACONDICIONADO', 'BOMBA_RIEGO', 'CALEFACTOR'
+  'DESHUMIDIFICADOR', 'AIRE_ACONDICIONADO', 'BOMBA_RIEGO', 'CALEFACTOR', 'ENCHUFE'
 ];
 
 // Detectar si un dispositivo tiene capacidad de control basado en el status

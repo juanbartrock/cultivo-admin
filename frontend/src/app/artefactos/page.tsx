@@ -27,6 +27,7 @@ import {
   X,
   Activity,
   Unplug,
+  Plug,
   RefreshCw,
   AlertCircle,
   ArrowRightLeft
@@ -65,6 +66,7 @@ const getDeviceIcon = (type: DeviceType) => {
     case 'BOMBA_RIEGO': return Droplets;
     case 'CALEFACTOR': return Thermometer;
     case 'CAMARA': return Video;
+    case 'ENCHUFE': return Plug;
     default: return Zap;
   }
 };
@@ -131,6 +133,7 @@ export default function ArtefactosPage() {
     BOMBA_RIEGO: 'Bomba de Riego',
     CALEFACTOR: 'Calefactor',
     CAMARA: 'Cámara',
+    ENCHUFE: 'Enchufe',
   };
 
   const conectorColors: Record<Connector, string> = {
@@ -152,6 +155,7 @@ export default function ArtefactosPage() {
     BOMBA_RIEGO: Droplets,
     CALEFACTOR: Thermometer,
     CAMARA: Video,
+    ENCHUFE: Plug,
   };
 
   const [scanResult, setScanResult] = useState<{
@@ -171,7 +175,7 @@ export default function ArtefactosPage() {
   });
 
   const controllableDevices = devices.filter(d =>
-    ['LUZ', 'EXTRACTOR', 'VENTILADOR', 'BOMBA_RIEGO', 'CALEFACTOR', 'HUMIDIFICADOR', 'DESHUMIDIFICADOR', 'AIRE_ACONDICIONADO'].includes(d.type)
+    ['LUZ', 'EXTRACTOR', 'VENTILADOR', 'BOMBA_RIEGO', 'CALEFACTOR', 'HUMIDIFICADOR', 'DESHUMIDIFICADOR', 'AIRE_ACONDICIONADO', 'ENCHUFE'].includes(d.type)
   );
 
   useEffect(() => {

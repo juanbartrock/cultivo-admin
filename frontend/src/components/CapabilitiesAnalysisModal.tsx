@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Brain, Loader2, ThermometerSun, Droplets, Wind,
-  Zap, AlertTriangle, CheckCircle2, Lightbulb, Camera,
+  Zap, AlertTriangle, CheckCircle2, Lightbulb, Camera, Plug,
   ChevronDown, ChevronRight, Sparkles, MessageSquare
 } from 'lucide-react';
 import { automationService, SystemCapabilities, SectionCapabilities } from '@/services/automationService';
@@ -25,6 +25,7 @@ const deviceTypeIcons: Record<string, any> = {
   AIRE_ACONDICIONADO: ThermometerSun,
   BOMBA_RIEGO: Droplets,
   CAMARA: Camera,
+  ENCHUFE: Plug,
 };
 
 const deviceTypeLabels: Record<string, string> = {
@@ -37,6 +38,7 @@ const deviceTypeLabels: Record<string, string> = {
   AIRE_ACONDICIONADO: 'Aire Acondicionado',
   BOMBA_RIEGO: 'Bomba de Riego',
   CAMARA: 'Cámara',
+  ENCHUFE: 'Enchufe',
 };
 
 export default function CapabilitiesAnalysisModal({ isOpen, onClose }: CapabilitiesAnalysisModalProps) {
