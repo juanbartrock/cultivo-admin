@@ -128,6 +128,13 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
     `DEFAULT`. El frontend no la recalcula.
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
+- **Sensor principal de la carpa**: `Device.primarySensor` (`primary_sensor`), uno por carpa y
+  solo SENSOR. Da la temperatura y la humedad cuando la carpa tiene más de un sensor (en Floración
+  manda el THR320D sobre el Nobito). Se marca con `PUT /devices/:id` `{ primarySensor: true }`,
+  que desmarca al anterior de la misma carpa; cambiar de carpa quita la marca. Los endpoints de
+  carpas (`GET /sections`, `/sections/:id`, `/rooms/:id/sections`, dashboard) devuelven los
+  dispositivos con el principal primero, y home, `/sala`, la carpa y la vista 3D toman el primer
+  SENSOR. Todavía no hay control en la interfaz para cambiarlo.
 - **Kill switch de lecturas**: apaga las consultas de estado a los conectores, en dos niveles y
   desde la base. Existe porque el panel (`panel.ramsesvii.com`, card "Errores en logs") matchea
   `/error|exception|fatal|panic/i` sobre las últimas 300 líneas de cada contenedor, y un aparato

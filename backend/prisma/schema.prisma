@@ -113,6 +113,7 @@ model Device {
   controlledByDeviceId String?               @map("controlled_by_device_id")
   recordHistory        Boolean               @default(false) @map("record_history")
   readingsEnabled      Boolean               @default(true) @map("readings_enabled")
+  primarySensor        Boolean               @default(false) @map("primary_sensor")
   userId               String?               @map("user_id")
   automationActions    AutomationAction[]
   automationConditions AutomationCondition[]

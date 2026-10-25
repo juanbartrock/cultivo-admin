@@ -141,7 +141,13 @@ export class DevicesService {
    * Actualiza un dispositivo
    */
   async update(id: string, data: UpdateDeviceDto) {
-    await this.findById(id);
+    const existing = await this.findById(id);
+    const targetSectionId = data.sectionId !== undefined ? data.sectionId : existing.sectionId;
+    const movesSection = data.sectionId !== undefined && data.sectionId !== existing.sectionId;
+
+    if (data.primarySensor && ((data.type ?? existing.type) !== DeviceType.SENSOR || !targetSectionId)) {
+      throw new BadRequestException('Solo un SENSOR asignado a una carpa puede ser el sensor principal');
+    }
 
     // Verificar que el dispositivo controlador existe si se proporciona
     if (data.controlledByDeviceId) {
@@ -167,6 +173,10 @@ export class DevicesService {
       ...(data.metadata !== undefined && { metadata: data.metadata as Prisma.InputJsonValue }),
       ...(data.recordHistory !== undefined && { recordHistory: data.recordHistory }),
       ...(data.readingsEnabled !== undefined && { readingsEnabled: data.readingsEnabled }),
+      // Cambiar de carpa le quita la marca de principal, salvo que el mismo pedido la pida
+      ...(data.primarySensor !== undefined
+        ? { primarySensor: data.primarySensor }
+        : movesSection && { primarySensor: false }),
       ...(data.sectionId !== undefined && {
         section: data.sectionId ? { connect: { id: data.sectionId } } : { disconnect: true },
       }),
@@ -177,14 +187,23 @@ export class DevicesService {
       }),
     };
 
-    return this.prisma.device.update({
-      where: { id },
-      data: updateData,
-      include: {
-        section: true,
-        controlledBy: true,
-        controlledDevices: true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      if (data.primarySensor && targetSectionId) {
+        await tx.device.updateMany({
+          where: { sectionId: targetSectionId, primarySensor: true, id: { not: id } },
+          data: { primarySensor: false },
+        });
+      }
+
+      return tx.device.update({
+        where: { id },
+        data: updateData,
+        include: {
+          section: true,
+          controlledBy: true,
+          controlledDevices: true,
+        },
+      });
     });
   }
 

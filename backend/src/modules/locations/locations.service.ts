@@ -5,6 +5,13 @@ import { CreateSectionDto, UpdateSectionDto } from './dto/section.dto';
 import { UpdateSectionLayoutDto, DEFAULT_LAYOUT_CONFIG } from './dto/layout.dto';
 import { CreatePPFDReadingDto } from './dto/ppfd.dto';
 import { effectiveStage } from '../stage-ranges/effective-stage';
+import { Prisma } from '@prisma/client';
+
+// El sensor principal va primero: home, /sala, la carpa y la vista 3D toman el primer SENSOR.
+const SECTION_DEVICES_ORDER: Prisma.DeviceOrderByWithRelationInput[] = [
+  { primarySensor: 'desc' },
+  { createdAt: 'asc' },
+];
 
 @Injectable()
 export class LocationsService {
@@ -39,7 +46,7 @@ export class LocationsService {
       include: {
         sections: {
           include: {
-            devices: true,
+            devices: { orderBy: SECTION_DEVICES_ORDER },
             plants: {
               include: {
                 strain: true,
@@ -104,7 +111,7 @@ export class LocationsService {
     const sections = await this.prisma.section.findMany({
       where: { roomId },
       include: {
-        devices: true,
+        devices: { orderBy: SECTION_DEVICES_ORDER },
         plants: true,
         _count: {
           select: {
@@ -135,7 +142,7 @@ export class LocationsService {
       where: userId ? { room: { userId } } : undefined,
       include: {
         room: true,
-        devices: true,
+        devices: { orderBy: SECTION_DEVICES_ORDER },
         plants: true,
         _count: {
           select: {
@@ -158,7 +165,7 @@ export class LocationsService {
       where: { id },
       include: {
         room: true,
-        devices: true,
+        devices: { orderBy: SECTION_DEVICES_ORDER },
         plants: {
           include: {
             strain: true,
@@ -230,7 +237,7 @@ export class LocationsService {
       where: { id },
       include: {
         room: true,
-        devices: true,
+        devices: { orderBy: SECTION_DEVICES_ORDER },
         plants: {
           include: {
             strain: true,

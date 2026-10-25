@@ -87,7 +87,17 @@ export class CreateDeviceDto {
   readingsEnabled?: boolean;
 }
 
-export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}
+export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {
+  @ApiPropertyOptional({
+    description:
+      'Sensor principal de su carpa: da la temperatura y la humedad cuando hay más de un SENSOR. ' +
+      'Marcarlo desmarca al anterior de la misma carpa.',
+    example: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  primarySensor?: boolean;
+}
 
 export class AssignDeviceDto {
   @ApiProperty({

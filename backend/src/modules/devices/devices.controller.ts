@@ -174,7 +174,7 @@ export class DevicesController {
   }
 
   @Put(':id')
-  @UseInterceptors(BooleanBodyInterceptor('readingsEnabled', 'recordHistory'))
+  @UseInterceptors(BooleanBodyInterceptor('readingsEnabled', 'recordHistory', 'primarySensor'))
   @ApiOperation({ summary: 'Actualizar un dispositivo' })
   @ApiResponse({ status: 200, description: 'Dispositivo actualizado exitosamente' })
   @ApiResponse({ status: 400, description: 'readingsEnabled o recordHistory sin ser booleanos' })

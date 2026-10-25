@@ -8,6 +8,26 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
+## 2026-10-24 — Sensor principal por carpa; fotos del ciclo en `docs/fotos-carpa-flora/`
+
+- Pedido de Juan: en Floración manda el termohigrómetro. Antes cada pantalla tomaba el primer
+  SENSOR en el orden que devolvía la base, sin garantía.
+- Migración `20261024230000_add_device_primary_sensor` (`ADD COLUMN IF NOT EXISTS primary_sensor
+  BOOLEAN NOT NULL DEFAULT false`), aplicada con `migrate deploy`. `PUT /devices/:id` acepta
+  `primarySensor` (pasa por `BooleanBodyInterceptor`): solo SENSOR con carpa, desmarca al anterior
+  de la carpa en la misma transacción, y cambiar de carpa quita la marca. Los includes de
+  dispositivos de `LocationsService` ordenan `primarySensor desc, createdAt asc`.
+- THR320D marcado como principal de Floración.
+- Verificación: `tsc`, jest de `devices` 9/9 (4 nuevos en `primary-sensor.spec.ts`), 400 para
+  `{"primarySensor":"true"}` y para un EXTRACTOR, THR320D primero en `GET /sections`,
+  `/sections/:id`, `/rooms/:id/sections` y el dashboard. QA navegado: home, `/sala` y la vista 3D
+  muestran 23,5 °C / 65 % del THR320D (el Nobito marcaba 23,6 °C / 48 %), sin errores.
+- Pendiente para la ronda de interfaz: el CO₂ de la carpa sale del sensor principal, que no lo
+  mide; el del Nobito se ve solo en su tarjeta. Falta un control para elegir el principal.
+- Fotos de las etiquetas (Tropicana WFC, Guaraní Porá, Pastel de Choque, Celosa 10) movidas de la
+  raíz a `docs/fotos-carpa-flora/`; la de las macetas ya estaba ahí, idéntica.
+
+<!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — Fotos de la cámara servidas por el backend; medidor de CO₂ activo
 
 - **Bug previo:** el visor armaba la URL de la imagen con `MS_TAPO_PUBLIC_URL` (default
