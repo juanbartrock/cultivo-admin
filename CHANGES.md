@@ -8,6 +8,20 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
+## 2026-10-24 — IP de la cámara de la carpa en tapo-service
+
+- La cámara de la carpa Floración es la C100 (`Tapo_C100_Wayra`) y está en `192.168.0.109`, la red
+  del router del ISP. `TAPO_CAMERA_IP` en `tapo-service/.env` seguía en `192.168.68.64`, de la red
+  Deco. Corregida (permisos 600 intactos) y contenedor recreado con
+  `app-restart tapo-service --build` (exit 0). Un `restart` a secas no relee el `env_file`: el
+  contenedor siguió con la IP vieja hasta recrearlo.
+- El usuario RTSP sale de `TAPO_USERNAME` ("Indoor"), que `src/tapo.js` usa cuando falta
+  `TAPO_CAMERA_USER`.
+- Pendiente: el VPS no llega a `192.168.0.109:554` (`accept-routes` apagado en el VPS; solo el
+  Linux de la PC anuncia `192.168.0.0/24`). Delegado a server-audit armar el camino por la PC,
+  tanto en Windows como en Linux.
+
+<!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — Rangos propios para VEGETATIVO y FLORACION
 
 Hasta hoy las tres etapas tenían los valores genéricos de la siembra (humedad ideal 40–65 % en
