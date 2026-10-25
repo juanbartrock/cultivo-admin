@@ -8,6 +8,20 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
+## 2026-10-24 — Rangos propios para VEGETATIVO y FLORACION
+
+Hasta hoy las tres etapas tenían los valores genéricos de la siembra (humedad ideal 40–65 % en
+todas). Pedido de Juan; cargado con `PATCH /api/stage-ranges/:stage`, CO₂ sin cambios:
+
+| Etapa | Temp. ideal (amplio) | Humedad ideal (amplio) | VPD ideal (amplio) |
+|---|---|---|---|
+| VEGETATIVO | 22–28 °C (18–30) | 55–70 % (45–80) | 0,8–1,2 kPa (0,6–1,4) |
+| FLORACION | 20–26 °C (18–29) | 40–55 % (35–60) | 1,0–1,5 kPa (0,8–1,6) |
+
+Verificado navegando la home: la carpa Floración (22,5 °C, 69,6 %) pasó de la alerta de humedad
+a "Todo en rango", sin errores de consola.
+
+<!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — Tipo de dispositivo `ENCHUFE` (enchufe inteligente genérico)
 
 - Migración `20261024220000_add_device_type_enchufe` (`ALTER TYPE "DeviceType" ADD VALUE IF NOT
