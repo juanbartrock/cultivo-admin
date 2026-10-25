@@ -47,6 +47,18 @@ Escritura de datos con Prisma contra la base de producción, sin cambios de cód
     día 1 de 31) y navegando la carpa: ambos planes visibles con sus 6 plantas, sin errores.
     Hallazgo preexistente: "Inicio de etapa" se muestra en formato `MM/DD/YYYY` y un día antes
     (fecha UTC a medianoche leída en `-03`).
+- **Dispositivos y lecturas** (2026-10-25 00:00 UTC, por la API):
+  - Sonoff THR320D `Termohigometro Indoor` pasa de Secado a Floración, con lecturas e historial.
+  - Tuya `flora-extractor` (EXTRACTOR) y `flora-calidad-aire` (SENSOR, lecturas pausadas mientras
+    esté offline) registrados en Floración. `vege-temp-hum` con lecturas pausadas: offline y su
+    carpa quedó vacía.
+  - Interruptor general `sensors_enabled=true`. Primera lectura 22,5 °C / 69,6 %, historial
+    grabando, 0 líneas warn/error del backend en los ciclos siguientes. QA navegado en la home y
+    la carpa sin errores.
+  - Tuya devolvía 0 dispositivos ("IoT Core service subscription has expired"); volvió con los 7
+    después de que Juan renovara IoT Core en la plataforma de Tuya.
+  - Cámara de la carpa: el snapshot falla porque TapoCare responde 500 y el VPS no tiene ruta a
+    `192.168.68.64:554`.
 
 <!-- [agent:cultivo-admin][date:2026-09-08][action:modified] -->
 <!-- [agent:server-audit][date:2026-09-16][action:created] -->
