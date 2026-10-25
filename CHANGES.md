@@ -8,6 +8,73 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
+## 2026-10-24 — Fotos de la cámara servidas por el backend; medidor de CO₂ activo
+
+- **Bug previo:** el visor armaba la URL de la imagen con `MS_TAPO_PUBLIC_URL` (default
+  `http://localhost:3003`) y el navegador la pedía directo al tapo-service, que no tiene puerto al
+  host ni ruta en Caddy. La captura funcionaba; la imagen nunca se veía fuera del VPS.
+- **Arreglo:** `GET /api/devices/:id/snapshots/:filename` (JWT como el resto, nombre validado con
+  `^snapshot-[A-Za-z0-9-]+\.jpg$`) trae el JPEG del tapo-service por la red interna y lo devuelve
+  con `StreamableFile`. El status de la cámara informa `snapshotsPath` en lugar de
+  `tapoServiceUrl`; la lista de snapshots devuelve `path`. `CameraViewer` baja la imagen con
+  `api.getBlob` (con token) y la muestra como object URL. Se eliminaron `getTapoServiceUrl` y
+  `MS_TAPO_PUBLIC_URL`. Las automatizaciones de foto guardan en el evento la `path` de la API en
+  vez de la URL a `localhost:3003`.
+- **Medidor de CO₂:** `flora-calidad-aire` (Nobito) apareció online; lecturas e historial
+  activados. Lee CO₂ 405 ppm, 21,4 °C y 52 % frente a 22,5 °C y 70 % del THR320D. La home toma el
+  primer SENSOR de la carpa, hoy el THR320D.
+- **Verificación:** `tsc` de backend y frontend, jest de `devices` y `automations` (7/7), lint sin
+  errores nuevos, `app-restart cultivo-backend --build` y `cultivo-frontend --build` con exit 0.
+  QA navegado en la carpa: la cámara muestra la foto 1920×1080 de la carpa con sus 6 plantas, el
+  CO₂ se ve en 405 ppm y no hay errores de consola ni 5xx.
+
+<!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
+## 2026-10-24 — Cámara de la carpa funcionando vía `camara-relay`
+
+Lo armó server-audit a pedido de Juan; este agente lo revisa y lo commitea.
+
+- `camara-relay` (HAProxy `haproxy:lts-alpine`) en `docker-compose.yml`, solo en `cultivo-network`
+  y sin puertos al host. Reenvía `:554` a las IP de Tailscale de la PC de casa (Linux
+  `100.75.199.75`, Windows `100.72.147.26`), con `balance first` y health check. En la PC,
+  Windows reenvía con `netsh portproxy` a `192.168.0.109:554` y una regla de firewall que solo
+  acepta al VPS. El relay de Linux (`systemd-socket-proxyd`) está escrito y falta instalarlo la
+  próxima vez que la PC arranque en Linux.
+- `tapo-service/.env`: `TAPO_CAMERA_IP=camara-relay`. El backup que dejó server-audit
+  (`.env.bak-20261024-camara-relay`, 600) quedaba dentro del repo sin ignorar; ahora
+  `tapo-service/.gitignore` cubre `.env.*`.
+- Correcciones al diagnóstico anterior: la C100 es la cámara de la carpa y está en la red del
+  router del ISP (`192.168.0.109`), no en la red Deco; el usuario RTSP ya estaba en
+  `TAPO_USERNAME`. El VPS sigue con `accept-routes=false`.
+- Verificación (server-audit): `POST /api/devices/:id/snapshot` → 201, JPEG 1920×1080 de la carpa;
+  log de tapo-service `Capturando via camara-relay… Snapshot guardado`.
+- Pendiente: reservar `192.168.0.109` para la MAC `60:83:E7:3E:CA:CD` en el router del ISP.
+
+<!-- [agent:server-audit][date:2026-10-24][action:created] -->
+## 2026-10-24 — Diagnóstico de la cámara Tapo de Floración (sin cambios de código)
+
+Pedido de Juan: resolver la captura de la cámara. Quedó diagnosticada; la solución necesita
+decisiones y datos de Juan, así que no se tocó código, `.env` ni infraestructura.
+
+- **Red de casa:** hay doble NAT. desktop-casa (cableada, `192.168.0.208`) cuelga del router del ISP
+  (`192.168.0.1`, Wi-Fi «Casa Griveo»). Los Deco X50 arman otra red, «RedAmpliada»
+  (`192.168.68.x`), y ahí viven las cámaras. `192.168.0.1` no rutea a `192.168.68.x` y ningún Deco
+  ni ninguna cámara aparecen por ARP en `192.168.0.0/24`. El subnet router Tailscale de desktop-casa
+  Linux anuncia solo `192.168.0.0/24`, el VPS no acepta rutas y ese nodo estaba offline (la PC
+  estaba en Windows). Ningún equipo alcanzable hoy desde el VPS llega a `192.168.68.64`.
+- **Nube:** TapoCare devuelve 500, no hay una API pública de snapshot a demanda y el passthrough de
+  la nube TP-Link responde `-20571 Device is offline` para las dos cámaras. Vale solo como indicio,
+  porque la nube también da offline a un Deco satélite que sí emite Wi-Fi.
+- **Configuración de tapo-service:** `TAPO_CAMERA_NAME` no matchea ninguna cámara, así que el
+  servicio toma la primera, `Tapo_C100_Wayra` (C100). La otra es `Tapo_C200c` (C200C). Falta
+  `TAPO_CAMERA_USER` y el RTSP cae en `TAPO_USERNAME`. `GET /devices` devuelve `online: true`
+  hardcodeado, sin consultar el estado.
+- **Síntoma en la app:** `POST /snapshot` tarda ~32 s y termina en 500. ffmpeg queda colgado contra
+  la IP inalcanzable hasta que lo cortan los 30 s del spawn, y para entonces ya venció el
+  `timeout(30000)` del backend.
+- **Pendiente (Juan):** decidir la cámara de la carpa y el camino de red (detalle en el informe de
+  server-audit del 24/10).
+
+<!-- [agent:cultivo-admin][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — IP de la cámara de la carpa en tapo-service
 
 - La cámara de la carpa Floración es la C100 (`Tapo_C100_Wayra`) y está en `192.168.0.109`, la red

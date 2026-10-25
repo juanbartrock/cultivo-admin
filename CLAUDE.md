@@ -93,6 +93,14 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
 - **Socket.io**: el gateway escucha en `path: '/api/socket.io'` porque Caddy sólo enruta
   `/api/*` al backend. El cliente (`SocketContext.tsx`) usa el origin de `NEXT_PUBLIC_API_URL`
   sin el sufijo `/api` y ese mismo `path`, y exige token (`REALTIME_ALLOW_GUEST=false`).
+- **Cámara de la carpa**: `tapo-service` captura por RTSP a través de `camara-relay` (HAProxy en
+  `cultivo-network`, sin puertos al host, config `camara-relay/haproxy.cfg`), que reenvía por
+  Tailscale a la PC de casa (Windows con `netsh portproxy`, Linux con `systemd-socket-proxyd`) y de
+  ahí a la C100 en `192.168.0.109:554`. `TAPO_CAMERA_IP=camara-relay`; el usuario RTSP sale de
+  `TAPO_USERNAME`. Con la PC apagada no hay snapshot. El navegador ve las fotos por
+  `GET /api/devices/:id/snapshots/:filename`: el backend las trae del tapo-service por la red
+  interna, que no tiene URL pública. Operación y reversión:
+  `/opt/server-audit/tools/camara-relay/README.md`.
 - **Rangos de sensores (ok/warn/danger)**: viven en la tabla `stage_ranges` de la base, una fila
   por valor de `PlantStage` más una fila `DEFAULT`, con rango ideal y rango amplio de
   temperatura, humedad, VPD y CO₂. Dentro del ideal la lectura es `ok`, entre el ideal y el
@@ -194,7 +202,7 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
 | Dominio | `cultivo.ramsesvii.com` |
 | Reverse proxy | Caddy (TLS automático Let's Encrypt) |
 | Puerto HTTP interno | `127.0.0.1:4000` (backend), `127.0.0.1:3001` (frontend) |
-| Contenedores | cultivo-backend, cultivo-frontend, sonoff-ewelink-service, tuya-service, tapo-service |
+| Contenedores | cultivo-backend, cultivo-frontend, sonoff-ewelink-service, tuya-service, tapo-service, camara-relay |
 | Firewall | UFW: solo 22, 80, 443, 8883 abiertos |
 
 ### Archivos relevantes

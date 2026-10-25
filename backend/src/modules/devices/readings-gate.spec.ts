@@ -22,7 +22,7 @@ describe('DevicesService · kill switch de lecturas', () => {
   });
 
   const prismaMock = { device: { findUnique: jest.fn() } };
-  const gatewayMock = { getDeviceStatus: jest.fn(), getCameraStreamInfo: jest.fn(), getTapoServiceUrl: jest.fn() };
+  const gatewayMock = { getDeviceStatus: jest.fn(), getCameraStreamInfo: jest.fn() };
   const settingsMock = { sensorsEnabled: jest.fn() };
 
   let service: DevicesService;

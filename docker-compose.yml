@@ -147,6 +147,17 @@ services:
       retries: 3
       start_period: 10s
 
+  # Relay RTSP hacia la cámara de la carpa a través de la PC de casa (Windows o Linux, por Tailscale).
+  # tapo-service lo usa con TAPO_CAMERA_IP=camara-relay. Config: camara-relay/haproxy.cfg
+  camara-relay:
+    image: haproxy:lts-alpine
+    container_name: camara-relay
+    restart: unless-stopped
+    volumes:
+      - ./camara-relay/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    networks:
+      - cultivo-network
+
   # ESP32 Service - Deshabilitado temporalmente
   # esp32-service:
   #   build: ./esp32-service

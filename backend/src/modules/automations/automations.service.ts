@@ -667,7 +667,7 @@ export class AutomationsService {
             success = snapshotResult.success || false;
             
             // Si hay plantas asociadas y la foto se capturó correctamente, registrar eventos
-            if (success && automation.plantIds && automation.plantIds.length > 0 && snapshotResult.downloadUrl) {
+            if (success && automation.plantIds && automation.plantIds.length > 0 && snapshotResult.path) {
               try {
                 // Obtener información de las plantas asociadas
                 const plants = await this.prisma.plant.findMany({
@@ -684,7 +684,7 @@ export class AutomationsService {
                       cycleId: plant.cycleId,
                       sectionId: plant.sectionId,
                       data: {
-                        url: snapshotResult.downloadUrl,
+                        url: snapshotResult.path,
                         filename: snapshotResult.filename,
                         caption: `Foto automática capturada por automatización "${automation.name}"`,
                         automationId: automation.id,

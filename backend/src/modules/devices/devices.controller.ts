@@ -9,6 +9,8 @@ import {
   Query,
   ParseUUIDPipe,
   UseInterceptors,
+  StreamableFile,
+  Header,
 } from '@nestjs/common';
 import { BooleanBodyInterceptor } from '../../common/interceptors/boolean-body.interceptor';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
@@ -117,6 +119,23 @@ export class DevicesController {
   @ApiResponse({ status: 404, description: 'Dispositivo no encontrado o no es una cámara' })
   async listSnapshots(@Param('id', ParseUUIDPipe) id: string) {
     return this.devicesService.listSnapshots(id);
+  }
+
+  @Get(':id/snapshots/:filename')
+  @Header('Cache-Control', 'private, max-age=3600')
+  @ApiOperation({
+    summary: 'Imagen de un snapshot de la cámara',
+    description: 'JPEG traído del tapo-service por la red interna. Solo cámaras TAPO',
+  })
+  @ApiResponse({ status: 200, description: 'Imagen JPEG' })
+  @ApiResponse({ status: 400, description: 'Nombre de snapshot inválido' })
+  @ApiResponse({ status: 404, description: 'Cámara o snapshot no encontrado' })
+  async getSnapshotFile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('filename') filename: string,
+  ) {
+    const file = await this.devicesService.getSnapshotFile(id, filename);
+    return new StreamableFile(file, { type: 'image/jpeg' });
   }
 
   @Post()

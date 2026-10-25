@@ -435,7 +435,7 @@ export class IoTGatewayService {
   /**
    * Captura un snapshot de la cámara TAPO
    */
-  async captureSnapshot(quality: 'high' | 'low' = 'high'): Promise<{ success: boolean; filename?: string; downloadUrl?: string }> {
+  async captureSnapshot(quality: 'high' | 'low' = 'high'): Promise<{ success: boolean; filename?: string }> {
     const baseUrl = this.getConnectorUrl(Connector.TAPO);
 
     try {
@@ -449,11 +449,9 @@ export class IoTGatewayService {
         ),
       );
 
-      const tapoServiceUrl = this.getTapoServiceUrl();
       return {
         success: response.data.success,
         filename: response.data.filename,
-        downloadUrl: `${tapoServiceUrl}${response.data.downloadUrl}`,
       };
     } catch {
       this.logger.error('Failed to capture snapshot');
@@ -486,11 +484,24 @@ export class IoTGatewayService {
   }
 
   /**
-   * Obtiene la URL del tapo-service para acceder a snapshots
-   * Devuelve la URL pública para que el navegador pueda acceder
+   * Descarga un snapshot del tapo-service por la red interna. El navegador no llega al
+   * tapo-service (sin puerto al host ni ruta en Caddy), así que la imagen pasa por el backend.
    */
-  getTapoServiceUrl(): string {
-    // Usar la URL pública para el navegador (no la interna de Docker)
-    return this.configService.get<string>('MS_TAPO_PUBLIC_URL', 'http://localhost:3003');
+  async getSnapshotFile(filename: string): Promise<Buffer | null> {
+    const baseUrl = this.getConnectorUrl(Connector.TAPO);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService
+          .get<ArrayBuffer>(`${baseUrl}/snapshots/${encodeURIComponent(filename)}`, {
+            responseType: 'arraybuffer',
+          })
+          .pipe(timeout(10000)),
+      );
+      return Buffer.from(response.data);
+    } catch (error) {
+      this.logger.warn(`Snapshot ${filename} no disponible: ${(error as Error).message}`);
+      return null;
+    }
   }
 }

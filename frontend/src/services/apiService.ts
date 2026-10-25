@@ -19,12 +19,12 @@ const getApiUrl = () => {
 export const API_BASE = getApiUrl();
 
 /**
- * Realiza una petición HTTP al backend
+ * fetch al backend con el token y el manejo de errores comunes a todas las peticiones
  */
-async function request<T>(
+async function authorizedFetch(
   endpoint: string,
   options?: RequestInit
-): Promise<T> {
+): Promise<Response> {
   // Buscar token con ambos nombres por compatibilidad
   const token = typeof window !== 'undefined' 
     ? (localStorage.getItem('access_token') || localStorage.getItem('token')) 
@@ -62,6 +62,18 @@ async function request<T>(
     throw new Error(error.message || `HTTP ${response.status}`);
   }
 
+  return response;
+}
+
+/**
+ * Realiza una petición HTTP al backend
+ */
+async function request<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const response = await authorizedFetch(endpoint, options);
+
   // Manejar respuestas vacías (204 No Content)
   const text = await response.text();
   if (!text) {
@@ -80,6 +92,11 @@ export const api = {
    */
   get: <T>(endpoint: string, options?: { signal?: AbortSignal }) =>
     request<T>(endpoint, options),
+
+  /**
+   * GET de un binario (imágenes): devuelve el Blob sin parsear JSON
+   */
+  getBlob: async (endpoint: string) => (await authorizedFetch(endpoint)).blob(),
 
   /**
    * POST request

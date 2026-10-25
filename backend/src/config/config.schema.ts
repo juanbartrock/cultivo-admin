@@ -34,7 +34,6 @@ export const configValidationSchema = Joi.object({
   MS_TUYA_URL: Joi.string().uri().default('http://tuya-service:3000'),
   MS_TAPO_URL: Joi.string().uri().default('http://tapo-service:3000'),
   MS_ESP32_URL: Joi.string().uri().default('http://esp32-service:3000'),
-  MS_TAPO_PUBLIC_URL: Joi.string().uri().default('http://localhost:3003'),
 });
 
 export function parseBooleanEnv(value: string | boolean | undefined, fallback = false): boolean {

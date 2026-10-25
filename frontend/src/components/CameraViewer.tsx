@@ -30,9 +30,23 @@ export default function CameraViewer({ device, status, loading = false }: Camera
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
 
-  // Obtener la URL del tapo service desde el status
-  const tapoServiceUrl = (status as Record<string, unknown>)?.tapoServiceUrl as string | undefined;
+  // El backend informa la ruta de snapshots solo para cámaras TAPO configuradas
+  const cameraReady = Boolean((status as Record<string, unknown>)?.snapshotsPath);
+
+  // La imagen se pide al backend con el token y se muestra como object URL
+  const showSnapshot = useCallback(async (filename: string) => {
+    const blob = await deviceService.getSnapshotImage(device.id, filename);
+    const url = URL.createObjectURL(blob);
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    objectUrlRef.current = url;
+    setSnapshotUrl(url);
+  }, [device.id]);
+
+  useEffect(() => () => {
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+  }, []);
 
   // Función para capturar un snapshot
   const captureSnapshot = useCallback(async () => {
@@ -44,10 +58,8 @@ export default function CameraViewer({ device, status, loading = false }: Camera
     try {
       const result = await deviceService.captureSnapshot(device.id);
       
-      if (result.success && result.filename && tapoServiceUrl) {
-        // Agregar timestamp para evitar caché
-        const url = `${tapoServiceUrl}/snapshots/${result.filename}?t=${Date.now()}`;
-        setSnapshotUrl(url);
+      if (result.success && result.filename) {
+        await showSnapshot(result.filename);
         setLastUpdate(new Date());
       } else {
         setError('No se pudo capturar el snapshot');
@@ -58,18 +70,18 @@ export default function CameraViewer({ device, status, loading = false }: Camera
     } finally {
       setCapturing(false);
     }
-  }, [device.id, capturing, tapoServiceUrl]);
+  }, [device.id, capturing, showSnapshot]);
 
   // Cargar el último snapshot disponible al montar
   const loadLatestSnapshot = useCallback(async () => {
-    if (!tapoServiceUrl) return;
+    if (!cameraReady) return;
 
     try {
       const result = await deviceService.listSnapshots(device.id);
       
       if (result.snapshots && result.snapshots.length > 0) {
         const latest = result.snapshots[0];
-        setSnapshotUrl(`${latest.url}?t=${Date.now()}`);
+        await showSnapshot(latest.filename);
         setLastUpdate(new Date(latest.created));
       } else {
         // Si no hay snapshots, capturar uno nuevo
@@ -80,25 +92,25 @@ export default function CameraViewer({ device, status, loading = false }: Camera
       // Intentar capturar uno nuevo
       await captureSnapshot();
     }
-  }, [device.id, tapoServiceUrl, captureSnapshot]);
+  }, [device.id, cameraReady, captureSnapshot, showSnapshot]);
 
   // Cargar snapshot inicial
   useEffect(() => {
-    if (tapoServiceUrl) {
+    if (cameraReady) {
       loadLatestSnapshot();
     }
-  }, [tapoServiceUrl]);
+  }, [cameraReady]);
 
   // Auto-refresh cada 30 segundos si está habilitado
   useEffect(() => {
-    if (!autoRefresh || !tapoServiceUrl) return;
+    if (!autoRefresh || !cameraReady) return;
 
     const interval = setInterval(() => {
       captureSnapshot();
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [autoRefresh, captureSnapshot, tapoServiceUrl]);
+  }, [autoRefresh, captureSnapshot, cameraReady]);
 
   // Toggle fullscreen
   const toggleFullscreen = useCallback(() => {
@@ -133,8 +145,8 @@ export default function CameraViewer({ device, status, loading = false }: Camera
     );
   }
 
-  // Si no hay tapoServiceUrl, la cámara no está configurada correctamente
-  if (!tapoServiceUrl) {
+  // Sin ruta de snapshots, la cámara no está configurada correctamente
+  if (!cameraReady) {
     return (
       <div className="aspect-video bg-zinc-900/50 rounded-lg flex flex-col items-center justify-center gap-3 border border-zinc-700/50">
         <AlertCircle className="w-8 h-8 text-yellow-500/60" />

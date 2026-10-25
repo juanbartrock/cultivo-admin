@@ -50,7 +50,7 @@ interface CameraStreamInfo {
 interface SnapshotResponse {
   success: boolean;
   filename?: string;
-  downloadUrl?: string;
+  path?: string;
 }
 
 interface SnapshotListResponse {
@@ -59,7 +59,7 @@ interface SnapshotListResponse {
     filename: string;
     size: number;
     created: string;
-    url: string;
+    path: string;
   }[];
 }
 
@@ -152,6 +152,12 @@ export const deviceService = {
    * Lista los snapshots disponibles de una cámara
    */
   listSnapshots: (id: string) => api.get<SnapshotListResponse>(`/devices/${id}/snapshots`),
+
+  /**
+   * Imagen de un snapshot, servida por el backend con el token de la sesión
+   */
+  getSnapshotImage: (id: string, filename: string) =>
+    api.getBlob(`/devices/${id}/snapshots/${encodeURIComponent(filename)}`),
 };
 
 // ============================================

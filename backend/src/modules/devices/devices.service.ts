@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { IoTGatewayService, DeviceStatus, CameraStreamInfo } from './iot-gateway.service';
 import { CreateDeviceDto, UpdateDeviceDto, AssignDeviceDto } from './dto/device.dto';
@@ -403,15 +403,14 @@ export class DevicesService {
     // Si es una cámara TAPO, agregar información adicional del stream
     if (device.type === DeviceType.CAMARA && device.connector === Connector.TAPO) {
       const streamInfo = await this.iotGateway.getCameraStreamInfo('high');
-      const tapoServiceUrl = this.iotGateway.getTapoServiceUrl();
-      
+
       return {
         device,
         status: {
           ...status,
           online: true,
           streamInfo: streamInfo,
-          tapoServiceUrl,
+          snapshotsPath: `/devices/${device.id}/snapshots`,
         },
       };
     }
@@ -445,7 +444,11 @@ export class DevicesService {
       throw new NotFoundException('Este dispositivo no es una cámara TAPO');
     }
 
-    return this.iotGateway.captureSnapshot(quality);
+    const result = await this.iotGateway.captureSnapshot(quality);
+    return {
+      ...result,
+      path: result.filename ? `/devices/${device.id}/snapshots/${result.filename}` : undefined,
+    };
   }
 
   /**
@@ -459,15 +462,34 @@ export class DevicesService {
     }
 
     const snapshots = await this.iotGateway.listSnapshots();
-    const tapoServiceUrl = this.iotGateway.getTapoServiceUrl();
 
     return {
       device,
       snapshots: snapshots.map(s => ({
         ...s,
-        url: `${tapoServiceUrl}/snapshots/${s.filename}`,
+        path: `/devices/${device.id}/snapshots/${s.filename}`,
       })),
     };
+  }
+
+  /**
+   * Imagen de un snapshot, servida por el backend porque el navegador no llega al tapo-service
+   */
+  async getSnapshotFile(id: string, filename: string): Promise<Buffer> {
+    const device = await this.findById(id);
+
+    if (device.type !== DeviceType.CAMARA || device.connector !== Connector.TAPO) {
+      throw new NotFoundException('Este dispositivo no es una cámara TAPO');
+    }
+    if (!/^snapshot-[A-Za-z0-9-]+\.jpg$/.test(filename)) {
+      throw new BadRequestException('Nombre de snapshot inválido');
+    }
+
+    const file = await this.iotGateway.getSnapshotFile(filename);
+    if (!file) {
+      throw new NotFoundException(`Snapshot ${filename} no encontrado`);
+    }
+    return file;
   }
 
   /**
