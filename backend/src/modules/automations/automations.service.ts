@@ -21,6 +21,15 @@ import {
   Prisma 
 } from '@prisma/client';
 
+/**
+ * Minutos de reloj entre la última evaluación y ahora. El cron corre al inicio de cada minuto y
+ * `lastEvaluatedAt` se graba segundos después: restar timestamps daba 4,9 con un intervalo de 5
+ * y la automatización recién corría en el ciclo siguiente, un minuto tarde.
+ */
+export function clockMinutesSince(last: Date, now: Date): number {
+  return Math.floor(now.getTime() / 60_000) - Math.floor(last.getTime() / 60_000);
+}
+
 @Injectable()
 export class AutomationsService {
   private readonly logger = new Logger(AutomationsService.name);
@@ -379,8 +388,7 @@ export class AutomationsService {
         if (!automation.intervalMinutes) return { shouldExecute: false, actionType: null };
         
         if (automation.lastEvaluatedAt) {
-          const minutesSinceLastEval = (now.getTime() - automation.lastEvaluatedAt.getTime()) / (1000 * 60);
-          if (minutesSinceLastEval < automation.intervalMinutes) {
+          if (clockMinutesSince(automation.lastEvaluatedAt, now) < automation.intervalMinutes) {
             return { shouldExecute: false, actionType: null };
           }
         }
@@ -928,8 +936,7 @@ export class AutomationsService {
 
       // Para CONDITION y HYBRID, verificar intervalo de evaluación
       if (automation.lastEvaluatedAt) {
-        const minutesSinceLastEval = (now.getTime() - automation.lastEvaluatedAt.getTime()) / (1000 * 60);
-        if (minutesSinceLastEval < automation.interval) {
+        if (clockMinutesSince(automation.lastEvaluatedAt, now) < automation.interval) {
           return {
             id: automation.id,
             name: automation.name,

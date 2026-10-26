@@ -8,10 +8,11 @@ import { effectiveStage } from '../stage-ranges/effective-stage';
 import { Prisma } from '@prisma/client';
 
 // El sensor principal va primero: home, /sala, la carpa y la vista 3D toman el primer SENSOR.
-const SECTION_DEVICES_ORDER: Prisma.DeviceOrderByWithRelationInput[] = [
-  { primarySensor: 'desc' },
-  { createdAt: 'asc' },
-];
+// Cada dispositivo viaja con su controlador para que la tarjeta de un VIRTUAL diga de quién depende.
+const SECTION_DEVICES = {
+  orderBy: [{ primarySensor: 'desc' }, { createdAt: 'asc' }],
+  include: { controlledBy: true },
+} satisfies Prisma.Section$devicesArgs;
 
 @Injectable()
 export class LocationsService {
@@ -46,7 +47,7 @@ export class LocationsService {
       include: {
         sections: {
           include: {
-            devices: { orderBy: SECTION_DEVICES_ORDER },
+            devices: SECTION_DEVICES,
             plants: {
               include: {
                 strain: true,
@@ -111,7 +112,7 @@ export class LocationsService {
     const sections = await this.prisma.section.findMany({
       where: { roomId },
       include: {
-        devices: { orderBy: SECTION_DEVICES_ORDER },
+        devices: SECTION_DEVICES,
         plants: true,
         _count: {
           select: {
@@ -142,7 +143,7 @@ export class LocationsService {
       where: userId ? { room: { userId } } : undefined,
       include: {
         room: true,
-        devices: { orderBy: SECTION_DEVICES_ORDER },
+        devices: SECTION_DEVICES,
         plants: true,
         _count: {
           select: {
@@ -165,7 +166,7 @@ export class LocationsService {
       where: { id },
       include: {
         room: true,
-        devices: { orderBy: SECTION_DEVICES_ORDER },
+        devices: SECTION_DEVICES,
         plants: {
           include: {
             strain: true,
@@ -237,7 +238,7 @@ export class LocationsService {
       where: { id },
       include: {
         room: true,
-        devices: { orderBy: SECTION_DEVICES_ORDER },
+        devices: SECTION_DEVICES,
         plants: {
           include: {
             strain: true,

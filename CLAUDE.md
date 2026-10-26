@@ -151,9 +151,9 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
     La calculan `ReadingsSettingsService.isDeviceReadable()` en el backend e `isReadingPaused()`
     en `frontend/src/features/lecturas/lib/readingsGate.ts`. Un dispositivo `VIRTUAL` sale a la
     red por su controlador, así que hereda su pausa: con el controlador en `readingsEnabled=false`
-    el virtual también responde `readingsPaused`. En el frontend eso se resuelve pasándole a
-    `isReadingPaused` un `findDevice` que busca `controlledByDeviceId` en la lista de la pantalla,
-    porque las secciones traen el id del controlador sin la fila entera.
+    el virtual también responde `readingsPaused`. En el frontend `isReadingPaused` usa
+    `device.controlledBy`, que viaja en el listado de devices y en los endpoints de carpas, y cae
+    a un `findDevice` que busca `controlledByDeviceId` en la lista de la pantalla si falta la fila.
   - **Sin consulta**: `GET /devices/:id/status` responde **200** con
     `{ device, status: { online: false, readingsPaused: true } }` sin HTTP al microservicio y sin
     un solo `logger.warn` ni `logger.error`. `SensorPollerService` y `SensorHistoryService`

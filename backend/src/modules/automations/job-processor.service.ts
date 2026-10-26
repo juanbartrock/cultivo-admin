@@ -59,9 +59,11 @@ export class JobProcessorService {
    */
   private async claimJobs(): Promise<ScheduledJob[]> {
     const now = new Date();
-    
-    // Usamos una transacción con raw SQL para el patrón claim
-    const jobs = await this.prisma.$queryRaw<ScheduledJob[]>`
+
+    // El claim va en SQL crudo por el SKIP LOCKED. `RETURNING *` trae las columnas en snake_case
+    // (`device_id`, `max_attempts`) y el procesador lee camelCase: con la fila cruda `job.deviceId`
+    // era undefined y todo DEVICE_ON/OFF fallaba. Se devuelven los ids y se releen con Prisma.
+    const claimed = await this.prisma.$queryRaw<Array<{ id: string }>>`
       UPDATE scheduled_jobs
       SET 
         status = 'RUNNING'::"JobStatus",
@@ -77,10 +79,15 @@ export class JobProcessorService {
         LIMIT ${this.BATCH_SIZE}
         FOR UPDATE SKIP LOCKED
       )
-      RETURNING *
+      RETURNING id
     `;
 
-    return jobs;
+    if (claimed.length === 0) return [];
+
+    return this.prisma.scheduledJob.findMany({
+      where: { id: { in: claimed.map((job) => job.id) } },
+      orderBy: { runAt: 'asc' },
+    });
   }
 
   /**

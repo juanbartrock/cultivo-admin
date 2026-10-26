@@ -95,6 +95,15 @@ const executionStatusConfig: Record<ExecutionStatus, { label: string; color: str
   CANCELLED: { label: 'Cancelado', color: 'text-zinc-500', icon: X },
 };
 
+/**
+ * El intervalo de evaluación se edita como texto y se valida al guardar: con `parseInt(v) || 5`
+ * en el onChange, borrar el número para escribir otro lo devolvía a 5.
+ */
+function parseEvaluationInterval(value: string): number | null {
+  const minutes = Number(value);
+  return value.trim() !== '' && Number.isInteger(minutes) && minutes >= 1 ? minutes : null;
+}
+
 export default function AutomatizacionesPage() {
   const { toast } = useToast();
   const confirm = useConfirm();
@@ -875,7 +884,7 @@ function CreateAutomationModal({
     actionDuration: 30,
     specificTimes: ['08:00', '14:00', '20:00'] as string[],
     daysOfWeek: [] as number[],
-    evaluationInterval: 5,
+    evaluationInterval: '5',
     startTime: '',
     endTime: '',
     notifications: true,
@@ -954,8 +963,9 @@ function CreateAutomationModal({
           if (form.scheduleType === 'SPECIFIC_TIMES') {
             return form.specificTimes.length > 0;
           }
+          return true;
         }
-        return true;
+        return parseEvaluationInterval(form.evaluationInterval) !== null;
       case 'conditions':
         // Para SCHEDULED, las condiciones son opcionales
         if (form.triggerType === 'SCHEDULED') return true;
@@ -1046,7 +1056,9 @@ function CreateAutomationModal({
         actionDuration: form.scheduleType === 'INTERVAL' ? form.actionDuration : undefined,
         specificTimes: form.scheduleType === 'SPECIFIC_TIMES' ? form.specificTimes : undefined,
         daysOfWeek: form.daysOfWeek.length > 0 ? form.daysOfWeek : undefined,
-        evaluationInterval: form.triggerType !== 'SCHEDULED' ? form.evaluationInterval : undefined,
+        evaluationInterval: form.triggerType !== 'SCHEDULED'
+          ? parseEvaluationInterval(form.evaluationInterval) ?? undefined
+          : undefined,
         startTime: form.startTime || undefined,
         endTime: form.endTime || undefined,
         notifications: form.notifications,
@@ -1363,10 +1375,14 @@ function CreateAutomationModal({
                       <input
                         type="number"
                         value={form.evaluationInterval}
-                        onChange={(e) => setForm({ ...form, evaluationInterval: parseInt(e.target.value) || 5 })}
+                        onChange={(e) => setForm({ ...form, evaluationInterval: e.target.value })}
                         min={1}
+                        step={1}
                         className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
                       />
+                      {parseEvaluationInterval(form.evaluationInterval) === null && (
+                        <p className="mt-1 text-xs text-red-400">Número entero de minutos, 1 o más.</p>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -2060,15 +2076,23 @@ function EditAutomationModal({
 }) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const evaluatesConditions = automation.triggerType === 'CONDITION' || automation.triggerType === 'HYBRID';
   const [form, setForm] = useState({
     name: automation.name,
     description: automation.description || '',
     notifications: automation.notifications,
+    evaluationInterval: String(automation.interval),
   });
+  const evaluationInterval = parseEvaluationInterval(form.evaluationInterval);
+  const intervalInvalid = evaluatesConditions && evaluationInterval === null;
 
   async function handleSubmit() {
     if (!form.name.trim()) {
       toast.error('El nombre es requerido');
+      return;
+    }
+    if (intervalInvalid) {
+      toast.error('El intervalo tiene que ser un número entero de minutos, 1 o más');
       return;
     }
 
@@ -2078,6 +2102,7 @@ function EditAutomationModal({
         name: form.name,
         description: form.description || undefined,
         notifications: form.notifications,
+        ...(evaluatesConditions && evaluationInterval !== null && { evaluationInterval }),
       });
     } finally {
       setIsUpdating(false);
@@ -2129,6 +2154,28 @@ function EditAutomationModal({
             />
           </div>
 
+          {evaluatesConditions && (
+            <div>
+              <label htmlFor="edit-evaluation-interval" className="block text-sm font-medium text-zinc-300 mb-1">
+                Evaluar condiciones cada (min)
+              </label>
+              <input
+                id="edit-evaluation-interval"
+                type="number"
+                inputMode="numeric"
+                value={form.evaluationInterval}
+                onChange={(e) => setForm({ ...form, evaluationInterval: e.target.value })}
+                min={1}
+                step={1}
+                aria-invalid={intervalInvalid}
+                className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-lg text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              />
+              {intervalInvalid && (
+                <p className="mt-1 text-xs text-red-400">Número entero de minutos, 1 o más.</p>
+              )}
+            </div>
+          )}
+
           {/* Toggle de alertas */}
           <div className="flex items-center justify-between p-4 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
             <div className="flex items-center gap-3">
@@ -2162,7 +2209,7 @@ function EditAutomationModal({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={isUpdating || !form.name.trim()}
+            disabled={isUpdating || !form.name.trim() || intervalInvalid}
             className="flex items-center gap-2 px-6 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg transition-colors"
           >
             {isUpdating ? (

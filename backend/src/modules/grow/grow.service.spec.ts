@@ -1,3 +1,4 @@
+import { CycleStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdatePlantDto } from './dto/plant.dto';
 import { GrowService } from './grow.service';
@@ -5,8 +6,12 @@ import { GrowService } from './grow.service';
 describe('GrowService', () => {
   let service: GrowService;
 
+  // `updatePlant` consulta el ciclo antes de la transacción para no tocar plantas de un ciclo curado
   const prismaMock = {
     $transaction: jest.fn(),
+    cycle: {
+      findUnique: jest.fn(),
+    },
   };
 
   const txMock = {
@@ -23,6 +28,7 @@ describe('GrowService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    prismaMock.cycle.findUnique.mockResolvedValue({ id: 'cycle-1', status: CycleStatus.ACTIVE });
     prismaMock.$transaction.mockImplementation(
       async (callback: (tx: typeof txMock) => Promise<unknown>) => callback(txMock),
     );
@@ -71,5 +77,14 @@ describe('GrowService', () => {
 
     await expect(service.updatePlant('plant-1', payload)).rejects.toThrow('zone create failed');
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects updates on a cured cycle before opening the transaction', async () => {
+    prismaMock.cycle.findUnique.mockResolvedValueOnce({ id: 'cycle-1', status: CycleStatus.CURED });
+
+    const payload = { zones: [{ zone: 1, coverage: 100 }] } as unknown as UpdatePlantDto;
+
+    await expect(service.updatePlant('plant-1', payload)).rejects.toThrow('curado');
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
   });
 });

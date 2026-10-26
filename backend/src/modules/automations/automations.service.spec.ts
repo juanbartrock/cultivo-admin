@@ -3,7 +3,7 @@ import { DevicesService } from '../devices/devices.service';
 import { JobSchedulerService } from './job-scheduler.service';
 import { PlantAnalysisService } from './plant-analysis.service';
 import { UpdateAutomationDto } from './dto/automation.dto';
-import { AutomationsService } from './automations.service';
+import { AutomationsService, clockMinutesSince } from './automations.service';
 
 describe('AutomationsService', () => {
   let service: AutomationsService;
@@ -12,6 +12,7 @@ describe('AutomationsService', () => {
     $transaction: jest.fn(),
     automation: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
   };
 
@@ -85,5 +86,60 @@ describe('AutomationsService', () => {
 
     await expect(service.update('automation-1', payload)).rejects.toThrow('update failed');
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  describe('intervalo de evaluación', () => {
+    // Ciclo real del 2026-10-26: evaluada 3 s después del tick de las 11:40, el cron vuelve a las 11:45
+    const evaluatedAt = new Date('2026-10-26T11:40:03.100Z');
+
+    const automationRow = (overrides: Record<string, unknown>) => ({
+      id: 'automation-1',
+      name: 'Humedad bajo 75',
+      triggerType: 'CONDITION',
+      scheduleType: null,
+      interval: 5,
+      lastEvaluatedAt: evaluatedAt,
+      daysOfWeek: [],
+      startTime: null,
+      endTime: null,
+      activeStartTime: null,
+      activeEndTime: null,
+      intervalMinutes: null,
+      specificTimes: [],
+      ...overrides,
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('cuenta minutos de reloj, no la resta de timestamps', () => {
+      expect(clockMinutesSince(evaluatedAt, new Date('2026-10-26T11:45:00.005Z'))).toBe(5);
+      expect(clockMinutesSince(evaluatedAt, new Date('2026-10-26T11:44:59.999Z'))).toBe(4);
+    });
+
+    it('evalúa una CONDITION de 5 min en el tick de las 11:45, no a las 11:46', async () => {
+      prismaMock.automation.findMany.mockResolvedValue([automationRow({})]);
+      jest.useFakeTimers().setSystemTime(new Date('2026-10-26T11:44:00.005Z'));
+      await expect(service.getAutomationsToEvaluate()).resolves.toHaveLength(0);
+
+      jest.setSystemTime(new Date('2026-10-26T11:45:00.005Z'));
+      await expect(service.getAutomationsToEvaluate()).resolves.toMatchObject([
+        { id: 'automation-1', shouldExecute: true },
+      ]);
+    });
+
+    it('ejecuta un SCHEDULED INTERVAL de 5 min en el tick de las 11:45', async () => {
+      prismaMock.automation.findMany.mockResolvedValue([
+        automationRow({ triggerType: 'SCHEDULED', scheduleType: 'INTERVAL', intervalMinutes: 5 }),
+      ]);
+      jest.useFakeTimers().setSystemTime(new Date('2026-10-26T11:44:00.005Z'));
+      await expect(service.getAutomationsToEvaluate()).resolves.toHaveLength(0);
+
+      jest.setSystemTime(new Date('2026-10-26T11:45:00.005Z'));
+      await expect(service.getAutomationsToEvaluate()).resolves.toMatchObject([
+        { id: 'automation-1', shouldExecute: true, actionType: 'on' },
+      ]);
+    });
   });
 });

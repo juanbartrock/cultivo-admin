@@ -5,9 +5,9 @@ import { Device } from '@/types';
  * solo si el dispositivo tiene las lecturas activas y, cuando es SENSOR, además el interruptor
  * general está encendido.
  *
- * Un dispositivo VIRTUAL sale a la red por su controlador, así que hereda su pausa. `findDevice`
- * resuelve `controlledByDeviceId` contra la lista que ya tiene la pantalla, porque las secciones
- * traen el id del controlador sin la fila entera.
+ * Un dispositivo VIRTUAL sale a la red por su controlador, así que hereda su pausa. El controlador
+ * llega en `controlledBy` (listado de devices y endpoints de carpas); `findDevice` lo resuelve por
+ * `controlledByDeviceId` contra la lista de la pantalla cuando la fila no viene.
  */
 export function isReadingPaused(
   device: Device,

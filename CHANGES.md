@@ -7,6 +7,114 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:claude][date:2026-10-26][action:modified] -->
+## 2026-10-26 — Tests de `grow` en verde
+
+`grow.service.spec.ts` fallaba en sus 2 tests desde `f9d9d49` (2026-02-16): `updatePlant` llama a
+`ensureCycleIsNotCured`, que consulta `prisma.cycle.findUnique`, y el mock de Prisma no tenía
+`cycle`. Se agrega con un ciclo `ACTIVE` por defecto y un caso nuevo: con el ciclo en `CURED`,
+`updatePlant` rechaza antes de abrir la transacción. `npx jest` del backend: 8 suites, 30/30.
+
+<!-- [agent:claude][date:2026-10-26][action:modified] -->
+## 2026-10-26 — Los apagados programados (`actionDuration`) nunca corrían
+
+**Síntoma.** "Renovación de aire" (INTERVAL 60 min, `actionDuration` 5) prendió `flora-extractor`
+a las 08:59 y el `DEVICE_OFF` de las 09:04 falló: "DEVICE_OFF for device undefined".
+
+**Causa.** `JobProcessorService.claimJobs` reclamaba con `UPDATE ... RETURNING *` en SQL crudo,
+que devuelve `device_id` y `max_attempts`; el procesador lee `job.deviceId` y `job.maxAttempts`.
+Todo DEVICE_ON/OFF/TOGGLE/CAPTURE_PHOTO fallaba, y con `maxAttempts` undefined nunca pasaba a
+DEAD: se reprogramaba con backoff para siempre. En la tabla había 249 `DEVICE_OFF` en PENDING
+desde el 2025-12-13, hasta 19 intentos cada uno.
+
+**Arreglo.** El claim devuelve `RETURNING id` y los jobs se releen con `scheduledJob.findMany`
+(camelCase de Prisma), ordenados por `runAt`. Test nuevo
+`automations/job-processor.service.spec.ts` con el job real; falla con el código anterior.
+
+**Dato (producción).** 248 de los 249 PENDING apuntaban a dispositivos y automatizaciones que ya
+no existen (sin FK en `scheduled_jobs`) y su próximo reintento era desde 2026-12. Pasados a
+`CANCELLED` con `completed_at = now()`, sin borrar filas, con el criterio
+`status='PENDING' AND device_id sin fila en devices AND automation_id sin fila en automations`
+(conteo previo 248 = filas actualizadas). Con el arreglo habrían dejado un `ERROR ... marked as
+DEAD` cada uno en el log que mira el panel.
+
+**Verificación.** tsc exit 0; `npx jest src/modules/automations` 7/7. `app-restart
+cultivo-backend --build` exit 0. El job del extractor corrió en el contenedor nuevo a las
+12:11:32Z ("completed successfully") y tuya-service devuelve `switch_1: false`.
+
+<!-- [agent:claude][date:2026-10-26][action:modified] -->
+## 2026-10-26 — Automatizaciones: intervalo exacto, intervalo editable, TZ Argentina y favicon
+
+**Intervalo un minuto tarde.** `getAutomationsToEvaluate` comparaba `now - lastEvaluatedAt` en
+minutos fraccionarios contra `interval`. El cron corre al inicio de cada minuto y
+`lastEvaluatedAt` se graba segundos después, así que a los 5 min daba 4,9 y la evaluación caía
+en el tick siguiente: toda automatización de condición de N min corría cada N+1, y lo mismo el
+horario `INTERVAL`. Caso real: "Humedad bajo 75" evaluó a las 08:40 con 74,6 % y recién a las
+08:46 con 80,9 %. Ahora ambos caminos usan `clockMinutesSince` (minutos de reloj).
+`SPECIFIC_TIMES` queda con la resta original porque ahí solo evita la doble ejecución.
+Tests nuevos en `automations.service.spec.ts` con el ciclo real (11:40:03 → tick 11:45:00).
+
+**Intervalo no editable.** El modal "Editar Automatización" solo tenía nombre, descripción y
+alertas. Ahora, para CONDITION e HYBRID, también "Evaluar condiciones cada (min)", que viaja como
+`evaluationInterval` en `PUT /automations/:id` (el backend ya lo aceptaba). En el modal de
+creación el campo hacía `parseInt(v) || 5` en cada tecla y volvía a 5 al borrarlo; los dos
+campos guardan texto y validan entero ≥ 1 con aviso y botón deshabilitado.
+
+**TZ.** `docker-compose.yml` pasa de `America/Santiago` a `America/Argentina/Buenos_Aires` en
+los cinco servicios. Chile cambia de horario y Argentina no: de abril a septiembre los horarios
+de las automatizaciones corrían una hora corridos. Recreados backend y frontend. sonoff, tuya y
+tapo no usan hora local (sin `getHours`/`toLocale`/cron en su código) y toman el valor en su
+próximo recreate: reconstruirlos solo por esto traía dependencias nuevas a imágenes de marzo.
+
+**Favicon.** `frontend/src/app/icon.svg` (hoja de Lucide en `accent` sobre `surface-2`, la
+marca del sidebar), `favicon.ico` 16/32/48 y `apple-icon.png` 180 generados desde el SVG.
+
+**Verificación.**
+- tsc backend y frontend exit 0, lint del archivo de automatizaciones sin warnings.
+  `npx jest`: 25/27; las 2 fallas son `grow.service.spec.ts`, preexistentes (el mock de Prisma
+  no tiene `cycle` desde que `updatePlant` llama a `ensureCycleIsNotCured`); no se tocó `grow`.
+- `app-restart cultivo-backend --build` y `cultivo-frontend --build` exit 0. `date` y Node en
+  los dos contenedores: `GMT-0300 (Argentina Standard Time)`.
+- Producción: "Humedad arriba de 58" evaluó 11:54:00 y 11:59:00Z, 5 min exactos.
+- API: `PUT` con `evaluationInterval: 5` → 200 sin tocar condición ni acción; con `0` → 400.
+- Navegado a 1440 y 390 con las escrituras interceptadas en el navegador (la base sigue en 5):
+  en edición el campo arranca en 5, borrado queda vacío con aviso y Guardar deshabilitado, con 1
+  manda `{"evaluationInterval":1}`; en creación, vacío deshabilita Siguiente y 2 lo habilita.
+- `/favicon.ico` y `/apple-icon.png` 200; el `<head>` trae los tres `<link>` de ícono.
+
+<!-- [agent:claude][date:2026-10-26][action:modified] -->
+## 2026-10-26 — Humidificador de Floración asociado al relé del Sonoff
+
+**Síntoma.** `flora-humidificador` (VIRTUAL) no aparecía encendido con el relé del
+`Termohigometro Indoor` (SONOFF `10018e3624`) en `on`.
+
+**Causa.** El virtual no tenía controlador: `controlled_by_device_id = NULL` desde su alta
+(2025-12-17, `created_at = updated_at`). Sin controlador, `GET /devices/:id/status` devuelve
+`state` vacío con "Este dispositivo virtual no tiene un controlador asignado".
+
+**Dato (producción).** `PUT /api/devices/402d593c-953b-493a-8c0a-b1d6c3f73887`
+`{"controlledByDeviceId":"c04963d5-c091-426f-9618-4e61ac8c015a"}` → 200, pedido por Juan.
+Antes: `NULL`. Reversión: el mismo `PUT` con `{"controlledByDeviceId":""}`. Desde ahora
+Encender/Apagar del humidificador conmuta el relé del Sonoff.
+
+**Código.** Los endpoints de carpas (`GET /sections`, `/sections/:id`, `/rooms/:id/sections`,
+`/rooms/:id`, dashboard) devolvían los dispositivos sin la relación `controlledBy`, y
+`DeviceControlCard` mostraba "⚠️ Sin controlador asignado" aunque el virtual estuviera asociado.
+`locations.service.ts` incluye ahora `controlledBy` en un único `SECTION_DEVICES` (orden + include).
+Ajustados el comentario de `readingsGate.ts` y el párrafo del kill switch en `CLAUDE.md`, que
+decían que las secciones traían solo el id del controlador.
+
+**Verificación.**
+- `tsc --noEmit` backend exit 0. `npx jest`: 6/7 suites, 22/24 tests; las 2 fallas son
+  `grow.service.spec.ts`, preexistentes y ajenas (no se tocó `grow`).
+- `app-restart cultivo-backend --build` exit 0, contenedor `healthy`.
+- API: `status` del humidificador pasó de "sin controlador" a `{"online":true,"state":"on"}`;
+  `controlledBy.name = Termohigometro Indoor` en `/sections`, `/sections/:id` y dashboard.
+- Navegado contra producción a 1440 y 390: home y `/sala` sin errores; en la carpa (Gestión y
+  Equipos 3D) la tarjeta dice "→ Controlado por: Termohigometro Indoor" con el estado del relé.
+- A las 11:22:07Z otra sesión del navegador apagó el relé desde la tarjeta del Sonoff y a las
+  11:22:19Z encendió `flora-extractor` (humedad en 82 %); el QA no hizo clicks de control.
+
 <!-- [agent:kimi][date:2026-10-24][action:modified] -->
 ## 2026-10-24 — Carpa viva rehecha como puesto de operación 3D
 
