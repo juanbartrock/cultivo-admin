@@ -89,6 +89,11 @@ export const notificationService = {
    * Elimina todas las notificaciones leídas
    */
   deleteAllRead: () => api.post<{ deleted: number }>('/notifications/delete-read', {}),
+
+  /**
+   * Elimina todas las notificaciones, leídas o no
+   */
+  deleteAll: () => api.post<{ deleted: number }>('/notifications/delete-all', {}),
 };
 
 export default notificationService;

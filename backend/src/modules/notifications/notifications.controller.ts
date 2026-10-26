@@ -76,6 +76,11 @@ export class NotificationsController {
     return this.notificationsService.deleteAllRead();
   }
 
+  @Post('delete-all')
+  deleteAll() {
+    return this.notificationsService.deleteAll();
+  }
+
   @Delete('cleanup')
   deleteOld(@Query() query: CleanupNotificationsQueryDto) {
     return this.notificationsService.deleteOld(query.daysOld ?? 30);

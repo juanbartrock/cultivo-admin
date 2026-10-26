@@ -227,6 +227,14 @@ export class NotificationsService {
   }
 
   /**
+   * Elimina todas las notificaciones, leídas o no
+   */
+  async deleteAll() {
+    const result = await this.prisma.notification.deleteMany();
+    return { deleted: result.count };
+  }
+
+  /**
    * Elimina notificaciones antiguas (más de X días)
    */
   async deleteOld(daysOld = 30) {

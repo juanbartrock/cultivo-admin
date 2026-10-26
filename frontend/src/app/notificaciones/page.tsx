@@ -23,10 +23,12 @@ import {
   Search,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
 import { notificationService, NotificationSummary } from '@/services/notificationService';
 import { Notification, NotificationType, NotificationPriority } from '@/types';
 import { useToast } from '@/contexts/ToastContext';
-import { PageHeader } from '@/components/shell';
+import { useConfirm } from '@/contexts/DialogContext';
+import { PageHeader, unreadCountKey } from '@/components/shell';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -58,6 +60,8 @@ const ITEMS_PER_PAGE = 20;
 
 export default function NotificacionesPage() {
   const { toast } = useToast();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
   
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [summary, setSummary] = useState<NotificationSummary | null>(null);
@@ -234,6 +238,32 @@ export default function NotificacionesPage() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    const total = summary?.total ?? totalCount;
+    const shouldDelete = await confirm({
+      title: 'Eliminar todas las notificaciones',
+      message: `Se eliminan las ${total} notificaciones, leídas y sin leer, de todas las páginas. Esta acción no se puede deshacer.`,
+      variant: 'danger',
+      confirmText: 'Eliminar todas',
+    });
+    if (!shouldDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await notificationService.deleteAll();
+      setSelectedIds(new Set());
+      setCurrentPage(0);
+      queryClient.invalidateQueries({ queryKey: unreadCountKey });
+      toast.success(`${result.deleted} notificaciones eliminadas`);
+      loadNotifications();
+    } catch (error) {
+      console.error('Error deleting all notifications:', error);
+      toast.error('Error al eliminar todas las notificaciones');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
       await notificationService.delete(id);
@@ -385,6 +415,17 @@ export default function NotificacionesPage() {
                 >
                   <CheckCheck className="w-4 h-4" />
                   <span className="hidden sm:inline">Marcar todas leídas</span>
+                </button>
+              )}
+
+              {summary && summary.total > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  disabled={isDeleting}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Eliminar todas</span>
                 </button>
               )}
             </div>

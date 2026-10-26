@@ -8,6 +8,20 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:claude][date:2026-10-26][action:modified] -->
+## 2026-10-26 — Notificaciones: "Eliminar todas"
+
+`/notificaciones` solo borraba por selección dentro de la página (20 por página) o las leídas.
+Endpoint nuevo `POST /notifications/delete-all` (`NotificationsService.deleteAll`, devuelve
+`{ deleted }`), mismo nivel de acceso que `delete-read`. En la barra de acciones, botón
+"Eliminar todas" visible con `summary.total > 0`, con `ConfirmDialog` (`useConfirm`, variante
+`danger`) que dice cuántas se van; al terminar invalida el contador del shell (`unreadCountKey`).
+
+**Dato (producción), pedido de Juan.** Se borraron todas las notificaciones desde el botón nuevo,
+en el QA con Playwright: 348 (339 `WEATHER` leídas, del 2026-02-28 al 2026-07-16, y 9
+`AUTOMATION` de hoy, 5 sin leer). `POST /api/notifications/delete-all` → 201 `{"deleted":348}`;
+`notification.count()` posterior = 0. El camino de cancelar se probó antes y no borró nada.
+
+<!-- [agent:claude][date:2026-10-26][action:modified] -->
 ## 2026-10-26 — Tests de `grow` en verde
 
 `grow.service.spec.ts` fallaba en sus 2 tests desde `f9d9d49` (2026-02-16): `updatePlant` llama a
