@@ -108,7 +108,7 @@ export function SceneInspector({
               Registrar <ArrowUpRight className="h-4 w-4" />
             </button>
           </div>
-          <PlantCard plant={plant} isSelected onRegisterEvent={onRegisterEvent} onStageChange={onPlantStageChange} />
+          <PlantCard key={plant.id} plant={plant} isSelected onRegisterEvent={onRegisterEvent} onStageChange={onPlantStageChange} />
           <PlantActivity plant={plant} />
         </>
       ) : device ? (

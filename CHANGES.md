@@ -7,6 +7,29 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:claude][date:2026-10-27][action:modified] -->
+## 2026-10-27 — Vista 3D: las plantas se ubican por zona
+
+`resolvePlantSlots` (`frontend/src/features/carpa-viva/lib/scene-config.ts`) ubicaba cada planta
+en el slot de su genética. Con dos plantas de la misma genética (049/067 Tropicana, 043/061 Guaraní)
+el par salía del orden de `section.plants`, que `getSectionDashboard` trae sin `orderBy`: editar una
+planta podía cruzarlas. Ahora manda la zona cargada (`Plant.zones`, la de mayor cobertura): el
+orden de `PLANT_SLOTS` es la grilla de zonas mirando desde la puerta, 1-2-3 fondo y 4-5-6 frente.
+Sin zona, o con la zona ya ocupada, sigue el criterio anterior por genética.
+
+**Ficha de la planta en el inspector.** `PlantCard` copia la planta a estado local
+(`useState(plant)`) y en `SceneInspector` se montaba sin `key`: al pasar de una planta a otra, la
+ficha seguía mostrando la primera, y sus botones "Evento" y "Etapa" actuaban sobre ella (elegir
+049 después de 045 registraba en 045). Se monta con `key={plant.id}`.
+
+**Datos (producción), pedido de Juan.**
+- Zonas de las 6 plantas del ciclo Octubre 2026, copiadas de la ubicación que ya mostraba la 3D y
+  que Juan confirmó como la real: 049→1, 067→2, 043→3, 061→4, 045→5, 068→6 (`plant_zones`,
+  cobertura 100). Con eso el PPFD por zona es el PPFD de cada planta.
+- Automatización "Foto diaria" en Floración: SCHEDULED, `SPECIFIC_TIMES` `09:30`, `CAPTURE_PHOTO`
+  con la Tapo, asociada a las 6 plantas (registra un evento FOTO por planta). La captura pasa por
+  `camara-relay` y la PC de casa: con la PC apagada, no hay foto.
+
 <!-- [agent:claude][date:2026-10-26][action:modified] -->
 ## 2026-10-26 — Notificaciones: "Eliminar todas"
 

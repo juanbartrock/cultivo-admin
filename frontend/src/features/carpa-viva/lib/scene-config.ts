@@ -40,24 +40,40 @@ function normalize(value: string) {
     .trim();
 }
 
+function mainZone(plant: Plant) {
+  const [zone] = [...(plant.zones ?? [])].sort((a, b) => b.coverage - a.coverage);
+  return zone?.zone;
+}
+
+// PLANT_SLOTS sigue la grilla de zonas mirando desde la puerta: 1-2-3 fondo, 4-5-6 frente.
+// La zona cargada manda; sin zona, la planta cae en el slot de su genética.
 export function resolvePlantSlots(plants: Plant[]) {
-  const remaining = [...plants];
+  const remaining: Plant[] = [];
   const assignments: Array<{ plant: Plant; slot: PlantSlot }> = [];
+  const taken = new Set<string>();
+  const assign = (plant: Plant, slot: PlantSlot) => {
+    assignments.push({ plant, slot });
+    taken.add(slot.key);
+  };
+
+  for (const plant of plants) {
+    const zone = mainZone(plant);
+    const slot = zone ? PLANT_SLOTS[zone - 1] : undefined;
+    if (slot && !taken.has(slot.key)) assign(plant, slot);
+    else remaining.push(plant);
+  }
 
   for (const slot of PLANT_SLOTS) {
+    if (taken.has(slot.key)) continue;
     const index = remaining.findIndex((plant) =>
       normalize(plant.strain?.name ?? '').includes(slot.strain),
     );
-    if (index >= 0) {
-      assignments.push({ plant: remaining.splice(index, 1)[0], slot });
-    }
+    if (index >= 0) assign(remaining.splice(index, 1)[0], slot);
   }
 
   for (const slot of PLANT_SLOTS) {
     if (!remaining.length) break;
-    if (!assignments.some((assignment) => assignment.slot.key === slot.key)) {
-      assignments.push({ plant: remaining.shift()!, slot });
-    }
+    if (!taken.has(slot.key)) assign(remaining.shift()!, slot);
   }
 
   return assignments;
