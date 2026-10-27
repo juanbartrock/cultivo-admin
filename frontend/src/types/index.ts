@@ -191,7 +191,22 @@ export interface DeviceStatus {
   humidity?: number;
   /** Las lecturas del dispositivo están pausadas: no se consultó al conector. */
   readingsPaused?: boolean;
+  /** Retención manual vigente: automatizaciones y jobs no tocan el dispositivo hasta `holdUntil`. */
+  manualHold?: ManualHoldState;
   [key: string]: unknown;
+}
+
+/** Retención manual de un dispositivo (`GET /devices/:id/manual-hold`). */
+export interface ManualHoldState {
+  /** Dispositivo físico que guarda la retención: el controlador si es un VIRTUAL. */
+  deviceId: string;
+  active: boolean;
+  holdUntil: string | null;
+  remainingMinutes: number;
+  action: 'on' | 'off' | null;
+  setAt: string | null;
+  /** Minutos que dura la próxima retención manual. */
+  holdMinutes: number;
 }
 
 /** Interruptor general de lecturas: fila única de `readings_settings`. */

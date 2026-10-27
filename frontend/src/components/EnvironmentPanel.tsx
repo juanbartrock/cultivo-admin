@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { DeviceStatus, Device, RangeStage, StageRange } from '@/types';
 import { useDeviceControl } from '@/hooks/useDeviceStatus';
 import { DeviceReadingsSwitch } from '@/features/lecturas';
+import { ManualHoldBadge, controlToastMessage, useManualHold } from '@/features/retencion';
 import { 
   Thermometer, 
   Droplets, 
@@ -190,6 +191,7 @@ export default function EnvironmentPanel({
   const { toast } = useToast();
   // Hook de control (solo se usa si hay device)
   const { toggle, controlling } = useDeviceControl(device?.id || '');
+  const hold = useManualHold(device, status, onRefresh);
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
   const [recordHistory, setRecordHistory] = useState<boolean>(device?.recordHistory ?? false);
   const [togglingHistory, setTogglingHistory] = useState(false);
@@ -246,14 +248,16 @@ export default function EnvironmentPanel({
     
     setOptimisticState(!isOn);
     
-    const success = await toggle(isOn);
+    const outcome = await toggle(isOn);
     
-    if (success) {
+    if (outcome.success) {
+      hold.applyControl(outcome.manualHold);
+      toast.success(controlToastMessage(device.name, outcome.action, outcome.manualHold));
       onRefresh?.();
     } else {
       setOptimisticState(null);
     }
-  }, [controlling, isOnline, device, isOn, toggle, onRefresh]);
+  }, [controlling, isOnline, device, isOn, toggle, onRefresh, hold, toast]);
 
   const handleToggleRecordHistory = useCallback(async () => {
     if (togglingHistory || !device) return;
@@ -562,6 +566,7 @@ export default function EnvironmentPanel({
               )}
             </button>
           </div>
+          <ManualHoldBadge hold={hold} className="mt-3" />
         </div>
       )}
 

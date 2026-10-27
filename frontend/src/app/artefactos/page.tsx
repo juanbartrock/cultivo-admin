@@ -21,7 +21,6 @@ import {
   Lightbulb,
   Fan,
   Video,
-  Power,
   Search,
   Check,
   X,
@@ -43,6 +42,7 @@ import {
 } from '@/components/ui/select';
 import { PageHeader } from '@/components/shell';
 import { DeviceReadingsSwitch, SensorReadingsSwitch } from '@/features/lecturas';
+import { DeviceManualControl } from '@/features/retencion';
 import { motion, AnimatePresence } from 'framer-motion';
 import { deviceService } from '@/services/deviceService';
 import { sectionService } from '@/services/locationService';
@@ -107,7 +107,6 @@ export default function ArtefactosPage() {
   const [isCreatingVirtual, setIsCreatingVirtual] = useState(false);
 
   // Estado para control manual
-  const [controllingDevice, setControllingDevice] = useState<string | null>(null);
 
   // Estado para reasignación de dispositivos
   const [showReassignModal, setShowReassignModal] = useState(false);
@@ -317,22 +316,6 @@ export default function ArtefactosPage() {
       toast.error('Error al crear dispositivo: ' + (error as Error).message);
     } finally {
       setIsCreatingVirtual(false);
-    }
-  }
-
-  // Controlar dispositivo (on/off)
-  async function handleControl(deviceId: string, action: 'on' | 'off') {
-    setControllingDevice(deviceId);
-    try {
-      await deviceService.control(deviceId, action);
-      // Actualizar estado local (optimistic update)
-      // En un escenario real, deberías refrescar el estado del dispositivo
-      toast.success(`Dispositivo ${action === 'on' ? 'encendido' : 'apagado'}`);
-    } catch (error) {
-      console.error('Error controlando dispositivo:', error);
-      toast.error('Error al controlar: ' + (error as Error).message);
-    } finally {
-      setControllingDevice(null);
     }
   }
 
@@ -631,22 +614,7 @@ export default function ArtefactosPage() {
                     {/* Control */}
                     <div className="flex items-center gap-2">
                       {device.type !== 'SENSOR' && device.type !== 'CAMARA' ? (
-                        <>
-                          <button
-                            onClick={() => handleControl(device.id, 'on')}
-                            disabled={controllingDevice === device.id}
-                            className="flex items-center gap-1 px-2 py-1 text-xs text-cultivo-green-400 hover:bg-cultivo-green-500/10 rounded transition-colors disabled:opacity-50"
-                          >
-                            <Power className="w-3 h-3" /> ON
-                          </button>
-                          <button
-                            onClick={() => handleControl(device.id, 'off')}
-                            disabled={controllingDevice === device.id}
-                            className="flex items-center gap-1 px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-500/10 rounded transition-colors disabled:opacity-50"
-                          >
-                            <Power className="w-3 h-3" /> OFF
-                          </button>
-                        </>
+                        <DeviceManualControl device={device} />
                       ) : <span className="text-zinc-500">-</span>}
                     </div>
 

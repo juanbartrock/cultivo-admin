@@ -96,6 +96,20 @@ const executionStatusConfig: Record<ExecutionStatus, { label: string; color: str
 };
 
 /**
+ * Ejecución en la que no se tocó ningún dispositivo: todas las acciones se saltearon por
+ * retención manual o por una automatización de prioridad mayor. El backend la deja CANCELLED.
+ */
+function isSkippedExecution(execution: { status: ExecutionStatus; executedActions?: unknown }): boolean {
+  const actions = execution.executedActions;
+  return (
+    execution.status === 'CANCELLED' &&
+    Array.isArray(actions) &&
+    actions.length > 0 &&
+    actions.every((action) => (action as { skipped?: boolean }).skipped === true)
+  );
+}
+
+/**
  * El intervalo de evaluación se edita como texto y se valida al guardar: con `parseInt(v) || 5`
  * en el onChange, borrar el número para escribir otro lo devolvía a 5.
  */
@@ -727,7 +741,9 @@ export default function AutomatizacionesPage() {
                       {executions
                         .slice((executionsPage - 1) * executionsPerPage, executionsPage * executionsPerPage)
                         .map((execution) => {
-                          const statusInfo = executionStatusConfig[execution.status];
+                          const statusInfo = isSkippedExecution(execution)
+                            ? { label: 'Salteada', color: 'text-info' }
+                            : executionStatusConfig[execution.status];
                           return (
                             <div
                               key={execution.id}
@@ -748,6 +764,9 @@ export default function AutomatizacionesPage() {
                                   <p className="text-xs text-zinc-500">
                                     {new Date(execution.startedAt).toLocaleString('es-AR')}
                                   </p>
+                                  {execution.errorMessage && (
+                                    <p className="text-xs text-zinc-400">{execution.errorMessage}</p>
+                                  )}
                                 </div>
                               </div>
                               {execution.effectivenessChecks && execution.effectivenessChecks.length > 0 && (

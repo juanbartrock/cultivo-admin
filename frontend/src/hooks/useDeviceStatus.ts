@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { deviceService } from '@/services/deviceService';
-import { Device, DeviceStatus } from '@/types';
+import { Device, DeviceStatus, ManualHoldState } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { isReadingPaused, useReadingsSettings } from '@/features/lecturas';
@@ -284,6 +284,13 @@ export function useDevicesStatus(
   return { statuses, getStatus, lastUpdate, loading, error, refresh: fetchAllStatuses };
 }
 
+/** Resultado de un control desde la app; trae la retención manual que dejó abierta. */
+export interface DeviceControlOutcome {
+  success: boolean;
+  action: 'on' | 'off';
+  manualHold?: ManualHoldState;
+}
+
 /**
  * Hook para controlar un dispositivo (on/off)
  */
@@ -292,16 +299,16 @@ export function useDeviceControl(deviceId: string) {
   const [error, setError] = useState<string | null>(null);
 
   const control = useCallback(
-    async (action: 'on' | 'off') => {
+    async (action: 'on' | 'off'): Promise<DeviceControlOutcome> => {
       setControlling(true);
       setError(null);
 
       try {
         const result = await deviceService.control(deviceId, action);
-        return result.result.success;
+        return { success: result.result.success, action, manualHold: result.manualHold };
       } catch (err) {
         setError((err as Error).message);
-        return false;
+        return { success: false, action };
       } finally {
         setControlling(false);
       }

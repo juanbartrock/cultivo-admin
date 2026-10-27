@@ -12,6 +12,7 @@ import {
   Connector,
   DeviceType,
   DeviceStatus,
+  ManualHoldState,
   AssignDeviceDto,
   // Legacy types para compatibilidad temporal
   DispositivoConector,
@@ -29,10 +30,12 @@ export interface DeviceScanResult {
   timestamp: string;
 }
 
-interface DeviceControlResponse {
+export interface DeviceControlResponse {
   device: Device;
   action: string;
   result: { success: boolean };
+  /** El control desde la app deja al dispositivo en retención manual. */
+  manualHold?: ManualHoldState;
 }
 
 interface DeviceStatusResponse {
@@ -122,6 +125,16 @@ export const deviceService = {
    */
   control: (id: string, action: 'on' | 'off') =>
     api.post<DeviceControlResponse>(`/devices/${id}/control`, { action }),
+
+  /**
+   * Retención manual: mientras dura, automatizaciones y jobs no tocan el dispositivo
+   */
+  getManualHold: (id: string) => api.get<ManualHoldState>(`/devices/${id}/manual-hold`),
+
+  /**
+   * Libera la retención manual: las automatizaciones vuelven a mandar
+   */
+  releaseManualHold: (id: string) => api.delete<ManualHoldState>(`/devices/${id}/manual-hold`),
 
   /**
    * Actualiza un dispositivo

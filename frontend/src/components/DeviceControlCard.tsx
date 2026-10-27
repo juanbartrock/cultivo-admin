@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Device, DeviceType, DeviceStatus } from '@/types';
 import { useDeviceControl } from '@/hooks/useDeviceStatus';
 import { DeviceReadingsSwitch } from '@/features/lecturas';
+import { ManualHoldBadge, controlToastMessage, useManualHold } from '@/features/retencion';
 import CameraViewer from './CameraViewer';
 import { 
   Thermometer, 
@@ -122,6 +123,7 @@ export default function DeviceControlCard({
   const colors = typeColors[device.type] || { icon: 'text-cultivo-green-400', bg: 'bg-cultivo-green-500/10', border: 'border-cultivo-green-500/30' };
   
   const { control, toggle, controlling } = useDeviceControl(device.id);
+  const hold = useManualHold(device, status, onStatusChange);
   const [optimisticState, setOptimisticState] = useState<boolean | null>(null);
   const [recordHistory, setRecordHistory] = useState<boolean>(device.recordHistory ?? false);
   const [togglingHistory, setTogglingHistory] = useState(false);
@@ -158,16 +160,18 @@ export default function DeviceControlCard({
     // Optimistic update
     setOptimisticState(!isOn);
     
-    const success = await toggle(isOn);
+    const outcome = await toggle(isOn);
     
-    if (success) {
+    if (outcome.success) {
+      hold.applyControl(outcome.manualHold);
+      toast.success(controlToastMessage(device.name, outcome.action, outcome.manualHold));
       // Notificar para refrescar
       onStatusChange?.();
     } else {
       // Revertir si falla
       setOptimisticState(null);
     }
-  }, [controlling, isOnline, isOn, toggle, onStatusChange]);
+  }, [controlling, isOnline, isOn, toggle, onStatusChange, hold, toast, device.name]);
 
   /**
    * Encender o apagar sin conocer el estado. Pausar las lecturas corta la consulta al conector;
@@ -176,10 +180,13 @@ export default function DeviceControlCard({
   const handleControl = useCallback(
     async (action: 'on' | 'off') => {
       if (controlling) return;
-      const success = await control(action);
-      if (success) onStatusChange?.();
+      const outcome = await control(action);
+      if (!outcome.success) return;
+      hold.applyControl(outcome.manualHold);
+      toast.success(controlToastMessage(device.name, action, outcome.manualHold));
+      onStatusChange?.();
     },
-    [control, controlling, onStatusChange]
+    [control, controlling, onStatusChange, hold, toast, device.name]
   );
 
   const handleToggleRecordHistory = useCallback(async () => {
@@ -475,6 +482,9 @@ export default function DeviceControlCard({
           )}
         </button>
       )}
+
+      {/* Retención manual: automatizaciones y jobs no tocan el dispositivo hasta que vence o se libera */}
+      {isControllable && <ManualHoldBadge hold={hold} className="mt-2" />}
 
       {/* Camera viewer */}
       {device.type === 'CAMARA' && (
