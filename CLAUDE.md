@@ -196,6 +196,34 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
     humidificador).
   - **Reactivar cuando enchufen los sensores**: prender el interruptor general en la home o en
     `/artefactos`, y el switch de cada aparato en su fila de `/artefactos`.
+- **Precedencia de controles automáticos** (regla de Juan, 2026-10-27): antes de que una acción
+  TURN_ON/TURN_OFF/TOGGLE/TRIGGER_IRRIGATION o un job DEVICE_ON/DEVICE_OFF/DEVICE_TOGGLE cambie un
+  dispositivo, `AutomationsService.checkAutomatedControl()` decide en este orden:
+  1. **Retención manual**: `POST /devices/:id/control` (solo ese endpoint, el de la app) deja al
+     relé físico retenido `MANUAL_HOLD_MINUTES` (env del backend, default 60) o
+     `metadata.manualHoldMinutes` del dispositivo (`0` la desactiva). Vive en
+     `devices.metadata.manualHold` (`holdUntil`, `action`, `minutes`), sin columna; para un VIRTUAL
+     se guarda en su controlador. `GET /devices/:id/manual-hold` la consulta,
+     `DELETE /devices/:id/manual-hold` la libera y `GET /devices/:id/status` la trae en
+     `status.manualHold` (`holdUntil`, `remainingMinutes`). `PUT /devices/:id` con `metadata` la
+     conserva.
+  2. **Prioridad**: gana una automatización ACTIVE de `priority` mayor, CONDITION/HYBRID con
+     condiciones, dentro de su horario, con una acción del estado contrario sobre el mismo relé y
+     su condición cumplida en ese momento. Por eso el apagado a los 5 min de "Renovación de aire"
+     (prioridad 0) no corre con "Extractor por humedad: prender" (prioridad 10) cumplida, y su
+     encendido tampoco corre con "Extractor por humedad: apagar" cumplida.
+  - **Cómo queda registrado**: no hay estado SKIPPED. La ejecución con todo salteado queda
+    `CANCELLED`, `errorMessage` "Salteada: <motivo>" y `executedActions[].skipped/skipReason`; en
+    `/automatizaciones` se ve como "Salteada". El job queda `CANCELLED`, `lastError`
+    "Salteado: <motivo>" y `payload.skipped`, sin reintento. En logs: `salteado`.
+  - **UI**: `frontend/src/features/retencion/` (hook `useManualHold`, `ManualHoldBadge` con cuenta
+    regresiva y "Liberar", `DeviceManualControl` para las filas de `/artefactos`). Se ve en
+    `DeviceControlCard` (carpa y vista 3D), `EnvironmentPanel` y `/artefactos`; el toast del
+    control dice "<aparato> encendido · retenido N min".
+  - Código: `backend/src/modules/devices/manual-hold.ts`, `DevicesService` (sección RETENCIÓN
+    MANUAL), `AutomationsService.checkAutomatedControl`, `JobProcessorService.markSkipped`. Tests:
+    `devices/manual-hold.spec.ts`, `automations/control-precedence.spec.ts`,
+    `automations/job-processor.service.spec.ts`.
 
 ---
 

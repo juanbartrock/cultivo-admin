@@ -8,6 +8,29 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 # CHANGES.md — cultivo-admin
 
 <!-- [agent:claude][date:2026-10-27][action:modified] -->
+## 2026-10-27 — Precedencia de controles: retención manual y prioridad
+
+Juan prendió a mano `flora-extractor` y "Renovación de aire" lo apagó a los 5 min: el job
+DEVICE_OFF apagaba sin mirar nada. Regla acordada: la humedad prima sobre la renovación horaria y
+lo manual prima sobre todo durante una ventana.
+
+- **Backend.** `AutomationsService.checkAutomatedControl()` corre antes de cada acción que cambia
+  un dispositivo (automatizaciones) y de cada job DEVICE_ON/OFF/TOGGLE. Retención manual primero;
+  después, una automatización ACTIVE de prioridad mayor con su condición cumplida que pide el
+  estado contrario. Lo salteado queda `CANCELLED` con motivo (ejecución: `errorMessage` y
+  `executedActions[].skipReason`; job: `lastError` y `payload.skipped`) y en el log.
+- **Retención manual.** `POST /devices/:id/control` retiene el relé `MANUAL_HOLD_MINUTES` (default
+  60) o `metadata.manualHoldMinutes`. Endpoints `GET`/`DELETE /devices/:id/manual-hold`;
+  `GET /devices/:id/status` trae `status.manualHold`.
+- **Frontend.** `features/retencion/`: cuenta regresiva y "Liberar" en `DeviceControlCard`,
+  `EnvironmentPanel` y `/artefactos`; toast "… encendido · retenido N min"; ejecuciones
+  salteadas como "Salteada" con su motivo en `/automatizaciones`.
+- **Sin migración.** La retención vive en `devices.metadata` (JSON existente) y los saltos usan
+  `CANCELLED` de los enums actuales. Las automatizaciones existentes no se tocaron.
+- **Efecto a tener en cuenta.** Con la humedad debajo de 65 gana "Extractor por humedad: apagar"
+  y la renovación horaria no prende el extractor.
+
+<!-- [agent:claude][date:2026-10-27][action:modified] -->
 ## 2026-10-27 — Vista 3D: las plantas se ubican por zona
 
 `resolvePlantSlots` (`frontend/src/features/carpa-viva/lib/scene-config.ts`) ubicaba cada planta
