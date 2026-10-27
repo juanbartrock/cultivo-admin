@@ -22,16 +22,16 @@ export function ManualHoldBadge({ hold, compact = false, className }: ManualHold
       data-testid="manual-hold"
       className={cn(
         'flex items-center justify-between gap-2 rounded-md border border-info/30 bg-info/10 text-info',
-        compact ? 'px-2 py-1' : 'px-3 py-2',
+        compact ? 'max-w-full gap-1 px-1.5 py-0.5' : 'px-3 py-2',
         className
       )}
     >
       <span
         className="flex min-w-0 items-center gap-1.5 text-xs"
-        title={`Automatizaciones y jobs en pausa hasta ${until}`}
+        title={`Retención manual: automatizaciones y jobs en pausa hasta ${until}`}
       >
         <Hand className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        <span>{compact ? 'Manual' : 'Retención manual'}</span>
+        {compact ? <span className="sr-only">Retención manual</span> : <span>Retención manual</span>}
         <span className="font-mono tabular-nums" aria-label={`hasta ${until}`}>
           {formatCountdown(hold.remainingMs)}
         </span>
