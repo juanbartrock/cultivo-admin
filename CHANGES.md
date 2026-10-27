@@ -24,7 +24,8 @@ lo manual prima sobre todo durante una ventana.
   `GET /devices/:id/status` trae `status.manualHold`.
 - **Frontend.** `features/retencion/`: cuenta regresiva y "Liberar" en `DeviceControlCard`,
   `EnvironmentPanel` y `/artefactos`; toast "… encendido · retenido N min"; ejecuciones
-  salteadas como "Salteada" con su motivo en `/automatizaciones`.
+  salteadas como "Salteada" con su motivo en `/automatizaciones`. En la fila de `/artefactos`
+  el badge va compacto (ícono, cuenta regresiva y "Liberar") para no pisar la columna Acciones.
 - **Sin migración.** La retención vive en `devices.metadata` (JSON existente) y los saltos usan
   `CANCELLED` de los enums actuales. Las automatizaciones existentes no se tocaron.
 - **Efecto a tener en cuenta.** Con la humedad debajo de 65 gana "Extractor por humedad: apagar"
