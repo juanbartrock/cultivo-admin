@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DevicesService } from '../devices/devices.service';
+import { holdReason } from '../devices/manual-hold';
 import { JobSchedulerService } from './job-scheduler.service';
 import { PlantAnalysisService } from './plant-analysis.service';
 import { 
@@ -28,6 +29,31 @@ import {
  */
 export function clockMinutesSince(last: Date, now: Date): number {
   return Math.floor(now.getTime() / 60_000) - Math.floor(last.getTime() / 60_000);
+}
+
+/** Por qué un control automático no se ejecutó. */
+export type ControlSkipKind = 'MANUAL_HOLD' | 'PRIORITY';
+
+export interface ControlBlock {
+  allowed: false;
+  kind: ControlSkipKind;
+  reason: string;
+  byAutomationId?: string;
+  holdUntil?: string | null;
+}
+
+export type ControlVerdict = { allowed: true } | ControlBlock;
+
+/** Resultado de una acción dentro de una ejecución; `skipped` la distingue de una falla. */
+export interface ActionResult {
+  actionId: string;
+  deviceId?: string;
+  actionType: ActionType;
+  success: boolean;
+  error?: string;
+  skipped?: boolean;
+  skipKind?: ControlSkipKind;
+  skipReason?: string;
 }
 
 @Injectable()
@@ -565,18 +591,91 @@ export class AutomationsService {
   }
 
   /**
+   * Decide si un control automático (acción de automatización o job) puede cambiar el estado de
+   * un dispositivo. Precedencia acordada con Juan el 2026-10-27:
+   * 1. Lo manual prima sobre todo mientras dura la retención (`devices.metadata.manualHold`).
+   * 2. Una automatización ACTIVE de prioridad mayor, sobre el mismo dispositivo, que pide el
+   *    estado contrario y tiene su condición cumplida en este momento, gana. Cuentan solo las
+   *    CONDITION/HYBRID con condiciones: una SCHEDULED no tiene condición que se cumpla.
+   */
+  async checkAutomatedControl(params: {
+    deviceId: string;
+    action: 'on' | 'off';
+    automationId?: string | null;
+    priority?: number;
+  }): Promise<ControlVerdict> {
+    const { deviceIds, manualHold } = await this.devicesService.getControlScope(params.deviceId);
+
+    if (manualHold.active) {
+      return {
+        allowed: false,
+        kind: 'MANUAL_HOLD',
+        reason: holdReason(manualHold),
+        holdUntil: manualHold.holdUntil,
+      };
+    }
+
+    const priority = params.priority ?? (await this.priorityOf(params.automationId));
+    const contrary =
+      params.action === 'on'
+        ? [ActionType.TURN_OFF]
+        : [ActionType.TURN_ON, ActionType.TRIGGER_IRRIGATION];
+
+    const candidates = await this.prisma.automation.findMany({
+      where: {
+        status: AutomationStatus.ACTIVE,
+        priority: { gt: priority },
+        triggerType: { in: [TriggerType.CONDITION, TriggerType.HYBRID] },
+        conditions: { some: {} },
+        actions: { some: { deviceId: { in: deviceIds }, actionType: { in: contrary } } },
+        ...(params.automationId && { id: { not: params.automationId } }),
+      },
+      select: {
+        id: true,
+        name: true,
+        priority: true,
+        daysOfWeek: true,
+        startTime: true,
+        endTime: true,
+      },
+      orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
+    });
+
+    for (const candidate of candidates) {
+      if (!this.isWithinSchedule(candidate)) continue;
+      const { allMet } = await this.evaluateConditions(candidate.id);
+      if (!allMet) continue;
+      return {
+        allowed: false,
+        kind: 'PRIORITY',
+        reason:
+          `"${candidate.name}" (prioridad ${candidate.priority}) pide ` +
+          `${params.action === 'on' ? 'apagado' : 'encendido'} y su condición se cumple`,
+        byAutomationId: candidate.id,
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  private async priorityOf(automationId?: string | null): Promise<number> {
+    if (!automationId) return 0;
+    const automation = await this.prisma.automation.findUnique({
+      where: { id: automationId },
+      select: { priority: true },
+    });
+    return automation?.priority ?? 0;
+  }
+
+  /**
    * Ejecuta las acciones de una automatización
    */
   async executeActions(automationId: string, skipConditions = false, forceActionType?: 'on' | 'off'): Promise<{
     executionId: string;
     success: boolean;
-    results: Array<{
-      actionId: string;
-      deviceId?: string;
-      actionType: ActionType;
-      success: boolean;
-      error?: string;
-    }>;
+    /** Todas las acciones se saltearon por retención manual o prioridad: no se tocó nada. */
+    skipped?: boolean;
+    results: ActionResult[];
   }> {
     const automation = await this.findById(automationId);
 
@@ -588,13 +687,22 @@ export class AutomationsService {
       },
     });
 
-    const actionResults: Array<{
-      actionId: string;
-      deviceId?: string;
-      actionType: ActionType;
-      success: boolean;
-      error?: string;
-    }> = [];
+    const actionResults: ActionResult[] = [];
+
+    /** Consulta la precedencia antes de cambiar un dispositivo; devuelve el bloqueo si lo hay. */
+    const blockedBy = async (deviceId: string, desired: 'on' | 'off'): Promise<ControlBlock | null> => {
+      const verdict = await this.checkAutomatedControl({
+        deviceId,
+        action: desired,
+        automationId: automation.id,
+        priority: automation.priority,
+      });
+      if (verdict.allowed) return null;
+      this.logger.log(
+        `Automatización "${automation.name}": ${desired} de ${deviceId} salteado. ${verdict.reason}`,
+      );
+      return verdict;
+    };
 
     // Verificar condiciones primero (si no se omiten)
     let conditionResults = null;
@@ -630,6 +738,7 @@ export class AutomationsService {
         }
 
         let success = false;
+        let skipped: ControlBlock | null = null;
         let effectiveActionType = action.actionType;
 
         // Si se fuerza un tipo de acción (para TIME_RANGE), sobreescribir
@@ -640,6 +749,8 @@ export class AutomationsService {
         switch (effectiveActionType) {
           case ActionType.TURN_ON:
             if (!action.deviceId) throw new Error('deviceId is required for TURN_ON');
+            skipped = await blockedBy(action.deviceId, 'on');
+            if (skipped) break;
             await this.devicesService.controlDevice(action.deviceId, 'on');
             success = true;
             
@@ -659,6 +770,8 @@ export class AutomationsService {
             break;
           case ActionType.TURN_OFF:
             if (!action.deviceId) throw new Error('deviceId is required for TURN_OFF');
+            skipped = await blockedBy(action.deviceId, 'off');
+            if (skipped) break;
             await this.devicesService.controlDevice(action.deviceId, 'off');
             success = true;
             break;
@@ -666,6 +779,8 @@ export class AutomationsService {
             if (!action.deviceId) throw new Error('deviceId is required for TOGGLE');
             const { status } = await this.devicesService.getDeviceStatus(action.deviceId);
             const newState = status.state === 'on' ? 'off' : 'on';
+            skipped = await blockedBy(action.deviceId, newState);
+            if (skipped) break;
             await this.devicesService.controlDevice(action.deviceId, newState);
             success = true;
             break;
@@ -711,6 +826,8 @@ export class AutomationsService {
             break;
           case ActionType.TRIGGER_IRRIGATION:
             if (!action.deviceId) throw new Error('deviceId is required for TRIGGER_IRRIGATION');
+            skipped = await blockedBy(action.deviceId, 'on');
+            if (skipped) break;
             await this.devicesService.controlDevice(action.deviceId, 'on');
             success = true;
 
@@ -763,6 +880,7 @@ export class AutomationsService {
           deviceId: action.deviceId || undefined,
           actionType: effectiveActionType,
           success,
+          ...(skipped && { skipped: true, skipKind: skipped.kind, skipReason: skipped.reason }),
         });
       } catch (error) {
         actionResults.push({
@@ -775,17 +893,28 @@ export class AutomationsService {
       }
     }
 
-    const allSuccessful = actionResults.every(r => r.success);
+    // Una acción salteada no es una falla: se registra con su motivo y la ejecución queda
+    // CANCELLED si no se tocó nada (no hay un estado SKIPPED en el enum y no se migra por esto).
+    const allSuccessful = actionResults.every(r => r.success || r.skipped);
+    const skippedResults = actionResults.filter(r => r.skipped);
+    const allSkipped = actionResults.length > 0 && skippedResults.length === actionResults.length;
+    const skipMessage = skippedResults.length
+      ? `Salteada: ${[...new Set(skippedResults.map(r => r.skipReason))].join('; ')}`
+      : null;
 
     // Actualizar registro de ejecución
     await this.prisma.automationExecution.update({
       where: { id: execution.id },
       data: {
-        status: allSuccessful ? ExecutionStatus.COMPLETED : ExecutionStatus.FAILED,
+        status: !allSuccessful
+          ? ExecutionStatus.FAILED
+          : allSkipped
+            ? ExecutionStatus.CANCELLED
+            : ExecutionStatus.COMPLETED,
         endedAt: new Date(),
         triggeredConditions: conditionResults?.results as unknown as Prisma.InputJsonValue,
         executedActions: actionResults as unknown as Prisma.InputJsonValue,
-        errorMessage: allSuccessful ? null : 'Some actions failed',
+        errorMessage: allSuccessful ? skipMessage : 'Some actions failed',
       },
     });
 
@@ -798,6 +927,7 @@ export class AutomationsService {
     return {
       executionId: execution.id,
       success: allSuccessful,
+      skipped: allSkipped,
       results: actionResults,
     };
   }

@@ -162,7 +162,9 @@ export class DevicesController {
   @Post(':id/control')
   @ApiOperation({
     summary: 'Controlar un dispositivo (encender/apagar)',
-    description: 'Envía comando al microservicio correspondiente',
+    description:
+      'Envía comando al microservicio correspondiente y deja al dispositivo en retención manual ' +
+      '(MANUAL_HOLD_MINUTES o metadata.manualHoldMinutes, default 60)',
   })
   @ApiResponse({ status: 200, description: 'Comando ejecutado' })
   @ApiResponse({ status: 404, description: 'Dispositivo no encontrado' })
@@ -170,7 +172,28 @@ export class DevicesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() controlDto: ControlDeviceDto,
   ) {
-    return this.devicesService.controlDevice(id, controlDto.action);
+    // Este endpoint es el control a mano desde la app: abre la retención manual. Automatizaciones
+    // y jobs llaman al servicio directo, sin pasar por acá.
+    return this.devicesService.controlDevice(id, controlDto.action, { source: 'manual' });
+  }
+
+  @Get(':id/manual-hold')
+  @ApiOperation({
+    summary: 'Retención manual del dispositivo',
+    description: 'Mientras está activa, automatizaciones y jobs no tocan el dispositivo',
+  })
+  @ApiResponse({ status: 200, description: 'Estado de la retención' })
+  @ApiResponse({ status: 404, description: 'Dispositivo no encontrado' })
+  async getManualHold(@Param('id', ParseUUIDPipe) id: string) {
+    return this.devicesService.getManualHold(id);
+  }
+
+  @Delete(':id/manual-hold')
+  @ApiOperation({ summary: 'Liberar la retención manual del dispositivo' })
+  @ApiResponse({ status: 200, description: 'Retención liberada' })
+  @ApiResponse({ status: 404, description: 'Dispositivo no encontrado' })
+  async releaseManualHold(@Param('id', ParseUUIDPipe) id: string) {
+    return this.devicesService.releaseManualHold(id);
   }
 
   @Put(':id')

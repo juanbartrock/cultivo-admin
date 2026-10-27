@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DevicesService } from '../devices/devices.service';
+import { AutomationsService, ControlBlock } from './automations.service';
 import { JobStatus, JobType, ScheduledJob, Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
@@ -16,6 +17,7 @@ export class JobProcessorService {
   constructor(
     private prisma: PrismaService,
     private devicesService: DevicesService,
+    private automationsService: AutomationsService,
   ) {
     this.logger.log(`JobProcessor initialized with workerId: ${this.workerId}`);
   }
@@ -120,7 +122,11 @@ export class JobProcessorService {
     this.logger.debug(`Processing job ${job.id}: ${job.type} for device ${job.deviceId}`);
 
     try {
-      await this.executeJob(job);
+      const skipped = await this.executeJob(job);
+      if (skipped) {
+        await this.markSkipped(job, skipped);
+        return;
+      }
       await this.markCompleted(job.id);
       this.logger.log(`Job ${job.id} completed successfully`);
     } catch (error) {
@@ -129,31 +135,76 @@ export class JobProcessorService {
   }
 
   /**
-   * Ejecuta la acción del job según su tipo
+   * Ejecuta la acción del job según su tipo. Antes de cambiar un dispositivo consulta la
+   * precedencia (retención manual y automatizaciones de prioridad mayor); si gana otra cosa,
+   * devuelve el bloqueo y no toca nada.
    */
-  private async executeJob(job: ScheduledJob) {
+  private async executeJob(job: ScheduledJob): Promise<ControlBlock | null> {
     switch (job.type) {
       case JobType.DEVICE_ON:
-        await this.devicesService.controlDevice(job.deviceId, 'on');
-        break;
+        return this.controlUnlessBlocked(job, 'on');
 
       case JobType.DEVICE_OFF:
-        await this.devicesService.controlDevice(job.deviceId, 'off');
-        break;
+        return this.controlUnlessBlocked(job, 'off');
 
-      case JobType.DEVICE_TOGGLE:
+      case JobType.DEVICE_TOGGLE: {
         const { status } = await this.devicesService.getDeviceStatus(job.deviceId);
-        const newState = status.state === 'on' ? 'off' : 'on';
-        await this.devicesService.controlDevice(job.deviceId, newState);
-        break;
+        return this.controlUnlessBlocked(job, status.state === 'on' ? 'off' : 'on');
+      }
 
       case JobType.CAPTURE_PHOTO:
         await this.devicesService.captureSnapshot(job.deviceId);
-        break;
+        return null;
 
       default:
         throw new Error(`Unknown job type: ${job.type}`);
     }
+  }
+
+  private async controlUnlessBlocked(job: ScheduledJob, action: 'on' | 'off'): Promise<ControlBlock | null> {
+    const verdict = await this.automationsService.checkAutomatedControl({
+      deviceId: job.deviceId,
+      action,
+      automationId: job.automationId,
+    });
+    if (!verdict.allowed) return verdict;
+
+    await this.devicesService.controlDevice(job.deviceId, action);
+    return null;
+  }
+
+  /**
+   * Job salteado: queda CANCELLED con el motivo en `lastError` y en `payload.skipped`. No hay
+   * estado SKIPPED en `JobStatus` y no se migra el enum por esto; no se reintenta.
+   */
+  private async markSkipped(job: ScheduledJob, block: ControlBlock) {
+    const payload =
+      job.payload && typeof job.payload === 'object' && !Array.isArray(job.payload)
+        ? (job.payload as Prisma.JsonObject)
+        : {};
+
+    await this.prisma.scheduledJob.update({
+      where: { id: job.id },
+      data: {
+        status: JobStatus.CANCELLED,
+        completedAt: new Date(),
+        lockedAt: null,
+        lockedBy: null,
+        lastError: `Salteado: ${block.reason}`,
+        payload: {
+          ...payload,
+          skipped: {
+            kind: block.kind,
+            reason: block.reason,
+            ...(block.byAutomationId && { byAutomationId: block.byAutomationId }),
+            ...(block.holdUntil && { holdUntil: block.holdUntil }),
+            at: new Date().toISOString(),
+          },
+        },
+      },
+    });
+
+    this.logger.log(`Job ${job.id} (${job.type} ${job.deviceId}) salteado: ${block.reason}`);
   }
 
   /**

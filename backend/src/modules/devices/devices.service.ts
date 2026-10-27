@@ -1,9 +1,30 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { IoTGatewayService, DeviceStatus, CameraStreamInfo } from './iot-gateway.service';
 import { CreateDeviceDto, UpdateDeviceDto, AssignDeviceDto } from './dto/device.dto';
 import { Connector, DeviceType, Prisma } from '@prisma/client';
 import { ReadingsSettingsService } from '../readings-settings/readings-settings.service';
+import {
+  ManualHoldState,
+  buildHold,
+  holdMinutesFor,
+  holdState,
+  preserveHold,
+  withHold,
+  withoutHold,
+} from './manual-hold';
+
+/** Quién pide el control. Solo `manual` (el endpoint de la app) abre una retención. */
+export type ControlSource = 'manual' | 'automation';
+
+/** Lo mínimo de un dispositivo para resolver su retención manual. */
+interface HoldableDevice {
+  id: string;
+  name: string;
+  connector: Connector;
+  metadata: Prisma.JsonValue | null;
+  controlledBy?: { id: string; name: string; connector: Connector; metadata: Prisma.JsonValue | null } | null;
+}
 
 export interface ScannedDevice {
   id: string;
@@ -23,6 +44,8 @@ export interface ScannedDevice {
 
 @Injectable()
 export class DevicesService {
+  private readonly logger = new Logger(DevicesService.name);
+
   constructor(
     private prisma: PrismaService,
     private iotGateway: IoTGatewayService,
@@ -170,7 +193,9 @@ export class DevicesService {
       ...(data.connector && { connector: data.connector }),
       ...(data.externalId && { externalId: data.externalId }),
       ...(data.type && { type: data.type }),
-      ...(data.metadata !== undefined && { metadata: data.metadata as Prisma.InputJsonValue }),
+      ...(data.metadata !== undefined && {
+        metadata: preserveHold(existing.metadata, data.metadata) as Prisma.InputJsonValue,
+      }),
       ...(data.recordHistory !== undefined && { recordHistory: data.recordHistory }),
       ...(data.readingsEnabled !== undefined && { readingsEnabled: data.readingsEnabled }),
       // Cambiar de carpa le quita la marca de principal, salvo que el mismo pedido la pida
@@ -297,7 +322,9 @@ export class DevicesService {
         section: { connect: { id: data.sectionId } },
         ...(data.name && { name: data.name }),
         ...(data.type && { type: data.type }),
-        ...(data.metadata && { metadata: data.metadata as Prisma.InputJsonValue }),
+        ...(data.metadata && {
+          metadata: preserveHold(existing.metadata, data.metadata) as Prisma.InputJsonValue,
+        }),
         ...(data.controlledByDeviceId && { controlledBy: { connect: { id: data.controlledByDeviceId } } }),
       };
 
@@ -355,13 +382,18 @@ export class DevicesService {
    */
   async getDeviceStatus(id: string): Promise<{ device: Awaited<ReturnType<typeof this.findById>>; status: DeviceStatus }> {
     const device = await this.findById(id);
+    const status = await this.readDeviceStatus(device);
+    // La retención sale de la base, no del conector: viaja también con las lecturas pausadas.
+    return { device, status: { ...status, manualHold: this.holdStateOf(device) } };
+  }
 
+  private async readDeviceStatus(device: Awaited<ReturnType<typeof this.findById>>): Promise<DeviceStatus> {
     // Kill switch de lecturas: con las lecturas pausadas no se sale a la red. Responde 200 con
     // `readingsPaused` para que la pantalla distinga una pausa de un aparato caído, y sin log:
     // un aparato desenchufado a propósito no es un error del sistema.
     const sensorsEnabled = await this.readingsSettings.sensorsEnabled();
     if (!this.readingsSettings.isDeviceReadable(device, sensorsEnabled)) {
-      return { device, status: { online: false, readingsPaused: true } };
+      return { online: false, readingsPaused: true };
     }
 
     // Si es un dispositivo VIRTUAL, obtener el estado del controlador
@@ -370,7 +402,7 @@ export class DevicesService {
         // El virtual sale a la red por su controlador: si el controlador está pausado, tampoco
         // se lo consulta. Sin esto un virtual reabre la puerta al conector que se quiso cerrar.
         if (!this.readingsSettings.isDeviceReadable(device.controlledBy, sensorsEnabled)) {
-          return { device, status: { online: false, readingsPaused: true } };
+          return { online: false, readingsPaused: true };
         }
 
         // Obtener estado del dispositivo controlador
@@ -389,28 +421,22 @@ export class DevicesService {
           rawState === 'on' ? 'on' : rawState === 'off' ? 'off' : undefined;
         
         return {
-          device,
-          status: {
-            online: controllerStatus.online,
-            state: inheritedState, // Heredar el estado ON/OFF del controlador
-            switch: switchValue, // También incluir switch por compatibilidad
-            controlledBy: {
-              id: device.controlledBy.id,
-              name: device.controlledBy.name,
-              connector: device.controlledBy.connector,
-            },
+          online: controllerStatus.online,
+          state: inheritedState, // Heredar el estado ON/OFF del controlador
+          switch: switchValue, // También incluir switch por compatibilidad
+          controlledBy: {
+            id: device.controlledBy.id,
+            name: device.controlledBy.name,
+            connector: device.controlledBy.connector,
           },
         };
       }
       
       // Si no tiene controlador asignado
       return {
-        device,
-        status: {
-          online: true,
-          state: undefined,
-          message: 'Este dispositivo virtual no tiene un controlador asignado',
-        },
+        online: true,
+        state: undefined,
+        message: 'Este dispositivo virtual no tiene un controlador asignado',
       };
     }
 
@@ -424,20 +450,14 @@ export class DevicesService {
       const streamInfo = await this.iotGateway.getCameraStreamInfo('high');
 
       return {
-        device,
-        status: {
-          ...status,
-          online: true,
-          streamInfo: streamInfo,
-          snapshotsPath: `/devices/${device.id}/snapshots`,
-        },
+        ...status,
+        online: true,
+        streamInfo: streamInfo,
+        snapshotsPath: `/devices/${device.id}/snapshots`,
       };
     }
 
-    return {
-      device,
-      status,
-    };
+    return status;
   }
 
   /**
@@ -514,10 +534,23 @@ export class DevicesService {
   /**
    * Controla un dispositivo (on/off)
    * Para dispositivos VIRTUAL, controla el dispositivo padre (controlledBy)
+   *
+   * Con `source: 'manual'` (el endpoint de la app) y el comando aceptado, el dispositivo físico
+   * queda en retención manual: automatizaciones y jobs lo saltean hasta `holdUntil`.
    */
-  async controlDevice(id: string, action: 'on' | 'off') {
+  async controlDevice(id: string, action: 'on' | 'off', options: { source?: ControlSource } = {}) {
     const device = await this.findById(id);
+    const response = await this.sendControl(device, action);
 
+    if (options.source !== 'manual') return response;
+
+    const manualHold = response.result.success
+      ? await this.startManualHold(device, action)
+      : this.holdStateOf(device);
+    return { ...response, manualHold };
+  }
+
+  private async sendControl(device: Awaited<ReturnType<typeof this.findById>>, action: 'on' | 'off') {
     // Si es un dispositivo VIRTUAL, controlar el dispositivo padre
     if (device.connector === Connector.VIRTUAL) {
       if (!device.controlledBy) {
@@ -560,6 +593,74 @@ export class DevicesService {
       action,
       result,
     };
+  }
+
+  // ============================================
+  // RETENCIÓN MANUAL
+  // ============================================
+
+  /** Dispositivo físico que recibe el comando: el controlador cuando es un VIRTUAL. */
+  private physicalOf(device: HoldableDevice) {
+    return device.connector === Connector.VIRTUAL && device.controlledBy ? device.controlledBy : device;
+  }
+
+  private holdStateOf(device: HoldableDevice, now = new Date()): ManualHoldState {
+    const physical = this.physicalOf(device);
+    return holdState(
+      physical.id,
+      physical.metadata,
+      holdMinutesFor([device.metadata, physical.metadata]),
+      now,
+    );
+  }
+
+  private async startManualHold(device: HoldableDevice, action: 'on' | 'off'): Promise<ManualHoldState> {
+    const physical = this.physicalOf(device);
+    const minutes = holdMinutesFor([device.metadata, physical.metadata]);
+    // `manualHoldMinutes: 0` en el dispositivo desactiva la retención para ese aparato.
+    if (minutes === 0) return this.holdStateOf(device);
+
+    const now = new Date();
+    const metadata = withHold(physical.metadata, buildHold(action, minutes, now));
+    await this.prisma.device.update({
+      where: { id: physical.id },
+      data: { metadata: metadata as Prisma.InputJsonValue },
+    });
+    this.logger.log(`Retención manual: ${physical.name} (${physical.id}) ${action} por ${minutes} min`);
+
+    return holdState(physical.id, metadata, minutes, now);
+  }
+
+  /** Estado de la retención manual de un dispositivo (la de su controlador si es VIRTUAL). */
+  async getManualHold(id: string): Promise<ManualHoldState> {
+    return this.holdStateOf(await this.findById(id));
+  }
+
+  /** Libera la retención: automatizaciones y jobs vuelven a tocar el dispositivo. */
+  async releaseManualHold(id: string): Promise<ManualHoldState> {
+    const device = await this.findById(id);
+    const physical = this.physicalOf(device);
+    const metadata = withoutHold(physical.metadata);
+
+    await this.prisma.device.update({
+      where: { id: physical.id },
+      data: { metadata: metadata as Prisma.InputJsonValue },
+    });
+    this.logger.log(`Retención manual liberada: ${physical.name} (${physical.id})`);
+
+    return holdState(physical.id, metadata, holdMinutesFor([device.metadata, physical.metadata]));
+  }
+
+  /**
+   * Lo que necesita una automatización o un job antes de tocar un dispositivo: los ids que
+   * comparten el mismo relé (el pedido, su controlador y los virtuales que cuelgan de él) y la
+   * retención manual vigente.
+   */
+  async getControlScope(id: string): Promise<{ deviceIds: string[]; manualHold: ManualHoldState }> {
+    const device = await this.findById(id);
+    const physical = this.physicalOf(device);
+    const deviceIds = new Set([device.id, physical.id, ...device.controlledDevices.map((d) => d.id)]);
+    return { deviceIds: [...deviceIds], manualHold: this.holdStateOf(device) };
   }
 
   /**

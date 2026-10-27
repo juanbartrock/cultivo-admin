@@ -49,7 +49,11 @@ describe('DevicesService · kill switch de lecturas', () => {
 
     const { status } = await service.getDeviceStatus('device-1');
 
-    expect(status).toEqual({ online: false, readingsPaused: true });
+    expect(status).toEqual({
+      online: false,
+      readingsPaused: true,
+      manualHold: expect.objectContaining({ active: false }),
+    });
     expect(gatewayMock.getDeviceStatus).not.toHaveBeenCalled();
   });
 
@@ -59,7 +63,11 @@ describe('DevicesService · kill switch de lecturas', () => {
 
     const { status } = await service.getDeviceStatus('device-1');
 
-    expect(status).toEqual({ online: false, readingsPaused: true });
+    expect(status).toEqual({
+      online: false,
+      readingsPaused: true,
+      manualHold: expect.objectContaining({ active: false }),
+    });
     expect(gatewayMock.getDeviceStatus).not.toHaveBeenCalled();
   });
 
@@ -91,7 +99,11 @@ describe('DevicesService · kill switch de lecturas', () => {
 
     const { status } = await service.getDeviceStatus('device-1');
 
-    expect(status).toEqual({ online: false, readingsPaused: true });
+    expect(status).toEqual({
+      online: false,
+      readingsPaused: true,
+      manualHold: expect.objectContaining({ active: false }),
+    });
     expect(gatewayMock.getDeviceStatus).not.toHaveBeenCalled();
   });
 

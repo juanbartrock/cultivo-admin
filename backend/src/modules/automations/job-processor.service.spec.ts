@@ -1,6 +1,7 @@
 import { JobStatus, JobType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DevicesService } from '../devices/devices.service';
+import { AutomationsService } from './automations.service';
 import { JobProcessorService } from './job-processor.service';
 
 describe('JobProcessorService', () => {
@@ -25,6 +26,7 @@ describe('JobProcessorService', () => {
     },
   };
   const devicesMock = { controlDevice: jest.fn() };
+  const automationsMock = { checkAutomatedControl: jest.fn() };
 
   let service: JobProcessorService;
 
@@ -33,9 +35,11 @@ describe('JobProcessorService', () => {
     prismaMock.scheduledJob.updateMany.mockResolvedValue({ count: 0 });
     prismaMock.scheduledJob.update.mockResolvedValue({});
     devicesMock.controlDevice.mockResolvedValue({ success: true });
+    automationsMock.checkAutomatedControl.mockResolvedValue({ allowed: true });
     service = new JobProcessorService(
       prismaMock as unknown as PrismaService,
       devicesMock as unknown as DevicesService,
+      automationsMock as unknown as AutomationsService,
     );
   });
 
@@ -66,5 +70,67 @@ describe('JobProcessorService', () => {
 
     expect(prismaMock.scheduledJob.findMany).not.toHaveBeenCalled();
     expect(devicesMock.controlDevice).not.toHaveBeenCalled();
+  });
+
+  describe('precedencia', () => {
+    beforeEach(() => {
+      prismaMock.$queryRaw.mockResolvedValue([{ id: job.id }]);
+      prismaMock.scheduledJob.findMany.mockResolvedValue([{ ...job, payload: null }]);
+    });
+
+    it('consulta la precedencia con la automatización dueña del job antes de apagar', async () => {
+      await service.processJobs();
+
+      expect(automationsMock.checkAutomatedControl).toHaveBeenCalledWith({
+        deviceId: job.deviceId,
+        action: 'off',
+        automationId: job.automationId,
+      });
+      expect(devicesMock.controlDevice).toHaveBeenCalledWith(job.deviceId, 'off');
+    });
+
+    it('no apaga si "Extractor por humedad: prender" tiene su condición cumplida y deja el job CANCELLED con motivo', async () => {
+      automationsMock.checkAutomatedControl.mockResolvedValue({
+        allowed: false,
+        kind: 'PRIORITY',
+        reason: '"Extractor por humedad: prender" (prioridad 10) pide encendido y su condición se cumple',
+        byAutomationId: 'd869eebd-a199-4572-aaab-72cea13480ae',
+      });
+
+      await service.processJobs();
+
+      expect(devicesMock.controlDevice).not.toHaveBeenCalled();
+      const update = prismaMock.scheduledJob.update.mock.calls[0][0];
+      expect(update.where).toEqual({ id: job.id });
+      expect(update.data).toMatchObject({
+        status: JobStatus.CANCELLED,
+        lastError: expect.stringMatching(/^Salteado: "Extractor por humedad: prender"/),
+        payload: {
+          skipped: {
+            kind: 'PRIORITY',
+            byAutomationId: 'd869eebd-a199-4572-aaab-72cea13480ae',
+          },
+        },
+      });
+      // Un salto no es una falla: no se reprograma
+      expect(update.data).not.toHaveProperty('runAt');
+    });
+
+    it('no toca un dispositivo en retención manual', async () => {
+      automationsMock.checkAutomatedControl.mockResolvedValue({
+        allowed: false,
+        kind: 'MANUAL_HOLD',
+        reason: 'Retención manual hasta 13:00 (quedan 42 min)',
+        holdUntil: '2026-10-26T16:00:00.000Z',
+      });
+
+      await service.processJobs();
+
+      expect(devicesMock.controlDevice).not.toHaveBeenCalled();
+      expect(prismaMock.scheduledJob.update.mock.calls[0][0].data).toMatchObject({
+        status: JobStatus.CANCELLED,
+        payload: { skipped: { kind: 'MANUAL_HOLD', holdUntil: '2026-10-26T16:00:00.000Z' } },
+      });
+    });
   });
 });

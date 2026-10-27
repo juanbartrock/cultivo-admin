@@ -34,6 +34,9 @@ export const configValidationSchema = Joi.object({
   MS_TUYA_URL: Joi.string().uri().default('http://tuya-service:3000'),
   MS_TAPO_URL: Joi.string().uri().default('http://tapo-service:3000'),
   MS_ESP32_URL: Joi.string().uri().default('http://esp32-service:3000'),
+
+  /** Minutos que un control manual deja al dispositivo fuera de automatizaciones y jobs. */
+  MANUAL_HOLD_MINUTES: Joi.number().integer().min(0).optional(),
 });
 
 export function parseBooleanEnv(value: string | boolean | undefined, fallback = false): boolean {

@@ -50,7 +50,11 @@ export class AutomationSchedulerService {
             // Ejecutar acciones
             const result = await this.automationsService.executeActions(automation.id, true);
             
-            if (result.success) {
+            if (result.skipped) {
+              // Retención manual o una automatización de prioridad mayor: no se tocó nada y no
+              // hay nada que avisar. El motivo queda en la ejecución.
+              this.logger.log(`Automation ${automation.name} skipped: ${result.results.map(r => r.skipReason).join('; ')}`);
+            } else if (result.success) {
               this.logger.log(`Automation ${automation.name} executed successfully`);
               
               // Crear notificación si está habilitada

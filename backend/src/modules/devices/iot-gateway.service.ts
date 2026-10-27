@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, catchError, timeout } from 'rxjs';
 import { Connector } from '@prisma/client';
+import { ManualHoldState } from './manual-hold';
 
 export interface ConnectorDevice {
   id: string;
@@ -21,6 +22,8 @@ export interface DeviceStatus {
   humidity?: number;
   /** El dispositivo tiene las lecturas pausadas: no se consultó al conector. */
   readingsPaused?: boolean;
+  /** Retención manual vigente (`GET /devices/:id/status`); sale de la base, no del conector. */
+  manualHold?: ManualHoldState;
   [key: string]: unknown;
 }
 
