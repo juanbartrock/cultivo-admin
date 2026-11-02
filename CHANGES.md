@@ -7,6 +7,36 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:claude][date:2026-11-02][action:created] -->
+## 2026-11-02 — Bloque "Hoy" en Inicio: noche, tareas y próximos
+
+Juan pidió dejar de preguntar cada mañana "cómo pasamos la noche y qué toca hoy" y tenerlo en la
+app. Eligió la opción B: resumen de los períodos de luz, tareas de los planes y tareas manuales con
+"Hecho" que escribe en la bitácora, arriba de Inicio.
+
+- **Migración `20261102120000_add_agenda_tasks`** (aditiva e idempotente, aplicada con
+  `migrate deploy`): `sections.lights_on`/`lights_off` y tabla `tasks` con enum `TaskStatus`.
+- **Backend.** Módulo `agenda`: `GET /agenda/today`, `POST/PATCH/DELETE /agenda/tasks`,
+  `POST /agenda/tasks/:id/complete`, `POST /agenda/watering`, `POST /agenda/prevention/complete`.
+  `PUT /sections/:id` acepta `lightsOn`/`lightsOff`. Lógica pura en `agenda.logic.ts` con 21 tests.
+  Las tablas se cargan en paralelo (de 4,9 s a ~1 s: cada consulta a la base tarda ~280 ms).
+- **Frontend.** `features/hoy/`: tarjeta por carpa con "Con luz"/"Sin luz", foto, riego de la
+  semana con "Regué", tareas con checkbox y menú (Editar, Omitir, Borrar), "Próximo", y diálogos de
+  riego, tarea, confirmación y horario de luz. La bitácora muestra el texto de las PODA.
+- **Datos.** Floración con luz 18:00–10:00. Se cargaron 11 tareas: topping (043, 061, 049, 067,
+  045 → PODA), LST de la 068, luz a 450 µmol, PPFD por zona, vaciar platos, segunda ventila,
+  sustrato, alargue de la sonda, pilas del sensor Tuya, trasplante a 25 L (09/11) y pase a 12/12
+  (24/11).
+- **Verificación.** Jest 73/73; Playwright `tests/hoy.spec.ts` (tildar, regar, crear, preventivo);
+  QA contra producción en 1440 y 390 con los cuatro diálogos, sin errores de consola ni desborde.
+  Capturas en `docs/rediseno-2026-09/capturas/hoy-2026-11-02/`.
+
+<!-- [agent:claude][date:2026-11-02][action:modified] -->
+## 2026-11-02 — Contexto del ecosistema sincronizado
+
+Se commitea el bloque que `sync-agent-context` escribió en `CLAUDE.md` el 27/10: skill
+`manejo-de-secretos` con `secret-get`, y "Dónde queda lo generado".
+
 <!-- [agent:claude][date:2026-10-27][action:modified] -->
 ## 2026-10-27 — Precedencia de controles: retención manual y prioridad
 

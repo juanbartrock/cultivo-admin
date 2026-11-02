@@ -224,6 +224,48 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
     MANUAL), `AutomationsService.checkAutomatedControl`, `JobProcessorService.markSkipped`. Tests:
     `devices/manual-hold.spec.ts`, `automations/control-precedence.spec.ts`,
     `automations/job-processor.service.spec.ts`.
+- **Bloque "Hoy" de Inicio** (pedido de Juan, 2026-11-02: tener a la vista lo que antes preguntaba
+  cada mañana). Va arriba de Alertas, una tarjeta por carpa con plantas de un ciclo activo, y sale
+  entero de `GET /api/agenda/today`. Se refresca cada 5 min y con "Actualizar".
+  - **Períodos de luz**: `sections.lights_on` / `lights_off` ("HH:MM", hora local, migración
+    `20261102120000_add_agenda_tasks`). Muestra el período en curso y el anterior ("Con luz",
+    "Sin luz"); sin horario, las últimas 12 h. Floración quedó en 18:00–10:00. Se edita con el
+    botón "Luz …" de la tarjeta (`PUT /sections/:id` con `lightsOn`/`lightsOff`). **Al pase a
+    12/12 hay que cambiarlo** o los períodos quedan corridos.
+  - **Ambiente del período**: min–máx y media del primer SENSOR de la carpa (el principal) contra
+    `stage_ranges` de la `effectiveStage`, y horas fuera de rango (danger) y fuera del ideal (warn),
+    pesando cada lectura por el tiempo hasta la siguiente con tope de 10 min. Automatizaciones de la
+    carpa en el período (`groupBy` en la base): las de condición dicen cuánto tiempo estuvo cumplida
+    (corridas × intervalo), las programadas cuántas corridas y salteadas. Foto: último evento FOTO
+    de 36 h.
+  - **Tareas de los planes** (no se guardan, se calculan): riego con la semana de alimentación
+    vigente y el último riego (botón "Regué" → `POST /agenda/watering`, un RIEGO por planta, con
+    drenaje en `notes` y en `drainPh`/`drainEc`), y la aplicación del preventivo del día
+    (`POST /agenda/prevention/complete` → NOTA por planta con `data.taskKey`; queda hecha cuando
+    todas las plantas la tienen). **Semana y día se cuentan por calendario** desde la fecha de
+    inicio (`calendarDateKey`): `FeedingPlansService`/`PreventionPlansService` cuentan
+    milisegundos y, con el inicio guardado a medianoche UTC, adelantan el cambio a las 21:00 del
+    día anterior.
+  - **Tareas manuales**: tabla `tasks` (`sectionId`, `title`, `detail`, `dueDate` DATE local,
+    `plantIds`, `eventType`, `status` PENDING/DONE/SKIPPED, `eventIds`). En "Hoy" van las
+    pendientes con fecha hasta hoy (las vencidas dicen "desde …") o sin fecha, y las hechas hoy;
+    las de fecha futura van a "Próximo" (30 días, junto al preventivo de 14 días y el cambio de
+    semana de alimentación). `POST /agenda/tasks/:id/complete` marca hecha y, si tiene
+    `eventType` (PODA, NOTA, CAMBIO_MACETA, TRANSPLANTE, CAMBIO_FOTOPERIODO), escribe un evento
+    por planta o uno en la carpa, en una transacción, con `data.content` y `data.taskId`. Una
+    hecha no se reabre. La bitácora (`/seguimientos` y la carpa) muestra `content` de NOTA y PODA.
+  - **Cargar lo que Juan dicta**: lo que surge en el repaso va a `tasks` (con `eventType` si al
+    hacerla tiene que quedar en la bitácora) y lo que hizo se marca hecho, por la API o con Prisma
+    desde el contenedor (`docker exec -i -w /app cultivo-backend node -`), para que el bloque lo
+    muestre.
+  - **Pool de conexiones**: la base es el pooler de Supabase en modo sesión con tope de 15
+    clientes. `AgendaService` lanza unas 10 consultas en paralelo (cada una ~280 ms de latencia)
+    y el pool del backend (9) las encola. Un script desde el host tiene que bajar su propio pool
+    (`connection_limit=3` en la URL) o se lleva los clientes que usa el backend.
+  - Código: `backend/src/modules/agenda/` (`agenda.logic.ts` puro, con
+    `agenda.logic.spec.ts`; `agenda-time.ts` para la zona `CULTIVO_TZ`, default Buenos Aires) y
+    `frontend/src/features/hoy/`. Tests: `frontend/tests/hoy.spec.ts` (backend mockeado) y "QA del
+    bloque Hoy" en `tests/qa-nav.spec.ts` (producción, abre los diálogos y cancela).
 
 ---
 
@@ -516,6 +558,11 @@ es Awwwards: `awwwards-ficha` la lee desde el VPS; uso y límites en
 API keys de una sola cuenta van a `~/.config/secrets/<servicio>.env` (600) y la config referencia
 `${VAR}`. Si encontrás un secreto en texto plano donde no corresponde, reportalo.
 
+<!-- [agent:server-audit][date:2026-10-27][action:modified] skill manejo-de-secretos + secret-get (fila 1) -->
+**Antes del primer comando que toque un `.env`, `~/.config/secrets` o una credencial:** skill de usuario
+`manejo-de-secretos` (`/opt/server-audit/skills-usuario/manejo-de-secretos/SKILL.md`). Para usar un valor sin que pase
+por stdout ni por argv: `secret-get <archivo.env> VAR` (ruta a un archivo 600) o `secret-get --env <archivo.env> VAR -- <comando>`.
+
 <!-- [agent:server-audit][date:2026-09-24][action:modified] -->
 **⛔ Antes de correr un script contra la DB de tu app:** `~/.bashrc` y `~/.profile` cargan enteros
 todos los `~/.config/secrets/*.env` con `set -a`, así que cualquier `DATABASE_URL` que aparezca en
@@ -570,4 +617,10 @@ directo.
   la carga inicial.
 - Nada de prosa perecedera en interfaces ni reportes: dato y ficha técnica, sin párrafos que
   narran lo que los datos ya muestran.
+<!-- [agent:server-audit][date:2026-10-27][action:created] decisión 19 de la auditoría de skills -->
+### Dónde queda lo generado
+
+Juan trabaja desde el VPS. Lo que se genere en desktop-casa, en un pod o en cualquier otro host se trae al VPS
+y se le pasa la ruta; un archivo que quedó en otra máquina no es una entrega.
+
 <!-- END:ecosystem-context -->
