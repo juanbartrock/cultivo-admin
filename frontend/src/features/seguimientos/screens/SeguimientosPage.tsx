@@ -628,10 +628,10 @@ function SeguimientosContent() {
                                       )}
                                     </>
                                   )}
-                                  {/* Nota */}
-                                  {event.type === 'NOTA' && (
-                                    <p className="text-sm text-zinc-400">{String(event.data.content || '')}</p>
-                                  )}
+                                  {/* Nota, y poda registrada desde una tarea del bloque Hoy */}
+                                  {(event.type === 'NOTA' || event.type === 'PODA') && event.data.content ? (
+                                    <p className="text-sm text-zinc-400">{String(event.data.content)}</p>
+                                  ) : null}
                                   {/* Foto */}
                                   {event.type === 'FOTO' && (
                                     <div className="mt-2">

@@ -144,3 +144,43 @@ test.describe('QA de navegación', () => {
     });
   }
 });
+
+/**
+ * Bloque "Hoy" de Inicio: abre cada diálogo, lo captura y cancela. No guarda nada: corre contra
+ * producción y la bitácora es real.
+ */
+test.describe('QA del bloque Hoy', () => {
+  test('diálogos del bloque Hoy', async ({ page }, info) => {
+    await mockWeather(page);
+    const errors = watchForErrors(page);
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await settle(page);
+
+    const hoy = page.locator('article').filter({ has: page.getByRole('button', { name: 'Regué' }) }).first();
+    await expect(hoy).toBeVisible();
+    await hoy.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(SHOTS_DIR, `${info.project.name}-10_hoy.png`) });
+
+    const steps: { slug: string; open: () => Promise<void>; dialog: RegExp }[] = [
+      { slug: '11_hoy_riego', open: () => hoy.getByRole('button', { name: 'Regué' }).click(), dialog: /Registrar riego/ },
+      { slug: '12_hoy_tarea', open: () => hoy.getByRole('button', { name: 'Tarea', exact: true }).click(), dialog: /Nueva tarea/ },
+      {
+        slug: '13_hoy_hecha',
+        open: () => hoy.getByRole('checkbox', { name: /^Marcar hecha: Topping/ }).click(),
+        dialog: /Marcar hecha/,
+      },
+      { slug: '14_hoy_luz', open: () => hoy.getByRole('button', { name: /^Luz |Horario de luz/ }).click(), dialog: /Horario de luz/ },
+    ];
+
+    for (const step of steps) {
+      await step.open();
+      const dialog = page.getByRole('dialog', { name: step.dialog });
+      await expect(dialog).toBeVisible();
+      await page.screenshot({ path: path.join(SHOTS_DIR, `${info.project.name}-${step.slug}.png`) });
+      await dialog.getByRole('button', { name: 'Cancelar' }).click();
+      await expect(dialog).toBeHidden();
+    }
+
+    expect(errors, `errores de página en el bloque Hoy:\n${errors.join('\n')}`).toEqual([]);
+  });
+});

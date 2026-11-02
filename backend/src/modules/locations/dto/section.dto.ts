@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsUUID, MaxLength, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUUID, MaxLength, IsBoolean, Matches } from 'class-validator';
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export class CreateSectionDto {
   @ApiProperty({
@@ -53,6 +55,16 @@ export class CreateSectionDto {
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
+
+  @ApiPropertyOptional({ description: 'Encendido del timer de luz (HH:MM, hora local)', example: '18:00' })
+  @Matches(HHMM, { message: 'lightsOn tiene que ser HH:MM' })
+  @IsOptional()
+  lightsOn?: string | null;
+
+  @ApiPropertyOptional({ description: 'Apagado del timer de luz (HH:MM, hora local)', example: '10:00' })
+  @Matches(HHMM, { message: 'lightsOff tiene que ser HH:MM' })
+  @IsOptional()
+  lightsOff?: string | null;
 }
 
 export class UpdateSectionDto extends PartialType(CreateSectionDto) {}

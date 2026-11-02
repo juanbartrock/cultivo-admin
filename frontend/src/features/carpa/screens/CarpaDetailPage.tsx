@@ -2265,7 +2265,7 @@ export default function CarpaDetailPage() {
                                         )}
                                       </>
                                     )}
-                                    {event.type === 'NOTA' && 'content' in event.data && event.data.content != null && (
+                                    {(event.type === 'NOTA' || event.type === 'PODA') && 'content' in event.data && event.data.content != null && (
                                       <span className="line-clamp-2">{String(event.data.content)}</span>
                                     )}
                                     {event.type === 'PARAMETRO_AMBIENTAL' && (

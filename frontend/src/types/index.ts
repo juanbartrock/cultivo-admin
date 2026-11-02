@@ -111,6 +111,9 @@ export interface Section {
   };
   /** Etapa cuyos rangos de sensores aplican a la carpa; la calcula el backend. */
   effectiveStage?: RangeStage;
+  /** Horario del timer de luz ("HH:MM", hora local); arma los períodos del bloque "Hoy". */
+  lightsOn?: string | null;
+  lightsOff?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1193,3 +1196,168 @@ export const SECTION_LAYOUT_META: Record<SectionLayoutKey, { label: string; desc
   preventionPlans: { label: 'Plan Prevención', description: 'Planes de prevención' },
   plants: { label: 'Plantas', description: 'Tarjetas de plantas' },
 };
+
+// ============================================
+// AGENDA - Bloque "Hoy" de Inicio (GET /agenda/today)
+// ============================================
+
+/** Período del timer de luz; `VENTANA` = últimas 12 h cuando la carpa no tiene horario. */
+export type AgendaPeriodKind = 'LUZ' | 'OSCURIDAD' | 'VENTANA';
+export type AgendaReadingStatus = 'ok' | 'warn' | 'danger';
+
+export interface AgendaMetricSummary {
+  min: number;
+  max: number;
+  avg: number;
+  last: number;
+  /** Horas en cada estado contra los rangos de la etapa; `null` sin rangos. */
+  hours: Record<AgendaReadingStatus, number> | null;
+  status: AgendaReadingStatus | null;
+}
+
+export interface AgendaAutomationActivity {
+  automationId: string;
+  name: string;
+  triggerType: 'SCHEDULED' | 'CONDITION' | 'HYBRID';
+  runs: number;
+  skipped: number;
+  failed: number;
+  first: string;
+  last: string;
+  /** Por condición: minutos con la condición cumplida. */
+  conditionMinutes: number | null;
+}
+
+export interface AgendaPeriod {
+  kind: AgendaPeriodKind;
+  start: string;
+  end: string;
+  plannedEnd: string;
+  ongoing: boolean;
+  readings: number;
+  lastReadingAt: string | null;
+  metrics: {
+    temperature: AgendaMetricSummary | null;
+    humidity: AgendaMetricSummary | null;
+    vpd: AgendaMetricSummary | null;
+  };
+  automations: AgendaAutomationActivity[];
+}
+
+export interface AgendaPlantRef {
+  id: string;
+  tagCode: string;
+}
+
+export interface AgendaProduct {
+  name: string;
+  dose: string;
+  unit: string;
+}
+
+export interface AgendaFeeding {
+  key: string;
+  planId: string;
+  planName: string;
+  week: number;
+  products: AgendaProduct[];
+  ph: number | null;
+  ec: number | null;
+  notes: string | null;
+  plantIds: string[];
+  plants: AgendaPlantRef[];
+  wateredToday: { plants: AgendaPlantRef[]; lastAt: string | null };
+}
+
+export type TaskStatus = 'PENDING' | 'DONE' | 'SKIPPED';
+
+export interface AgendaTask {
+  /** `task:<id>` para las manuales, `prevention:<plan>:<día>:<fecha>` para el preventivo. */
+  key: string;
+  source: 'MANUAL' | 'PREVENCION';
+  taskId: string | null;
+  title: string;
+  detail: string | null;
+  /** Día en que toca (YYYY-MM-DD); `null` = sin fecha. */
+  dueDate: string | null;
+  status: TaskStatus;
+  doneAt: string | null;
+  /** Evento que escribe al completarse. */
+  eventType: EventType | null;
+  plants: AgendaPlantRef[];
+  donePlants: AgendaPlantRef[];
+  products: AgendaProduct[];
+  planName: string | null;
+  day: number | null;
+}
+
+export interface AgendaUpcoming {
+  date: string;
+  source: 'MANUAL' | 'PREVENCION' | 'ALIMENTACION';
+  title: string;
+  detail: string | null;
+  taskId: string | null;
+}
+
+export interface AgendaLastWatering {
+  at: string;
+  plants: AgendaPlantRef[];
+  ph: number | null;
+  ec: number | null;
+  liters: number | null;
+  nutrients: { name?: string; dose?: string }[];
+  notes: string | null;
+}
+
+export interface AgendaSection {
+  section: {
+    id: string;
+    name: string;
+    lightsOn: string | null;
+    lightsOff: string | null;
+    effectiveStage: RangeStage;
+  };
+  cycle: { id: string; name: string; startDate: string; day: number } | null;
+  plants: (AgendaPlantRef & { stage: PlantStage })[];
+  sensor: { id: string; name: string; readingsEnabled: boolean } | null;
+  /** El primero es el período en curso. */
+  periods: AgendaPeriod[];
+  photo: { deviceId: string; filename: string; takenAt: string } | null;
+  lastWatering: AgendaLastWatering | null;
+  feeding: AgendaFeeding[];
+  tasks: AgendaTask[];
+  upcoming: AgendaUpcoming[];
+}
+
+export interface AgendaToday {
+  /** Día local (YYYY-MM-DD) en la zona del cultivo. */
+  date: string;
+  timeZone: string;
+  generatedAt: string;
+  sections: AgendaSection[];
+}
+
+/** Eventos que puede escribir una tarea manual al completarse. */
+export type TaskEventType = Extract<EventType, 'PODA' | 'NOTA' | 'CAMBIO_MACETA' | 'TRANSPLANTE' | 'CAMBIO_FOTOPERIODO'>;
+
+export interface TaskInput {
+  sectionId: string;
+  title: string;
+  detail?: string | null;
+  dueDate?: string | null;
+  plantIds?: string[];
+  eventType?: TaskEventType | null;
+}
+
+export interface WateringInput {
+  sectionId: string;
+  plantIds: string[];
+  liters?: number;
+  ph?: number;
+  ec?: number;
+  nutrients?: { name: string; dose: string }[];
+  drainPh?: number;
+  drainEc?: number;
+  notes?: string;
+  taskKey?: string;
+}

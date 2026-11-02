@@ -1,10 +1,12 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { RefreshCw, Tent } from 'lucide-react';
 import { PageHeader } from '@/components/shell';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { SensorReadingsSwitch } from '@/features/lecturas';
+import { HoyBlock, hoyKeys } from '@/features/hoy';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ActiveCyclesBlock } from '../components/ActiveCyclesBlock';
 import { AlertsBlock } from '../components/AlertsBlock';
@@ -31,6 +33,7 @@ export default function HomePage() {
     cyclesQuery,
   } = useHomeDashboard();
   const updatedAgo = useTimeAgo(statusUpdatedAt);
+  const queryClient = useQueryClient();
 
   return (
     <div className="space-y-8">
@@ -46,6 +49,7 @@ export default function HomePage() {
                 void sectionsQuery.refetch();
                 void cyclesQuery.refetch();
                 void refreshStatuses();
+                void queryClient.invalidateQueries({ queryKey: hoyKeys.all });
               }}
             >
               <RefreshCw className={statusLoading ? 'animate-spin' : undefined} />
@@ -54,6 +58,8 @@ export default function HomePage() {
           </>
         }
       />
+
+      <HoyBlock />
 
       <HomeSection
         title="Alertas"

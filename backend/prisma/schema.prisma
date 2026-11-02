@@ -76,12 +76,16 @@ model Section {
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
   enabled      Boolean        @default(true)
+  /// Horario del timer de luz ("HH:MM", hora local). Arma los períodos con y sin luz del bloque "Hoy".
+  lightsOn     String?        @map("lights_on")
+  lightsOff    String?        @map("lights_off")
   automations  Automation[]
   devices      Device[]
   events       Event[]
   plants       Plant[]
   ppfdReadings PPFDReading[]
   layout       SectionLayout?
+  tasks        Task[]
   room         Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@map("sections")
@@ -327,32 +331,32 @@ model PlantPreventionPlan {
 
 /// Automatización - Regla de automatización para dispositivos
 model Automation {
-  id              String                @id @default(uuid())
+  id              String           @id @default(uuid())
   name            String
   description     String?
-  sectionId       String                @map("section_id")
-  status          AutomationStatus      @default(ACTIVE)
-  interval        Int                   @default(60)
-  executionTime   Int?                  @map("execution_time")
-  daysOfWeek      Int[]                 @map("days_of_week")
-  startTime       String?               @map("start_time")
-  endTime         String?               @map("end_time")
-  priority        Int                   @default(0)
-  allowOverlap    Boolean               @default(true) @map("allow_overlap")
-  notifications   Boolean               @default(true)
-  dependsOnId     String?               @map("depends_on_id")
-  lastEvaluatedAt DateTime?             @map("last_evaluated_at")
-  createdAt       DateTime              @default(now()) @map("created_at")
-  updatedAt       DateTime              @updatedAt @map("updated_at")
-  actionDuration  Int?                  @map("action_duration")
-  activeEndTime   String?               @map("active_end_time")
-  activeStartTime String?               @map("active_start_time")
-  intervalMinutes Int?                  @map("interval_minutes")
-  scheduleType    ScheduleType?         @map("schedule_type")
-  specificTimes   String[]              @default([]) @map("specific_times")
-  triggerType     TriggerType           @default(CONDITION) @map("trigger_type")
-  plantIds        String[]              @default([]) @map("plant_ids")
-  
+  sectionId       String           @map("section_id")
+  status          AutomationStatus @default(ACTIVE)
+  interval        Int              @default(60)
+  executionTime   Int?             @map("execution_time")
+  daysOfWeek      Int[]            @map("days_of_week")
+  startTime       String?          @map("start_time")
+  endTime         String?          @map("end_time")
+  priority        Int              @default(0)
+  allowOverlap    Boolean          @default(true) @map("allow_overlap")
+  notifications   Boolean          @default(true)
+  dependsOnId     String?          @map("depends_on_id")
+  lastEvaluatedAt DateTime?        @map("last_evaluated_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  actionDuration  Int?             @map("action_duration")
+  activeEndTime   String?          @map("active_end_time")
+  activeStartTime String?          @map("active_start_time")
+  intervalMinutes Int?             @map("interval_minutes")
+  scheduleType    ScheduleType?    @map("schedule_type")
+  specificTimes   String[]         @default([]) @map("specific_times")
+  triggerType     TriggerType      @default(CONDITION) @map("trigger_type")
+  plantIds        String[]         @default([]) @map("plant_ids")
+
   // Configuración de análisis IA (solo para AI_PLANT_ANALYSIS)
   analysisType                   AnalysisType? @map("analysis_type")
   analysisIncludePhotos          Boolean       @default(true) @map("analysis_include_photos")
@@ -360,22 +364,22 @@ model Automation {
   analysisIncludePreventionPlans Boolean       @default(true) @map("analysis_include_prevention")
   analysisIncludeEvents          Boolean       @default(true) @map("analysis_include_events")
   analysisCustomPrompt           String?       @map("analysis_custom_prompt")
-  
+
   // Campos para propuestas de IA (cuando status = PENDING_APPROVAL)
   proposedByAI      Boolean   @default(false) @map("proposed_by_ai")
-  aiReason          String?   @map("ai_reason")        /// Justificación de la IA para proponer esta automatización
-  aiConfidence      Float?    @map("ai_confidence")    /// Nivel de confianza 0-1
-  aiContextSnapshot Json?     @map("ai_context")       /// Contexto del sistema cuando se propuso
-  proposedAt        DateTime? @map("proposed_at")      /// Fecha de propuesta
-  reviewedAt        DateTime? @map("reviewed_at")      /// Fecha de revisión (aprobación/rechazo)
-  reviewedBy        String?   @map("reviewed_by")      /// userId que revisó
-  
-  actions         AutomationAction[]
-  conditions      AutomationCondition[]
-  executions      AutomationExecution[]
-  dependsOn       Automation?           @relation("AutomationDependency", fields: [dependsOnId], references: [id])
-  dependents      Automation[]          @relation("AutomationDependency")
-  section         Section               @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  aiReason          String?   @map("ai_reason") /// Justificación de la IA para proponer esta automatización
+  aiConfidence      Float?    @map("ai_confidence") /// Nivel de confianza 0-1
+  aiContextSnapshot Json?     @map("ai_context") /// Contexto del sistema cuando se propuso
+  proposedAt        DateTime? @map("proposed_at") /// Fecha de propuesta
+  reviewedAt        DateTime? @map("reviewed_at") /// Fecha de revisión (aprobación/rechazo)
+  reviewedBy        String?   @map("reviewed_by") /// userId que revisó
+
+  actions    AutomationAction[]
+  conditions AutomationCondition[]
+  executions AutomationExecution[]
+  dependsOn  Automation?           @relation("AutomationDependency", fields: [dependsOnId], references: [id])
+  dependents Automation[]          @relation("AutomationDependency")
+  section    Section               @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@index([sectionId])
   @@index([status])
@@ -691,6 +695,35 @@ model ReadingsSettings {
   @@map("readings_settings")
 }
 
+/// Tarea manual del bloque "Hoy": lo que no sale de un plan (topping, compras, mediciones).
+/// Al marcarla hecha con `eventType` escribe ese evento en la bitácora de `plantIds` o de la carpa.
+model Task {
+  id        String     @id @default(uuid())
+  sectionId String     @map("section_id")
+  title     String
+  detail    String?
+  /// Día en que toca (fecha local). Sin fecha queda en "Hoy" hasta resolverla.
+  dueDate   DateTime?  @map("due_date") @db.Date
+  plantIds  String[]   @default([]) @map("plant_ids")
+  eventType EventType? @map("event_type")
+  status    TaskStatus @default(PENDING)
+  doneAt    DateTime?  @map("done_at")
+  eventIds  String[]   @default([]) @map("event_ids")
+  userId    String?    @map("user_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  section   Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId, status])
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  DONE
+  SKIPPED
+}
+
 enum SubscriptionTier {
   BASIC
   PRO
@@ -775,7 +808,7 @@ enum AutomationStatus {
   ACTIVE
   PAUSED
   DISABLED
-  PENDING_APPROVAL  /// Propuesta por IA, esperando aprobación del usuario
+  PENDING_APPROVAL /// Propuesta por IA, esperando aprobación del usuario
 }
 
 enum ConditionOperator {
