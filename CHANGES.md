@@ -19,9 +19,12 @@ prendida en Windows.
   connectaddress=192.168.0.103 connectport=554` en desktop-casa (Windows). Sin cambios en el VPS.
 - **Verificación.** `OPTIONS` RTSP desde `tapo-service` por `camara-relay` → `200 OK`; captura
   `snapshot-2026-11-03T10-05-15-083Z.jpg` (210 KB, las 6 macetas en cuadro).
-- **Pendiente.** Reserva DHCP en el router (`192.168.0.1`) para esa MAC. La unidad Linux
-  (`/opt/server-audit/tools/camara-relay/linux/camara-carpa-relay.service`, sin instalar) y su README
-  siguen nombrando la `.109`.
+- **Linux.** server-audit pasó la unidad y su README a la `.103` (su commit `bb2c303`). Con la PC en
+  Linux se corrió `install-linux.sh` por primera vez (creó el symlink en `sockets.target.wants`):
+  `CAMARA_DESTINO=192.168.0.103:554`, socket activo en `:554`, `OPTIONS` → `200 OK`, HAProxy con
+  `pc-linux` UP y captura `snapshot-2026-11-03T10-17-35-941Z.jpg`. Cartel prendido durante el
+  trabajo, visto en `:0` y apagado al terminar.
+- **Pendiente.** Reserva DHCP en el router (`192.168.0.1`) para esa MAC.
 
 <!-- [agent:claude][date:2026-11-02][action:modified] -->
 ## 2026-11-02 — El intractor de Floración sigue al extractor
