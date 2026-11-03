@@ -7,6 +7,22 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:claude][date:2026-11-03][action:modified] -->
+## 2026-11-03 — La cámara de la carpa cambió de IP
+
+La "Foto diaria" de las 18:29 del 02/11 falló y el 03/11 el relay no respondía con la PC de casa
+prendida en Windows.
+
+- **Causa.** La C100 (MAC `60:83:E7:3E:CA:CD`) pasó de `192.168.0.109` a `192.168.0.103` por DHCP.
+  El `netsh portproxy` de Windows seguía apuntando a la `.109`.
+- **Cambio.** `netsh interface portproxy set v4tov4 listenaddress=0.0.0.0 listenport=554
+  connectaddress=192.168.0.103 connectport=554` en desktop-casa (Windows). Sin cambios en el VPS.
+- **Verificación.** `OPTIONS` RTSP desde `tapo-service` por `camara-relay` → `200 OK`; captura
+  `snapshot-2026-11-03T10-05-15-083Z.jpg` (210 KB, las 6 macetas en cuadro).
+- **Pendiente.** Reserva DHCP en el router (`192.168.0.1`) para esa MAC. La unidad Linux
+  (`/opt/server-audit/tools/camara-relay/linux/camara-carpa-relay.service`, sin instalar) y su README
+  siguen nombrando la `.109`.
+
 <!-- [agent:claude][date:2026-11-02][action:modified] -->
 ## 2026-11-02 — El intractor de Floración sigue al extractor
 

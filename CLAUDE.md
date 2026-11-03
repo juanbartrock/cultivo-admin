@@ -97,7 +97,8 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
 - **Cámara de la carpa**: `tapo-service` captura por RTSP a través de `camara-relay` (HAProxy en
   `cultivo-network`, sin puertos al host, config `camara-relay/haproxy.cfg`), que reenvía por
   Tailscale a la PC de casa (Windows con `netsh portproxy`, Linux con `systemd-socket-proxyd`) y de
-  ahí a la C100 en `192.168.0.109:554`. `TAPO_CAMERA_IP=camara-relay`; el usuario RTSP sale de
+  ahí a la C100 en `192.168.0.103:554` (MAC `60:83:E7:3E:CA:CD`; tomaba la `.109` hasta el 03/11 y
+  el DHCP del router se la cambió: sin reserva puede volver a moverse). `TAPO_CAMERA_IP=camara-relay`; el usuario RTSP sale de
   `TAPO_USERNAME`. Con la PC apagada no hay snapshot. El navegador ve las fotos por
   `GET /api/devices/:id/snapshots/:filename`: el backend las trae del tapo-service por la red
   interna, que no tiene URL pública. Operación y reversión:
