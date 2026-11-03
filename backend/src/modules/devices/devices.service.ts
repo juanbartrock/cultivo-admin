@@ -8,11 +8,29 @@ import {
   ManualHoldState,
   buildHold,
   holdMinutesFor,
+  holdReason,
   holdState,
   preserveHold,
   withHold,
   withoutHold,
 } from './manual-hold';
+import {
+  FOLLOWS_KEY,
+  FollowerResult,
+  MirrorRecord,
+  preserveFollows,
+  readFollows,
+  shouldMirror,
+} from './follow';
+
+/** Relaciones que trae `findById`; `sendControl` las necesita para resolver un VIRTUAL. */
+const DEVICE_INCLUDE = {
+  section: { include: { room: true } },
+  controlledBy: true,
+  controlledDevices: true,
+} satisfies Prisma.DeviceInclude;
+
+type DeviceWithRelations = Prisma.DeviceGetPayload<{ include: typeof DEVICE_INCLUDE }>;
 
 /** Quién pide el control. Solo `manual` (el endpoint de la app) abre una retención. */
 export type ControlSource = 'manual' | 'automation';
@@ -45,6 +63,8 @@ export interface ScannedDevice {
 @Injectable()
 export class DevicesService {
   private readonly logger = new Logger(DevicesService.name);
+  /** Último on/off aceptado por cada seguidor; vive en memoria y se pierde al reiniciar. */
+  private readonly lastMirror = new Map<string, MirrorRecord>();
 
   constructor(
     private prisma: PrismaService,
@@ -76,15 +96,7 @@ export class DevicesService {
   async findById(id: string) {
     const device = await this.prisma.device.findUnique({
       where: { id },
-      include: {
-        section: {
-          include: {
-            room: true,
-          },
-        },
-        controlledBy: true,
-        controlledDevices: true,
-      },
+      include: DEVICE_INCLUDE,
     });
 
     if (!device) {
@@ -188,13 +200,18 @@ export class DevicesService {
       }
     }
 
+    await this.assertFollowTarget(id, data.metadata);
+
     const updateData: Prisma.DeviceUpdateInput = {
       ...(data.name && { name: data.name }),
       ...(data.connector && { connector: data.connector }),
       ...(data.externalId && { externalId: data.externalId }),
       ...(data.type && { type: data.type }),
       ...(data.metadata !== undefined && {
-        metadata: preserveHold(existing.metadata, data.metadata) as Prisma.InputJsonValue,
+        metadata: preserveFollows(
+          existing.metadata,
+          preserveHold(existing.metadata, data.metadata),
+        ) as Prisma.InputJsonValue,
       }),
       ...(data.recordHistory !== undefined && { recordHistory: data.recordHistory }),
       ...(data.readingsEnabled !== undefined && { readingsEnabled: data.readingsEnabled }),
@@ -323,7 +340,10 @@ export class DevicesService {
         ...(data.name && { name: data.name }),
         ...(data.type && { type: data.type }),
         ...(data.metadata && {
-          metadata: preserveHold(existing.metadata, data.metadata) as Prisma.InputJsonValue,
+          metadata: preserveFollows(
+            existing.metadata,
+            preserveHold(existing.metadata, data.metadata),
+          ) as Prisma.InputJsonValue,
         }),
         ...(data.controlledByDeviceId && { controlledBy: { connect: { id: data.controlledByDeviceId } } }),
       };
@@ -537,10 +557,15 @@ export class DevicesService {
    *
    * Con `source: 'manual'` (el endpoint de la app) y el comando aceptado, el dispositivo físico
    * queda en retención manual: automatizaciones y jobs lo saltean hasta `holdUntil`.
+   *
+   * Con el comando aceptado, los dispositivos que siguen a este relé reciben el mismo on/off y
+   * la respuesta los lista en `followers`.
    */
   async controlDevice(id: string, action: 'on' | 'off', options: { source?: ControlSource } = {}) {
     const device = await this.findById(id);
-    const response = await this.sendControl(device, action);
+    const sent = await this.sendControl(device, action);
+    const followers = sent.result.success ? await this.mirrorToFollowers(device, action) : [];
+    const response = followers.length ? { ...sent, followers } : sent;
 
     if (options.source !== 'manual') return response;
 
@@ -550,7 +575,7 @@ export class DevicesService {
     return { ...response, manualHold };
   }
 
-  private async sendControl(device: Awaited<ReturnType<typeof this.findById>>, action: 'on' | 'off') {
+  private async sendControl(device: DeviceWithRelations, action: 'on' | 'off') {
     // Si es un dispositivo VIRTUAL, controlar el dispositivo padre
     if (device.connector === Connector.VIRTUAL) {
       if (!device.controlledBy) {
@@ -593,6 +618,78 @@ export class DevicesService {
       action,
       result,
     };
+  }
+
+  // ============================================
+  // SEGUIDORES
+  // ============================================
+
+  /** Manda el mismo on/off a los dispositivos con `metadata.followsDeviceId` en este relé. */
+  private async mirrorToFollowers(device: DeviceWithRelations, action: 'on' | 'off'): Promise<FollowerResult[]> {
+    const physical = this.physicalOf(device);
+    const leaderIds = [...new Set([device.id, physical.id])];
+
+    let followers: DeviceWithRelations[];
+    try {
+      followers = await this.prisma.device.findMany({
+        where: {
+          id: { notIn: leaderIds },
+          OR: leaderIds.map((leaderId) => ({ metadata: { path: [FOLLOWS_KEY], equals: leaderId } })),
+        },
+        include: DEVICE_INCLUDE,
+      });
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      this.logger.warn(`Seguidores de ${physical.name} sin leer: ${detail}`);
+      return [];
+    }
+
+    const results: FollowerResult[] = [];
+    for (const follower of followers) {
+      results.push(await this.mirrorTo(follower, action, physical.name));
+    }
+    return results;
+  }
+
+  private async mirrorTo(follower: DeviceWithRelations, action: 'on' | 'off', leaderName: string): Promise<FollowerResult> {
+    const base = { id: follower.id, name: follower.name, action };
+
+    // Lo manual prima también acá: un seguidor movido desde la app queda quieto mientras dure su retención.
+    const hold = this.holdStateOf(follower);
+    if (hold.active) {
+      this.logger.debug(`Seguidor salteado: ${follower.name} ${action} (sigue a ${leaderName}) · ${holdReason(hold)}`);
+      return { ...base, outcome: 'held', message: holdReason(hold) };
+    }
+
+    const now = Date.now();
+    const last = this.lastMirror.get(follower.id);
+    if (!shouldMirror(last, action, now)) return { ...base, outcome: 'recent' };
+
+    const { result } = await this.sendControl(follower, action);
+    if (!result.success) {
+      this.lastMirror.delete(follower.id);
+      this.logger.warn(`Seguidor ${follower.name} no aceptó ${action} (sigue a ${leaderName}): ${result.message ?? 'sin detalle'}`);
+      return { ...base, outcome: 'failed', message: result.message };
+    }
+
+    this.lastMirror.set(follower.id, { action, at: now });
+    if (last?.action !== action) {
+      this.logger.log(`Seguidor: ${follower.name} ${action} (sigue a ${leaderName})`);
+    }
+    return { ...base, outcome: 'sent' };
+  }
+
+  /** `metadata.followsDeviceId` tiene que nombrar otro dispositivo que exista. */
+  private async assertFollowTarget(id: string, metadata: unknown) {
+    const leaderId = readFollows(metadata);
+    if (!leaderId) return;
+    if (leaderId === id) {
+      throw new BadRequestException('Un dispositivo no puede seguirse a sí mismo');
+    }
+    const leader = await this.prisma.device.findUnique({ where: { id: leaderId }, select: { id: true } });
+    if (!leader) {
+      throw new NotFoundException(`El dispositivo a seguir (${leaderId}) no existe`);
+    }
   }
 
   // ============================================

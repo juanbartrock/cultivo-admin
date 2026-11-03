@@ -224,6 +224,27 @@ servicio en la red `cultivo-network` (`http://tuya-service:3000`).
     MANUAL), `AutomationsService.checkAutomatedControl`, `JobProcessorService.markSkipped`. Tests:
     `devices/manual-hold.spec.ts`, `automations/control-precedence.spec.ts`,
     `automations/job-processor.service.spec.ts`.
+- **Seguidores** (pedido de Juan, 2026-11-02: el intractor sigue al extractor): un dispositivo con
+  `metadata.followsDeviceId = <id del líder>` recibe el mismo on/off cada vez que
+  `DevicesService.controlDevice` le manda un comando aceptado al líder, venga de una automatización,
+  un job o la app. Para un VIRTUAL cuentan los seguidores del virtual y los de su controlador. Hoy:
+  `flora-intractor` (Tuya, ex "Switch Tanque Riego") sigue a `flora-extractor`.
+  - **Sin automatizaciones propias**: el seguidor no lleva acciones ni jobs; si una automatización
+    lo tocara, se pelearía con el líder.
+  - **Repeticiones**: las automatizaciones de condición mandan el mismo comando cada minuto. Al
+    seguidor se le reenvía el mismo estado como mucho cada 10 min (`FOLLOW_RESYNC_MS`), lo que
+    corrige un cambio a mano sin duplicar las llamadas a Tuya. Un cambio de estado se copia en el
+    acto. El registro vive en memoria: tras un reinicio el primer comando se manda siempre.
+  - **Lo manual del seguidor**: si se lo controla desde la app, su retención manual propia lo deja
+    quieto hasta `holdUntil`. Lo que se mueva desde la app de Tuya o el botón del enchufe no pasa por
+    el backend: no se copia ni se corrige hasta el próximo comando al líder.
+  - **API**: la respuesta de `POST /devices/:id/control` trae `followers[]` (`outcome`: `sent`,
+    `recent`, `held`, `failed`). Se configura con `PUT /devices/:id` `{ metadata: { followsDeviceId } }`
+    (el backend rechaza seguirse a sí mismo o a un id inexistente) y se saca con
+    `followsDeviceId: null`; un `PUT` con `metadata` que no nombra la clave la conserva. No hay
+    control en la interfaz.
+  - Código: `backend/src/modules/devices/follow.ts`, `DevicesService` (sección SEGUIDORES). Tests:
+    `devices/follow.spec.ts`. En logs: `Seguidor: <nombre> on|off (sigue a <líder>)`.
 - **Bloque "Hoy" de Inicio** (pedido de Juan, 2026-11-02: tener a la vista lo que antes preguntaba
   cada mañana). Va arriba de Alertas, una tarjeta por carpa con plantas de un ciclo activo, y sale
   entero de `GET /api/agenda/today`. Se refresca cada 5 min y con "Actualizar".

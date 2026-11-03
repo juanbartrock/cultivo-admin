@@ -26,7 +26,7 @@ describe('DevicesService · retención manual', () => {
     ...over,
   });
 
-  const prismaMock = { device: { findUnique: jest.fn(), update: jest.fn() } };
+  const prismaMock = { device: { findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() } };
   const gatewayMock = { controlDevice: jest.fn(), getDeviceStatus: jest.fn() };
   const settingsMock = { sensorsEnabled: jest.fn() };
 
@@ -41,6 +41,7 @@ describe('DevicesService · retención manual', () => {
     gatewayMock.getDeviceStatus.mockResolvedValue({ online: true, state: 'on' });
     settingsMock.sensorsEnabled.mockResolvedValue(true);
     prismaMock.device.update.mockResolvedValue({});
+    prismaMock.device.findMany.mockResolvedValue([]);
 
     service = new DevicesService(
       prismaMock as unknown as PrismaService,

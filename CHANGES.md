@@ -7,6 +7,24 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:claude][date:2026-11-02][action:modified] -->
+## 2026-11-02 — El intractor de Floración sigue al extractor
+
+Juan habilitó un intractor de 4" en un enchufe Tuya que traía de otra carpa y pidió que siga al
+extractor.
+
+- **Datos.** El enchufe es el que figuraba como "Switch Tanque Riego" (Exterior Directo, sin
+  automatizaciones): volvió a la nube de Tuya a las 21:26:49, sin actividad en los 3 días previos.
+  Quedó `flora-intractor`, tipo VENTILADOR, en Floración, con lecturas activadas y
+  `metadata.followsDeviceId` = `flora-extractor`. En Exterior Directo queda "Operación Tanque Riego".
+- **Backend.** `devices/follow.ts` y sección SEGUIDORES de `DevicesService`: todo comando aceptado
+  en `controlDevice` se copia a los dispositivos que siguen a ese relé. El mismo estado se reenvía
+  como mucho cada 10 min; un seguidor con retención manual propia se saltea. `PUT /devices/:id`
+  valida `followsDeviceId` y lo conserva si el `metadata` nuevo no lo nombra. Sin migración.
+- **Verificación.** Jest `devices/follow.spec.ts` 14/14 y suites de devices y automations 52/52;
+  `tsc --noEmit` limpio. En producción, el log `Seguidor: flora-intractor …` tras el primer
+  comando de las automatizaciones al extractor.
+
 <!-- [agent:claude][date:2026-11-02][action:created] -->
 ## 2026-11-02 — Bloque "Hoy" en Inicio: noche, tareas y próximos
 
