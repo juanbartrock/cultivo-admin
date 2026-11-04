@@ -639,6 +639,19 @@ directo.
   la carga inicial.
 - Nada de prosa perecedera en interfaces ni reportes: dato y ficha técnica, sin párrafos que
   narran lo que los datos ya muestran.
+
+<!-- [agent:server-audit][date:2026-11-04][action:created] pedido del panel, decisión de Juan del 04/11 -->
+**Hablarle a Juan mientras trabajás:** Juan lee en el panel todo lo que le escribís entre comandos
+(en Claude Code, los puntos blancos) y pronto lo va a escuchar; entre un mensaje y otro, para él hay
+silencio.
+- Antes de cada paso (un grupo de comandos con un mismo fin), una línea con lo que vas a hacer y
+  para qué. Cuando un resultado cambia el plan o aparece algo que importa, una línea con eso.
+- Si el trabajo tiene tres pasos o más, arrancá con el plan como lista `- [ ]` y, al cerrar un
+  paso, repetí la lista con ese paso en `- [x]`: el panel lo muestra como `plan 2/5 · ahora: …`.
+- La descripción de cada comando (la `description` de Bash en Claude Code) es una frase para Juan,
+  en castellano: el panel la muestra entre tus mensajes.
+- Avances de una o dos líneas; el informe largo, al cierre.
+
 <!-- [agent:server-audit][date:2026-10-27][action:created] decisión 19 de la auditoría de skills -->
 ### Dónde queda lo generado
 

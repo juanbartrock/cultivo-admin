@@ -42,3 +42,7 @@ blob-report/
 # Transcripts crudos del crítico (3-4 MB por corrida, sin valor documental)
 docs/critica/**/runner.json
 docs/critica/**/runner.stderr
+
+# Fotos del cultivo que deja Juan: material personal y pesado, quedan en disco y en el backup, fuera de git
+/docs/*.jpg
+/docs/fotos*/
