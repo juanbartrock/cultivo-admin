@@ -7,6 +7,31 @@ con configuración, fallback y activación. Cambio documental, validado con sync
 
 # CHANGES.md — cultivo-admin
 
+<!-- [agent:claude][date:2026-11-04][action:modified] -->
+## 2026-11-04 — Next.js 14.2.3 → 14.2.35 (parche de seguridad)
+
+Autorizado por Juan el 04/11 20:50. Último parche de la rama 14, sin salto de mayor.
+
+- **Cambio.** `frontend/package.json`: `next` y `eslint-config-next` a `14.2.35` (exactas).
+  Producción solo cambia `next`, `@next/env` y `@next/swc-*` (estos en `14.2.33`, que es lo que fija
+  `next@14.2.35`). En dev npm resolvió de nuevo el subárbol de `eslint-config-next`:
+  `@typescript-eslint/*` 7.2.0 → 8.72.1 y parches transitivos (ansi-regex, minipass, brace-expansion).
+- **CVE-2025-29927.** El frontend no tiene `middleware.ts`: el acceso lo controla `AuthContext` en el
+  cliente y los datos, el JWT del backend. `GET` con `x-middleware-subrequest: middleware` y
+  `src/middleware` a `/`, `/artefactos` y `/admin/rangos` por `127.0.0.1:3001`: 200 antes y después,
+  igual que sin el header.
+- **`npm audit --omit=dev`.** Conteo igual antes y después: 1 critical, 6 high, 3 moderate.
+  Los avisos de `next` bajan de 38 a 26; los 26 restantes tienen parche solo en 15.5.x/16. Los
+  critical que quedan son del Image Optimizer (`images.unoptimized: true`, `/_next/image` → 404) y
+  de servidores Windows. Sin Server Actions, rewrites ni i18n.
+- **Verificación.** typecheck 0, lint 0 (mismo warning de antes), `next build` 0. Playwright mockeado
+  6/7 antes y después: "carpa viva: integra selección…" vence los 30 s con el VPS cargado (load 7 en
+  4 núcleos) también con 14.2.3; aislado con 14.2.35 pasa 3/3. `app-restart cultivo-frontend --build`
+  → 0; contenedor con `next` 14.2.35; rutas principales 200; logs sin errores.
+- **Hallazgos previos, sin tocar.** `qa:nav` contra producción: 17/21. Fallan `/seguimientos`
+  (404 de la foto: `SeguimientosPage.tsx` usa `event.data.url` = `/devices/:id/snapshots/…` sin
+  `/api`) y "diálogos del bloque Hoy" (busca la tarea "Topping", que ya no figura en Hoy).
+
 <!-- [agent:claude][date:2026-11-03][action:modified] -->
 ## 2026-11-03 — La cámara de la carpa cambió de IP
 
